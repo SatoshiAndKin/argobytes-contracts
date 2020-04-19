@@ -9,7 +9,7 @@ contract DyDxAction is AbstractERC20Exchange {
         address to,
         address dest_token,
         uint256 dest_min_tokens,
-        uint256 dest_max_tokens, 
+        uint256 dest_max_tokens,
         bytes memory extra_data
     ) internal override {
         revert("wip");
@@ -20,7 +20,7 @@ contract DyDxAction is AbstractERC20Exchange {
         address src_token,
         address dest_token,
         uint256 dest_min_tokens,
-        uint256 dest_max_tokens, 
+        uint256 dest_max_tokens,
         bytes memory extra_data
     ) internal override {
         revert("wip");
@@ -30,7 +30,7 @@ contract DyDxAction is AbstractERC20Exchange {
         address to,
         address src_token,
         uint256 dest_min_tokens,
-        uint256 dest_max_tokens, 
+        uint256 dest_max_tokens,
         bytes memory extra_data
     ) internal override {
         revert("wip");
