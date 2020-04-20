@@ -9,7 +9,6 @@ import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/Saf
 
 
 library UniversalERC20 {
-
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -22,7 +21,9 @@ library UniversalERC20 {
         }
 
         if (isETH(token)) {
-            payable(to).transfer(amount);
+            // https://diligence.consensys.net/blog/2019/09/stop-using-soliditys-transfer-now/
+            (bool success, ) = to.call{value: amount}("");
+            require(success, "UniversalERC20.universalTransfer: ETH transfer failed");
         } else {
             token.safeTransfer(to, amount);
             return true;
@@ -36,11 +37,17 @@ library UniversalERC20 {
 
         if (isETH(token)) {
             require(from == msg.sender && msg.value >= amount, "Wrong useage of ETH.universalTransferFrom()");
+            // send ETH to "to"
             if (to != address(this)) {
-                payable(to).transfer(amount);
+                // https://diligence.consensys.net/blog/2019/09/stop-using-soliditys-transfer-now/
+                (bool success, ) = to.call{value: amount}("");
+                require(success, "UniversalERC20.universalTransferFrom: ETH transfer failed");
             }
+            // send back any extra msg.value
             if (msg.value > amount) {
-                msg.sender.transfer(msg.value.sub(amount));
+                // https://diligence.consensys.net/blog/2019/09/stop-using-soliditys-transfer-now/
+                (bool success, ) = msg.sender.call{value: msg.value.sub(amount)}("");
+                require(success, "UniversalERC20.universalTransferFrom: ETH refund failed");
             }
         } else {
             token.safeTransferFrom(from, to, amount);
@@ -53,8 +60,10 @@ library UniversalERC20 {
         }
 
         if (isETH(token)) {
+            // ETH transfers are done with msg.value and so it's probably already done
+            // TODO: should we revert if msg.value < amount?
             if (msg.value > amount) {
-                // Return remainder if exist
+                // send back any extra msg.value
                 msg.sender.transfer(msg.value.sub(amount));
             }
         } else {
@@ -63,12 +72,18 @@ library UniversalERC20 {
     }
 
     function universalApprove(IERC20 token, address to, uint256 amount) internal {
-        if (!isETH(token)) {
-            if (amount > 0 && token.allowance(address(this), to) > 0) {
-                token.safeApprove(to, 0);
-            }
-            token.safeApprove(to, amount);
+        if (isETH(token)) { 
+            // ETH doesn't need approvals
+            return;
         }
+
+        // clear the allowance if once exists
+        if (amount > 0 && token.allowance(address(this), to) > 0) {
+            token.safeApprove(to, 0);
+        }
+
+        // set the new allowance
+        token.safeApprove(to, amount);
     }
 
     function universalBalanceOf(IERC20 token, address who) internal view returns (uint256) {
@@ -80,7 +95,6 @@ library UniversalERC20 {
     }
 
     function universalDecimals(IERC20 token) internal view returns (uint256) {
-
         if (isETH(token)) {
             return 18;
         }
