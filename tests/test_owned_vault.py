@@ -14,7 +14,7 @@ zero_address = "0x0000000000000000000000000000000000000000"
     value=strategy('uint256', max_value=1e18, min_value=1),
 )
 @settings(max_examples=pytest.MAX_EXAMPLES)
-def test_access_control(example_action, atomic_trade, owned_vault, value):
+def test_access_control(example_action, atomic_trade, owned_vault, value, fn_isolation):
     # send some ETH into the vault
     accounts[0].transfer(owned_vault, value)
 
@@ -25,7 +25,7 @@ def test_access_control(example_action, atomic_trade, owned_vault, value):
     )
     print("encoded_actions: ", encoded_actions)
 
-    with brownie.reverts("ArgobytesOwnedVault: Caller is not trusted"):
+    with brownie.reverts("ArgobytesOwnedVault.atomicArbitrage: Caller is not trusted"):
         owned_vault.atomicArbitrage(
             [zero_address], value, encoded_actions, {'from': accounts[0]})
 
@@ -34,7 +34,10 @@ def test_access_control(example_action, atomic_trade, owned_vault, value):
     value=strategy('uint256', max_value=1e18, min_value=1),
 )
 @settings(max_examples=pytest.MAX_EXAMPLES)
-def test_simple_borrow_and_sweep(value, atomic_trade, owned_vault, example_action):
+def test_simple_borrow_and_sweep(value, atomic_trade, owned_vault, example_action, fn_isolation):
+    # make sure the arbitrage contract has no funds
+    assert owned_vault.balance() == 0
+
     # send some ETH into the vault
     accounts[0].transfer(owned_vault, value)
 
@@ -48,8 +51,6 @@ def test_simple_borrow_and_sweep(value, atomic_trade, owned_vault, example_actio
     atomic_arbitrage_tx = owned_vault.atomicArbitrage(
         [zero_address], value, encoded_actions, {'from': accounts[1]})
 
-    print(atomic_arbitrage_tx)
-
     profit = atomic_arbitrage_tx.return_value
 
     ending_balance = owned_vault.balance()
@@ -57,37 +58,109 @@ def test_simple_borrow_and_sweep(value, atomic_trade, owned_vault, example_actio
     assert ending_balance == value
     assert profit == 0
 
-# it("... should fail if using kollateral and not enough profit", async ()=> {
-#     const aovInstance=await ArgobytesOwnedVault.deployed()
-#     const aaaInstance=await ArgobytesAtomicArbitrage.deployed()
-#     const exampleActionInstance=await ExampleAction.deployed()
 
-#     let simulatedArbAmount=100000
+@given(
+    value=strategy('uint256', max_value=1e18, min_value=1),
+)
+@settings(max_examples=pytest.MAX_EXAMPLES)
+def test_profitless_kollateral_fails(atomic_trade, owned_vault, example_action, value, fn_isolation):
+    # make sure the arbitrage contract has no funds
+    assert owned_vault.balance() == 0
 
-#     // give some tokens to the example action. this is NOT a realistic scenario, but it is an easy way to simulate an arbitrage opportunity
-#     await exampleActionInstance.send(simulatedArbAmount)
+    # no actual arb. just call the sweep contract
+    encoded_actions = atomic_trade.encodeActions(
+        [example_action],
+        [example_action.sweep.encode_input(zero_address)],
+    )
 
-#     // this sweep call will give us back all our tokens, plus simulatedArbAmount
-#     let exampleSweepCalldata=exampleActionInstance.contract.methods.sweep("0x0000000000000000000000000000000000000000").encodeABI()
+    # accounts[1] is setup as the default trusted bot
+    # TODO: this is raising `KeyError: KeyError('0x91b01baeee3a24b590d112613814d86801005c7ef9353e7fc1eaeaf33ccf83b0',)`
+    # https://etherscan.io/address/0x1e0447b19bb6ecfdae1e4ae1694b0c3659614e4e
+    # https://github.com/iamdefinitelyahuman/brownie/issues/430
+    with brownie.reverts("ArgobytesAtomicTrade.execute: Not enough ETH balance to repay kollateral"):
+        owned_vault.atomicArbitrage(
+            [zero_address], value, encoded_actions, {'from': accounts[1]})
 
-#     let encoded_actions=await aaaInstance.encodeActions(
-#         [exampleActionInstance.address],
-#         [exampleSweepCalldata]
-#     )
 
-#     let starting_balance=await web3.eth.getBalance(aovInstance.address)
-#     assert.isAbove(parseInt(starting_balance), 1000000)
+@given(
+    value=strategy('uint256', max_value=1e18, min_value=1e8),
+)
+@settings(max_examples=pytest.MAX_EXAMPLES)
+def test_simple_kollateral(atomic_trade, owned_vault, example_action, value, fn_isolation):
+    # make sure the arbitrage contract has no funds
+    assert owned_vault.balance() == 0
 
-#     if (global.mode == "profile") global.profilerSubprovider.start()
+    # add a giant arb return to the sweep contract
+    accounts[0].transfer(example_action, value * 2, gas_price=0)
 
-#     // use more than our starting balance so that we borrow some from kollateral
-#     // TODO: this is supposed to revert! how do we catch that?
-#     await aovInstance.atomicArbitrage(["0x0000000000000000000000000000000000000000"], starting_balance + 1, encoded_actions)
+    encoded_actions = atomic_trade.encodeActions(
+        [example_action],
+        [example_action.sweep.encode_input(zero_address)],
+    )
 
-#     if (global.mode == "profile") global.profilerSubprovider.stop()
+    arbitrage_tx = owned_vault.atomicArbitrage(
+        [zero_address], value, encoded_actions, {'from': accounts[1]})
 
-#     let ending_balance=await web3.eth.getBalance(aovInstance.address)
+    # TODO: what is the actual amount? it needs to include fees from kollateral
+    assert arbitrage_tx.return_value > value
 
-#     // TODO: this is starting balance + simulatedArbAmount - kollateral fee
-#     assert.isAbove(parseInt(ending_balance), parseInt(starting_balance))
-# })
+
+# TODO: i'm seeing a starting balance in owned_vault! i don't think fn_isolation and hypothesis strategies are working properly
+@given(
+    value=strategy('uint256', max_value=1e18, min_value=1e8),
+)
+@settings(max_examples=pytest.MAX_EXAMPLES)
+def test_gastoken_saves_gas(atomic_trade, owned_vault, example_action, fn_isolation, value):
+    # send some ETH into the vault
+    accounts[0].transfer(owned_vault, value)
+    # send some ETH into the sweep contract to simulate arbitrage profits
+    accounts[0].transfer(example_action, value)
+
+    # make sure balances match what we expect
+    assert owned_vault.balance() == value
+    assert example_action.balance() == value
+
+    # sweep a bunch of times to use up gas
+    encoded_actions = atomic_trade.encodeActions(
+        [example_action] * 12,
+        [example_action.sweep.encode_input(zero_address)] * 12,
+    )
+
+    arbitrage_tx = owned_vault.atomicArbitrage(
+        [zero_address], value, encoded_actions, {'from': accounts[1]})
+
+    # make sure balances match what we expect
+    assert arbitrage_tx.return_value == value
+    assert owned_vault.balance() == 2 * value
+
+    gas_used_without_gastoken = arbitrage_tx.gas_used
+
+    print("gas_used_without_gastoken: ", gas_used_without_gastoken)
+
+    # move the arb return back to the sweep contract
+    owned_vault.withdrawTo(zero_address, example_action, value)
+
+    # make sure balances match what we expect
+    assert owned_vault.balance() == value
+    assert example_action.balance() == value
+
+    # mint some gas token
+    # TODO: how much should we make?
+    owned_vault.mintGasToken()
+    owned_vault.mintGasToken()
+    owned_vault.mintGasToken()
+
+    # TODO: use gastoken interface to get the number of gas tokens available
+
+    # do the faked arbitrage trade again (but this time with gas tokens)
+    arbitrage_tx = owned_vault.atomicArbitrage(
+        [zero_address], value, encoded_actions, {'from': accounts[1]})
+
+    gas_used_with_gastoken = arbitrage_tx.gas_used
+
+    print("gas_used_with_gastoken: ", gas_used_with_gastoken)
+
+    assert arbitrage_tx.return_value == value
+    assert owned_vault.balance() == 2 * value
+    assert gas_used_with_gastoken < gas_used_without_gastoken
+    # TODO: assert something about the number of freed gas tokens

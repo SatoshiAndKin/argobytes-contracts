@@ -72,15 +72,13 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         external
         returns (uint256 primary_profit)
     {
-        // TODO: turn this back on!
-        // uint256 initial_gas = startFreeGasTokens();
+        uint256 initial_gas = startFreeGasTokens();
 
-        // TODO: turn this back on!
-        require(hasRole(TRUSTED_ARBITRAGER_ROLE, msg.sender), "ArgobytesOwnedVault: Caller is not trusted");
+        require(hasRole(TRUSTED_ARBITRAGER_ROLE, msg.sender), "ArgobytesOwnedVault.atomicArbitrage: Caller is not trusted");
 
         // TODO: debug_require? we only have these for helpful revert messages
-        require(tokens.length > 0, "ArgobytesOwnedVault: tokens.length must be > 0");
-        require(tokenAmount > 0, "ArgobytesOwnedVault: tokenAmount must be > 0");
+        require(tokens.length > 0, "ArgobytesOwnedVault.atomicArbitrage: tokens.length must be > 0");
+        require(tokenAmount > 0, "ArgobytesOwnedVault.atomicArbitrage: tokenAmount must be > 0");
 
         IERC20 borrow_token = IERC20(tokens[0]);
 
@@ -94,7 +92,7 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
             borrow_token.universalTransfer(address(_aat), starting_vault_balance);
         }
 
-        require(address(_aat) != address(0x0), "ArgobytesOwnedVault atomicArbitrage: require setArgobytesAtomicArbitrage");
+        require(address(_aat) != address(0x0), "ArgobytesOwnedVault.atomicArbitrage: require setArgobytesAtomicArbitrage");
 
         // notice that this is an atomic trade. it doesn't require a profitable arbitrage. we have to check that ourself
         _aat.atomicTrade(tokens, tokenAmount, encoded_actions);
@@ -104,17 +102,23 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
 
         // we burn gas token before the very end. that way if we revert, we get more of our gas back and don't actually burn any tokens
         // TODO: is this true? if not, just use the modifier
-        // TODO: turn this back on!
-        // endFreeGasTokens(initial_gas);
+        endFreeGasTokens(initial_gas);
 
         // we allow this to be equal because it's possible that we got our profits somewhere else (like uniswap or kollateral LP fees)
         if (ending_vault_balance < starting_vault_balance) {
             uint256 decreased_amount = starting_vault_balance - ending_vault_balance;
-            string memory err = string(abi.encodePacked("ArgobytesOwnedVault atomicArbitrage: Vault balance of ", address(borrow_token).fromAddress(), " did not increase. Decreased by ", decreased_amount.fromUint256()));
+            string memory err = string(abi.encodePacked("ArgobytesOwnedVault.atomicArbitrage: Vault balance of ", address(borrow_token).fromAddress(), " did not increase. Decreased by ", decreased_amount.fromUint256()));
             revert(err);
         }
 
         // TODO: return the profit in all tokens so a caller can decide if the trade is worthwhile?
         primary_profit = ending_vault_balance - starting_vault_balance;
+    }
+
+    function withdrawTo(IERC20 token, address to, uint256 amount) external returns(bool) {
+        // TODO: what role? it should be seperate from the deployer
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "ArgobytesOwnedVault.withdrawTo: Caller is not an admin");
+
+        return token.universalTransfer(to, amount);
     }
 }

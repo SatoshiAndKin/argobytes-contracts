@@ -88,7 +88,7 @@ contract GasTokenBurner is AccessControl {
     /**
      * @notice Mint `_gas_token_mint_amount` gas tokens for this contract.
      */
-    function mintGas() public {
+    function mintGasToken() public {
         _gas_token.mint(_gas_token_mint_amount);
     }
 

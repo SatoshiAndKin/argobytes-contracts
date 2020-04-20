@@ -220,7 +220,7 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
                 revert("No ETH balance was returned by the last action");
             }
 
-            require(balance >= repay_amount, "Not enough ETH balance to repay kollateral");
+            require(balance >= repay_amount, "ArgobytesAtomicTrade.execute: Not enough ETH balance to repay kollateral");
         } else {
             uint256 balance = borrowed_token.balanceOf(address(this));
 
