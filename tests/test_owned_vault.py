@@ -55,6 +55,7 @@ def test_simple_borrow_and_sweep(value, atomic_trade, owned_vault, example_actio
     ending_balance = owned_vault.balance()
 
     assert ending_balance == value
+    assert profit == 0
 
 # it("... should fail if using kollateral and not enough profit", async ()=> {
 #     const aovInstance=await ArgobytesOwnedVault.deployed()
