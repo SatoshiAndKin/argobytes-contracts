@@ -1,13 +1,17 @@
+# TODO: max_examples should not be 1, but tests are slow with the default while developing
+
 import pytest
 from brownie import accounts
 from brownie.test import given, strategy
+from hypothesis import settings
 
 
-# @given(
-#     value=strategy('uint256', max_value=1e18, min_value=1),
-# )
-def test_wrapping_and_unwrapping(quick_and_dirty, weth9_action):
-    value = 1e10
+@given(
+    value=strategy('uint256', max_value=1e18, min_value=1),
+)
+@settings(max_examples=pytest.MAX_EXAMPLES)
+def test_wrapping_and_unwrapping(quick_and_dirty, value, weth9_action):
+    # value = 1e10
 
     # put some ETH into the action
     accounts[0].transfer(weth9_action, value)

@@ -1,6 +1,13 @@
 import pytest
 from brownie import accounts
 
+MAX_EXAMPLES = 1
+
+
+def pytest_configure():
+    pytest.MAX_EXAMPLES = MAX_EXAMPLES
+
+
 # test isolation, always use!
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
