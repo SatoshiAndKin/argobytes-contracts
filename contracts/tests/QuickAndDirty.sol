@@ -1,5 +1,6 @@
 // i can't figure out how to access interfaces as pytest fixtures, so i wrote this
 
+// brownie dev said he would support interfaces as fixtures soon. that means we shouldn't need this for long
 pragma solidity 0.6.6;
 
 import "interfaces/weth9/IWETH9.sol";
