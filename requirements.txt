@@ -1,0 +1,5 @@
+bandit
+pytest
+eth-brownie
+autopep8
+pylint

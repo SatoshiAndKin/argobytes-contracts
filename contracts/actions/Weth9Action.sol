@@ -1,10 +1,16 @@
 pragma solidity 0.6.6;
 
+import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/utils/Strings.sol";
+
+import "contracts/Strings2.sol";
 import {IWETH9} from "interfaces/weth9/IWETH9.sol";
 
 
 // TODO: do we want auth on this with setters? i think no. i think we should just have a simple contract with a constructor. if we need changes, we can deploy a new contract. less methods is less attack surface
 contract Weth9Action {
+    using Strings for uint256;
+    using Strings2 for address;
+
     // cheaper as calldata or saved on the contract? i assume saved is cheaper
     IWETH9 public _WETH9;
 
