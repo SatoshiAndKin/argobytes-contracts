@@ -78,6 +78,8 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
     // TODO: get rid of this. do encoding outside of the smart contract
     // this is here because I'm having trouble encoding these types in Rust
     function encodeActions(address payable[] memory targets, bytes[] memory targets_data) public pure returns (bytes memory encoded_data) {
+        require(targets.length == targets_data.length, "ArgobytesAtomicTrade.encodeActions: lengths do not match");
+
         Action[] memory actions = new Action[](targets.length);
 
         for (uint i = 0; i < targets.length; i++) {
@@ -97,10 +99,10 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
         // TODO: if we want to use GSN, we should use `_msgSender()` instead of msg.sender
         // TODO: open this up once it has been audited
         // TODO: this is disabled because of the truffle debugger!
-        require(hasRole(TRUSTED_TRADER_ROLE, msg.sender), "ArgobytesAtomicArbitrage: Caller is not trusted");
+        require(hasRole(TRUSTED_TRADER_ROLE, msg.sender), "ArgobytesAtomicArbitrage.atomicTrade: Caller is not trusted");
 
-        require(tokens.length > 0, "ArgobytesAtomicArbitrage: tokens.length must be > 0");
-        require(first_amount > 0, "ArgobytesAtomicArbitrage: first_amount must be > 0");
+        require(tokens.length > 0, "ArgobytesAtomicArbitrage.atomicTrade: tokens.length must be > 0");
+        require(first_amount > 0, "ArgobytesAtomicArbitrage.atomicTrade: first_amount must be > 0");
 
         uint256 starting_amount = IERC20(tokens[0]).universalBalanceOf(address(this));
 
@@ -154,13 +156,13 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
       */
     function execute(bytes calldata encoded_actions) external override payable {
         // TODO: open this up once it has been audited
-        require(currentSender() == address(this), "Original sender is not this contract");
+        require(currentSender() == address(this), "ArgobytesAtomicTrade.execute: Original sender is not this contract");
 
         // TODO: can we get a revert message if the decode fails?
         (Action[] memory actions) = abi.decode(encoded_actions, (Action[]));
 
         // we could allow 0 actions, but why would we ever want to pay a fee to do nothing?
-        require(actions.length > 0, "ArgobytesAtomicArbitrage execute: there must be at least one action");
+        require(actions.length > 0, "ArgobytesAtomicArbitrage.execute: there must be at least one action");
 
         uint256 action_value = 0;
         bool current_token_is_ether = isCurrentTokenEther();
@@ -199,10 +201,12 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
             // ignore the return data. using it would limit compatability
             // TODO: on error, does the return_data have anything in it?
             // solium-disable-next-line security/no-low-level-calls
-            (bool success, ) = action_address.call{value: action_value}(actions[i].data);
+            (bool success, bytes memory call_returned) = action_address.call{value: action_value}(actions[i].data);
 
+            // TODO: i thought call_returned would have the revert string if !success, but i'm not getting anything
             if (!success) {
-                string memory err = string(abi.encodePacked("on call #", i.fromUint256()," to ", action_address.fromAddress(), " with ", action_value.fromUint256(), " ETH failed"));
+                // TODO: how do we convert call_returned into a string?
+                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.execute: on call #", i.fromUint256()," to ", action_address.fromAddress(), " with ", action_value.fromUint256(), " ETH failed"));
                 revert(err);
             }
 
@@ -217,7 +221,7 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
             uint256 balance = address(this).balance;
 
             if (balance == 0) {
-                revert("No ETH balance was returned by the last action");
+                revert("ArgobytesAtomicTrade.execute: No ETH balance was returned by the last action");
             }
 
             require(balance >= repay_amount, "ArgobytesAtomicTrade.execute: Not enough ETH balance to repay kollateral");
@@ -225,10 +229,10 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
             uint256 balance = borrowed_token.balanceOf(address(this));
 
             if (balance == 0) {
-                revert("No token balance was returned by the last action");
+                revert("ArgobytesAtomicTrade.execute: No token balance was returned by the last action");
             }
 
-            require(balance >= repay_amount, "Not enough token balance to repay kollateral");
+            require(balance >= repay_amount, "ArgobytesAtomicTrade.execute: Not enough token balance to repay kollateral");
         }
 
         repay();
@@ -269,10 +273,10 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
             // We need call here though because we want to call arbitrary contracts with arbitrary arguments
             // ignore the return data. using it would limit compatability
             // solium-disable-next-line security/no-low-level-calls
-            (bool success, ) = action_address.call(actions[i].data);
+            (bool success, bytes memory call_returned) = action_address.call(actions[i].data);
 
             if (!success) {
-                string memory err = string(abi.encodePacked("on call #", i.fromUint256()," to ", action_address.fromAddress(), " failed"));
+                string memory err = string(abi.encodePacked("on call #", i.fromUint256()," to ", action_address.fromAddress(), " failed: ", string(call_returned)));
                 revert(err);
             }
         }

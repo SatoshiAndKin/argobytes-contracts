@@ -1,13 +1,6 @@
 import pytest
 from brownie import accounts
 
-MAX_EXAMPLES = 1
-
-
-# it's better to write a plugin, but this works for now
-def pytest_configure():
-    pytest.MAX_EXAMPLES = MAX_EXAMPLES
-
 
 # test isolation, always use!
 @pytest.fixture(autouse=True)
@@ -33,6 +26,19 @@ def example_action(ExampleAction):
 
 
 @pytest.fixture(scope="module")
+def kyber_action(KyberAction):
+    kyber_network_proxy = "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
+    kyber_wallet_id = "0x0000000000000000000000000000000000000000"
+    return accounts[0].deploy(KyberAction, kyber_network_proxy, kyber_wallet_id)
+
+
+@pytest.fixture(scope="module")
+def onesplit_action(OneSplitAction):
+    # TODO: does this support ENS? this is 1split.eth
+    return accounts[0].deploy(OneSplitAction, "0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E")
+
+
+@pytest.fixture(scope="module")
 def owned_vault(ArgobytesOwnedVault):
     gastoken = "0x0000000000b3F879cb30FE243b4Dfee438691c04"
 
@@ -46,6 +52,12 @@ def owned_vault(ArgobytesOwnedVault):
 @pytest.fixture(scope="module")
 def quick_and_dirty(QuickAndDirty):
     return accounts[0].deploy(QuickAndDirty)
+
+
+@pytest.fixture(scope="module")
+def uniswap_action(UniswapAction):
+    uniswap_factory = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
+    return accounts[0].deploy(UniswapAction, uniswap_factory)
 
 
 @pytest.fixture(scope="module")

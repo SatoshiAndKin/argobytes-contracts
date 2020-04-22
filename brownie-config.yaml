@@ -1,0 +1,9 @@
+compiler:
+  solc:
+    optimizer:
+      enabled: false
+
+autofetch_sources: true
+
+dependencies:
+  - OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1
