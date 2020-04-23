@@ -5,16 +5,10 @@ import pytest
 import brownie
 
 
-# we use the zero address for ETH
-zero_address = "0x0000000000000000000000000000000000000000"
-
-# TODO: parameterize with a bunch of mainnet token addresses
-
-
 # @given(
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
-def test_uniswap_actions(uniswap_action, fn_isolation):
+def test_uniswap_actions(uniswap_action):
     value = 1e17
 
     # send some ETH into the action

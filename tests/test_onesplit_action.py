@@ -15,7 +15,7 @@ zero_address = "0x0000000000000000000000000000000000000000"
 # @given(
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
-def test_onesplit_actions(onesplit_action, fn_isolation):
+def test_onesplit_actions(onesplit_action):
     value = 1e17
 
     # send some ETH into the action
@@ -24,7 +24,7 @@ def test_onesplit_actions(onesplit_action, fn_isolation):
     # make sure balances match what we expect
     assert onesplit_action.balance() == value
 
-    # TODO: use https://eth-brownie.readthedocs.io/en/stable/api-network.html#Contract.from_explorer in fixtures
+    # TODO: use dai_erc20 and usdc_erc20 fixtures
     dai = "0x6B175474E89094C44Da98b954EedeAC495271d0F"
     usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
 

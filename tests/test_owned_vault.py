@@ -112,7 +112,7 @@ def test_simple_kollateral(atomic_trade, owned_vault, example_action):
         [zero_address], value, encoded_actions, {'from': accounts[1]})
 
     # TODO: what is the actual amount? it needs to include fees from kollateral
-    assert arbitrage_tx.return_value > value
+    assert arbitrage_tx.return_value > 0
 
 
 # @given(

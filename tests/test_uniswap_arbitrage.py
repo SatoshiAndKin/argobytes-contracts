@@ -60,8 +60,7 @@ def test_uniswap_arbitrage(atomic_trade, owned_vault, example_action, uniswap_ac
         ],
     )
 
-    arbitrage_tx = owned_vault.atomicArbitrage(
-        [zero_address], value, encoded_actions, {'from': accounts[1]})
+    arbitrage_tx = owned_vault.atomicArbitrage([zero_address], value, encoded_actions, {'from': accounts[1]})
 
     # make sure balances match what we expect
     # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet
