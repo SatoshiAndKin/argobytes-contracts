@@ -1,5 +1,3 @@
-# TODO: max_examples should not be 1, but tests are slow with the default while developing
-
 import brownie
 import pytest
 from brownie import accounts

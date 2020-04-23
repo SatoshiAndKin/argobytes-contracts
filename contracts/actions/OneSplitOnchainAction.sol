@@ -1,7 +1,3 @@
-/**
- * Split a trade across multiple other exchange actions.
- * we will probably want a more advanced contract that can enable/disable different exchanges to keep gas costs down.
- */
 pragma solidity 0.6.6;
 pragma experimental ABIEncoderV2;
 
@@ -9,17 +5,16 @@ import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {IERC20} from "contracts/UniversalERC20.sol";
 import {IOneSplit} from "interfaces/onesplit/IOneSplit.sol";
 
-// TODO: do we want auth on this with setters? i think no. i think we should just have a simple contract with a constructor. if we need changes, we can deploy a new contract. less methods is less attack surface
-contract OneSplitAction is AbstractERC20Exchange {
+contract OneSplitOnchainAction is AbstractERC20Exchange {
 
     IOneSplit _one_split;
+    address constant internal ETH_ON_ONESPLIT = address(0x0);
 
     constructor(address one_split) public {
         _one_split = IOneSplit(one_split);
     }
 
-    // parts: I'm 95% sure this is the number of chunks to split this order into. its a uint256. seems like that could be smaller
-    // disable_flags: https://github.com/CryptoManiacsZone/1split/blob/d8fae717176e7db86877535940e4429ff0d60752/contracts/IOneSplit.sol
+    // https://github.com/CryptoManiacsZone/1split/blob/master/contracts/IOneSplit.sol
     function encodeExtraData(uint256 parts, uint256 disable_flags) external pure returns (bytes memory encoded) {
         encoded = abi.encode(parts, disable_flags);
     }
@@ -37,15 +32,28 @@ contract OneSplitAction is AbstractERC20Exchange {
         uint256 src_balance = address(this).balance;
         require(src_balance > 0, "OneSplitAction._tradeEtherToToken: NO_ETH_BALANCE");
 
-        // do the actual swap
-        _one_split.goodSwap{value: src_balance}(IERC20(address(0x0)), IERC20(dest_token), src_balance, dest_min_tokens, parts, disable_flags);
+        // no approvals are necessary since we are using ETH
+
+        // calculate the amounts
+        // TODO: this is MUCH cheaper to do off chain, but then we don't get the dynamic routing
+        (uint256 return_amount, uint256[] memory distribution) = _one_split.getExpectedReturn(
+            IERC20(ETH_ON_ONESPLIT),
+            IERC20(dest_token),
+            src_balance,
+            parts,
+            disable_flags
+        );
+
+        require(return_amount > dest_min_tokens, "OneSplitAction._tradeEtherToToken: LOW_EXPECTED_RETURN");
+
+        // do the actual swap (and send the ETH along as value)
+        _one_split.swap{value: src_balance}(IERC20(ETH_ON_ONESPLIT), IERC20(dest_token), src_balance, dest_min_tokens, distribution, disable_flags);
 
         // forward the tokens that we bought
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
         require(dest_balance >= dest_min_tokens, "OneSplitAction._tradeEtherToToken: LOW_DEST_BALANCE");
 
-        // TODO: don't use `.transfer(` (and search for everywhere else we use it)
-        payable(to).transfer(dest_balance);
+        IERC20(dest_token).transfer(to, dest_balance);
     }
 
     function _tradeTokenToToken(
@@ -64,8 +72,20 @@ contract OneSplitAction is AbstractERC20Exchange {
         // approve tokens
         IERC20(src_token).approve(address(_one_split), src_balance);
 
+        // calculate the amounts
+        // TODO: this is MUCH cheaper to do off chain, but then we don't get the dynamic routing
+        (uint256 return_amount, uint256[] memory distribution) = _one_split.getExpectedReturn(
+            IERC20(src_token),
+            IERC20(dest_token),
+            src_balance,
+            parts,
+            disable_flags
+        );
+
+        require(return_amount > dest_min_tokens, "OneSplitAction._tradeTokenToToken: LOW_EXPECTED_RETURN");
+
         // do the actual swap
-        _one_split.goodSwap(IERC20(src_token), IERC20(dest_token), src_balance, dest_min_tokens, parts, disable_flags);
+        _one_split.swap(IERC20(src_token), IERC20(dest_token), src_balance, dest_min_tokens, distribution, disable_flags);
 
         // forward the tokens that we bought
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
@@ -89,13 +109,27 @@ contract OneSplitAction is AbstractERC20Exchange {
         // approve tokens
         IERC20(src_token).approve(address(_one_split), src_balance);
 
+        // calculate the amounts
+        // TODO: this is MUCH cheaper to do off chain, but then we don't get the dynamic routing
+        (uint256 return_amount, uint256[] memory distribution) = _one_split.getExpectedReturn(
+            IERC20(src_token),
+            IERC20(ETH_ON_ONESPLIT),
+            src_balance,
+            parts,
+            disable_flags
+        );
+
+        require(return_amount > dest_min_tokens, "OneSplitAction._tradeTokenToEther: LOW_EXPECTED_RETURN");
+
         // do the actual swap
-        _one_split.goodSwap(IERC20(src_token), IERC20(address(0x0)), src_balance, dest_min_tokens, parts, disable_flags);
+        // TODO: do we need to pass dest_min_tokens since we did the check above? maybe just pass 0 or 1
+        _one_split.swap(IERC20(src_token), IERC20(ETH_ON_ONESPLIT), src_balance, dest_min_tokens, distribution, disable_flags);
 
         // forward the tokens that we bought
         uint256 dest_balance = address(this).balance;
         require(dest_balance >= dest_min_tokens, "OneSplitAction._tradeTokenToEther: LOW_DEST_BALANCE");
 
+        // TODO: don't use transfer. use call instead. and search for anywhere else we use transfer, too
         payable(to).transfer(dest_balance);
     }
 
@@ -135,4 +169,3 @@ contract OneSplitAction is AbstractERC20Exchange {
         return amounts;
     }
 }
-

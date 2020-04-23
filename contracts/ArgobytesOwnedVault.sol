@@ -72,6 +72,7 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         external
         returns (uint256 primary_profit)
     {
+        // TODO: make freeing gas tokens optional? 
         uint256 initial_gas = startFreeGasTokens();
 
         require(hasRole(TRUSTED_ARBITRAGER_ROLE, msg.sender), "ArgobytesOwnedVault.atomicArbitrage: Caller is not trusted");

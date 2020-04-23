@@ -10,9 +10,7 @@ def isolation(fn_isolation):
 
 
 @pytest.fixture()
-def atomic_trade(ArgobytesAtomicTrade, owned_vault):
-    kollateral_invoker = "0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01"
-
+def atomic_trade(ArgobytesAtomicTrade, kollateral_invoker, owned_vault):
     atomic_trade_instance = accounts[0].deploy(ArgobytesAtomicTrade, kollateral_invoker, owned_vault)
 
     owned_vault.setArgobytesAtomicTrade(atomic_trade_instance)
@@ -31,28 +29,51 @@ def example_action(ExampleAction):
 
 
 @pytest.fixture()
-def kyber_action(KyberAction):
-    kyber_network_proxy = "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
-    kyber_wallet_id = "0x0000000000000000000000000000000000000000"
+def kollateral_invoker(ExampleAction):
+    return "0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01"
+
+
+@pytest.fixture()
+def kyber_action(KyberAction, kyber_network_proxy, kyber_wallet_id):
     return accounts[0].deploy(KyberAction, kyber_network_proxy, kyber_wallet_id)
+
+
+@pytest.fixture(scope="session")
+def kyber_network_proxy():
+    # TODO: `return Contract.from_explorer("0x818E6FECD516Ecc3849DAf6845e3EC868087B755")`
+    return "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
+
+
+@pytest.fixture(scope="session")
+def kyber_wallet_id():
+    # TODO: should we do the vault address? i think so. then if someone else uses our proxy, we can get some credit. but maybe we should do the KyberAction
+    return "0x0000000000000000000000000000000000000000"
 
 
 @pytest.fixture()
 def onesplit():
     # 1split.eth
-    return Contract.from_explorer("0xc586bef4a0992c495cf22e1aeee4e446cecdee0e")
+    # TODO: does this support ENS? this is 1split.eth (although its probably better to have an address here)
+    return Contract.from_explorer("0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E")
 
 
 @pytest.fixture()
-def onesplit_action(OneSplitAction):
-    # TODO: does this support ENS? this is 1split.eth
-    return accounts[0].deploy(OneSplitAction, "0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E")
+def onesplit_onchain_action(OneSplitOnchainAction, onesplit):
+    return accounts[0].deploy(OneSplitOnchainAction, onesplit)
 
 
 @pytest.fixture()
-def owned_vault(ArgobytesOwnedVault):
-    gastoken = "0x0000000000b3F879cb30FE243b4Dfee438691c04"
+def onesplit_offchain_action(OneSplitOffchainAction, onesplit):
+    return accounts[0].deploy(OneSplitOffchainAction, onesplit)
 
+
+@pytest.fixture(scope="session")
+def gastoken():
+    return Contract.from_explorer("0x0000000000b3F879cb30FE243b4Dfee438691c04")
+
+
+@pytest.fixture()
+def owned_vault(ArgobytesOwnedVault, gastoken):
     # deployer = accounts[0]
     arb_bots = [accounts[1]]
 
@@ -60,9 +81,13 @@ def owned_vault(ArgobytesOwnedVault):
 
 
 @pytest.fixture()
-def uniswap_action(UniswapAction):
-    uniswap_factory = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
+def uniswap_action(UniswapAction, uniswap_factory):
     return accounts[0].deploy(UniswapAction, uniswap_factory)
+
+
+@pytest.fixture(scope="session")
+def uniswap_factory():
+    return Contract.from_explorer("0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95")
 
 
 @pytest.fixture(scope="session")
