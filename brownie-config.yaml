@@ -3,7 +3,7 @@ compiler:
     optimizer:
       enabled: false
 
-autofetch_sources: true
+autofetch_sources: false
 
 dependencies:
   - OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1

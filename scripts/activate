@@ -1,0 +1,5 @@
+# source me!
+# TODO: exit if this isn't being sourced
+
+. venv/bin/activate
+. .env

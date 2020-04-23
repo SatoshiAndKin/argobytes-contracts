@@ -190,7 +190,7 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
             address action_address = actions[i].target;
 
             // calls to this aren't expected, so lets just block them to be safe
-            require(action_address != address(this), "calls to self are not allowed");
+            require(action_address != address(this), "ArgobytesAtomicArbitrage.execute: calls to self are not allowed");
 
             // IMPORTANT! An action contract could be designed that keeps profits for itself.
             // Preventing that will be very difficult. This is why other similar contracts take a fee.
@@ -198,15 +198,13 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
 
             // Generally, avoid using call
             // We need call here though because we want to call arbitrary contracts with arbitrary arguments
-            // ignore the return data. using it would limit compatability
-            // TODO: on error, does the return_data have anything in it?
+            // ignore a success' return data. using it would limit compatability
+            // on error, call_returned should have the revert message
             // solium-disable-next-line security/no-low-level-calls
             (bool success, bytes memory call_returned) = action_address.call{value: action_value}(actions[i].data);
 
-            // TODO: i thought call_returned would have the revert string if !success, but i'm not getting anything
             if (!success) {
-                // TODO: how do we convert call_returned into a string?
-                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.execute: on call #", i.fromUint256()," to ", action_address.fromAddress(), " with ", action_value.fromUint256(), " ETH failed"));
+                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.execute: on call #", i.fromUint256()," to ", action_address.fromAddress(), " with ", action_value.fromUint256(), " ETH failed: '", string(call_returned), "'"));
                 revert(err);
             }
 
@@ -247,11 +245,11 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
         (Action[] memory actions) = abi.decode(encoded_actions, (Action[]));
 
         // we could allow 0 actions, but why would we ever want that?
-        require(actions.length > 0, "ArgobytesAtomicArbitrage executeSolo: there must be at least one action");
+        require(actions.length > 0, "ArgobytesAtomicArbitrage.executeSolo: there must be at least one action");
 
         // debugging
         uint256 first_token_balance = IERC20(first_token).universalBalanceOf(address(this));
-        require(first_token_balance >= first_amount, "not enough token");
+        require(first_token_balance >= first_amount, "ArgobytesAtomicArbitrage.executeSolo: not enough token");
 
         // TODO: why is universalTransfer fighting me?
         IERC20(first_token).universalTransfer(actions[0].target, first_amount);
@@ -263,7 +261,7 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
             address action_address = actions[i].target;
 
             // calls to this aren't expected, so lets just block them to be safe
-            require(action_address != address(this), "calls to self are not allowed");
+            require(action_address != address(this), "ArgobytesAtomicArbitrage.executeSolo: calls to self are not allowed");
 
             // IMPORTANT! An action contract could be designed that keeps profits for itself.
             // Preventing that will be very difficult. This is why other similar contracts take a fee.
@@ -271,12 +269,13 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
 
             // Generally, avoid using call
             // We need call here though because we want to call arbitrary contracts with arbitrary arguments
-            // ignore the return data. using it would limit compatability
+            // ignore a success' return data. using it would limit compatability
+            // on error, call_returned should have the revert message
             // solium-disable-next-line security/no-low-level-calls
             (bool success, bytes memory call_returned) = action_address.call(actions[i].data);
 
             if (!success) {
-                string memory err = string(abi.encodePacked("on call #", i.fromUint256()," to ", action_address.fromAddress(), " failed: ", string(call_returned)));
+                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.executeSolo: on call #", i.fromUint256()," to ", action_address.fromAddress(), " failed: '", string(call_returned), "'"));
                 revert(err);
             }
         }
