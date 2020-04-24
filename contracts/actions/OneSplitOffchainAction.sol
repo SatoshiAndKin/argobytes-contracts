@@ -12,19 +12,41 @@ import {IOneSplit} from "interfaces/onesplit/IOneSplit.sol";
 // TODO: do we want auth on this with setters? i think no. i think we should just have a simple contract with a constructor. if we need changes, we can deploy a new contract. less methods is less attack surface
 contract OneSplitOffchainAction is AbstractERC20Exchange {
 
+    // https://github.com/CryptoManiacsZone/1split/blob/master/contracts/IOneSplit.sol
     IOneSplit _one_split;
+
     address constant internal ETH_ON_ONESPLIT = address(0x0);
 
     constructor(address one_split) public {
         _one_split = IOneSplit(one_split);
     }
 
-    // https://github.com/CryptoManiacsZone/1split/blob/master/contracts/IOneSplit.sol
-    function encodeExtraData(uint256[] calldata distribution, uint256 disable_flags) external pure returns (bytes memory encoded) {
-        encoded = abi.encode(distribution, disable_flags);
+    // src_amount isn't necessarily the amount being traded. it is the amount used to determine the distribution
+    function encodeExtraData(address src_token, address dest_token, uint src_amount, uint dest_min_tokens, uint256 parts)
+        external view
+        returns (uint256, bytes memory)
+    {
+        require(dest_min_tokens > 0, "OneSplitOffchainAction.encodeExtraData: dest_min_tokens must be > 0");
+
+        // TODO: think about this more. i think using distribution makes disabling unused exchanges not actually do anything.
+        // TODO: maybe take this as a function arg
+        uint256 disable_flags = allEnabled();
+
+        (uint256 expected_return, uint256[] memory distribution) = _one_split.getExpectedReturn(
+            IERC20(src_token),
+            IERC20(dest_token),
+            src_amount,
+            parts,
+            disable_flags
+        );
+
+        require(expected_return > dest_min_tokens, "OneSplitOffchainAction.encodeExtraData: LOW_EXPECTED_RETURN");
+
+        bytes memory encoded = abi.encode(distribution, disable_flags);
+
+        return (expected_return, encoded);
     }
 
-    // TODO: helper here that sets allowances and then transfers? i think IUniswapExchange might already have all the methods we need though
     function _tradeEtherToToken(
         address to,
         address dest_token,
@@ -35,7 +57,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         (uint256[] memory distribution, uint256 disable_flags) = abi.decode(extra_data, (uint256[], uint256));
 
         uint256 src_balance = address(this).balance;
-        require(src_balance > 0, "OneSplitAction._tradeEtherToToken: NO_ETH_BALANCE");
+        require(src_balance > 0, "OneSplitOffchainAction._tradeEtherToToken: NO_ETH_BALANCE");
 
         // no approvals are necessary since we are using ETH
 
@@ -44,7 +66,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
 
         // forward the tokens that we bought
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
-        require(dest_balance >= dest_min_tokens, "OneSplitAction._tradeEtherToToken: LOW_DEST_BALANCE");
+        require(dest_balance >= dest_min_tokens, "OneSplitOffchainAction._tradeEtherToToken: LOW_DEST_BALANCE");
 
         IERC20(dest_token).transfer(to, dest_balance);
     }
@@ -60,7 +82,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         (uint256[] memory distribution, uint256 disable_flags) = abi.decode(extra_data, (uint256[], uint256));
 
         uint256 src_balance = IERC20(src_token).balanceOf(address(this));
-        require(src_balance > 0, "OneSplitAction._tradeTokenToToken: NO_SRC_BALANCE");
+        require(src_balance > 0, "OneSplitOffchainAction._tradeTokenToToken: NO_SRC_BALANCE");
 
         // approve tokens
         IERC20(src_token).approve(address(_one_split), src_balance);
@@ -70,7 +92,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
 
         // forward the tokens that we bought
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
-        require(dest_balance >= dest_min_tokens, "OneSplitAction._tradeTokenToToken: LOW_DEST_BALANCE");
+        require(dest_balance >= dest_min_tokens, "OneSplitOffchainAction._tradeTokenToToken: LOW_DEST_BALANCE");
 
         IERC20(dest_token).transfer(to, dest_balance);
     }
@@ -85,7 +107,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         (uint256[] memory distribution, uint256 disable_flags) = abi.decode(extra_data, (uint256[], uint256));
 
         uint256 src_balance = IERC20(src_token).balanceOf(address(this));
-        require(src_balance > 0, "OneSplitAction._tradeTokenToEther: NO_SRC_BALANCE");
+        require(src_balance > 0, "OneSplitOffchainAction._tradeTokenToEther: NO_SRC_BALANCE");
 
         // approve tokens
         IERC20(src_token).approve(address(_one_split), src_balance);
@@ -96,13 +118,11 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
 
         // forward the tokens that we bought
         uint256 dest_balance = address(this).balance;
-        require(dest_balance >= dest_min_tokens, "OneSplitAction._tradeTokenToEther: LOW_DEST_BALANCE");
+        require(dest_balance >= dest_min_tokens, "OneSplitOffchainAction._tradeTokenToEther: LOW_DEST_BALANCE");
 
         // TODO: don't use transfer. use call instead. and search for anywhere else we use transfer, too
         payable(to).transfer(dest_balance);
     }
-
-    // TODO: _tradeUniversal instead of the above functions? it would have more if/elses, which makes it harder to reason about. probably higher gas too. but less gas to deploy.
 
     struct Amount {
         uint256 maker_wei;
@@ -113,17 +133,19 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         uint256[] distribution;
     }
 
-    function allEnabled() internal returns (uint256 disable_flags) {
+    function allEnabled() internal view returns (uint256 disable_flags) {
         disable_flags = 0;
-        disable_flags += _one_split.FLAG_ENABLE_MULTI_PATH_ETH();
-        disable_flags += _one_split.FLAG_ENABLE_MULTI_PATH_DAI();
-        disable_flags += _one_split.FLAG_ENABLE_MULTI_PATH_USDC();
-        disable_flags += _one_split.FLAG_ENABLE_UNISWAP_COMPOUND();
-        disable_flags += _one_split.FLAG_ENABLE_UNISWAP_CHAI();
-        disable_flags += _one_split.FLAG_ENABLE_UNISWAP_AAVE();
+
+        // TODO: these cause reverts if the assets aren't compatible
+        // disable_flags += _one_split.FLAG_ENABLE_MULTI_PATH_ETH();
+        // disable_flags += _one_split.FLAG_ENABLE_MULTI_PATH_DAI();
+        // disable_flags += _one_split.FLAG_ENABLE_MULTI_PATH_USDC();
+        // disable_flags += _one_split.FLAG_ENABLE_UNISWAP_COMPOUND();
+        // disable_flags += _one_split.FLAG_ENABLE_UNISWAP_CHAI();
+        // disable_flags += _one_split.FLAG_ENABLE_UNISWAP_AAVE();
     }
 
-    function getExpectedReturn(Amount memory a, uint disable_flags) internal returns (Amount memory) {
+    function getExpectedReturnForAmount(Amount memory a, uint disable_flags) internal view returns (Amount memory) {
         (uint maker_wei, uint[] memory distribution) = _one_split.getExpectedReturn(
             IERC20(a.maker_address),
             IERC20(a.taker_address),
@@ -151,7 +173,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         amounts[0].taker_wei = eth_amount;
         amounts[0].taker_address = ETH_ON_ONESPLIT;
         amounts[0].parts = parts;
-        amounts[0] = getExpectedReturn(amounts[0], disable_flags);
+        amounts[0] = getExpectedReturnForAmount(amounts[0], disable_flags);
 
         // get amounts for trading token_a_amount_from_eth -> ETH (=token_a_amount_eth_from_token)
         // TODO: i'd actually prefer for this to take the maker_amount. then it would actually eth_amount tokens purchased instead of some slipped amount
@@ -159,7 +181,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         amounts[1].taker_wei = amounts[0].maker_wei;
         amounts[1].taker_address = token_a;
         amounts[1].parts = parts;
-        amounts[1] = getExpectedReturn(amounts[1], disable_flags);
+        amounts[1] = getExpectedReturnForAmount(amounts[1], disable_flags);
 
         uint next_amount_id = 2;
 
@@ -181,7 +203,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             amounts[next_amount_id].taker_wei = amounts[0].maker_wei;
             amounts[next_amount_id].taker_address = token_a;
             amounts[next_amount_id].parts = parts;
-            amounts[next_amount_id] = getExpectedReturn(amounts[next_amount_id], disable_flags);
+            amounts[next_amount_id] = getExpectedReturnForAmount(amounts[next_amount_id], disable_flags);
 
             next_amount_id++;
             if (next_amount_id > num_amounts) {
@@ -193,7 +215,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             amounts[next_amount_id].taker_wei = amounts[next_amount_id - 1].maker_wei;
             amounts[next_amount_id].taker_address = token_b;
             amounts[next_amount_id].parts = parts;
-            amounts[next_amount_id] = getExpectedReturn(amounts[next_amount_id], disable_flags);
+            amounts[next_amount_id] = getExpectedReturnForAmount(amounts[next_amount_id], disable_flags);
 
             next_amount_id++;
             if (next_amount_id > num_amounts) {

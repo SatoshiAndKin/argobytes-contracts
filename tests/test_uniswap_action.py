@@ -8,7 +8,7 @@ import brownie
 # @given(
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
-def test_uniswap_actions(uniswap_action):
+def test_action(uniswap_action):
     value = 1e17
 
     # send some ETH into the action

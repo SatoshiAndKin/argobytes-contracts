@@ -5,6 +5,7 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 # we use the zero address for ETH
+# TODO: they use 0xEeE..., but our wrapper handles the conversion
 zero_address = "0x0000000000000000000000000000000000000000"
 
 # TODO: parameterize with a bunch of mainnet token addresses
@@ -13,7 +14,7 @@ zero_address = "0x0000000000000000000000000000000000000000"
 # @given(
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
-def test_kyber_actions(kyber_action, dai_erc20, usdc_erc20):
+def test_action(kyber_action, dai_erc20, usdc_erc20):
     value = 1e17
 
     # send some ETH into the action

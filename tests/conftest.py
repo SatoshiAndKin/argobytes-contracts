@@ -1,6 +1,9 @@
 import pytest
 from brownie import accounts, Contract
 
+# TODO: it's dangerous out there. take this
+# import pdb
+# pdb.set_trace()
 
 # test isolation, always use!
 # be careful though! you can still leak state in other fixtures use scope="module" or scope="session"
@@ -92,7 +95,9 @@ def uniswap_factory():
 
 @pytest.fixture(scope="session")
 def usdc_erc20():
-    return Contract.from_explorer("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
+    # TODO: how did etherscan figure out this address?
+    # https://etherscan.io/address/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48#readProxyContract
+    return Contract.from_explorer("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", as_proxy_for="0x0882477e7895bdc5cea7cb1552ed914ab157fe56")
 
 
 @pytest.fixture()
