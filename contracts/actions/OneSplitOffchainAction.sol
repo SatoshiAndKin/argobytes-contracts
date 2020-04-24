@@ -109,16 +109,59 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         address maker_address;
         uint256 taker_wei;
         address taker_address;
+        uint256 parts;
+        uint256[] distribution;
     }
 
-    function get_amounts(address token_a, uint256 eth_amount, address[] calldata other_tokens) external returns (Amount[] memory) {
-        // TODO: get amounts for trading eth_amount -> token_a (token_a_amount_token_from_eth)
-        // TODO: get amounts for trading token_a_amount_from_eth -> ETH (=token_a_amount_eth_from_token)
-        // TODO: what disable_flags do we want? i think we should enable EVERYTHING
+    function allEnabled() internal returns (uint256 disable_flags) {
+        disable_flags = 0;
+        disable_flags += _one_split.FLAG_ENABLE_MULTI_PATH_ETH();
+        disable_flags += _one_split.FLAG_ENABLE_MULTI_PATH_DAI();
+        disable_flags += _one_split.FLAG_ENABLE_MULTI_PATH_USDC();
+        disable_flags += _one_split.FLAG_ENABLE_UNISWAP_COMPOUND();
+        disable_flags += _one_split.FLAG_ENABLE_UNISWAP_CHAI();
+        disable_flags += _one_split.FLAG_ENABLE_UNISWAP_AAVE();
+    }
+
+    function getExpectedReturn(Amount memory a, uint disable_flags) internal returns (Amount memory) {
+        (uint maker_wei, uint[] memory distribution) = _one_split.getExpectedReturn(
+            IERC20(a.maker_address),
+            IERC20(a.taker_address),
+            a.taker_wei,
+            a.parts,
+            disable_flags
+        );
+
+        a.maker_wei = maker_wei;
+        a.distribution = distribution;
+
+        return a;
+    }
+
+    // TODO: this is going to use a LOT of gas. theres still a gas limit, even on eth_call. we might have to smart about chunking this up
+    function getAmounts(address token_a, uint256 eth_amount, address[] calldata other_tokens, uint256 parts) external returns (uint disable_flags, Amount[] memory) {
+        disable_flags = allEnabled();  // TODO: we might have to fetch this for each asset, but i think this is will work
 
         uint num_amounts = (1 + other_tokens.length) * 2;
 
         Amount[] memory amounts = new Amount[](num_amounts);
+
+        // get amounts for trading eth_amount -> token_a (token_a_amount_token_from_eth)
+        amounts[0].maker_address = token_a;
+        amounts[0].taker_wei = eth_amount;
+        amounts[0].taker_address = ETH_ON_ONESPLIT;
+        amounts[0].parts = parts;
+        amounts[0] = getExpectedReturn(amounts[0], disable_flags);
+
+        // get amounts for trading token_a_amount_from_eth -> ETH (=token_a_amount_eth_from_token)
+        // TODO: i'd actually prefer for this to take the maker_amount. then it would actually eth_amount tokens purchased instead of some slipped amount
+        amounts[1].maker_address = ETH_ON_ONESPLIT;
+        amounts[1].taker_wei = amounts[0].maker_wei;
+        amounts[1].taker_address = token_a;
+        amounts[1].parts = parts;
+        amounts[1] = getExpectedReturn(amounts[1], disable_flags);
+
+        uint next_amount_id = 2;
 
         for (uint i = 0; i < other_tokens.length; i++) {
             address token_b = other_tokens[i];
@@ -128,15 +171,37 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             }
 
             if (token_a > token_b) {
-                // these orders will be created when we call get_prices for token_b
+                // orders will be created when we call get_prices for token_b
                 continue;
             }
 
-            // TODO: get amounts for trading token_a -> token_b
-            // TODO: get amounts for trading token_b -> token_a
+            // get amounts for trading token_a -> token_b
+            // use the same amounts that we used in our ETH trades to keep these all around the same value
+            amounts[next_amount_id].maker_address = token_b;
+            amounts[next_amount_id].taker_wei = amounts[0].maker_wei;
+            amounts[next_amount_id].taker_address = token_a;
+            amounts[next_amount_id].parts = parts;
+            amounts[next_amount_id] = getExpectedReturn(amounts[next_amount_id], disable_flags);
+
+            next_amount_id++;
+            if (next_amount_id > num_amounts) {
+                revert("miscalculated num_amounts");
+            }
+
+            // get amounts for trading token_b -> token_a
+            amounts[next_amount_id].maker_address = token_a;
+            amounts[next_amount_id].taker_wei = amounts[next_amount_id - 1].maker_wei;
+            amounts[next_amount_id].taker_address = token_b;
+            amounts[next_amount_id].parts = parts;
+            amounts[next_amount_id] = getExpectedReturn(amounts[next_amount_id], disable_flags);
+
+            next_amount_id++;
+            if (next_amount_id > num_amounts) {
+                revert("miscalculated num_amounts");
+            }
         }
 
-        return amounts;
+        return (disable_flags, amounts);
     }
 }
 
