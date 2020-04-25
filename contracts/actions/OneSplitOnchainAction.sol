@@ -36,6 +36,7 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
 
         // calculate the amounts
         // TODO: this is MUCH cheaper to do off chain, but then we don't get the dynamic routing
+        // TODO: i think what we will do is disable all but the top 3 exchanges
         (uint256 return_amount, uint256[] memory distribution) = _one_split.getExpectedReturn(
             IERC20(ETH_ON_ONESPLIT),
             IERC20(dest_token),
@@ -74,6 +75,7 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
 
         // calculate the amounts
         // TODO: this is MUCH cheaper to do off chain, but then we don't get the dynamic routing
+        // TODO: i think what we will do is disable all but the top 3 exchanges
         (uint256 return_amount, uint256[] memory distribution) = _one_split.getExpectedReturn(
             IERC20(src_token),
             IERC20(dest_token),
@@ -111,6 +113,7 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
 
         // calculate the amounts
         // TODO: this is MUCH cheaper to do off chain, but then we don't get the dynamic routing
+        // TODO: i think what we will do is disable all but the top 3 exchanges
         (uint256 return_amount, uint256[] memory distribution) = _one_split.getExpectedReturn(
             IERC20(src_token),
             IERC20(ETH_ON_ONESPLIT),

@@ -26,7 +26,7 @@ def test_action(onesplit, onesplit_onchain_action, dai_erc20, usdc_erc20, skip_c
     disable_flags = 0
 
     # disable_flags |= onesplit.FLAG_DISABLE_UNISWAP()
-    # disable_flags |= onesplit.FLAG_DISABLE_KYBER()
+    disable_flags |= onesplit.FLAG_DISABLE_KYBER()
     disable_flags |= onesplit.FLAG_DISABLE_BANCOR.call()
     disable_flags |= onesplit.FLAG_DISABLE_OASIS.call()
     disable_flags |= onesplit.FLAG_DISABLE_COMPOUND.call()
@@ -42,7 +42,7 @@ def test_action(onesplit, onesplit_onchain_action, dai_erc20, usdc_erc20, skip_c
     disable_flags |= onesplit.FLAG_DISABLE_CURVE_BINANCE.call()
     disable_flags |= onesplit.FLAG_DISABLE_SMART_TOKEN.call()
     disable_flags |= onesplit.FLAG_DISABLE_WETH.call()
-    # TODO: this isn't on mainnet yet
+    # TODO: investigate
     # disable_flags |= onesplit.FLAG_DISABLE_IDLE.call()
 
     disable_flags |= onesplit.FLAG_ENABLE_MULTI_PATH_DAI.call()
