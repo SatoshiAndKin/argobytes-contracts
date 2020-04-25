@@ -142,6 +142,10 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         // disable_flags += _one_split.FLAG_ENABLE_UNISWAP_CHAI();
     }
 
+    function encodeAmountsExtraData(uint256 parts) external view returns (bytes memory) {
+        return abi.encode(parts);
+    }
+
     function getAmounts(address token_a, uint256 token_a_amount, address token_b, bytes calldata extra_data)
         external
         returns (Amount[] memory)
