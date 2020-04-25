@@ -136,39 +136,28 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
         payable(to).transfer(dest_balance);
     }
 
-    // TODO: _tradeUniversal instead of the above functions? it would have more if/elses, which makes it harder to reason about. probably higher gas too. but less gas to deploy.
+    function getAmounts(address token_a, uint256 token_a_amount, address token_b, bytes calldata extra_data)
+        external
+        returns (Amount[] memory)
+    {
+        require(token_a != token_b, "token_a should != token_b");
 
-    struct Amount {
-        uint256 maker_wei;
-        address maker_address;
-        uint256 taker_wei;
-        address taker_address;
-    }
+        Amount[] memory amounts = new Amount[](2);
 
-    function get_amounts(address token_a, uint256 eth_amount, address[] calldata other_tokens) external returns (Amount[] memory) {
-        // TODO: get amounts for trading eth_amount -> token_a (token_a_amount_token_from_eth)
-        // TODO: get amounts for trading token_a_amount_from_eth -> ETH (=token_a_amount_eth_from_token)
+        // get amounts for trading token_a -> token_b
+        // use the same amounts that we used in our ETH trades to keep these all around the same value
+        amounts[0] = newAmount(token_b, token_a_amount, token_a, extra_data);
 
-        uint num_amounts = (1 + other_tokens.length) * 2;
-
-        Amount[] memory amounts = new Amount[](num_amounts);
-
-        for (uint i = 0; i < other_tokens.length; i++) {
-            address token_b = other_tokens[i];
-
-            if (token_a == token_b) {
-                continue;
-            }
-
-            if (token_a > token_b) {
-                // these orders will be created when we call get_prices for token_b
-                continue;
-            }
-
-            // TODO: get amounts for trading token_a -> token_b
-            // TODO: get amounts for trading token_b -> token_a
-        }
+        // get amounts for trading token_b -> token_a
+        amounts[1] = newAmount(token_a, amounts[0].maker_wei, token_b, extra_data);
 
         return amounts;
+    }
+
+    function newAmount(address maker_address, uint taker_wei, address taker_address, bytes memory extra_data)
+        internal override view
+        returns (Amount memory)
+    {
+        revert("wip");
     }
 }

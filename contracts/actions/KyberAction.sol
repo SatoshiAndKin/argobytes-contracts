@@ -1,7 +1,5 @@
-/* if possible, you should use the network proxy directly */
-// TODO: do we want auth on this with setters? i think no. i think we should just have a simple contract with a constructor. if we need changes, we can deploy a new contract. less methods is less attack surface
-
 pragma solidity 0.6.6;
+pragma experimental ABIEncoderV2;
 
 import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/ERC20.sol";
 import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/SafeERC20.sol";
@@ -129,4 +127,28 @@ contract KyberAction is AbstractERC20Exchange {
         require(received >= dest_min_tokens, "BAD_ERC20_TO_ERC20");
     }
 
+    function getAmounts(address token_a, uint256 token_a_amount, address token_b, bytes calldata extra_data)
+        external
+        returns (Amount[] memory)
+    {
+        require(token_a != token_b, "token_a should != token_b");
+
+        Amount[] memory amounts = new Amount[](2);
+
+        // get amounts for trading token_a -> token_b
+        // use the same amounts that we used in our ETH trades to keep these all around the same value
+        amounts[0] = newAmount(token_b, token_a_amount, token_a, extra_data);
+
+        // get amounts for trading token_b -> token_a
+        amounts[1] = newAmount(token_a, amounts[0].maker_wei, token_b, extra_data);
+
+        return amounts;
+    }
+
+    function newAmount(address maker_address, uint taker_wei, address taker_address, bytes memory extra_data)
+        internal override view 
+        returns (Amount memory)
+    {
+        revert("wip");
+    }
 }

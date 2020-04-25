@@ -1,7 +1,3 @@
-/**
- * Split a trade across multiple other exchange actions.
- * we will probably want a more advanced contract that can enable/disable different exchanges to keep gas costs down.
- */
 pragma solidity 0.6.6;
 pragma experimental ABIEncoderV2;
 
@@ -125,16 +121,6 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         payable(to).transfer(dest_balance);
     }
 
-    struct Amount {
-        uint256 maker_wei;
-        address maker_address;
-        uint256 taker_wei;
-        address taker_address;
-        uint256 parts;
-        uint256 disable_flags;
-        uint256[] distribution;
-    }
-
     function allEnabled(address a, address b) internal view returns (uint256 disable_flags) {
         disable_flags = 0;
 
@@ -156,64 +142,40 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         // disable_flags += _one_split.FLAG_ENABLE_UNISWAP_CHAI();
     }
 
-    function getExpectedReturnForAmount(Amount memory a) internal view returns (Amount memory) {
-        a.disable_flags = allEnabled(a.maker_address, a.taker_address);
+    function getAmounts(address token_a, uint256 token_a_amount, address token_b, bytes calldata extra_data)
+        external
+        returns (Amount[] memory)
+    {
+        require(token_a != token_b, "token_a should != token_b");
 
-        (uint maker_wei, uint[] memory distribution) = _one_split.getExpectedReturn(
-            IERC20(a.maker_address),
-            IERC20(a.taker_address),
-            a.taker_wei,
-            a.parts,
-            a.disable_flags
-        );
+        Amount[] memory amounts = new Amount[](2);
 
-        a.maker_wei = maker_wei;
-        a.distribution = distribution;
+        // get amounts for trading token_a -> token_b
+        // use the same amounts that we used in our ETH trades to keep these all around the same value
+        amounts[0] = newAmount(token_b, token_a_amount, token_a, extra_data);
+
+        // get amounts for trading token_b -> token_a
+        amounts[1] = newAmount(token_a, amounts[0].maker_wei, token_b, extra_data);
+
+        return amounts;
+    }
+
+    function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory extra_data)
+        internal override view 
+        returns (Amount memory)
+    {
+        uint256 parts = abi.decode(extra_data, (uint256));
+
+        Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
+
+        (uint256 expected_return, bytes memory encoded) = this.encodeExtraData(a.taker_token, a.maker_token, a.taker_wei, 1, parts);
+
+        a.maker_wei = expected_return;
+        a.call_data = encoded;
+        
+        // TODO: would be cool to encode the complete calldata, but we can't be sure about the to address. we could default to 0x0
 
         return a;
     }
 
-    // TODO: this is going to use a LOT of gas. theres still a gas limit, even on eth_call. we might have to smart about chunking this up
-    function getAmounts(address token_a, uint256 token_a_amount, address token_b, uint256 parts) external returns (Amount[] memory) {
-        require(token_a != token_b, "token_a should != token_b");
-
-        // uint256 parts = abi.decode(extra_data, (uint256));
-
-        // TODO: think about this more
-        uint num_amounts;
-        if (token_a > token_b) {
-            // we will get the orders when the tokens are flipped
-            num_amounts = 0;
-        } else {
-            num_amounts = 2;
-        }
-
-        Amount[] memory amounts = new Amount[](num_amounts);
-
-        uint next_amount_id = 0;
-
-        if (next_amount_id == num_amounts) {
-            return amounts;
-        }
-
-        // get amounts for trading token_a -> token_b
-        // use the same amounts that we used in our ETH trades to keep these all around the same value
-        amounts[next_amount_id].maker_address = token_b;
-        amounts[next_amount_id].taker_wei = token_a_amount;
-        amounts[next_amount_id].taker_address = token_a;
-        amounts[next_amount_id].parts = parts;
-        amounts[next_amount_id] = getExpectedReturnForAmount(amounts[next_amount_id]);
-        next_amount_id++;
-
-        // get amounts for trading token_b -> token_a
-        amounts[next_amount_id].maker_address = token_a;
-        amounts[next_amount_id].taker_wei = amounts[next_amount_id - 1].maker_wei;
-        amounts[next_amount_id].taker_address = token_b;
-        amounts[next_amount_id].parts = parts;
-        amounts[next_amount_id] = getExpectedReturnForAmount(amounts[next_amount_id]);
-        next_amount_id++;
-
-        return amounts;
-    }
 }
-

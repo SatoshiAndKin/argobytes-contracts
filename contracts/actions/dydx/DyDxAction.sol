@@ -35,4 +35,11 @@ contract DyDxAction is AbstractERC20Exchange {
     ) internal override {
         revert("wip");
     }
+
+    function newAmount(address maker_address, uint taker_wei, address taker_address, bytes memory extra_data)
+        internal override view
+        returns (Amount memory)
+    {
+        revert("wip");
+    }
 }
