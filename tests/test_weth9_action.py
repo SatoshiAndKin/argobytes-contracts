@@ -12,8 +12,8 @@ def test_wrapping_and_unwrapping(weth9_erc20, weth9_action):
 
     # check starting balances
     assert weth9_action.balance() == 0
-    assert weth9_erc20.balanceOf(weth9_action) == 0
-    assert weth9_erc20.balanceOf(accounts[0]) == 0
+    assert weth9_erc20.balanceOf.call(weth9_action) == 0
+    assert weth9_erc20.balanceOf.call(accounts[0]) == 0
 
     starting_eth = accounts[0].balance()
 
@@ -21,16 +21,16 @@ def test_wrapping_and_unwrapping(weth9_erc20, weth9_action):
     accounts[0].transfer(weth9_action, value)
 
     assert weth9_action.balance() == value
-    assert weth9_erc20.balanceOf(accounts[0]) == 0
-    assert weth9_erc20.balanceOf(weth9_action) == 0
+    assert weth9_erc20.balanceOf.call(accounts[0]) == 0
+    assert weth9_erc20.balanceOf.call(weth9_action) == 0
 
     # do the wrapping
     weth9_action.wrap_all_to(accounts[0])
 
     # check balances after wrapping
     assert weth9_action.balance() == 0
-    assert weth9_erc20.balanceOf(accounts[0]) == value
-    assert weth9_erc20.balanceOf(weth9_action) == 0
+    assert weth9_erc20.balanceOf.call(accounts[0]) == value
+    assert weth9_erc20.balanceOf.call(weth9_action) == 0
 
     # put some WETH into the action
     assert weth9_erc20.transfer(weth9_action, value, {"from": accounts[0]})
@@ -41,5 +41,5 @@ def test_wrapping_and_unwrapping(weth9_erc20, weth9_action):
     # check ending balances
     assert accounts[0].balance() == starting_eth
     assert weth9_action.balance() == 0
-    assert weth9_erc20.balanceOf(accounts[0]) == 0
-    assert weth9_erc20.balanceOf(weth9_action) == 0
+    assert weth9_erc20.balanceOf.call(accounts[0]) == 0
+    assert weth9_erc20.balanceOf.call(weth9_action) == 0

@@ -4,7 +4,33 @@ from brownie import accounts
 from brownie.test import given, strategy
 
 
-def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20):
+# we skip covereage bceause this can end up taking a LOT of gas
+# we skip covereage bceause this can end up taking a LOT of gas
+# parts 2: OneSplitOffchainAction.getAmounts -  avg: 945866  low: 23638  high: 1868095
+# parts 3: OneSplitOffchainAction.getAmounts -  avg: 1105818  low: 23638  high: 2187998
+# parts 10: was like 8 mil lol
+def test_get_prices(dai_erc20, no_call_coverage, onesplit_offchain_action, usdc_erc20, weth9_erc20, skip_coverage):
+    eth_amount = 1e18
+    dai_amount = 1e20
+    # TODO: increasing parts will be fragile. some exchanges use a LOT of gas
+    parts = 1
+    zero_address = "0x0000000000000000000000000000000000000000"
+
+    # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)
+    tx = onesplit_offchain_action.getAmounts(zero_address, eth_amount, dai_erc20, parts)
+
+    print("tx 1 gas", tx.gas_used)
+
+    # TODO: use amounts from the previous call
+    tx = onesplit_offchain_action.getAmounts(dai_erc20, dai_amount, zero_address, parts)
+
+    print("tx 2 gas", tx.gas_used)
+
+    # TODO: what should we assert?
+
+
+# we skip covereage bceause this can end up taking a LOT of gas
+def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20, skip_coverage):
     value = 1e17
 
     # make sure balances match what we expect

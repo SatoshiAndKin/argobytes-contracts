@@ -43,6 +43,7 @@ def kyber_action(KyberAction, kyber_network_proxy, kyber_wallet_id):
 
 @pytest.fixture(scope="session")
 def kyber_network_proxy():
+    # TODO: they have an "info" method and that is a reserved keyword
     # TODO: `return Contract.from_explorer("0x818E6FECD516Ecc3849DAf6845e3EC868087B755")`
     return "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
 
@@ -95,7 +96,7 @@ def uniswap_factory():
 
 @pytest.fixture(scope="session")
 def usdc_erc20():
-    # TODO: how did etherscan figure out this address?
+    # TODO: how did etherscan figure out the proxy address?
     # https://etherscan.io/address/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48#readProxyContract
     return Contract.from_explorer("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", as_proxy_for="0x0882477e7895bdc5cea7cb1552ed914ab157fe56")
 
