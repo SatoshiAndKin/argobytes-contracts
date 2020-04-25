@@ -148,4 +148,21 @@ abstract contract AbstractERC20Exchange is AbstractERC20ExchangeModifiers {
         _tradeTokenToEther(to, src_token, dest_min_tokens, dest_max_tokens, extra_data);
     }
 
+    function _getAmounts(address token_a, uint256 token_a_amount, address token_b, bytes memory extra_data)
+        internal
+        returns (Amount[] memory)
+    {
+        require(token_a != token_b, "token_a should != token_b");
+
+        Amount[] memory amounts = new Amount[](2);
+
+        // get amounts for trading token_a -> token_b
+        // use the same amounts that we used in our ETH trades to keep these all around the same value
+        amounts[0] = newAmount(token_b, token_a_amount, token_a, extra_data);
+
+        // get amounts for trading token_b -> token_a
+        amounts[1] = newAmount(token_a, amounts[0].maker_wei, token_b, extra_data);
+
+        return amounts;
+    }
 }

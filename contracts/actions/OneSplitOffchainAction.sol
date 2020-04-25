@@ -146,22 +146,13 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         return abi.encode(parts);
     }
 
-    function getAmounts(address token_a, uint256 token_a_amount, address token_b, bytes calldata extra_data)
+    function getAmounts(address token_a, uint256 token_a_amount, address token_b, uint256 parts)
         external
         returns (Amount[] memory)
     {
-        require(token_a != token_b, "token_a should != token_b");
+        bytes memory extra_data = abi.encode(parts);
 
-        Amount[] memory amounts = new Amount[](2);
-
-        // get amounts for trading token_a -> token_b
-        // use the same amounts that we used in our ETH trades to keep these all around the same value
-        amounts[0] = newAmount(token_b, token_a_amount, token_a, extra_data);
-
-        // get amounts for trading token_b -> token_a
-        amounts[1] = newAmount(token_a, amounts[0].maker_wei, token_b, extra_data);
-
-        return amounts;
+        return _getAmounts(token_a, token_a_amount, token_b, extra_data);
     }
 
     function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory extra_data)
