@@ -8,7 +8,6 @@ import {IOneSplit} from "interfaces/onesplit/IOneSplit.sol";
 contract OneSplitOnchainAction is AbstractERC20Exchange {
 
     IOneSplit _one_split;
-    address constant internal ETH_ON_ONESPLIT = address(0x0);
 
     constructor(address one_split) public {
         _one_split = IOneSplit(one_split);
@@ -38,7 +37,7 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
         // TODO: this is MUCH cheaper to do off chain, but then we don't get the dynamic routing
         // TODO: i think what we will do is disable all but the top 3 exchanges
         (uint256 return_amount, uint256[] memory distribution) = _one_split.getExpectedReturn(
-            IERC20(ETH_ON_ONESPLIT),
+            IERC20(ZERO_ADDRESS),
             IERC20(dest_token),
             src_balance,
             parts,
@@ -48,7 +47,7 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
         require(return_amount > dest_min_tokens, "OneSplitAction._tradeEtherToToken: LOW_EXPECTED_RETURN");
 
         // do the actual swap (and send the ETH along as value)
-        _one_split.swap{value: src_balance}(IERC20(ETH_ON_ONESPLIT), IERC20(dest_token), src_balance, dest_min_tokens, distribution, disable_flags);
+        _one_split.swap{value: src_balance}(IERC20(ZERO_ADDRESS), IERC20(dest_token), src_balance, dest_min_tokens, distribution, disable_flags);
 
         // forward the tokens that we bought
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
@@ -71,7 +70,7 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
         require(src_balance > 0, "OneSplitAction._tradeTokenToToken: NO_SRC_BALANCE");
 
         // approve tokens
-        IERC20(src_token).approve(address(_one_split), src_balance);
+        require(IERC20(src_token).approve(address(_one_split), src_balance), "OneSplitAction._tradeTokenToToken: FAILED_APPROVE");
 
         // calculate the amounts
         // TODO: this is MUCH cheaper to do off chain, but then we don't get the dynamic routing
@@ -109,14 +108,14 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
         require(src_balance > 0, "OneSplitAction._tradeTokenToEther: NO_SRC_BALANCE");
 
         // approve tokens
-        IERC20(src_token).approve(address(_one_split), src_balance);
+        require(IERC20(src_token).approve(address(_one_split), src_balance), "OneSplitAction._tradeTokenToEther: FAILED_APPROVE");
 
         // calculate the amounts
         // TODO: this is MUCH cheaper to do off chain, but then we don't get the dynamic routing
         // TODO: i think what we will do is disable all but the top 3 exchanges
         (uint256 return_amount, uint256[] memory distribution) = _one_split.getExpectedReturn(
             IERC20(src_token),
-            IERC20(ETH_ON_ONESPLIT),
+            IERC20(ZERO_ADDRESS),
             src_balance,
             parts,
             disable_flags
@@ -126,7 +125,7 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
 
         // do the actual swap
         // TODO: do we need to pass dest_min_tokens since we did the check above? maybe just pass 0 or 1
-        _one_split.swap(IERC20(src_token), IERC20(ETH_ON_ONESPLIT), src_balance, dest_min_tokens, distribution, disable_flags);
+        _one_split.swap(IERC20(src_token), IERC20(ZERO_ADDRESS), src_balance, dest_min_tokens, distribution, disable_flags);
 
         // forward the tokens that we bought
         uint256 dest_balance = address(this).balance;

@@ -5,7 +5,8 @@
 pragma solidity 0.6.6;
 
 // TODO: we should be able to include a smaller interface, but we need it to be named "ERC20" so that the function signatures match!
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/ERC20.sol";
+// TODO: actually, IERC20 turns into "address" in the function signature
+import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/IERC20.sol";
 
 interface IKyberNetworkProxy {
     /// @notice use token address ETH_TOKEN_ADDRESS for ether
@@ -19,9 +20,9 @@ interface IKyberNetworkProxy {
     /// @param wallet_id is the wallet ID to send part of the fees
     /// @return amount of actual dest tokens
     function trade(
-        ERC20 src,
+        IERC20 src,
         uint src_amount,
-        ERC20 dest,
+        IERC20 dest,
         address destAddress,
         uint maxDestAmount,
         uint minConversionRate,
@@ -31,15 +32,15 @@ interface IKyberNetworkProxy {
         payable
         returns(uint);
 
-    event ExecuteTrade(address indexed trader, ERC20 src, ERC20 dest, uint actualsrc_amount, uint actualDestAmount);
+    event ExecuteTrade(address indexed trader, IERC20 src, IERC20 dest, uint actualsrc_amount, uint actualDestAmount);
 
-    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty)
+    function getExpectedRate(IERC20 src, IERC20 dest, uint srcQty)
         external view
         returns(uint expectedRate, uint slippageRate);
 
     function getUserCapInWei(address user) external view returns(uint);
 
-    function getUserCapInTokenWei(address user, ERC20 token) external view returns(uint);
+    function getUserCapInTokenWei(address user, IERC20 token) external view returns(uint);
 
     function maxGasPrice() external view returns(uint);
 

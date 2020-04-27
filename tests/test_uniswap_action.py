@@ -5,9 +5,25 @@ import pytest
 import brownie
 
 
-# @given(
-#     value=strategy('uint256', max_value=1e18, min_value=1e8),
-# )
+def test_get_amounts(dai_erc20, no_call_coverage, uniswap_action, usdc_erc20, weth9_erc20, skip_coverage):
+    eth_amount = 1e18
+    dai_amount = 1e20
+
+    zero_address = "0x0000000000000000000000000000000000000000"
+
+    # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)
+    tx = uniswap_action.getAmounts(zero_address, eth_amount, dai_erc20)
+
+    print("tx 1 gas", tx.gas_used)
+
+    # TODO: use amounts from the previous call
+    tx = uniswap_action.getAmounts(dai_erc20, dai_amount, zero_address)
+
+    print("tx 2 gas", tx.gas_used)
+
+    # TODO: what should we assert?
+
+
 def test_action(uniswap_action):
     value = 1e17
 

@@ -15,10 +15,10 @@ contract ExampleAction is AbstractERC20Exchange {
         return true;
     }
 
-    function sweep(address payable token) public payable {
-        uint256 balance = IERC20(token).universalBalanceOf(address(this));
+    function sweep(IERC20 token) public payable {
+        uint256 balance = token.universalBalanceOf(address(this));
 
-        IERC20(token).universalTransfer(msg.sender, balance);
+        token.universalTransfer(msg.sender, balance);
     }
 
     function _tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory)

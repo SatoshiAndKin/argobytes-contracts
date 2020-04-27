@@ -9,6 +9,7 @@ import "interfaces/uniswap/IUniswapExchange.sol";
 contract UniswapAction is AbstractERC20Exchange {
 
     // TODO: allow trading outside of this factory
+    // TODO: or maybe we sould just want multiple UniswapActions? what about cross factory trades?
     IUniswapFactory uniswapFactory;
 
     constructor(address _factoryAddress) public {
@@ -22,7 +23,7 @@ contract UniswapAction is AbstractERC20Exchange {
 
     // TODO: helper here that sets allowances and then transfers? i think IUniswapExchange might already have all the methods we need though
     function _tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory) internal override {
-        require(dest_token != address(0x0), "UniswapAction._tradeEtherToToken: dest_token cannot be ETH");
+        require(dest_token != ZERO_ADDRESS, "UniswapAction._tradeEtherToToken: dest_token cannot be ETH");
 
         uint srcBalance = address(this).balance;
 
@@ -54,17 +55,16 @@ contract UniswapAction is AbstractERC20Exchange {
     }
 
     function _tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory) internal override {
-        require(src_token != address(0x0), "UniswapAction._tradeTokenToToken: src_token cannot be ETH");
-        require(dest_token != address(0x0), "UniswapAction._tradeTokenToToken: dest_token cannot be ETH");
+        require(src_token != ZERO_ADDRESS, "UniswapAction._tradeTokenToToken: src_token cannot be ETH");
+        require(dest_token != ZERO_ADDRESS, "UniswapAction._tradeTokenToToken: dest_token cannot be ETH");
 
         uint src_balance = IERC20(src_token).balanceOf(address(this));
         require(src_balance > 0, "UniswapAction._tradeTokenToToken: NO_BALANCE");
 
         IUniswapExchange exchange = getExchange(src_token);
-        require(address(exchange) != address(0), "UniswapAction._tradeTokenToToken: NO_EXCHANGE");
+        require(address(exchange) != ZERO_ADDRESS, "UniswapAction._tradeTokenToToken: NO_EXCHANGE");
 
-        // TODO: require on this
-        IERC20(src_token).approve(address(exchange), src_balance);
+        require(IERC20(src_token).approve(address(exchange), src_balance), "UniswapAction._tradeTokenToToken: FAILED_APPROVE");
 
         if (dest_max_tokens > 0) {
             require(dest_min_tokens == 0, "UniswapAction._tradeTokenToToken: SET_MIN_OR_MAX");  // TODO: do something with dest_min_tokens instead?
@@ -82,7 +82,7 @@ contract UniswapAction is AbstractERC20Exchange {
             //     token_addr: address
             // ): uint256
             // solium-disable-next-line security/no-block-members
-            uint received = exchange.tokenToTokenTransferOutput(dest_max_tokens, src_balance, max_eth_sold, block.timestamp, to, dest_token);
+            uint received = exchange.tokenToTokenTransferOutput(dest_max_tokens, src_balance, max_eth_sold, block.timestamp, to, address(dest_token));
 
             require(received > 0, "UniswapAction._tradeTokenToToken: BAD_EXCHANGE");
         } else {
@@ -102,30 +102,30 @@ contract UniswapAction is AbstractERC20Exchange {
             //     token_addr: address
             // ): uint256
             // solium-disable-next-line security/no-block-members
-            uint received = exchange.tokenToTokenTransferInput(src_balance, dest_min_tokens, min_eth_bought, block.timestamp, to, dest_token);
+            uint received = exchange.tokenToTokenTransferInput(src_balance, dest_min_tokens, min_eth_bought, block.timestamp, to, address(dest_token));
 
             require(received > 0, "UniswapAction._tradeTokenToToken: BAD_EXCHANGE");
         }
     }
 
     function _tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory) internal override {
-        require(src_token != address(0x0), "UniswapAction._tradeTokenToEther: src_token cannot be ETH");
+        require(src_token != ZERO_ADDRESS, "UniswapAction._tradeTokenToEther: src_token cannot be ETH");
 
-        uint srcBalance = IERC20(src_token).balanceOf(address(this));
-        require(srcBalance > 0, "UniswapAction._tradeTokenToEther: NO_BALANCE");
+        uint src_balance = IERC20(src_token).balanceOf(address(this));
+        require(src_balance > 0, "UniswapAction._tradeTokenToEther: NO_BALANCE");
 
         IUniswapExchange exchange = getExchange(src_token);
         require(address(exchange) != address(0), "UniswapAction._tradeTokenToEther: NO_EXCHANGE");
 
-        // TODO: require on this
-        IERC20(src_token).approve(address(exchange), srcBalance);
+        // approve transfers
+        require(IERC20(src_token).approve(address(exchange), src_balance), "UniswapAction._tradeTokenToEther: FAILED_APPROVE");
 
         if (dest_max_tokens > 0) {
             require(dest_min_tokens == 0, "UniswapAction._tradeTokenToEther: SET_MIN_OR_MAX");  // TODO: do something with dest_min_tokens?
 
             // def tokenToEthTransferOutput(eth_bought: uint256(wei), max_tokens: uint256, deadline: timestamp, recipient: address) -> uint256:
             // solium-disable-next-line security/no-block-members
-            uint received = exchange.tokenToEthTransferOutput(dest_max_tokens, srcBalance, block.timestamp, to);
+            uint received = exchange.tokenToEthTransferOutput(dest_max_tokens, src_balance, block.timestamp, to);
 
             require(received > 0, "UniswapAction._tradeTokenToEther: BAD_EXCHANGE");
         } else {
@@ -135,7 +135,7 @@ contract UniswapAction is AbstractERC20Exchange {
 
             // def tokenToEthTransferInput(tokens_sold: uint256, min_eth: uint256(wei), deadline: timestamp, recipient: address) -> uint256(wei):
             // solium-disable-next-line security/no-block-members
-            uint received = exchange.tokenToEthTransferInput(srcBalance, dest_min_tokens, block.timestamp, to);
+            uint received = exchange.tokenToEthTransferInput(src_balance, dest_min_tokens, block.timestamp, to);
 
             require(received > 0, "UniswapAction._tradeTokenToEther: BAD_EXCHANGE");
         }
@@ -150,10 +150,27 @@ contract UniswapAction is AbstractERC20Exchange {
         return _getAmounts(token_a, token_a_amount, token_b, extra_data);
     }
 
-    function newAmount(address maker_address, uint taker_wei, address taker_address, bytes memory extra_data)
+    function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory /* extra_data */)
         internal override view 
         returns (Amount memory)
     {
-        revert("wip");
+        Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
+
+        // TODO: this only works with input amounts. do we want it to work with output amounts?
+        if (maker_token == ZERO_ADDRESS) {
+            // token to eth
+            a.maker_wei = getExchange(taker_token).getTokenToEthInputPrice(taker_wei);
+        } else if (taker_token == ZERO_ADDRESS) {
+            // eth to token
+            a.maker_wei = getExchange(maker_token).getEthToTokenInputPrice(taker_wei);
+        } else {
+            // token to token
+            a.maker_wei = getExchange(taker_token).getTokenToEthInputPrice(taker_wei);
+            a.maker_wei = getExchange(maker_token).getEthToTokenInputPrice(a.maker_wei);
+        }
+
+        // TODO: would be cool to encode the complete calldata, but we can't be sure about the "to" address. we could default to 0x0 and fill it in though
+
+        return a;
     }
 }

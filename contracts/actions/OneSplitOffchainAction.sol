@@ -11,8 +11,6 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
     // https://github.com/CryptoManiacsZone/1split/blob/master/contracts/IOneSplit.sol
     IOneSplit _one_split;
 
-    address constant internal ETH_ON_ONESPLIT = address(0x0);
-
     constructor(address one_split) public {
         _one_split = IOneSplit(one_split);
     }
@@ -59,7 +57,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         // no approvals are necessary since we are using ETH
 
         // do the actual swap (and send the ETH along as value)
-        _one_split.swap{value: src_balance}(IERC20(ETH_ON_ONESPLIT), IERC20(dest_token), src_balance, dest_min_tokens, distribution, disable_flags);
+        _one_split.swap{value: src_balance}(IERC20(ZERO_ADDRESS), IERC20(dest_token), src_balance, dest_min_tokens, distribution, disable_flags);
 
         // forward the tokens that we bought
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
@@ -82,7 +80,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         require(src_balance > 0, "OneSplitOffchainAction._tradeTokenToToken: NO_SRC_BALANCE");
 
         // approve tokens
-        IERC20(src_token).approve(address(_one_split), src_balance);
+        require(IERC20(src_token).approve(address(_one_split), src_balance), "OneSplitOffchainAction._tradeTokenToToken: FAILED_APPROVE");
 
         // do the actual swap
         _one_split.swap(IERC20(src_token), IERC20(dest_token), src_balance, dest_min_tokens, distribution, disable_flags);
@@ -107,11 +105,11 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         require(src_balance > 0, "OneSplitOffchainAction._tradeTokenToEther: NO_SRC_BALANCE");
 
         // approve tokens
-        IERC20(src_token).approve(address(_one_split), src_balance);
+        require(IERC20(src_token).approve(address(_one_split), src_balance), "OneSplitOffchainAction._tradeTokenToEther: FAILED_APPROVE");
 
         // do the actual swap
         // TODO: do we need to pass dest_min_tokens since we did the check above? maybe just pass 0 or 1
-        _one_split.swap(IERC20(src_token), IERC20(ETH_ON_ONESPLIT), src_balance, dest_min_tokens, distribution, disable_flags);
+        _one_split.swap(IERC20(src_token), IERC20(ZERO_ADDRESS), src_balance, dest_min_tokens, distribution, disable_flags);
 
         // forward the tokens that we bought
         uint256 dest_balance = address(this).balance;
@@ -172,5 +170,4 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
 
         return a;
     }
-
 }

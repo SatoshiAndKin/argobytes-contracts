@@ -14,7 +14,9 @@ import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/Saf
 contract AbstractERC20ExchangeModifiers {
     using SafeERC20 for IERC20;
 
-    // this function must be able to receive ether if it is expected to sweep it
+    address constant ZERO_ADDRESS = address(0);
+
+    // this contract must be able to receive ether if it is expected to sweep it
     receive() external payable { }
 
     /// @dev after the function, send any remaining ether to an address
@@ -44,8 +46,7 @@ contract AbstractERC20ExchangeModifiers {
 abstract contract AbstractERC20Exchange is AbstractERC20ExchangeModifiers {
 
     // TODO: document this. i think it came from Kyber
-    uint public constant MAX_QTY = 10**28;
-    address public constant ZERO_ADDRESS = address(0x0);
+    uint constant MAX_QTY = 10**28;
 
     struct Amount {
         address maker_token;
@@ -65,23 +66,23 @@ abstract contract AbstractERC20Exchange is AbstractERC20ExchangeModifiers {
     function _tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
     function _tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
 
-    // function getAmounts(address token_a, uint256 token_a_amount, address token_b, bytes calldata extra_data)
-    //     external
-    //     returns (Amount[] memory)
-    // {
-    //     require(token_a != token_b, "token_a should != token_b");
+    function _getAmounts(address token_a, uint256 token_a_amount, address token_b, bytes memory extra_data)
+        internal
+        returns (Amount[] memory)
+    {
+        require(token_a != token_b, "token_a should != token_b");
 
-    //     Amount[] memory amounts = new Amount[](2);
+        Amount[] memory amounts = new Amount[](2);
 
-    //     // get amounts for trading token_a -> token_b
-    //     // use the same amounts that we used in our ETH trades to keep these all around the same value
-    //     amounts[0] = newAmount(token_b, token_a_amount, token_a, extra_data);
+        // get amounts for trading token_a -> token_b
+        // use the same amounts that we used in our ETH trades to keep these all around the same value
+        amounts[0] = newAmount(token_b, token_a_amount, token_a, extra_data);
 
-    //     // get amounts for trading token_b -> token_a
-    //     amounts[1] = newAmount(token_a, amounts[0].maker_wei, token_b, extra_data);
+        // get amounts for trading token_b -> token_a
+        amounts[1] = newAmount(token_a, amounts[0].maker_wei, token_b, extra_data);
 
-    //     return amounts;
-    // }
+        return amounts;
+    }
 
     function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory extra_data)
         internal virtual view 
@@ -146,23 +147,5 @@ abstract contract AbstractERC20Exchange is AbstractERC20ExchangeModifiers {
         }
 
         _tradeTokenToEther(to, src_token, dest_min_tokens, dest_max_tokens, extra_data);
-    }
-
-    function _getAmounts(address token_a, uint256 token_a_amount, address token_b, bytes memory extra_data)
-        internal
-        returns (Amount[] memory)
-    {
-        require(token_a != token_b, "token_a should != token_b");
-
-        Amount[] memory amounts = new Amount[](2);
-
-        // get amounts for trading token_a -> token_b
-        // use the same amounts that we used in our ETH trades to keep these all around the same value
-        amounts[0] = newAmount(token_b, token_a_amount, token_a, extra_data);
-
-        // get amounts for trading token_b -> token_a
-        amounts[1] = newAmount(token_a, amounts[0].maker_wei, token_b, extra_data);
-
-        return amounts;
     }
 }
