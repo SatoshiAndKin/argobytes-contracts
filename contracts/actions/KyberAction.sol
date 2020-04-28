@@ -152,8 +152,22 @@ contract KyberAction is AbstractERC20Exchange {
 
         // TODO: disable the uniswap reserve? https://github.com/CryptoManiacsZone/1split/blob/614fa1efdd647d560491671c92869daf69f158b0/contracts/OneSplitBase.sol#L532
 
-        // TODO: we are going to need the token decimals! kyber returns all values as if the token had 18 decimals!
-        // uint256 maker_decimals = IERC20(maker_token).universalDecimals();
+        uint maker_decimals = IERC20(maker_token).universalDecimals();
+        uint taker_decimals = IERC20(taker_token).universalDecimals();
+
+        // https://developer.kyber.network/docs/API_ABI-TokenQuantityConversion/#calcdstqty
+        // https://github.com/KyberNetwork/smart-contracts/blob/master/contracts/Utils2.sol#L28
+        uint precision = 10 ** 18;
+
+        // TODO: i think this is on Kyber's Utils2 contract. use that instead
+        // 
+        if (maker_decimals >= taker_decimals) {
+            // (srcQty * rate * (10**(dstDecimals - srcDecimals))) / PRECISION;
+            expected_rate = (taker_wei * expected_rate * (10 ** (maker_decimals - taker_decimals))) / precision;
+        } else {
+            // (srcQty * rate) / (PRECISION * (10**(srcDecimals - dstDecimals)));
+            expected_rate = (taker_wei * expected_rate) / (precision * (10 ** (taker_decimals - maker_decimals)));
+        }
 
         // TODO: use slippage_rate?
         a.maker_wei = expected_rate;

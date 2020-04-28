@@ -10,9 +10,11 @@ pragma experimental ABIEncoderV2;
 
 import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/IERC20.sol";
 import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/SafeERC20.sol";
+import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/math/SafeMath.sol";
 
 contract AbstractERC20ExchangeModifiers {
     using SafeERC20 for IERC20;
+    using SafeMath for uint;
 
     address constant ZERO_ADDRESS = address(0);
 
