@@ -164,7 +164,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         (uint256 expected_return, bytes memory encoded) = this.encodeExtraData(a.taker_token, a.maker_token, a.taker_wei, 1, parts);
 
         a.maker_wei = expected_return;
-        a.call_data = encoded;
+        a.extra_data = encoded;
         
         // TODO: would be cool to encode the complete calldata, but we can't be sure about the to address. we could default to 0x0
 

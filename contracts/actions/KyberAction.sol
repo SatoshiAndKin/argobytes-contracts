@@ -157,6 +157,7 @@ contract KyberAction is AbstractERC20Exchange {
 
         // TODO: use slippage_rate?
         a.maker_wei = expected_rate;
+        a.extra_data = "";
 
         return a;
     }

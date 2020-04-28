@@ -54,8 +54,8 @@ abstract contract AbstractERC20Exchange is AbstractERC20ExchangeModifiers {
         address taker_token;
         uint256 taker_wei;
 
-        bytes4 selector;
-        bytes call_data;
+        // bytes4 selector;
+        bytes extra_data;
     }
 
     // these functions require that address(this) has an ether/token balance.
@@ -92,25 +92,25 @@ abstract contract AbstractERC20Exchange is AbstractERC20ExchangeModifiers {
         internal pure
         returns (Amount memory)
     {
-        bytes4 selector;
-        if (maker_token == ZERO_ADDRESS) {
-            selector = this.tradeTokenToEther.selector;
-        } else if (taker_token == ZERO_ADDRESS) {
-            selector = this.tradeEtherToToken.selector;
-        } else {
-            selector = this.tradeTokenToToken.selector;
-        }
+        // bytes4 selector;
+        // if (maker_token == ZERO_ADDRESS) {
+        //     selector = this.tradeTokenToEther.selector;
+        // } else if (taker_token == ZERO_ADDRESS) {
+        //     selector = this.tradeEtherToToken.selector;
+        // } else {
+        //     selector = this.tradeTokenToToken.selector;
+        // }
 
         Amount memory a = Amount({
             maker_token: maker_token,
             maker_wei: 0,
             taker_token: taker_token,
             taker_wei: taker_wei,
-            selector: selector,
-            call_data: ""
+            // selector: selector,
+            extra_data: ""
         });
 
-        // missing maker_wei and call_data! you need to set these in your `newAmount`
+        // missing maker_wei and extra_data! you need to set these in your `newAmount`
 
         return a;
     }
