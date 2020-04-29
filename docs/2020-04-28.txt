@@ -1,0 +1,56 @@
+ganache-cli --accounts 10 --hardfork istanbul --fork wss://eth.stytt.com --gasLimit 6721975 --mnemonic "virus harbor pact end relief change limit magnet screen term dest fit" --port 8545 --verbose --networkId 1
+
+ssh -R 8545:localhost:8545 -A ubuntu@18.221.115.148
+
+cargo run w/ unicycle - Apr 29 00:03:27.190  INFO argobytes::arbitrage::circular: Finished scan after 23900 ms
+cargo run --release w/ unicycle- Apr 29 00:07:02.951  INFO argobytes::arbitrage::circular: Finished scan after 23850 ms
+
+cargo run w/ futures::stream - Apr 29 00:13:03.121  INFO argobytes::arbitrage::circular: Finished scan after 25018 ms
+cargo run --release w/ unicycle- Apr 29 00:13:53.541  INFO argobytes::arbitrage::circular: Finished scan after 24564 ms
+
+cargo run --release w/ futures::stream - 26k
+
+w/ all tokens enabled, process_block_header completed after 166815 ms
+- wow thats a long time. i wonder how much is ganache-cli --fork's fault and how much is tokio's. flamegraphs show a lot of time in tokio, but until ganache is faster I don't think those graphs are worth much
+
+
+echo -1 | sudo tee /proc/sys/kernel/perf_event_paranoid 
+cargo flamegraph
+# wait awhile
+# TODO: with forking mainnet, waiting awhile
+# kill it
+
+# on laptop:
+scp aws:~/code/argobytes-backend/flamegraph.svg ~/Downloads/flamegraph.svg
+open ~/Downloads/flamegraph.svg
+
+
+Apr 29 00:18:09.988  WARN argobytes::ethereum::web3: Failed jsonrpc request for Some(Number(20)): Object({"code": Number(-32000), "data": Object({"0x55e111e486f7d66ee343a94d7f9c17549a446bd553e8d641d22dd6ff328ad88b": Object({"error": String("revert"), "program_counter": Number(5013), "reason": String("OneSplitOffchainAction.encodeExtraData: LOW_EXPECTED_RETURN"), "return": String("0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003b4f6e6553706c69744f6666636861696e416374696f6e2e656e636f64654578747261446174613a204c4f575f45585045435445445f52455455524e0000000000")}), "name": String("c"), "stack": String("c: VM Exception while processing transaction: revert OneSplitOffchainAction.encodeExtraData: LOW_EXPECTED_RETURN\n    at Function.c.fromResults (/home/ski/.config/yarn/global/node_modules/ganache-cli/build/ganache-core.node.cli.js:2:157333)\n    at /home/ski/.config/yarn/global/node_modules/ganache-cli/build/ganache-core.node.cli.js:17:121221")}), "message": String("VM Exception while processing transaction: revert OneSplitOffchainAction.encodeExtraData: LOW_EXPECTED_RETURN")}) tries_left=2
+- this transaction should not be retried. we only want to retry network errors and missing blocks. reverts should return immediatly
+
+we should add a bunch more tokens: LINK, MANA, Golem, ENJ. add coins i want to succeed first, not just any random coins
+more flavors of wrapped bitcoin and wrapped DAI!
+and email the tusd guy
+
+
+every time a block arrives, we want the wallet to check a few things
+- did any of our pending transactions confirm?
+    - if they confirmed, were they successful or did they fail?
+- if a transaction is still pending, is it still valid?
+    - if it is no longer valid, mark that nonce as needing immediate replacement
+        -i'm not sure if we should replace with the same transaction but with a higher gas or with 
+
+Some of our headaches with ethereum abi encoding might go away if we used serde for converting 
+
+how do we call functions instead of sending a full transaction?
+how do we get the return value of a transaction? Easy, `tx.return_value`
+how do we get vscode to use ~/.brownie/packages for the package dir? it doesn't seem to want to leave the project directory
+- for now i've added a symlink to ~/.brownie/packages to the project root
+how do we deploy with a hardware wallet
+- i think a simple web ui could be built from the artifacts so that you could use metamask or w/e other web3 wallet
+
+if buidler releases --fork support, we could probably use them instead of ganache. (they look faster) but we seem to have better reverts so far anyways
+
+# bugs in my contracts
+- i made uniswap intentionally fail to get a message. it seems return_data has /something/ at the front of it. i'm not sure what those bytes mean
+    brownie.exceptions.VirtualMachineError: ArgobytesAtomicTrade.executeSolo: on call #2 to 0x090982118bb67fa9c2c51c1eaa3b422dd54dfa99 failed: �y� 9UniswapAction._tradeTokenToEther: src_token cannot be ETH'
