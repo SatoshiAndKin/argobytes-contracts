@@ -27,6 +27,10 @@ contract Weth9Action {
         external
         payable
     {
+        if (to == address(0x0)) {
+            to = msg.sender;
+        }
+
         uint256 balance = address(this).balance;
 
         require(balance > 0, "Weth9Action:wrap_all_to: no balance");
@@ -42,6 +46,10 @@ contract Weth9Action {
     function unwrap_all_to(address payable to)
         external
     {
+        if (to == address(0x0)) {
+            to = msg.sender;
+        }
+
         uint256 balance = _WETH9.balanceOf(address(this));
 
         require(balance > 0, "Weth9Action:unwrap_all_to: no balance");

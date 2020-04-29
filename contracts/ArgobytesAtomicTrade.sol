@@ -165,11 +165,11 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
         require(actions.length > 0, "ArgobytesAtomicArbitrage.execute: there must be at least one action");
 
         uint256 action_value = 0;
-        bool current_token_is_ether = isCurrentTokenEther();
+        bool is_current_token_ether = isCurrentTokenEther();
         // TODO! IMPORTANT! THIS HAS A UNIQUE ETH ADDRESS!
         IERC20 borrowed_token = IERC20(currentTokenAddress());
 
-        if (current_token_is_ether) {
+        if (is_current_token_ether) {
             // this amount gets sent with the call 
             action_value = address(this).balance;
         } else {
@@ -215,7 +215,7 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
         // TODO: get rid of this when done debugging?
         uint256 repay_amount = currentRepaymentAmount();
 
-        if (current_token_is_ether) {
+        if (is_current_token_ether) {
             uint256 balance = address(this).balance;
 
             if (balance == 0) {

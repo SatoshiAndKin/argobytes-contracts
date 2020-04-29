@@ -26,9 +26,16 @@ def main():
 
     argobytes_owned_vault.setArgobytesAtomicTrade(argobytes_atomic_trade)
 
-    accounts[0].transfer(argobytes_owned_vault, 1000000000000000000)
+    # TODO: our rust code doesn't check our real balances yet, so just give the vault a ton of coins
+    accounts[0].transfer(argobytes_owned_vault, 50 * 1e18)
+    accounts[1].transfer(argobytes_owned_vault, 50 * 1e18)
+    accounts[2].transfer(argobytes_owned_vault, 50 * 1e18)
+    accounts[3].transfer(argobytes_owned_vault, 50 * 1e18)
 
     OneSplitOffchainAction.deploy(OneSplitAddress, {'from': accounts[0]})
     KyberAction.deploy(KyberNetworkProxy, KyberWalletId, {'from': accounts[0]})
     UniswapAction.deploy(UniswapFactory, {'from': accounts[0]})
-    Weth9Action.deploy(Weth9Address, {'from': accounts[0]})
+    weth9_action = Weth9Action.deploy(Weth9Address, {'from': accounts[0]})
+
+    # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity even if it actually loses money
+    accounts[1].transfer(argobytes_atomic_trade, 1e18)
