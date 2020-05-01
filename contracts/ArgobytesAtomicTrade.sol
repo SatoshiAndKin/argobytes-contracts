@@ -42,10 +42,6 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
     constructor(address kollateral_invoker, address first_vault)
         public
     {
-        // Grant the contract deployer the "backdoor" role
-        // BEWARE! this contract can call and delegate call arbitrary functions!
-        _setupRole(BACKDOOR_ROLE, msg.sender);
-
         // Grant the contract deployer the "default admin" role
         // it will be able to grant and revoke any roles
         // TODO: what happened. this used to be _grantRole, but now its grantRole
