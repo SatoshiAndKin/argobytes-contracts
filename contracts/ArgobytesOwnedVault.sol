@@ -2,15 +2,20 @@
 pragma solidity 0.6.6;
 pragma experimental ABIEncoderV2;
 
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/access/AccessControl.sol";
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/math/SafeMath.sol";
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/utils/Strings.sol";
+import {AccessControl} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/access/AccessControl.sol";
+import {SafeMath} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/math/SafeMath.sol";
+import {Strings} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/utils/Strings.sol";
 
-import "contracts/Backdoor.sol";
-import "contracts/GasTokenBurner.sol";
-import "contracts/UniversalERC20.sol";
-import "contracts/Strings2.sol";
-import "interfaces/argobytes/IArgobytesAtomicTrade.sol";
+import {GasTokenBurner} from "contracts/GasTokenBurner.sol";
+import {IERC20, UniversalERC20} from "contracts/UniversalERC20.sol";
+import {Strings2} from "contracts/Strings2.sol";
+import {IArgobytesAtomicTrade} from "interfaces/argobytes/IArgobytesAtomicTrade.sol";
+
+// WARNING! WARNING! THIS IS NOT A SECRET! THIS IS FOR RECOVERY IN CASE OF BUGS!
+// the backdoor is temporary until this is audited and public!
+// we actually need it right now since we don't have withdraw functions on ArgobytesOwnedVault
+import {Backdoor} from "contracts/Backdoor.sol";
+// END WARNING!
 
 contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
     using SafeMath for uint256;
@@ -18,10 +23,7 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
     using Strings2 for address;
     using UniversalERC20 for IERC20;
 
-    bytes32 public constant TRUSTED_ARBITRAGER_ROLE = keccak256("TRUSTED_ARBITRAGER_ROLE");
-
-    // TODO: function to withdraw tokens
-    // TODO: function to deposit into dydx/aave/kollateral/idle
+    bytes32 internal constant TRUSTED_ARBITRAGER_ROLE = keccak256("TRUSTED_ARBITRAGER_ROLE");
 
     IArgobytesAtomicTrade _aat;
 

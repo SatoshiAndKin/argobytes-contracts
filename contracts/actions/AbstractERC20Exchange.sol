@@ -8,13 +8,12 @@
 pragma solidity 0.6.6;
 pragma experimental ABIEncoderV2;
 
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/IERC20.sol";
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/SafeERC20.sol";
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/math/SafeMath.sol";
+import {IERC20} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/SafeERC20.sol";
+import {SafeMath} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/math/SafeMath.sol";
 
 contract AbstractERC20ExchangeModifiers {
     using SafeERC20 for IERC20;
-    using SafeMath for uint;
 
     address constant ZERO_ADDRESS = address(0);
 
@@ -28,8 +27,8 @@ contract AbstractERC20ExchangeModifiers {
         uint balance = address(this).balance;
 
         if (balance > 0) {
-            // TODO: require this succeded? or does it revert on fail?
-            Address.sendValue(to, balance);
+            (bool success, ) = to.call{value: balance}("");
+            require(success, "AbstractERC20ExchangeModifiers.sweepLeftoverEther: ETH transfer failed");
         }
     }
 
@@ -48,7 +47,7 @@ contract AbstractERC20ExchangeModifiers {
 abstract contract AbstractERC20Exchange is AbstractERC20ExchangeModifiers {
 
     // TODO: document this. i think it came from Kyber
-    uint constant MAX_QTY = 10**28;
+    uint internal constant MAX_QTY = 10**28;
 
     struct Amount {
         address maker_token;
@@ -69,7 +68,7 @@ abstract contract AbstractERC20Exchange is AbstractERC20ExchangeModifiers {
     function _tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
 
     function _getAmounts(address token_a, uint256 token_a_amount, address token_b, bytes memory extra_data)
-        internal
+        internal view
         returns (Amount[] memory)
     {
         require(token_a != token_b, "token_a should != token_b");

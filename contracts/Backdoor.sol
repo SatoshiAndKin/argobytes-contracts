@@ -3,10 +3,10 @@
 
 pragma solidity 0.6.6;
 
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/access/AccessControl.sol";
+import {AccessControl} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/access/AccessControl.sol";
 
 contract Backdoor is AccessControl {
-    bytes32 public constant BACKDOOR_ROLE = keccak256("BACKDOOR_ROLE");
+    bytes32 internal constant BACKDOOR_ROLE = keccak256("BACKDOOR_ROLE");
 
     /**
      * @notice Backdoor call to `to` with `value` wei and data `data`.

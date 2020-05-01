@@ -6,24 +6,18 @@
 pragma solidity 0.6.6;
 pragma experimental ABIEncoderV2;
 
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/access/AccessControl.sol";
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/math/SafeMath.sol";
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/utils/Strings.sol";
-
-// WARNING! WARNING! THIS IS NOT A SECRET! THIS IS FOR RECOVERY IN CASE OF BUGS!
-// the backdoor is temporary until this is audited and public!
-// we actually need it right now since we don't have withdraw functions on ArgobytesOwnedVault
-import {Backdoor} from "contracts/Backdoor.sol";
-// END WARNING!
+import {AccessControl} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/access/AccessControl.sol";
+import {SafeMath} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/math/SafeMath.sol";
+import {Strings} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/utils/Strings.sol";
 
 import {IInvokable} from "interfaces/kollateral/IInvokable.sol";
 import {IInvoker} from "interfaces/kollateral/IInvoker.sol";
 import {KollateralInvokable} from "interfaces/kollateral/KollateralInvokable.sol";
-import "contracts/UniversalERC20.sol";
-import "interfaces/argobytes/IArgobytesAtomicTrade.sol";
-import "contracts/Strings2.sol";
+import {IERC20, UniversalERC20} from "contracts/UniversalERC20.sol";
+import {IArgobytesAtomicTrade} from "interfaces/argobytes/IArgobytesAtomicTrade.sol";
+import {Strings2} from "contracts/Strings2.sol";
 
-contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade, KollateralInvokable {
+contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, KollateralInvokable {
     using SafeMath for uint;
     using Strings for uint;
     using Strings2 for address;
@@ -34,9 +28,9 @@ contract ArgobytesAtomicTrade is AccessControl, Backdoor, IArgobytesAtomicTrade,
         bytes data;
     }
 
-    address public constant ZERO_ADDRESS = address(0x0);
-    address public constant KOLLATERAL_ETH = address(0x0000000000000000000000000000000000000001);
-    bytes32 public constant TRUSTED_TRADER_ROLE = keccak256("TRUSTED_TRADER_ROLE");
+    address internal constant ZERO_ADDRESS = address(0x0);
+    address internal constant KOLLATERAL_ETH = address(0x0000000000000000000000000000000000000001);
+    bytes32 internal constant TRUSTED_TRADER_ROLE = keccak256("TRUSTED_TRADER_ROLE");
 
     // https://github.com/kollateral/kollateral/blob/master/lib/static/invoker.ts
     // they take a 6bps fee
