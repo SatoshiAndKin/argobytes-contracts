@@ -1,4 +1,4 @@
-eth-brownie
+eth-brownie<1.8
 bandit
 autopep8
 pylint
