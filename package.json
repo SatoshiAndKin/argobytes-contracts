@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "solc": "0.6.6"
+    "solc": "0.6.4"
   }
 }

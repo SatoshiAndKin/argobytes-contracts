@@ -1,8 +1,10 @@
-pragma solidity 0.6.6;
+pragma solidity 0.6.4;
 pragma experimental ABIEncoderV2;
 
-import "./AbstractERC20Exchange.sol";
-import "contracts/UniversalERC20.sol";
+import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
+
+import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
+import {UniversalERC20} from "contracts/UniversalERC20.sol";
 
 contract ExampleAction is AbstractERC20Exchange {
     using UniversalERC20 for IERC20;

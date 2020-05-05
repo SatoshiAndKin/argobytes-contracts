@@ -3,17 +3,18 @@
 // Uses gas token so that we pay less in miner fees.
 // TODO: use address payable once ethabi works with it
 // ABIEncodeV2 is not yet supported by rust's ethabi, so be careful how you use it. don't expose new encodings in function args or returns
-pragma solidity 0.6.6;
+pragma solidity 0.6.4;
 pragma experimental ABIEncoderV2;
 
-import {AccessControl} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/access/AccessControl.sol";
-import {SafeMath} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/math/SafeMath.sol";
-import {Strings} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/utils/Strings.sol";
+import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
+import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
+import {Strings} from "@openzeppelin/utils/Strings.sol";
+import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 
 import {IInvokable} from "interfaces/kollateral/IInvokable.sol";
 import {IInvoker} from "interfaces/kollateral/IInvoker.sol";
 import {KollateralInvokable} from "interfaces/kollateral/KollateralInvokable.sol";
-import {IERC20, UniversalERC20} from "contracts/UniversalERC20.sol";
+import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {IArgobytesAtomicTrade} from "interfaces/argobytes/IArgobytesAtomicTrade.sol";
 import {Strings2} from "contracts/Strings2.sol";
 
@@ -194,7 +195,7 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
             (bool success, bytes memory call_returned) = action_address.call{value: action_value}(actions[i].data);
 
             if (!success) {
-                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.execute: on call #", i.fromUint256()," to ", action_address.fromAddress(), " with ", action_value.fromUint256(), " ETH failed: '", string(call_returned), "'"));
+                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.execute: on call #", i.toString()," to ", action_address.toString(), " with ", action_value.toString(), " ETH failed: '", string(call_returned), "'"));
                 revert(err);
             }
 
@@ -265,7 +266,7 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
             (bool success, bytes memory call_returned) = action_address.call(actions[i].data);
 
             if (!success) {
-                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.executeSolo: on call #", i.fromUint256()," to ", action_address.fromAddress(), " failed: '", string(call_returned), "'"));
+                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.executeSolo: on call #", i.toString()," to ", action_address.toString(), " failed: '", string(call_returned), "'"));
                 revert(err);
             }
         }

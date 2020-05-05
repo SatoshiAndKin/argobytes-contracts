@@ -1,8 +1,8 @@
-pragma solidity 0.6.6;
+pragma solidity 0.6.4;
 
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/utils/Strings.sol";
+import {Strings} from "@openzeppelin/utils/Strings.sol";
 
-import "contracts/Strings2.sol";
+import {Strings2} from "contracts/Strings2.sol";
 import {IWETH9} from "interfaces/weth9/IWETH9.sol";
 
 

@@ -1,4 +1,4 @@
-pragma solidity 0.6.6;
+pragma solidity 0.6.4;
 
 abstract contract IGasToken {
     function free(uint256 value) virtual public returns (bool success);

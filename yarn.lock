@@ -141,9 +141,9 @@ semver@^5.5.0:
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.7.1.tgz#a954f931aeba508d307bbf069eff0c01c96116f7"
   integrity sha512-sauaDf/PZdVgrLTNYHRtpXa1iRiKcaebiKQ1BJdpQlWH2lCvexQdX55snPFyK7QzpudqbCI0qXFfOasHdyNDGQ==
 
-solc@0.6.6:
-  version "0.6.6"
-  resolved "https://registry.yarnpkg.com/solc/-/solc-0.6.6.tgz#0d4b9c2e7105dd6015583f5e1c5ba6a35861ea71"
+solc@0.6.7:
+  version "0.6.7"
+  resolved "https://registry.yarnpkg.com/solc/-/solc-0.6.7.tgz#0d4b9c2e7105dd6015583f5e1c5ba6a35861ea71"
   integrity sha512-p0IO/1fRaHWKN+qR+mUivpwnBpFYD8EoFAzT8VL4lmllNwsyEO7TJJAc2QK0XUeWOYOT92NWKhDNNNLTVbHShA==
   dependencies:
     command-exists "^1.2.8"

@@ -16,13 +16,13 @@
 
 */
 
-pragma solidity ^0.6.6;
+pragma solidity ^0.6.4;
 
-import "./BalanceCarrier.sol";
-import "./IInvocationHook.sol";
-import "./IInvokable.sol";
+import {BalanceCarrier} from "./BalanceCarrier.sol";
+import {IInvocationHook} from "./IInvocationHook.sol";
+import {IInvokable} from "./IInvokable.sol";
 
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 
 abstract contract KollateralInvokable is IInvokable, BalanceCarrier {
     using SafeMath for uint256;

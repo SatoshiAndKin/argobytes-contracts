@@ -1,9 +1,9 @@
 // https://github.com/curvefi/curve-contract/blob/compounded/integrations.md
 
-pragma solidity 0.6.6;
+pragma solidity 0.6.4;
 
-import "./AbstractERC20Exchange.sol";
-import "interfaces/curve/ICurveCompounded.sol";
+import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
+import {ICurveCompounded} from "interfaces/curve/ICurveCompounded.sol";
 
 
 contract CurveCompoundedAction is AbstractERC20ExchangeModifiers {

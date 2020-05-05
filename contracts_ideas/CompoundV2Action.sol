@@ -1,6 +1,6 @@
-pragma solidity 0.6.6;
+pragma solidity 0.6.4;
 
-import "./AbstractERC20Exchange.sol";
+import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
 
 // TODO: do we want auth on this with setters? i think no. i think we should just have a simple contract with a constructor. if we need changes, we can deploy a new contract. less methods is less attack surface

@@ -1,7 +1,7 @@
-pragma solidity 0.6.6;
+pragma solidity 0.6.4;
 
 library Strings2 {
-    function fromAddress(address x) internal pure returns (string memory) {
+    function toString(address x) internal pure returns (string memory) {
         bytes32 value = bytes32(uint256(x));
         bytes memory alphabet = "0123456789abcdef";
 

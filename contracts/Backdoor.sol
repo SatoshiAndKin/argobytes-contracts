@@ -1,9 +1,9 @@
 // TODO: backdoor_static_call and backdoor_delegate_call
 // TODO: maybe better to just use the diamond standard EIP for upgradable contracts, but this works for now
 
-pragma solidity 0.6.6;
+pragma solidity 0.6.4;
 
-import {AccessControl} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/access/AccessControl.sol";
+import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
 
 contract Backdoor is AccessControl {
     bytes32 internal constant BACKDOOR_ROLE = keccak256("BACKDOOR_ROLE");

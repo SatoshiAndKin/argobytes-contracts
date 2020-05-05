@@ -1,9 +1,11 @@
-pragma solidity 0.6.6;
+pragma solidity 0.6.4;
 pragma experimental ABIEncoderV2;
 
-import "./AbstractERC20Exchange.sol";
-import "interfaces/uniswap/IUniswapFactory.sol";
-import "interfaces/uniswap/IUniswapExchange.sol";
+import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
+
+import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
+import {IUniswapFactory} from "interfaces/uniswap/IUniswapFactory.sol";
+import {IUniswapExchange} from "interfaces/uniswap/IUniswapExchange.sol";
 
 // TODO: do we want auth on this with setters? i think no. i think we should just have a simple contract with a constructor. if we need changes, we can deploy a new contract. less methods is less attack surface
 contract UniswapAction is AbstractERC20Exchange {

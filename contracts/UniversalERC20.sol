@@ -1,11 +1,11 @@
 // https://github.com/CryptoManiacsZone/1split/blob/014d4a08ef746af4b4da053e9465927d151ec1fe/contracts/UniversalERC20.sol
 // this is probably going to cost more gas than doing this all in Rust, but this is saving me a lot of time
 // make it work, make it work right, make it work fast. gas counts as "fast"
-pragma solidity ^0.6.6;
+pragma solidity ^0.6.4;
 
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/math/SafeMath.sol";
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/IERC20.sol";
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/SafeERC20.sol";
+import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
+import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
 
 
 library UniversalERC20 {

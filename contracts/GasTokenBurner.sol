@@ -1,9 +1,9 @@
-pragma solidity 0.6.6;
+pragma solidity 0.6.4;
 
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/access/AccessControl.sol";
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/math/SafeMath.sol";
+import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
+import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 
-import "interfaces/gastoken/IGasToken.sol";
+import {IGasToken} from "interfaces/gastoken/IGasToken.sol";
 
 contract GasTokenBurner is AccessControl {
     using SafeMath for uint256;

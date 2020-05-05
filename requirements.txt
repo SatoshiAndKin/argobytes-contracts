@@ -5,7 +5,7 @@
 #    pip-compile
 #
 apipkg==1.5               # via execnet
-astroid==2.3.3            # via pylint
+astroid==2.4.1            # via pylint
 asttokens==2.0.3          # via vyper
 attrdict==2.0.1           # via eth-account
 attrs==19.3.0             # via hypothesis, jsonschema, pytest
@@ -17,7 +17,7 @@ chardet==3.0.4            # via requests
 cytoolz==0.10.1           # via eth-keyfile, eth-utils
 eth-abi==2.1.1            # via eth-account, eth-brownie, eth-event, web3
 eth-account==0.4.0        # via web3
-eth-brownie==1.7.3        # via -r requirements.in
+eth-brownie==1.7.5        # via -r requirements.in
 eth-event==1.0.0          # via eth-brownie
 eth-hash[pycryptodome]==0.2.0  # via eth-brownie, eth-event, eth-utils, web3
 eth-keyfile==0.5.1        # via eth-account
@@ -26,9 +26,8 @@ eth-rlp==0.1.2            # via eth-account
 eth-typing==2.2.1         # via eth-abi, eth-utils, web3
 eth-utils==1.8.4          # via eth-abi, eth-account, eth-brownie, eth-keyfile, eth-keys, eth-rlp, hexbytes, rlp, web3
 execnet==1.7.1            # via pytest-xdist
-fancycompleter==0.9.1     # via pdbpp
-gitdb==4.0.4              # via gitpython
-gitpython==3.1.1          # via bandit
+gitdb==4.0.5              # via gitpython
+gitpython==3.1.2          # via bandit
 hexbytes==0.2.0           # via eth-account, eth-brownie, eth-event, eth-rlp, web3
 hypothesis==5.10.1        # via eth-brownie
 idna==2.9                 # via requests
@@ -47,7 +46,6 @@ netaddr==0.7.19           # via multiaddr
 packaging==20.3           # via pytest
 parsimonious==0.8.1       # via eth-abi
 pbr==5.4.5                # via stevedore
-pdbpp==0.10.2             # via -r requirements.in
 pluggy==0.13.1            # via pytest
 prompt-toolkit==3.0.5     # via eth-brownie
 protobuf==3.11.3          # via web3
@@ -57,25 +55,25 @@ py-solc-x==0.8.1          # via eth-brownie
 py==1.8.1                 # via eth-brownie, pytest
 pycodestyle==2.5.0        # via autopep8
 pycryptodome==3.9.7       # via eth-hash, eth-keyfile, vyper
-pygments==2.6.1           # via eth-brownie, pdbpp
+pygments==2.6.1           # via eth-brownie
 pyjwt==1.7.1              # via pythx
-pylint==2.4.4             # via -r requirements.in
+pylint==2.5.2             # via -r requirements.in
 pyparsing==2.4.7          # via packaging
-pyrepl==0.9.0             # via fancycompleter
 pyrsistent==0.16.0        # via jsonschema
 pytest-forked==1.1.3      # via pytest-xdist
 pytest-xdist==1.31.0      # via eth-brownie
-pytest==5.4.1             # via -r requirements.in, eth-brownie, pytest-forked, pytest-xdist
+pytest==5.4.1             # via eth-brownie, pytest-forked, pytest-xdist
 python-dateutil==2.8.1    # via mythx-models, pythx
 pythx==1.5.6              # via eth-brownie
 pyyaml==5.3.1             # via bandit, eth-brownie
 requests==2.23.0          # via eth-brownie, ipfshttpclient, py-solc-x, pythx, web3
 rlp==1.2.0                # via eth-account, eth-rlp
-semantic-version==2.8.4   # via eth-brownie, py-solc-x
+semantic-version==2.8.5   # via eth-brownie, py-solc-x
 six==1.14.0               # via astroid, asttokens, attrdict, bandit, ipfshttpclient, jsonschema, multiaddr, packaging, parsimonious, protobuf, pyrsistent, pytest-xdist, python-dateutil, stevedore
-smmap==3.0.2              # via gitdb
+smmap==3.0.4              # via gitdb
 sortedcontainers==2.1.0   # via hypothesis
 stevedore==1.32.0         # via bandit
+toml==0.10.0              # via pylint
 toolz==0.10.0             # via cytoolz
 tqdm==4.45.0              # via eth-brownie
 typed-ast==1.4.1          # via astroid
@@ -86,8 +84,7 @@ vyper==0.1.0b17           # via eth-brownie
 wcwidth==0.1.9            # via prompt-toolkit, pytest
 web3==5.5.1               # via eth-brownie
 websockets==8.1           # via web3
-wmctrl==0.3               # via pdbpp
-wrapt==1.11.2             # via astroid
+wrapt==1.12.1             # via astroid
 zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:

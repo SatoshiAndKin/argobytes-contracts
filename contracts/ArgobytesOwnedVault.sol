@@ -1,13 +1,14 @@
 // Store profits and provide them for flash lending
-pragma solidity 0.6.6;
+pragma solidity 0.6.4;
 pragma experimental ABIEncoderV2;
 
-import {AccessControl} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/access/AccessControl.sol";
-import {SafeMath} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/math/SafeMath.sol";
-import {Strings} from "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/utils/Strings.sol";
+import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
+import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
+import {Strings} from "@openzeppelin/utils/Strings.sol";
+import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 
 import {GasTokenBurner} from "contracts/GasTokenBurner.sol";
-import {IERC20, UniversalERC20} from "contracts/UniversalERC20.sol";
+import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {Strings2} from "contracts/Strings2.sol";
 import {IArgobytesAtomicTrade} from "interfaces/argobytes/IArgobytesAtomicTrade.sol";
 
@@ -110,7 +111,7 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         // we allow this to be equal because it's possible that we got our profits somewhere else (like uniswap or kollateral LP fees)
         if (ending_vault_balance < starting_vault_balance) {
             uint256 decreased_amount = starting_vault_balance - ending_vault_balance;
-            string memory err = string(abi.encodePacked("ArgobytesOwnedVault.atomicArbitrage: Vault balance of ", address(borrow_token).fromAddress(), " did not increase. Decreased by ", decreased_amount.fromUint256()));
+            string memory err = string(abi.encodePacked("ArgobytesOwnedVault.atomicArbitrage: Vault balance of ", address(borrow_token).toString(), " did not increase. Decreased by ", decreased_amount.toString()));
             revert(err);
         }
 

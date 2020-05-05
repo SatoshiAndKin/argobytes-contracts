@@ -2,8 +2,8 @@ compiler:
   solc:
     optimizer:
       enabled: false
-
-autofetch_sources: false
+    remappings:
+      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@3.0.1/contracts"
 
 dependencies:
-  - OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1
+  - OpenZeppelin/openzeppelin-contracts@3.0.1

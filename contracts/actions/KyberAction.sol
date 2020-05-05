@@ -1,11 +1,11 @@
-pragma solidity 0.6.6;
+pragma solidity 0.6.4;
 pragma experimental ABIEncoderV2;
 
-import "OpenZeppelin/openzeppelin-contracts@3.0.0-rc.1/contracts/token/ERC20/SafeERC20.sol";
+import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
 
-import "./AbstractERC20Exchange.sol";
-import "contracts/UniversalERC20.sol";
-import "interfaces/kyber/IKyberNetworkProxy.sol";
+import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
+import {UniversalERC20, IERC20} from "contracts/UniversalERC20.sol";
+import {IKyberNetworkProxy} from "interfaces/kyber/IKyberNetworkProxy.sol";
 
 contract KyberAction is AbstractERC20Exchange {
     // TODO: we were using ERC20 instead of IERC20 because of kyber's interface. does this work?

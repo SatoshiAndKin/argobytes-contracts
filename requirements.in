@@ -1,6 +1,4 @@
 eth-brownie
 bandit
-pdbpp
-pytest
 autopep8
 pylint

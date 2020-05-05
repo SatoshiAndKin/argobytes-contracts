@@ -14,13 +14,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
-    Updated to 0.6.6 by Satoshi & Kin, Inc. These are functional changes and so are not under copyright.
+    Updated to 0.6.4 by Satoshi & Kin, Inc. These are functional changes and so are not under copyright.
 
 */
 
-pragma solidity ^0.6.6;
+pragma solidity ^0.6.4;
 
-import "./IInvocationHook.sol";
+import {IInvocationHook} from "./IInvocationHook.sol";
 
 abstract contract IInvoker is IInvocationHook {
     function invoke(address invokeTo, bytes calldata invokeData, address tokenAddress, uint256 tokenAmount)
