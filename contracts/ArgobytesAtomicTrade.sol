@@ -3,7 +3,7 @@
 // Uses gas token so that we pay less in miner fees.
 // TODO: use address payable once ethabi works with it
 // ABIEncodeV2 is not yet supported by rust's ethabi, so be careful how you use it. don't expose new encodings in function args or returns
-pragma solidity 0.6.4;
+pragma solidity 0.6.6;
 pragma experimental ABIEncoderV2;
 
 import {AccessControl} from "@openzeppelin/access/AccessControl.sol";

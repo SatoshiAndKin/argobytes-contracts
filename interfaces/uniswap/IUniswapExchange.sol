@@ -1,4 +1,4 @@
-pragma solidity 0.6.4;
+pragma solidity 0.6.6;
 
 /* https://docs.uniswap.io/smart-contract-integration/interface#exchange-interface */
 

@@ -18,7 +18,7 @@
 
 */
 
-pragma solidity ^0.6.4;
+pragma solidity ^0.6.6;
 
 abstract contract IInvokable {
     function execute(bytes calldata data) external payable virtual;

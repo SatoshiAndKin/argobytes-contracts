@@ -1,4 +1,4 @@
-pragma solidity 0.6.4;
+pragma solidity 0.6.6;
 
 import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";

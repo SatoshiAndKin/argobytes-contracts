@@ -1,5 +1,5 @@
 // Store profits and provide them for flash lending
-pragma solidity 0.6.4;
+pragma solidity 0.6.6;
 pragma experimental ABIEncoderV2;
 
 import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
