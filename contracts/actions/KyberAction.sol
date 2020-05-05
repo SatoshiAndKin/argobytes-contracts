@@ -1,4 +1,4 @@
-pragma solidity 0.6.6;
+pragma solidity 0.6.7;
 pragma experimental ABIEncoderV2;
 
 import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";

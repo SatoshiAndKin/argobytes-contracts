@@ -16,7 +16,7 @@
 
 */
 
-pragma solidity ^0.6.6;
+pragma solidity ^0.6.7;
 
 contract ExternalCaller {
     function externalTransfer(address _to, uint256 _value) internal {
