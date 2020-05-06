@@ -14,11 +14,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
-    Updated to 0.6.7 by Satoshi & Kin, Inc. These are functional changes and so are not under copyright.
+    Updated to 0.6 by Satoshi & Kin, Inc. These are functional changes and so are not under copyright.
 
 */
 
-pragma solidity ^0.6.7;
+pragma solidity 0.6.7;
 
 import {IInvocationHook} from "./IInvocationHook.sol";
 
