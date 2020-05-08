@@ -195,7 +195,7 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
             (bool success, bytes memory call_returned) = action_address.call{value: action_value}(actions[i].data);
 
             if (!success) {
-                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.execute: on call #", i.toString()," to ", action_address.toString(), " with ", action_value.toString(), " ETH failed: '", string(call_returned), "'"));
+                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.execute: on call #", i.toString()," to ", action_address.toString(), " with ", action_value.toString(), " ETH failed: '", call_returned, "'"));
                 revert(err);
             }
 
@@ -266,7 +266,7 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
             (bool success, bytes memory call_returned) = action_address.call(actions[i].data);
 
             if (!success) {
-                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.executeSolo: on call #", i.toString()," to ", action_address.toString(), " failed: '", string(call_returned), "'"));
+                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.executeSolo: on call #", i.toString()," to ", action_address.toString(), " failed: '", call_returned, "'"));
                 revert(err);
             }
         }
