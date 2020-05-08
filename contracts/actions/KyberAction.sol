@@ -30,6 +30,9 @@ contract KyberAction is AbstractERC20Exchange {
         uint dest_max_tokens, 
         bytes memory
     ) internal override {
+        require(dest_token != ZERO_ADDRESS, "KyberAction._tradeEtherToToken: dest_token cannot be ZERO_ADDRESS");
+        require(IERC20(dest_token) != ETH_ON_KYBER, "KyberAction._tradeEtherToToken: dest_token cannot be ETH");
+
         uint src_amount = address(this).balance;
 
         require(src_amount > 0, "KyberAction._tradeEtherToToken: NO_SRC_AMOUNT");
