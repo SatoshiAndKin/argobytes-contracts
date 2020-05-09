@@ -16,6 +16,7 @@ import {AbstractERC20Amounts} from "./AbstractERC20Exchange.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {IDepot} from "interfaces/synthetix/IDepot.sol";
 import {IAddressResolver} from "interfaces/synthetix/IAddressResolver.sol";
+import {ISystemStatus} from "interfaces/synthetix/ISystemStatus.sol";
 import {Strings2} from "contracts/Strings2.sol";
 
 contract SynthetixDepotAction is AbstractERC20Amounts {
@@ -25,6 +26,7 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
 
     IAddressResolver _address_resolver;
 
+    ISystemStatus _status;
     IDepot _depot;
     address _sETH;
     address _SNX;
@@ -35,6 +37,7 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
         _address_resolver = IAddressResolver(address_resolver);
 
         // TODO: use setAddresses();
+        _status = ISystemStatus(_address_resolver.getAddress("SystemStatus"));
         _depot = IDepot(0xE1f64079aDa6Ef07b03982Ca34f1dD7152AA3b86);
         _sETH = 0x5e74C9036fb86BD7eCdcb084a0673EFc32eA31cb;
         _SNX = 0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F;
@@ -44,6 +47,7 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
     // this will be wrong until may 10
     function setAddresses() public {
         _depot = IDepot(_address_resolver.getAddress("Depot"));
+        _status = ISystemStatus(_address_resolver.getAddress("SystemStatus"));
         _sETH = _address_resolver.getAddress("SynthsETH");
         _SNX = _address_resolver.getAddress("Synthetix");
         _sUSD = _address_resolver.getAddress("SynthsUSD");
@@ -62,12 +66,13 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
         public override view
         returns (Amount memory)
     {
-        // TODO: check SystemStatus?
-
         Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
 
         if (taker_token == ZERO_ADDRESS && maker_token == _sUSD) {
             // eth to sUSD
+
+            _status.requireSynthActive("SynthsUSD");
+
             a.maker_wei = _depot.synthsReceivedForEther(taker_wei);
             // a.selector = this.tradeEtherToSynthUSD.selector;
         } else {
