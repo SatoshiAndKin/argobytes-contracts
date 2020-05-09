@@ -10,14 +10,18 @@ pragma solidity 0.6.7;
 pragma experimental ABIEncoderV2;
 
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
+import {Strings} from "@openzeppelin/utils/Strings.sol";
 
 import {AbstractERC20Amounts} from "./AbstractERC20Exchange.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {IDepot} from "interfaces/synthetix/IDepot.sol";
 import {IAddressResolver} from "interfaces/synthetix/IAddressResolver.sol";
+import {Strings2} from "contracts/Strings2.sol";
 
 contract SynthetixDepotAction is AbstractERC20Amounts {
     using UniversalERC20 for IERC20;
+    using Strings for uint;
+    using Strings2 for address;
 
     IAddressResolver _address_resolver;
 
@@ -30,9 +34,14 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
         // https://docs.synthetix.io/contracts/AddressResolver
         _address_resolver = IAddressResolver(address_resolver);
 
-        setAddresses();
+        // TODO: use setAddresses();
+        _depot = IDepot(0xE1f64079aDa6Ef07b03982Ca34f1dD7152AA3b86);
+        _sETH = 0x5e74C9036fb86BD7eCdcb084a0673EFc32eA31cb;
+        _SNX = 0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F;
+        _sUSD = 0x57Ab1ec28D129707052df4dF418D58a2D46d5f51;
     }
 
+    // this will be wrong until may 10
     function setAddresses() public {
         _depot = IDepot(_address_resolver.getAddress("Depot"));
         _sETH = _address_resolver.getAddress("SynthsETH");
@@ -62,10 +71,13 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
             a.maker_wei = _depot.synthsReceivedForEther(taker_wei);
             // a.selector = this.tradeEtherToSynthUSD.selector;
         } else {
-            revert("SynthetixDepotAction.newAmount: unsupported assets");
+            string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: found ", taker_token.toString(), "->", maker_token.toString(), ". supported ", ZERO_ADDRESS.toString(), "->", _sUSD.toString()));
+
+            // revert(err);
+            a.error = err;
         }
 
-        // //a.extra_data = "";
+        //a.extra_data = "";
 
         return a;
     }

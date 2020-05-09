@@ -53,6 +53,7 @@ abstract contract AbstractERC20Amounts is AbstractERC20ExchangeModifiers {
 
         // bytes4 selector;
         bytes extra_data;
+        string error;
     }
 
 
@@ -113,7 +114,8 @@ abstract contract AbstractERC20Amounts is AbstractERC20ExchangeModifiers {
             taker_token: taker_token,
             taker_wei: taker_wei,
             // selector: selector,
-            extra_data: ""
+            extra_data: "",
+            error: ""
         });
 
         // missing maker_wei and extra_data! you need to set these in your `newAmount`
