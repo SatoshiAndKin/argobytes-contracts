@@ -44,11 +44,7 @@ contract AbstractERC20ExchangeModifiers {
     }
 }
 
-abstract contract AbstractERC20Exchange is AbstractERC20ExchangeModifiers {
-
-    // TODO: document this. i think it came from Kyber
-    uint internal constant MAX_QTY = 10**28;
-
+abstract contract AbstractERC20Amounts is AbstractERC20ExchangeModifiers {
     struct Amount {
         address maker_token;
         uint256 maker_wei;
@@ -59,13 +55,6 @@ abstract contract AbstractERC20Exchange is AbstractERC20ExchangeModifiers {
         bytes extra_data;
     }
 
-    // these functions require that address(this) has an ether/token balance.
-    // these functions might have some leftover ETH or src_token in them after they finish, so be sure to use the sweep modifiers
-    // TODO: decide on best order for the arguments
-    // TODO: _tradeUniversal?
-    function _tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
-    function _tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
-    function _tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
 
     function _getAmounts(address token_a, uint256 token_a_amount, address token_b, bytes memory extra_data)
         internal view
@@ -115,6 +104,17 @@ abstract contract AbstractERC20Exchange is AbstractERC20ExchangeModifiers {
 
         return a;
     }
+}
+
+abstract contract AbstractERC20Exchange is AbstractERC20Amounts {
+
+    // these functions require that address(this) has an ether/token balance.
+    // these functions might have some leftover ETH or src_token in them after they finish, so be sure to use the sweep modifiers on whatever calls these
+    // TODO: decide on best order for the arguments
+    // TODO: _tradeUniversal? that won't be as gas efficient
+    function _tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
+    function _tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
+    function _tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
 
     function tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
         external

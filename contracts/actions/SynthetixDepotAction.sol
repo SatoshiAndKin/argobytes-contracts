@@ -1,0 +1,85 @@
+/* The Depot is a place to deposit any excess sUSD for others to purchase it with ETH
+
+https://docs.synthetix.io/contracts/depot/
+https://docs.synthetix.io/contracts/walkthrus/depot/
+https://github.com/Synthetixio/synthetix/blob/develop/contracts/Depot.sol#L20
+
+The depot is capable of trading SNX, too. However, that is only done on Testnets.
+*/
+pragma solidity 0.6.7;
+pragma experimental ABIEncoderV2;
+
+import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
+
+import {AbstractERC20Amounts} from "./AbstractERC20Exchange.sol";
+import {UniversalERC20} from "contracts/UniversalERC20.sol";
+import {IDepot} from "interfaces/synthetix/IDepot.sol";
+import {IAddressResolver} from "interfaces/synthetix/IAddressResolver.sol";
+
+contract SynthetixDepotAction is AbstractERC20Amounts {
+    using UniversalERC20 for IERC20;
+
+    IAddressResolver _address_resolver;
+
+    IDepot _depot;
+    address _sETH;
+    address _SNX;
+    address _sUSD;
+
+    constructor(address address_resolver) public {
+        // https://docs.synthetix.io/contracts/AddressResolver
+        _address_resolver = IAddressResolver(address_resolver);
+
+        setAddresses();
+    }
+
+    function setAddresses() public {
+        _depot = IDepot(_address_resolver.getAddress("Depot"));
+        _sETH = _address_resolver.getAddress("SynthsETH");
+        _SNX = _address_resolver.getAddress("Synthetix");
+        _sUSD = _address_resolver.getAddress("SynthsUSD");
+    }
+
+    function getAmounts(address token_a, uint256 token_a_amount, address token_b)
+        external view
+        returns (Amount[] memory)
+    {
+        bytes memory extra_data = "";
+
+        return _getAmounts(token_a, token_a_amount, token_b, extra_data);
+    }
+
+    function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory /* extra_data */)
+        internal override view
+        returns (Amount memory)
+    {
+        // TODO: check SystemStatus?
+
+        Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
+
+        if (taker_token == ZERO_ADDRESS && maker_token == _sUSD) {
+            // eth to sUSD
+            a.maker_wei = _depot.synthsReceivedForEther(taker_wei);
+            // a.selector = this.tradeEtherToSynthUSD.selector;
+        } else {
+            revert("SynthetixDepotAction.newAmount: unsupported assets");
+        }
+
+        // //a.extra_data = "";
+
+        return a;
+    }
+
+    // solium-disable-next-line security/no-assign-params
+    function tradeEtherToSynthUSD(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
+        external
+        payable
+        sweepLeftoverEther(msg.sender)
+    {
+        if (to == address(0x0)) {
+            to = msg.sender;
+        }
+
+        revert("SynthetixDepotAction.tradeEtherToSynthUSD: wip");
+    }
+}

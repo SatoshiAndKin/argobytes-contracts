@@ -73,7 +73,7 @@ contract UniswapAction is AbstractERC20Exchange {
 
             // TODO: how should we calculate this? tokenToEthSomething? or is it fine to use a very large amount?
             // TODO: gas golf this
-            uint max_eth_sold = MAX_QTY;
+            uint max_eth_sold = uint(-1);
 
             // tokenToTokenTransferOutput(
             //     tokens_bought: uint256,
@@ -172,7 +172,7 @@ contract UniswapAction is AbstractERC20Exchange {
         }
 
         // TODO: would be cool to encode the complete calldata, but we can't be sure about the "to" address. we could default to 0x0 and fill it in though
-        a.extra_data = "";
+        //a.extra_data = "";
 
         return a;
     }

@@ -11,6 +11,9 @@ contract KyberAction is AbstractERC20Exchange {
     // TODO: we were using ERC20 instead of IERC20 because of kyber's interface. does this work?
     using UniversalERC20 for IERC20;
 
+    // TODO: document this
+    uint internal constant MAX_QTY = 10**28;
+
     IERC20 constant ETH_ON_KYBER = IERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
 
     IKyberNetworkProxy _network_proxy;
@@ -174,7 +177,7 @@ contract KyberAction is AbstractERC20Exchange {
 
         // TODO: use slippage_rate?
         a.maker_wei = expected_rate;
-        a.extra_data = "";
+        //a.extra_data = "";
 
         return a;
     }
