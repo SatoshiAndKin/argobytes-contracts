@@ -1,10 +1,11 @@
+// TODO: should this be 0.6.7?
 pragma solidity 0.4.25;
 
 
 /**
  * @title Synthetix Depot interface
  */
-contract IDepot {
+interface IDepot {
     function exchangeEtherForSynths() public payable returns (uint);
 
     function exchangeEtherForSynthsAtRate(uint guaranteedRate) external payable returns (uint);

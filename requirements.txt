@@ -7,29 +7,29 @@
 apipkg==1.5               # via execnet
 astroid==2.4.1            # via pylint
 asttokens==2.0.3          # via vyper
-attrdict==2.0.1           # via eth-account
 attrs==19.3.0             # via hypothesis, jsonschema, pytest
 autopep8==1.5.2           # via -r requirements.in
 bandit==1.6.2             # via -r requirements.in
 base58==2.0.0             # via multiaddr
+bitarray==1.2.1           # via eth-account
 certifi==2020.4.5.1       # via requests
 chardet==3.0.4            # via requests
 cytoolz==0.10.1           # via eth-keyfile, eth-utils
 eth-abi==2.1.1            # via eth-account, eth-brownie, eth-event, web3
-eth-account==0.4.0        # via web3
-eth-brownie==1.7.5        # via -r requirements.in
+eth-account==0.5.2        # via web3
+eth-brownie==1.8.3        # via -r requirements.in
 eth-event==1.0.0          # via eth-brownie
 eth-hash[pycryptodome]==0.2.0  # via eth-brownie, eth-event, eth-utils, web3
 eth-keyfile==0.5.1        # via eth-account
-eth-keys==0.2.4           # via eth-account, eth-keyfile
+eth-keys==0.3.3           # via eth-account, eth-keyfile
 eth-rlp==0.1.2            # via eth-account
-eth-typing==2.2.1         # via eth-abi, eth-utils, web3
+eth-typing==2.2.1         # via eth-abi, eth-keys, eth-utils, web3
 eth-utils==1.8.4          # via eth-abi, eth-account, eth-brownie, eth-keyfile, eth-keys, eth-rlp, hexbytes, rlp, web3
 execnet==1.7.1            # via pytest-xdist
 gitdb==4.0.5              # via gitpython
 gitpython==3.1.2          # via bandit
 hexbytes==0.2.0           # via eth-account, eth-brownie, eth-event, eth-rlp, web3
-hypothesis==5.10.1        # via eth-brownie
+hypothesis==5.10.4        # via eth-brownie
 idna==2.9                 # via requests
 importlib-metadata==1.6.0  # via jsonschema, pluggy, pytest
 inflection==0.4.0         # via mythx-models, pythx
@@ -64,12 +64,12 @@ pytest-forked==1.1.3      # via pytest-xdist
 pytest-xdist==1.31.0      # via eth-brownie
 pytest==5.4.1             # via eth-brownie, pytest-forked, pytest-xdist
 python-dateutil==2.8.1    # via mythx-models, pythx
-pythx==1.5.6              # via eth-brownie
+pythx==1.5.7              # via eth-brownie
 pyyaml==5.3.1             # via bandit, eth-brownie
 requests==2.23.0          # via eth-brownie, ipfshttpclient, py-solc-x, pythx, web3
 rlp==1.2.0                # via eth-account, eth-rlp
 semantic-version==2.8.5   # via eth-brownie, py-solc-x
-six==1.14.0               # via astroid, asttokens, attrdict, bandit, ipfshttpclient, jsonschema, multiaddr, packaging, parsimonious, protobuf, pyrsistent, pytest-xdist, python-dateutil, stevedore
+six==1.14.0               # via astroid, asttokens, bandit, ipfshttpclient, jsonschema, multiaddr, packaging, parsimonious, protobuf, pyrsistent, pytest-xdist, python-dateutil, stevedore
 smmap==3.0.4              # via gitdb
 sortedcontainers==2.1.0   # via hypothesis
 stevedore==1.32.0         # via bandit
@@ -82,7 +82,7 @@ urllib3==1.25.9           # via requests
 varint==1.0.2             # via multiaddr
 vyper==0.1.0b17           # via eth-brownie
 wcwidth==0.1.9            # via prompt-toolkit, pytest
-web3==5.5.1               # via eth-brownie
+web3==5.9.0               # via eth-brownie
 websockets==8.1           # via web3
 wrapt==1.12.1             # via astroid
 zipp==3.1.0               # via importlib-metadata
