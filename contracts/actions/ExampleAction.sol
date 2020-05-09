@@ -61,7 +61,7 @@ contract ExampleAction is AbstractERC20Exchange {
     }
 
     function newAmount(address maker_address, uint taker_wei, address taker_address, bytes memory extra_data)
-        internal override view
+        public override view
         returns (Amount memory)
     {
         revert("wip");

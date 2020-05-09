@@ -137,7 +137,7 @@ contract KyberAction is AbstractERC20Exchange {
     }
 
     function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory extra_data)
-        internal override view 
+        public override view
         returns (Amount memory)
     {
         Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);

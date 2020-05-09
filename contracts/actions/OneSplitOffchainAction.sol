@@ -154,7 +154,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
     }
 
     function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory extra_data)
-        internal override view 
+        public override view
         returns (Amount memory)
     {
         uint256 parts = abi.decode(extra_data, (uint256));

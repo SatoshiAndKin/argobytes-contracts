@@ -50,7 +50,7 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
     }
 
     function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory /* extra_data */)
-        internal override view
+        public override view
         returns (Amount memory)
     {
         // TODO: check SystemStatus?

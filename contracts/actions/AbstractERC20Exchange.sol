@@ -64,18 +64,34 @@ abstract contract AbstractERC20Amounts is AbstractERC20ExchangeModifiers {
 
         Amount[] memory amounts = new Amount[](2);
 
+        // TODO: think more about this. i think we need this because our contract is abstract
+        string memory newAmountSignature = "newAmount(address,uint256,address,bytes)";
+
         // get amounts for trading token_a -> token_b
         // use the same amounts that we used in our ETH trades to keep these all around the same value
-        amounts[0] = newAmount(token_b, token_a_amount, token_a, extra_data);
+        // we can't use try/catch with internal functions, so we have to use call instead
+        (bool success, bytes memory returnData) = address(this).staticcall(abi.encodeWithSignature(newAmountSignature, token_b, token_a_amount, token_a, extra_data));
+        if (success) {
+            amounts[0] = abi.decode(returnData, (Amount));
+        }
+        // amounts[0] = newAmount(token_b, token_a_amount, token_a, extra_data);
 
+        // TODO: since this uses amounts[0], we need to only do this if the amounts are valid
         // get amounts for trading token_b -> token_a
-        amounts[1] = newAmount(token_a, amounts[0].maker_wei, token_b, extra_data);
+        // we can't use try/catch with internal functions, so we have to use call instead
+        if (amounts[0].maker_wei > 0) {
+            (success, returnData) = address(this).staticcall(abi.encodeWithSignature(newAmountSignature, token_a, amounts[0].maker_wei, token_b, extra_data));
+            if (success) {
+                amounts[1] = abi.decode(returnData, (Amount));
+            }
+            // amounts[1] = newAmount(token_a, amounts[0].maker_wei, token_b, extra_data);
+        }
 
         return amounts;
     }
 
     function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory extra_data)
-        internal virtual view 
+        public virtual view
         returns (Amount memory);
 
     function newPartialAmount(address maker_token, uint taker_wei, address taker_token)
