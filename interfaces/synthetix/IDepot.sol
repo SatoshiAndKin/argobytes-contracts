@@ -1,24 +1,27 @@
-// TODO: should this be 0.6.7?
-pragma solidity 0.4.25;
+pragma solidity 0.6.7;
 
 
 /**
  * @title Synthetix Depot interface
  */
 interface IDepot {
-    function exchangeEtherForSynths() public payable returns (uint);
+    function exchangeEtherForSynths() external payable returns (uint);
 
     function exchangeEtherForSynthsAtRate(uint guaranteedRate) external payable returns (uint);
 
     function depositSynths(uint amount) external;
+
+    function synthsReceivedForEther(uint amount) external view returns (uint);
 
     function withdrawMyDepositedSynths() external;
 
     // Deprecated ABI for MAINNET. Only used on Testnets
     function exchangeEtherForSNX() external payable returns (uint);
 
+    // Deprecated ABI for MAINNET. Only used on Testnets
     function exchangeEtherForSNXAtRate(uint guaranteedRate) external payable returns (uint);
 
+    // Deprecated ABI for MAINNET. Only used on Testnets
     function exchangeSynthsForSNX() external payable returns (uint);
 
     event MaxEthPurchaseUpdated(uint amount);
