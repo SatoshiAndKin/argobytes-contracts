@@ -125,7 +125,7 @@ contract KyberAction is AbstractERC20Exchange {
     }
 
     function getAmounts(address token_a, uint256 token_a_amount, address token_b)
-        external
+        external view
         returns (Amount[] memory)
     {
         bytes memory extra_data = "";
