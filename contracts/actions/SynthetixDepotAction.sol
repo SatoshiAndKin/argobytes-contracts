@@ -12,11 +12,12 @@ pragma experimental ABIEncoderV2;
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {Strings} from "@openzeppelin/utils/Strings.sol";
 
-import {AbstractERC20Amounts} from "./AbstractERC20Exchange.sol";
-import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {IDepot} from "interfaces/synthetix/IDepot.sol";
 import {IAddressResolver} from "interfaces/synthetix/IAddressResolver.sol";
 import {ISystemStatus} from "interfaces/synthetix/ISystemStatus.sol";
+
+import {AbstractERC20Amounts} from "./AbstractERC20Exchange.sol";
+import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {Strings2} from "contracts/Strings2.sol";
 
 contract SynthetixDepotAction is AbstractERC20Amounts {
@@ -25,7 +26,6 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
     using Strings2 for address;
 
     IAddressResolver _address_resolver;
-
     ISystemStatus _status;
     IDepot _depot;
     address _sETH;
@@ -96,7 +96,7 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
         if (to == address(0x0)) {
             to = msg.sender;
         }
-
+        
         revert("SynthetixDepotAction.tradeEtherToSynthUSD: wip");
     }
 }

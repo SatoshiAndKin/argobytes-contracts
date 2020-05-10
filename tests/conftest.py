@@ -21,6 +21,14 @@ def atomic_trade(ArgobytesAtomicTrade, kollateral_invoker, owned_vault):
     yield atomic_trade_instance
 
 
+@pytest.fixture()
+def curve_fi_action(CurveFiAction):
+    curve_compounded = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
+    curve_n = 2
+
+    yield accounts[0].deploy(CurveFiAction, curve_compounded, curve_n)
+
+
 @pytest.fixture(scope="session")
 def dai_erc20():
     yield Contract.from_explorer("0x6b175474e89094c44da98b954eedeac495271d0f")

@@ -1,5 +1,11 @@
 from brownie import *
 
+CurveCompounded = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
+CurveUSDT = "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C"
+CurveY = "0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51"
+CurveB = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
+CurveSUSDV2 = "0xA5407eAE9Ba41422680e2e00537571bcC53efBfD"
+
 GasTokenAddress = "0x0000000000b3F879cb30FE243b4Dfee438691c04"
 KollateralInvokerAddress = "0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01"
 OneSplitAddress = "0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E"
@@ -39,6 +45,11 @@ def main():
     UniswapAction.deploy(UniswapFactory, {'from': accounts[0]})
     Weth9Action.deploy(Weth9Address, {'from': accounts[0]})
     SynthetixDepotAction.deploy(SynthetixAddressResolver, {'from': accounts[0]})
+    CurveFiAction.deploy(CurveCompounded, 2, {'from': accounts[0]})
+    CurveFiAction.deploy(CurveUSDT, 3, {'from': accounts[0]})
+    CurveFiAction.deploy(CurveY, 4, {'from': accounts[0]})
+    CurveFiAction.deploy(CurveB, 4, {'from': accounts[0]})
+    CurveFiAction.deploy(CurveSUSDV2, 4, {'from': accounts[0]})
 
     # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity even if it actually loses money
     accounts[1].transfer(argobytes_atomic_trade, 1e18)

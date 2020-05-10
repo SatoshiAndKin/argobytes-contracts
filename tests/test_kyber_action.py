@@ -13,7 +13,7 @@ def test_get_amounts(dai_erc20, no_call_coverage, kyber_action, usdc_erc20, weth
     eth_amount = 1e18
     dai_amount = 1e20
 
-    # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)
+    # getAmounts(address token_a, uint token_a_amount, address token_b)
     tx = kyber_action.getAmounts(zero_address, eth_amount, dai_erc20)
 
     print("tx 1 gas", tx.gas_used)

@@ -22,6 +22,8 @@ contract AbstractERC20ExchangeModifiers {
 
     /// @dev after the function, send any remaining ether to an address
     modifier sweepLeftoverEther(address payable to) {
+        // TODO: can we change "to" here? i'm not sure how modifiers interact
+
         _;
 
         uint balance = address(this).balance;
@@ -34,6 +36,8 @@ contract AbstractERC20ExchangeModifiers {
 
     /// @dev after the function, send any remaining tokens to an address
     modifier sweepLeftoverToken(address to, address token) {
+        // TODO: can we change "to" here? i'm not sure how modifiers interact
+
         _;
 
         uint balance = IERC20(token).balanceOf(address(this));
