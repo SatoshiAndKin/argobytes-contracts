@@ -4,6 +4,8 @@ from brownie import accounts
 import pytest
 import brownie
 
+zero_address = "0x0000000000000000000000000000000000000000"
+
 
 def test_get_amounts(dai_erc20, no_call_coverage, uniswap_action, usdc_erc20, weth9_erc20, skip_coverage):
     eth_amount = 1e18
