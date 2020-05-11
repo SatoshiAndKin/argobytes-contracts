@@ -88,7 +88,8 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
     }
 
     // solium-disable-next-line security/no-assign-params
-    function tradeEtherToSynthUSD(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
+    // TODO: i don't think we need dest_token at all. the caller could just encode based on the selector!
+    function tradeEtherToSynthUSD(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata /*extra_data*/)
         external
         payable
         sweepLeftoverEther(msg.sender)
@@ -96,7 +97,17 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
         if (to == address(0x0)) {
             to = msg.sender;
         }
-        
-        revert("SynthetixDepotAction.tradeEtherToSynthUSD: wip");
+
+        uint src_balance = address(this).balance;
+
+        _depot.exchangeEtherForSynths{value: src_balance}();
+
+        // TODO: should we use _sUSD or dest_token?
+        // TODO: if we use _sUSD, then we can just use the 0 address and save some gas from the caller
+        require(dest_token == _sUSD, "dest_token is not sUSD");
+
+        uint dest_balance = IERC20(_sUSD).balanceOf(address(this));
+
+        require(IERC20(_sUSD).transfer(to, dest_balance), "SynthetixDepotAction.tradeEtherToSynthUSD: transfer failed");
     }
 }

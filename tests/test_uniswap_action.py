@@ -50,9 +50,12 @@ def test_action(uniswap_action):
     # TODO: make sure USDC balance is zero (i think it will be swept back to accounts[0])
     # TODO: make sure DAI balance is non-zero
 
+    # TODO: save ETH balance for accounts[0]
+    # TODO: other tests need a similar change. we really should test zero_address sends to msg.sender on all of them
+
     # trade DAI to ETH
     # tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
-    uniswap_action.tradeTokenToEther(accounts[0], dai, 1, 0, "")
+    uniswap_action.tradeTokenToEther(zero_address, dai, 1, 0, "")
 
     # TODO: make sure DAI balance is zero (i think it will be swept back to accounts[0])
-    # TODO: make sure ETH balance is non-zero
+    # TODO: make sure ETH balance increased for accounts[0]

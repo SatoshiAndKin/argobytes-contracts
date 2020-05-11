@@ -51,7 +51,7 @@ def test_action(kyber_action, dai_erc20, usdc_erc20):
 
     # trade DAI to ETH
     # tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
-    kyber_action.tradeTokenToEther(accounts[0], dai_erc20, 1, 0, "")
+    kyber_action.tradeTokenToEther(zero_address, dai_erc20, 1, 0, "")
 
     # TODO: make sure DAI balance is zero (i think it will be swept back to accounts[0])
-    # TODO: make sure ETH balance is non-zero
+    # TODO: make sure ETH balance is non-zero for accounts[0]
