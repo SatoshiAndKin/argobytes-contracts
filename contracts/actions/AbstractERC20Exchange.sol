@@ -55,7 +55,7 @@ abstract contract AbstractERC20Amounts is AbstractERC20ExchangeModifiers {
         address taker_token;
         uint256 taker_wei;
 
-        // bytes4 selector;
+        bytes4 selector;
         bytes extra_data;
         string error;
     }
@@ -117,7 +117,7 @@ abstract contract AbstractERC20Amounts is AbstractERC20ExchangeModifiers {
             maker_wei: 0,
             taker_token: taker_token,
             taker_wei: taker_wei,
-            // selector: selector,
+            selector: "",
             extra_data: "",
             error: ""
         });
