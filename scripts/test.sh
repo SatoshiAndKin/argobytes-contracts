@@ -4,4 +4,5 @@
 [ -n "$VIRTUAL_ENV" ]
 
 # run the tests against the proper network with concurrency
-echo brownie test --network mainnet-fork -n 2
+# TODO: run with -n2 when ganache-cli doesn't have so many issues with OOMing
+brownie test --network mainnet-fork

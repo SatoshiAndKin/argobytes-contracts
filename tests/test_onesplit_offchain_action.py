@@ -16,12 +16,12 @@ def test_get_amounts(dai_erc20, no_call_coverage, onesplit_offchain_action, usdc
     zero_address = "0x0000000000000000000000000000000000000000"
 
     # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)
-    tx = onesplit_offchain_action.getAmounts(zero_address, eth_amount, dai_erc20, parts)
+    tx = onesplit_offchain_action.getAmounts.transact(zero_address, eth_amount, dai_erc20, parts)
 
     print("tx 1 gas", tx.gas_used)
 
     # TODO: use amounts from the previous call
-    tx = onesplit_offchain_action.getAmounts(dai_erc20, dai_amount, zero_address, parts)
+    tx = onesplit_offchain_action.getAmounts.transact(dai_erc20, dai_amount, zero_address, parts)
 
     print("tx 2 gas", tx.gas_used)
 
