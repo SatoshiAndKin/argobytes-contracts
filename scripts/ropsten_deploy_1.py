@@ -1,3 +1,4 @@
+import json
 from brownie import *
 
 CurveCompounded = "0x33b4161732B863B8C79957D1D75660F4E33a60bE"
@@ -57,10 +58,15 @@ def query_until_yes(question, default=None):
 def deploy_helper(contract, *constructor_params):
     name = contract._name
 
-    bytecodeWithParams = contract.deploy.encode_input(*constructor_params)
+    # bytecodeWithParams = contract.deploy.encode_input(*constructor_params)
 
-    print(name, "bytecodeWithParams:", bytecodeWithParams)
-    print(name, "abi:", contract.abi)
+    # print(name, "bytecodeWithParams:", "0x" + bytecodeWithParams)
+
+    print(name, "bytecode WITHOUT PARAMS:\n\n", "0x" + contract.bytecode)
+    print("")
+    print(name, "abi:\n\n", json.dumps(contract.abi))
+    print("")
+    print(name, "params: ", constructor_params)
 
     deployed_address = input(" ".join(["Input deployed address for", name, ": "]))
 
