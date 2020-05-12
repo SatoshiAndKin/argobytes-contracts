@@ -17,7 +17,7 @@ chardet==3.0.4            # via requests
 cytoolz==0.10.1           # via eth-keyfile, eth-utils
 eth-abi==2.1.1            # via eth-account, eth-brownie, eth-event, web3
 eth-account==0.5.2        # via web3
-eth-brownie==1.8.3        # via -r requirements.in
+eth-brownie==1.8.4        # via -r requirements.in
 eth-event==1.0.0          # via eth-brownie
 eth-hash[pycryptodome]==0.2.0  # via eth-brownie, eth-event, eth-utils, web3
 eth-keyfile==0.5.1        # via eth-account
@@ -29,7 +29,7 @@ execnet==1.7.1            # via pytest-xdist
 gitdb==4.0.5              # via gitpython
 gitpython==3.1.2          # via bandit
 hexbytes==0.2.0           # via eth-account, eth-brownie, eth-event, eth-rlp, web3
-hypothesis==5.10.4        # via eth-brownie
+hypothesis==5.11.0        # via eth-brownie
 idna==2.9                 # via requests
 importlib-metadata==1.6.0  # via jsonschema, pluggy, pytest
 inflection==0.4.0         # via mythx-models, pythx
@@ -41,7 +41,7 @@ lru-dict==1.1.6           # via web3
 mccabe==0.6.1             # via pylint
 more-itertools==8.2.0     # via pytest
 multiaddr==0.0.9          # via ipfshttpclient
-mythx-models==1.7.5       # via pythx
+mythx-models==1.7.7       # via pythx
 netaddr==0.7.19           # via multiaddr
 packaging==20.3           # via pytest
 parsimonious==0.8.1       # via eth-abi
@@ -51,9 +51,9 @@ prompt-toolkit==3.0.5     # via eth-brownie
 protobuf==3.11.3          # via web3
 psutil==5.7.0             # via eth-brownie
 py-solc-ast==1.2.4        # via eth-brownie
-py-solc-x==0.8.1          # via eth-brownie
+py-solc-x==0.8.2          # via eth-brownie
 py==1.8.1                 # via eth-brownie, pytest
-pycodestyle==2.5.0        # via autopep8
+pycodestyle==2.6.0        # via autopep8
 pycryptodome==3.9.7       # via eth-hash, eth-keyfile, vyper
 pygments==2.6.1           # via eth-brownie
 pyjwt==1.7.1              # via pythx
@@ -61,8 +61,8 @@ pylint==2.5.2             # via -r requirements.in
 pyparsing==2.4.7          # via packaging
 pyrsistent==0.16.0        # via jsonschema
 pytest-forked==1.1.3      # via pytest-xdist
-pytest-xdist==1.31.0      # via eth-brownie
-pytest==5.4.1             # via eth-brownie, pytest-forked, pytest-xdist
+pytest-xdist==1.32.0      # via eth-brownie
+pytest==5.4.2             # via eth-brownie, pytest-forked, pytest-xdist
 python-dateutil==2.8.1    # via mythx-models, pythx
 pythx==1.5.7              # via eth-brownie
 pyyaml==5.3.1             # via bandit, eth-brownie
@@ -75,7 +75,7 @@ sortedcontainers==2.1.0   # via hypothesis
 stevedore==1.32.0         # via bandit
 toml==0.10.0              # via pylint
 toolz==0.10.0             # via cytoolz
-tqdm==4.45.0              # via eth-brownie
+tqdm==4.46.0              # via eth-brownie
 typed-ast==1.4.1          # via astroid
 typing-extensions==3.7.4.2  # via web3
 urllib3==1.25.9           # via requests
