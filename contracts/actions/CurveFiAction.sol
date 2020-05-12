@@ -59,63 +59,53 @@ contract CurveFiAction is AbstractERC20Amounts {
     {
         Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
 
-        bool trade_underlying = false;
+        // i is the taker token
+        int128 i = _coins[taker_token];
         // j is the maker token
         int128 j = _coins[maker_token];
-        // i is the taker token
-        int128 i = 0;
 
-        if (j == 0) {
-            // no _coin was found. try _underlying_coins
+        if (i == 0 || j == 0) {
+            // at least one of the coins was not found
+            int128 underlying_i = _underlying_coins[taker_token];
+            int128 underlying_j = _underlying_coins[maker_token];
 
-            j = _underlying_coins[maker_token];
-
-            if (j == 0) {
+            if (underlying_i == 0 || underlying_j == 0) {
                 // no _coin and no _underlying_coin found. cancel
-                string memory err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported maker token ", maker_token.toString()));
+                // TODO: more specific error
+                string memory err;
+                // TODO: better log that uses both i/j and underlying_i/j
+                if (i == 0 && j == 0) {
+                    err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported underlying tokens ", maker_token.toString(), " and ", taker_token.toString()));
+                } else if (i == 0) {
+                    err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported underlying taker ", taker_token.toString()));
+                } else if (j == 0) {
+                    err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported underlying maker ", maker_token.toString()));
+                }
 
                 a.error = err;
 
                 return a;
             }
 
-            // we have a support maker token. now check the taker
-            trade_underlying = true;
+            // now that we know we have supported underlying_coins. fix the indexes to match what CurveFi expects
+            underlying_i -= 1;
+            underlying_j -= 1;
 
-            i = _underlying_coins[taker_token];
-
-            if (i == 0) {
-                string memory err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported underlying taker token ", taker_token.toString()));
-
-                a.error = err;
-
-                return a;
-            }
+            a.maker_wei = _curve_fi.get_dy_underlying(underlying_i, underlying_j, taker_wei);
+            a.selector = this.tradeUnderlying.selector;
         } else {
-            i = _coins[taker_token];
+            // both i and j are set! coins should be valid
 
-            if (i == 0) {
-                string memory err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported taker token ", taker_token.toString()));
+            // now that we know we have supported coins. fix the indexes to match what CurveFi expects
+            i -= 1;
+            j -= 1;
 
-                a.error = err;
-
-                return a;
-            }
-        }
-
-        // now that we know we have supported tokens. fix the indexes to match what CurveFi expects
-        j -= 1;
-        i -= 1;
-
-        if (trade_underlying) {
-            a.maker_wei = _curve_fi.get_dy_underlying(i, j, taker_wei);
-            // a.selector = this.tradeUnderlying.selector
-        } else {
             a.maker_wei = _curve_fi.get_dy(i, j, taker_wei);
-            // a.selector = this.trade.selector
+            a.selector = this.trade.selector;
         }
 
         //a.trade_extra_data = "";
+        //a.exchange_data = "";
 
         return a;
     }

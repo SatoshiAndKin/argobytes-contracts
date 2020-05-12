@@ -12,7 +12,7 @@ import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 
-contract AbstractERC20ExchangeModifiers {
+contract AbstractERC20Modifiers {
     using SafeERC20 for IERC20;
 
     address constant ZERO_ADDRESS = address(0);
@@ -30,7 +30,7 @@ contract AbstractERC20ExchangeModifiers {
 
         if (balance > 0) {
             (bool success, ) = to.call{value: balance}("");
-            require(success, "AbstractERC20ExchangeModifiers.sweepLeftoverEther: ETH transfer failed");
+            require(success, "AbstractERC20Modifiers.sweepLeftoverEther: ETH transfer failed");
         }
     }
 
@@ -48,7 +48,7 @@ contract AbstractERC20ExchangeModifiers {
     }
 }
 
-abstract contract AbstractERC20Amounts is AbstractERC20ExchangeModifiers {
+abstract contract AbstractERC20Amounts is AbstractERC20Modifiers {
     struct Amount {
         address maker_token;
         uint256 maker_wei;

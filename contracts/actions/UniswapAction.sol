@@ -152,35 +152,69 @@ contract UniswapAction is AbstractERC20Exchange {
         return _getAmounts(token_a, token_a_amount, token_b, extra_data);
     }
 
+    struct uniswapExchangeData {
+        address token;
+        uint token_supply;
+        uint ether_supply;
+    }
+
     function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory /* extra_data */)
         public override view 
         returns (Amount memory)
     {
         Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
+        uniswapExchangeData[] memory exchange_data;
 
         // TODO: this only works with input amounts. do we want it to work with output amounts?
         if (maker_token == ZERO_ADDRESS) {
             // token to eth
-            a.maker_wei = getExchange(taker_token).getTokenToEthInputPrice(taker_wei);
+            IUniswapExchange exchange = getExchange(taker_token);
+
+            a.maker_wei = exchange.getTokenToEthInputPrice(taker_wei);
+
+            a.selector = this.tradeTokenToEther.selector;
+
+            exchange_data = new uniswapExchangeData[](1);
+            exchange_data[0].token = taker_token;
+            exchange_data[0].token_supply = IERC20(taker_token).balanceOf(address(exchange));
+            exchange_data[0].ether_supply = address(exchange).balance;
         } else if (taker_token == ZERO_ADDRESS) {
             // eth to token
-            a.maker_wei = getExchange(maker_token).getEthToTokenInputPrice(taker_wei);
+            IUniswapExchange exchange = getExchange(taker_token);
+
+            a.maker_wei = exchange.getEthToTokenInputPrice(taker_wei);
+
+            a.selector = this.tradeEtherToToken.selector;
+            
+            exchange_data = new uniswapExchangeData[](1);
+            exchange_data[0].token = maker_token;
+            exchange_data[0].token_supply = IERC20(maker_token).balanceOf(address(exchange));
+            exchange_data[0].ether_supply = address(exchange).balance;
         } else {
             // token to token
-            a.maker_wei = getExchange(taker_token).getTokenToEthInputPrice(taker_wei);
-            a.maker_wei = getExchange(maker_token).getEthToTokenInputPrice(a.maker_wei);
+            IUniswapExchange exchange = getExchange(taker_token);
+
+            exchange_data = new uniswapExchangeData[](2);
+
+            a.maker_wei = exchange.getTokenToEthInputPrice(taker_wei);
+            exchange_data[1].token = maker_token;
+            exchange_data[0].token_supply = IERC20(taker_token).balanceOf(address(exchange));
+            exchange_data[0].ether_supply = address(exchange).balance;
+
+            exchange = getExchange(maker_token);
+
+            a.maker_wei = exchange.getEthToTokenInputPrice(a.maker_wei);
+            exchange_data[1].token = maker_token;
+            exchange_data[1].token_supply = IERC20(maker_token).balanceOf(address(exchange));
+            exchange_data[1].ether_supply = address(exchange).balance;
+
+            a.selector = this.tradeTokenToToken.selector;
         }
 
         // TODO: would be cool to encode the complete calldata, but we can't be sure about the "to" address. we could default to 0x0 and fill it in though
         //a.trade_extra_data = "";
 
-        if (maker_token == ZERO_ADDRESS) {
-            a.selector = this.tradeTokenToEther.selector;
-        } else if (taker_token == ZERO_ADDRESS) {
-            a.selector = this.tradeEtherToToken.selector;
-        } else {
-            a.selector = this.tradeTokenToToken.selector;
-        }
+        a.exchange_data = abi.encode(exchange_data);
 
         return a;
     }
