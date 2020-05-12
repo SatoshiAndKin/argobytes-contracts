@@ -104,7 +104,7 @@ contract CurveFiAction is AbstractERC20Amounts {
             a.selector = this.trade.selector;
         }
 
-        //a.trade_extra_data = "";
+        a.trade_extra_data = abi.encode([i, j]);
         //a.exchange_data = "";
 
         return a;
@@ -112,7 +112,7 @@ contract CurveFiAction is AbstractERC20Amounts {
 
     // trade wrapped stablecoins
     // solium-disable-next-line security/no-assign-params
-    function trade(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata /*extra_data*/)
+    function trade(address to, address src_token, address dest_token, uint dest_min_tokens, bytes calldata extra_data)
         external
         sweepLeftoverToken(msg.sender, src_token)
     {
@@ -120,7 +120,23 @@ contract CurveFiAction is AbstractERC20Amounts {
             to = msg.sender;
         }
 
-        revert("CurveFiAction.trade: wip");
+        (int128 i, int128 j) = abi.decode(extra_data, (int128, int128));
+
+        // Use the full balance of tokens transferred from the trade executor
+        uint256 src_amount = IERC20(src_token).balanceOf(address(this));
+        require(src_amount > 0, "CurveFiAction.trade: NO_SOURCE_AMOUNT");
+
+        // Approve the exchange to transfer tokens from this contract to the reserve
+        require(IERC20(src_token).approve(address(_curve_fi), src_amount), "CurveFiAction.trade: FAILED_APPROVE");
+
+        // do the trade
+        _curve_fi.exchange(i, j, src_amount, dest_min_tokens);
+
+        // forward the tokens that we bought
+        uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
+        require(dest_balance >= dest_min_tokens, "CurveFiAction.trade: LOW_DEST_BALANCE");
+
+        IERC20(dest_token).transfer(to, dest_balance);
     }
 
     // trade stablecoins
@@ -131,7 +147,7 @@ contract CurveFiAction is AbstractERC20Amounts {
         address dest_token,
         uint dest_min_tokens,
         uint dest_max_tokens,
-        bytes calldata /*extra_data*/
+        bytes calldata extra_data
     )
         external
         sweepLeftoverToken(msg.sender, src_token)
@@ -140,6 +156,22 @@ contract CurveFiAction is AbstractERC20Amounts {
             to = msg.sender;
         }
 
-        revert("CurveFiAction.tradeUnderlying: wip");
+        (int128 i, int128 j) = abi.decode(extra_data, (int128, int128));
+
+        // Use the full balance of tokens transferred from the trade executor
+        uint256 src_amount = IERC20(src_token).balanceOf(address(this));
+        require(src_amount > 0, "CurveFiAction.tradeUnderlying: NO_SOURCE_AMOUNT");
+
+        // Approve the exchange to transfer tokens from this contract to the reserve
+        require(IERC20(src_token).approve(address(_curve_fi), src_amount), "CurveFiAction.tradeUnderlying: FAILED_APPROVE");
+
+        // do the trade
+        _curve_fi.exchange_underlying(i, j, src_amount, dest_min_tokens);
+
+        // forward the tokens that we bought
+        uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
+        require(dest_balance >= dest_min_tokens, "CurveFiAction.tradeUnderlying: LOW_DEST_BALANCE");
+
+        IERC20(dest_token).transfer(to, dest_balance);
     }
 }

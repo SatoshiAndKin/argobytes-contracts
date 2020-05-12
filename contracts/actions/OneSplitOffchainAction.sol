@@ -35,7 +35,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             disable_flags
         );
 
-        require(expected_return > dest_min_tokens, "OneSplitOffchainAction.encodeExtraData: LOW_EXPECTED_RETURN");
+        require(expected_return >= dest_min_tokens, "OneSplitOffchainAction.encodeExtraData: LOW_EXPECTED_RETURN");
 
         bytes memory encoded = abi.encode(distribution, disable_flags);
 
@@ -119,6 +119,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         payable(to).transfer(dest_balance);
     }
 
+    // TODO: i don't think we actually want to disable things. we should enable multipath since it is only called offchain
     function allEnabled(address a, address b) internal view returns (uint256 disable_flags) {
         disable_flags = 0;
 

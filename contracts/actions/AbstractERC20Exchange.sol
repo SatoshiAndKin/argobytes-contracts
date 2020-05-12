@@ -123,6 +123,7 @@ abstract contract AbstractERC20Amounts is AbstractERC20Modifiers {
 
 abstract contract AbstractERC20Exchange is AbstractERC20Amounts {
 
+    // TODO: i think we should get rid of these generic functions. most every function ignores at least one of the arguments. this should make cleaner contracts and not just be considered gas golfing
     // these functions require that address(this) has an ether/token balance.
     // these functions might have some leftover ETH or src_token in them after they finish, so be sure to use the sweep modifiers on whatever calls these
     // TODO: decide on best order for the arguments

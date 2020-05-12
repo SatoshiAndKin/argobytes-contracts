@@ -12,8 +12,6 @@ KyberRegisterWallet = "0xECa04bB23612857650D727B8ed008f80952654ee"
 OneSplitAddress = "0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E"
 Weth9Address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
 KyberNetworkProxy = "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
-# TODO: use this. we just have to register our vault's address
-KyberWalletId = "0x0000000000000000000000000000000000000000"
 # https://contracts.synthetix.io/ReadProxyAddressResolver
 SynthetixAddressResolver = "0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2"
 UniswapFactory = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
@@ -42,7 +40,7 @@ def main():
     accounts[3].transfer(argobytes_owned_vault, 50 * 1e18)
 
     OneSplitOffchainAction.deploy(OneSplitAddress, {'from': accounts[0]})
-    KyberAction.deploy(KyberNetworkProxy, KyberWalletId, {'from': accounts[0]})
+    KyberAction.deploy(KyberNetworkProxy, argobytes_owned_vault, {'from': accounts[0]})
     UniswapAction.deploy(UniswapFactory, {'from': accounts[0]})
     Weth9Action.deploy(Weth9Address, {'from': accounts[0]})
     SynthetixDepotAction.deploy(SynthetixAddressResolver, {'from': accounts[0]})
