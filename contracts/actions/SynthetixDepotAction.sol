@@ -36,15 +36,9 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
         // https://docs.synthetix.io/contracts/AddressResolver
         _address_resolver = IAddressResolver(address_resolver);
 
-        // TODO: use setAddresses();
-        _status = ISystemStatus(_address_resolver.getAddress("SystemStatus"));
-        _depot = IDepot(0xE1f64079aDa6Ef07b03982Ca34f1dD7152AA3b86);
-        _sETH = 0x5e74C9036fb86BD7eCdcb084a0673EFc32eA31cb;
-        _SNX = 0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F;
-        _sUSD = 0x57Ab1ec28D129707052df4dF418D58a2D46d5f51;
+        setAddresses();
     }
 
-    // this will be wrong until may 10
     function setAddresses() public {
         _depot = IDepot(_address_resolver.getAddress("Depot"));
         _status = ISystemStatus(_address_resolver.getAddress("SystemStatus"));
