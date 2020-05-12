@@ -172,7 +172,15 @@ contract UniswapAction is AbstractERC20Exchange {
         }
 
         // TODO: would be cool to encode the complete calldata, but we can't be sure about the "to" address. we could default to 0x0 and fill it in though
-        //a.extra_data = "";
+        //a.trade_extra_data = "";
+
+        if (maker_token == ZERO_ADDRESS) {
+            a.selector = this.tradeTokenToEther.selector;
+        } else if (taker_token == ZERO_ADDRESS) {
+            a.selector = this.tradeEtherToToken.selector;
+        } else {
+            a.selector = this.tradeTokenToToken.selector;
+        }
 
         return a;
     }

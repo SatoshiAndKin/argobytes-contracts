@@ -56,7 +56,8 @@ abstract contract AbstractERC20Amounts is AbstractERC20ExchangeModifiers {
         uint256 taker_wei;
 
         bytes4 selector;
-        bytes extra_data;
+        bytes trade_extra_data;
+        bytes exchange_data;
         string error;
     }
 
@@ -103,22 +104,14 @@ abstract contract AbstractERC20Amounts is AbstractERC20ExchangeModifiers {
         internal pure
         returns (Amount memory)
     {
-        // bytes4 selector;
-        // if (maker_token == ZERO_ADDRESS) {
-        //     selector = this.tradeTokenToEther.selector;
-        // } else if (taker_token == ZERO_ADDRESS) {
-        //     selector = this.tradeEtherToToken.selector;
-        // } else {
-        //     selector = this.tradeTokenToToken.selector;
-        // }
-
         Amount memory a = Amount({
             maker_token: maker_token,
             maker_wei: 0,
             taker_token: taker_token,
             taker_wei: taker_wei,
             selector: "",
-            extra_data: "",
+            trade_extra_data: "",
+            exchange_data: "",
             error: ""
         });
 

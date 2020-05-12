@@ -161,12 +161,19 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
 
         Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
 
+        // TODO: would be cool to encode the complete calldata, but we can't be sure about the to address. we could default to 0x0
         (uint256 expected_return, bytes memory encoded) = this.encodeExtraData(a.taker_token, a.maker_token, a.taker_wei, 1, parts);
 
         a.maker_wei = expected_return;
-        a.extra_data = encoded;
+        a.trade_extra_data = encoded;
         
-        // TODO: would be cool to encode the complete calldata, but we can't be sure about the to address. we could default to 0x0
+        if (maker_token == ZERO_ADDRESS) {
+            a.selector = this.tradeTokenToEther.selector;
+        } else if (taker_token == ZERO_ADDRESS) {
+            a.selector = this.tradeEtherToToken.selector;
+        } else {
+            a.selector = this.tradeTokenToToken.selector;
+        }
 
         return a;
     }

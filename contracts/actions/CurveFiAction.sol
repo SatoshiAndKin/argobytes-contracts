@@ -115,7 +115,7 @@ contract CurveFiAction is AbstractERC20Amounts {
             // a.selector = this.trade.selector
         }
 
-        //a.extra_data = "";
+        //a.trade_extra_data = "";
 
         return a;
     }

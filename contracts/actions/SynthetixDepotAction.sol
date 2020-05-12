@@ -74,7 +74,7 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
             _status.requireSynthActive("SynthsUSD");
 
             a.maker_wei = _depot.synthsReceivedForEther(taker_wei);
-            // a.selector = this.tradeEtherToSynthUSD.selector;
+            a.selector = this.tradeEtherToSynthUSD.selector;
         } else {
             string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: found ", taker_token.toString(), "->", maker_token.toString(), ". supported ", ZERO_ADDRESS.toString(), "->", _sUSD.toString()));
 
@@ -82,7 +82,7 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
             a.error = err;
         }
 
-        //a.extra_data = "";
+        //a.trade_extra_data = "";
 
         return a;
     }

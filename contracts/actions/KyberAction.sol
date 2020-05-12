@@ -148,12 +148,15 @@ contract KyberAction is AbstractERC20Exchange {
         if (maker_token == ZERO_ADDRESS) {
             // token to eth
             (expected_rate, ) = _network_proxy.getExpectedRate(IERC20(taker_token), ETH_ON_KYBER, taker_wei);
+            a.selector = this.tradeTokenToEther.selector;
         } else if (taker_token == ZERO_ADDRESS) {
             // eth to token
             (expected_rate, ) = _network_proxy.getExpectedRate(ETH_ON_KYBER, IERC20(maker_token), taker_wei);
+            a.selector = this.tradeEtherToToken.selector;
         } else {
             // token to token
             (expected_rate, ) = _network_proxy.getExpectedRate(IERC20(taker_token), IERC20(maker_token), taker_wei);
+            a.selector = this.tradeTokenToToken.selector;
         }
 
         // TODO: disable the uniswap reserve? https://github.com/CryptoManiacsZone/1split/blob/614fa1efdd647d560491671c92869daf69f158b0/contracts/OneSplitBase.sol#L532
@@ -177,7 +180,7 @@ contract KyberAction is AbstractERC20Exchange {
 
         // TODO: use slippage_rate?
         a.maker_wei = expected_rate;
-        //a.extra_data = "";
+        //a.trade_extra_data = "";
 
         return a;
     }
