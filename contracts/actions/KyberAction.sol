@@ -1,13 +1,15 @@
 pragma solidity 0.6.7;
 pragma experimental ABIEncoderV2;
 
+import {Ownable} from "@openzeppelin/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
+
+import {IKyberNetworkProxy} from "interfaces/kyber/IKyberNetworkProxy.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {UniversalERC20, IERC20} from "contracts/UniversalERC20.sol";
-import {IKyberNetworkProxy} from "interfaces/kyber/IKyberNetworkProxy.sol";
 
-contract KyberAction is AbstractERC20Exchange {
+contract KyberAction is AbstractERC20Exchange, Ownable {
     // TODO: we were using ERC20 instead of IERC20 because of kyber's interface. does this work?
     using UniversalERC20 for IERC20;
 
@@ -19,10 +21,16 @@ contract KyberAction is AbstractERC20Exchange {
     IKyberNetworkProxy _network_proxy;
     address _wallet_id;
 
-    constructor(address network_proxy, address wallet_id) public {
+    constructor(address network_proxy, address wallet_id)
+        Ownable()
+        public
+    {
         _network_proxy = IKyberNetworkProxy(network_proxy);
 
-        // TODO: setter for _wallet_id
+        _wallet_id = wallet_id;
+    }
+
+    function setWalletId(address wallet_id) public onlyOwner {
         _wallet_id = wallet_id;
     }
 

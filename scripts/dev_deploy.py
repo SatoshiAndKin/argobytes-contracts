@@ -6,9 +6,9 @@ CurveY = "0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51"
 CurveB = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
 CurveSUSDV2 = "0xA5407eAE9Ba41422680e2e00537571bcC53efBfD"
 CurvePAX = "0x06364f10B501e868329afBc005b3492902d6C763"
-
 GasTokenAddress = "0x0000000000b3F879cb30FE243b4Dfee438691c04"
 KollateralInvokerAddress = "0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01"
+KyberRegisterWallet = "0xECa04bB23612857650D727B8ed008f80952654ee"
 OneSplitAddress = "0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E"
 Weth9Address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
 KyberNetworkProxy = "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
@@ -55,3 +55,7 @@ def main():
 
     # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity even if it actually loses money
     accounts[1].transfer(argobytes_atomic_trade, 1e18)
+
+    kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWallet, {'from': accounts[0]})
+
+    kyber_register_wallet.registerWallet(argobytes_owned_vault, {'from': accounts[0]})
