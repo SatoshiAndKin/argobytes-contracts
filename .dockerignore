@@ -6,6 +6,7 @@ report.*.json
 .hypothesis/
 .pytest_cache/
 build/
+Dockerfile
 reports/
 node_modules/
 venv/
