@@ -80,7 +80,8 @@ def send_eth_helper(to, amount):
 
 
 def main():
-    arb_bot = input("Input arb bot address: ")
+    arb_bot = input(
+        "Input arb bot address: [0x52517b7b19D3CA0Bd66c604BC1909D2c9951dbD5] ") or "0x52517b7b19D3CA0Bd66c604BC1909D2c9951dbD5"
 
     arb_bots = [
         arb_bot
