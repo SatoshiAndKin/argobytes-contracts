@@ -23,3 +23,7 @@ def test_get_amounts(no_call_coverage, curve_fi_action, usdc_erc20, dai_erc20, s
     print("tx 2 gas", tx.gas_used)
 
     # TODO: what should we assert?
+
+
+def test_action(curve_fi_action, dai_erc20, usdc_erc20):
+    assert False

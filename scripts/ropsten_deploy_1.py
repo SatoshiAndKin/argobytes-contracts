@@ -75,12 +75,14 @@ def deploy_helper(contract, *constructor_params):
     return contract.at(deployed_address)
 
 
-def transaction_helper(description, function, *function_params):
+def transaction_helper(description, contract, function, *function_params):
     unsigned_transaction = function.encode_input(*function_params)
 
-    print("Sign and send this transaction:", unsigned_transaction)
+    # TODO: do something to recommend a gas limit? mew seems to handle that for us
 
-    query_until_yes("Transaction", description, "confirmed?")
+    print("Sign and send this transaction:", contract, unsigned_transaction)
+
+    query_until_yes(" ".join(["Transaction", description, "confirmed?"]))
 
 
 def send_eth_helper(to, amount):
@@ -102,14 +104,14 @@ def main():
     argobytes_atomic_trade = deploy_helper(ArgobytesAtomicTrade, KollateralInvokerAddress, argobytes_owned_vault)
 
     transaction_helper("set ArgobytesAtomicTrade on ArgobytesOwnedVault",
-                       argobytes_owned_vault.setArgobytesAtomicTrade, argobytes_atomic_trade)
+                       argobytes_owned_vault, argobytes_owned_vault.setArgobytesAtomicTrade, argobytes_atomic_trade)
 
     send_eth_helper(argobytes_owned_vault, 0.5 * 1e18)
 
     # TODO: helper to setup kyber fee sharing
     # kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWallet)
 
-    # transaction_helper("register Kyber wallet", kyber_register_wallet.registerWallet, argobytes_owned_vault)
+    # transaction_helper("register Kyber wallet", kyber_register_wallet, kyber_register_wallet.registerWallet, argobytes_owned_vault)
 
     # deploy_helper(OneSplitOffchainAction, OneSplitAddress)
     deploy_helper(KyberAction, KyberNetworkProxy, argobytes_owned_vault)
