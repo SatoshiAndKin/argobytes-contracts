@@ -14,7 +14,7 @@ Weth9Address = "0xc778417e063141139fce010982780140aa0cd5ab"
 KyberNetworkProxy = "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
 KyberRegisterWallet = ""
 # https://contracts.synthetix.io/ReadProxyAddressResolver
-SynthetixAddressResolver = "0x5Eb054cfAc1e39e3C1b5C11A1b9C019e803fA033"
+SynthetixAddressResolver = "0x4da3B8fb742BC69531Ec7AdBAa06effDEd1A22BA"
 UniswapFactory = "0x9c83dCE8CA20E9aAF9D3efc003b2ea62aBC08351"
 
 # from Curve's logs - https://github.com/curvefi/curve-contract/blob/pool_compound/deployed/2020-03-25_ropsten_compound/ropsten.log

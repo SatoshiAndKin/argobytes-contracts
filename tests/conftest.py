@@ -101,7 +101,7 @@ def susd_erc20():
 
 @pytest.fixture(scope="session")
 def synthetix_address_resolver():
-    yield Contract.from_explorer("0xFbB6526ed92DA8915d4843a86166020d0B7bAAd0")
+    yield Contract.from_explorer("0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2")
 
 
 @pytest.fixture()
