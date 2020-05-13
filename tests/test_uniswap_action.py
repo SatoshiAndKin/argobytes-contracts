@@ -7,7 +7,8 @@ import brownie
 zero_address = "0x0000000000000000000000000000000000000000"
 
 
-def test_get_amounts(dai_erc20, no_call_coverage, uniswap_action, usdc_erc20, weth9_erc20, skip_coverage):
+# skip_coverage
+def test_get_amounts(dai_erc20, uniswap_action, usdc_erc20, weth9_erc20):
     eth_amount = 1e18
     dai_amount = 1e20
 
@@ -15,15 +16,19 @@ def test_get_amounts(dai_erc20, no_call_coverage, uniswap_action, usdc_erc20, we
 
     # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)
     # TODO: we could call these, but there is a problem decoding their return_value!
-    tx = uniswap_action.getAmounts.transact(zero_address, eth_amount, dai_erc20)
+    amounts = uniswap_action.getAmounts(zero_address, eth_amount, dai_erc20)
 
-    print("tx 1 gas", tx.gas_used)
+    print("amounts 1", amounts)
+    # TODO: what should we assert?
 
     # TODO: use amounts from the previous call
-    tx = uniswap_action.getAmounts.transact(dai_erc20, dai_amount, zero_address)
+    amounts = uniswap_action.getAmounts(dai_erc20, dai_amount, zero_address)
 
-    print("tx 2 gas", tx.gas_used)
-
+    print("amounts 2", amounts)
+    assert(amounts["taker_token"] == dai_erc20)
+    assert(amounts["maker_token"] == zero_address)
+    assert(amounts["taker_wei"] == dai_amount)
+    assert(amounts["maker_wei"] > 0)
     # TODO: what should we assert?
 
 

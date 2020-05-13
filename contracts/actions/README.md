@@ -12,3 +12,7 @@ Debugging (needs a LONG timeout!):
     tx = network.transaction.TransactionReceipt("0xa2caf427dd83e18060d29a0a1bbe105dc08c98720df686474a3cddba054edb82")  
     tx.trace()
     ```
+
+
+# TODO:
+when the exchange only has a few tokens, change approves to infinite approvals on contract creation instead of on each trade. theres no risk since the contract doesn't hold any funds

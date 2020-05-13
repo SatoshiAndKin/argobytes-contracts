@@ -7,7 +7,7 @@ import brownie
 zero_address = "0x0000000000000000000000000000000000000000"
 
 
-def test_get_amounts(synthetix_depot_action, susd_erc20, skip_coverage):
+def test_get_amounts(synthetix_depot_action, susd_erc20):
     eth_amount = 1e18
 
     # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)

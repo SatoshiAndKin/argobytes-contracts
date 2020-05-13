@@ -9,7 +9,7 @@ from hypothesis import settings
 zero_address = "0x0000000000000000000000000000000000000000"
 
 
-def test_get_amounts(dai_erc20, no_call_coverage, kyber_action, usdc_erc20, weth9_erc20, skip_coverage):
+def test_get_amounts(dai_erc20, kyber_action, usdc_erc20, weth9_erc20):
     eth_amount = 1e18
     dai_amount = 1e20
 

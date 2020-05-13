@@ -171,7 +171,6 @@ contract UniswapAction is AbstractERC20Exchange {
             IUniswapExchange exchange = getExchange(taker_token);
 
             a.maker_wei = exchange.getTokenToEthInputPrice(taker_wei);
-
             a.selector = this.tradeTokenToEther.selector;
 
             exchange_data = new uniswapExchangeData[](1);
@@ -183,7 +182,6 @@ contract UniswapAction is AbstractERC20Exchange {
             IUniswapExchange exchange = getExchange(taker_token);
 
             a.maker_wei = exchange.getEthToTokenInputPrice(taker_wei);
-
             a.selector = this.tradeEtherToToken.selector;
             
             exchange_data = new uniswapExchangeData[](1);
@@ -197,7 +195,7 @@ contract UniswapAction is AbstractERC20Exchange {
             exchange_data = new uniswapExchangeData[](2);
 
             a.maker_wei = exchange.getTokenToEthInputPrice(taker_wei);
-            exchange_data[1].token = maker_token;
+            exchange_data[0].token = maker_token;
             exchange_data[0].token_supply = IERC20(taker_token).balanceOf(address(exchange));
             exchange_data[0].ether_supply = address(exchange).balance;
 

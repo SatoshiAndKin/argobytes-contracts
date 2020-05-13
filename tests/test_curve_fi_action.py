@@ -9,7 +9,7 @@ from hypothesis import settings
 zero_address = "0x0000000000000000000000000000000000000000"
 
 
-def test_get_amounts(curve_fi_action, usdc_erc20, dai_erc20, skip_coverage):
+def test_get_amounts(curve_fi_action, usdc_erc20, dai_erc20):
     amount = 1e20
 
     # getAmounts(address token_a, uint token_a_amount, address token_b)
