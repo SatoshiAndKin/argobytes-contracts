@@ -29,7 +29,7 @@ def test_get_amounts(dai_erc20, no_call_coverage, onesplit_offchain_action, usdc
 
 
 # we skip coverage because this can end up being a LOT of calls which crashes ganche-cli
-def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20):
+def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20, skip_coverage):
     value = 1e17
 
     # make sure balances start zeroed

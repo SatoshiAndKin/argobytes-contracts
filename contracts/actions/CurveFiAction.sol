@@ -53,6 +53,13 @@ contract CurveFiAction is AbstractERC20Amounts {
         return _getAmounts(token_a, token_a_amount, token_b, extra_data);
     }
 
+    function encodeExtraData(int128 i, int128 j)
+        external view
+        returns (bytes memory encoded)
+    {
+        encoded = abi.encode([i, j]);
+    }
+
     function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory /* extra_data */)
         public override view
         returns (Amount memory)
@@ -104,7 +111,7 @@ contract CurveFiAction is AbstractERC20Amounts {
             a.selector = this.trade.selector;
         }
 
-        a.trade_extra_data = abi.encode([i, j]);
+        a.trade_extra_data = this.encodeExtraData(i, j);
         //a.exchange_data = "";
 
         return a;

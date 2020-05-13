@@ -1,5 +1,5 @@
 import pytest
-from brownie import accounts, Contract
+from brownie import *
 
 # TODO: it's dangerous out there. take this
 # import pdb
@@ -7,6 +7,8 @@ from brownie import accounts, Contract
 
 # test isolation, always use!
 # be careful though! you can still leak state in other fixtures use scope="module" or scope="session"
+
+
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
     pass
@@ -37,6 +39,11 @@ def dai_erc20():
 @pytest.fixture()
 def example_action(ExampleAction):
     yield accounts[0].deploy(ExampleAction)
+
+
+@pytest.fixture(scope="session")
+def gastoken():
+    yield Contract.from_explorer("0x0000000000b3F879cb30FE243b4Dfee438691c04")
 
 
 @pytest.fixture()
@@ -79,17 +86,27 @@ def onesplit_offchain_action(OneSplitOffchainAction, onesplit):
     yield accounts[0].deploy(OneSplitOffchainAction, onesplit)
 
 
-@pytest.fixture(scope="session")
-def gastoken():
-    yield Contract.from_explorer("0x0000000000b3F879cb30FE243b4Dfee438691c04")
-
-
 @pytest.fixture()
 def owned_vault(ArgobytesOwnedVault, gastoken):
     # deployer = accounts[0]
     arb_bots = [accounts[1]]
 
     yield accounts[0].deploy(ArgobytesOwnedVault, gastoken, arb_bots)
+
+
+@pytest.fixture(scope="session")
+def susd_erc20():
+    yield Contract.from_explorer("0x57ab1ec28d129707052df4df418d58a2d46d5f51")
+
+
+@pytest.fixture(scope="session")
+def synthetix_address_resolver():
+    yield Contract.from_explorer("0xFbB6526ed92DA8915d4843a86166020d0B7bAAd0")
+
+
+@pytest.fixture()
+def synthetix_depot_action(SynthetixDepotAction, synthetix_address_resolver):
+    yield accounts[0].deploy(SynthetixDepotAction, synthetix_address_resolver)
 
 
 @pytest.fixture()
