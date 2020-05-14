@@ -158,7 +158,7 @@ contract UniswapAction is AbstractERC20Exchange {
         uint ether_supply;
     }
 
-    function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory /* extra_data */)
+    function newAmount(address maker_token, uint256 taker_wei, address taker_token, bytes memory /* extra_data */)
         public override view 
         returns (Amount memory)
     {
@@ -179,7 +179,7 @@ contract UniswapAction is AbstractERC20Exchange {
             exchange_data[0].ether_supply = address(exchange).balance;
         } else if (taker_token == ZERO_ADDRESS) {
             // eth to token
-            IUniswapExchange exchange = getExchange(taker_token);
+            IUniswapExchange exchange = getExchange(maker_token);
 
             a.maker_wei = exchange.getEthToTokenInputPrice(taker_wei);
             a.selector = this.tradeEtherToToken.selector;
