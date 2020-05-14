@@ -16,20 +16,20 @@ def test_get_amounts(dai_erc20, onesplit_offchain_action, usdc_erc20, weth9_erc2
     zero_address = "0x0000000000000000000000000000000000000000"
 
     # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)
-    tx = onesplit_offchain_action.getAmounts.transact(zero_address, eth_amount, dai_erc20, parts)
+    amounts = onesplit_offchain_action.getAmounts(zero_address, eth_amount, dai_erc20, parts)
 
-    print("tx 1 gas", tx.gas_used)
+    print("amounts 1", amounts)
 
     # TODO: use amounts from the previous call
-    tx = onesplit_offchain_action.getAmounts.transact(dai_erc20, dai_amount, zero_address, parts)
+    amounts = onesplit_offchain_action.getAmounts(dai_erc20, dai_amount, zero_address, parts)
 
-    print("tx 2 gas", tx.gas_used)
+    print("amounts 2", amounts)
 
     # TODO: what should we assert?
 
 
 # we skip coverage because this can end up being a LOT of calls which crashes ganche-cli
-def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20, skip_coverage):
+def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20, no_call_coverage):
     value = 1e17
 
     # make sure balances start zeroed

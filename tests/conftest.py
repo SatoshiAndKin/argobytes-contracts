@@ -23,12 +23,26 @@ def atomic_trade(ArgobytesAtomicTrade, kollateral_invoker, owned_vault):
     yield atomic_trade_instance
 
 
+@pytest.fixture(scope="session")
+def cdai_erc20():
+    yield Contract.from_explorer("0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643")
+
+
+@pytest.fixture(scope="session")
+def cusdc_erc20():
+    yield Contract.from_explorer("0x39aa39c021dfbae8fac545936693ac917d5e7563")
+
+
+@pytest.fixture(scope="session")
+def curve_fi_compound(CurveFiAction):
+    yield Contract.from_explorer("0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56")
+
+
 @pytest.fixture()
-def curve_fi_action(CurveFiAction):
-    curve_compounded = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
+def curve_fi_compound_action(CurveFiAction, curve_fi_compound):
     curve_n = 2
 
-    yield accounts[0].deploy(CurveFiAction, curve_compounded, curve_n)
+    yield accounts[0].deploy(CurveFiAction, curve_fi_compound, curve_n)
 
 
 @pytest.fixture(scope="session")
@@ -46,14 +60,14 @@ def gastoken():
     yield Contract.from_explorer("0x0000000000b3F879cb30FE243b4Dfee438691c04")
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def kollateral_invoker(ExampleAction):
-    yield "0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01"
+    yield Contract.from_explorer("0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01")
 
 
 @pytest.fixture()
-def kyber_action(KyberAction, kyber_network_proxy, kyber_wallet_id):
-    yield accounts[0].deploy(KyberAction, kyber_network_proxy, kyber_wallet_id)
+def kyber_action(KyberAction, kyber_network_proxy, owned_vault):
+    yield accounts[0].deploy(KyberAction, kyber_network_proxy, owned_vault)
 
 
 @pytest.fixture(scope="session")
@@ -64,12 +78,6 @@ def kyber_network_proxy():
 
 
 @pytest.fixture(scope="session")
-def kyber_wallet_id():
-    # TODO: should we do the vault address? i think so. then if someone else uses our proxy, we can get some credit. but maybe we should do the KyberAction
-    yield "0x0000000000000000000000000000000000000000"
-
-
-@pytest.fixture()
 def onesplit():
     # 1split.eth
     # TODO: does this support ENS? this is 1split.eth (although its probably better to have an address here)

@@ -105,13 +105,13 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         uint256 ending_vault_balance = borrow_token.universalBalanceOf(address(this));
 
         // we burn gas token before the very end. that way if we revert, we get more of our gas back and don't actually burn any tokens
-        // TODO: is this true? if not, just use the modifier
+        // TODO: is this true? if not, just use the modifier. i think this also means we can free slightly more tokens
         endFreeGasTokens(initial_gas);
 
         // we allow this to be equal because it's possible that we got our profits somewhere else (like uniswap or kollateral LP fees)
         if (ending_vault_balance < starting_vault_balance) {
             uint256 decreased_amount = starting_vault_balance - ending_vault_balance;
-            string memory err = string(abi.encodePacked("ArgobytesOwnedVault.atomicArbitrage: Vault balance of ", address(borrow_token).toString(), " did not increase. Decreased by ", decreased_amount.toString()));
+            string memory err = string(abi.encodePacked("ArgobytesOwnedVault.atomicArbitrage: Vault balance of ", address(borrow_token).toString(), " decreased by ", decreased_amount.toString()));
             revert(err);
         }
 

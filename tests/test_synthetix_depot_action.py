@@ -12,9 +12,9 @@ def test_get_amounts(synthetix_depot_action, susd_erc20):
 
     # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)
     # TODO: we could call these, but there is a bug in brownie decoding their return_value!
-    tx = synthetix_depot_action.getAmounts.transact(zero_address, eth_amount, susd_erc20)
+    amounts = synthetix_depot_action.getAmounts(zero_address, eth_amount, susd_erc20)
 
-    print("tx gas", tx.gas_used)
+    print("amounts", amounts)
 
     # TODO: what should we assert?
 

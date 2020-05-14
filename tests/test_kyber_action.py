@@ -14,14 +14,14 @@ def test_get_amounts(dai_erc20, kyber_action, usdc_erc20, weth9_erc20):
     dai_amount = 1e20
 
     # getAmounts(address token_a, uint token_a_amount, address token_b)
-    tx = kyber_action.getAmounts.transact(zero_address, eth_amount, dai_erc20)
+    amounts = kyber_action.getAmounts(zero_address, eth_amount, dai_erc20)
 
-    print("tx 1 gas", tx.gas_used)
+    print("amounts 1", amounts)
 
     # TODO: use amounts from the previous call
-    tx = kyber_action.getAmounts.transact(dai_erc20, dai_amount, zero_address)
+    amounts = kyber_action.getAmounts(dai_erc20, dai_amount, zero_address)
 
-    print("tx 2 gas", tx.gas_used)
+    print("amounts 2", amounts)
 
     # TODO: what should we assert?
 
