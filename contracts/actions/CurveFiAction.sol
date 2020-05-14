@@ -35,11 +35,14 @@ contract CurveFiAction is AbstractERC20Amounts {
 
         for (int128 i = 0; i < n; i++) {
             address coin = _curve_fi.coins(i);
-
-            _coins[coin] = i + 1;
-
             address underlying_coin = _curve_fi.underlying_coins(i);
 
+            // Approve the exchange to transfer tokens from this contract to the reserve
+            require(IERC20(coin).approve(address(_curve_fi), uint256(-1)), "CurveFiAction: FAILED_APPROVE");
+            require(IERC20(underlying_coin).approve(address(_curve_fi), uint256(-1)), "CurveFiAction: FAILED_APPROVE_UNDERLYING");
+
+            // save the coins with an index of + 1. this lets us use 0
+            _coins[coin] = i + 1;
             _underlying_coins[underlying_coin] = i + 1;
         }
     }
@@ -133,10 +136,7 @@ contract CurveFiAction is AbstractERC20Amounts {
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
         require(src_amount > 0, "CurveFiAction.trade: NO_SOURCE_AMOUNT");
 
-        // Approve the exchange to transfer tokens from this contract to the reserve
-        require(IERC20(src_token).approve(address(_curve_fi), src_amount), "CurveFiAction.trade: FAILED_APPROVE");
-
-        // do the trade
+        // do the trade (approve was already called)
         _curve_fi.exchange(i, j, src_amount, dest_min_tokens);
 
         // forward the tokens that we bought
@@ -153,7 +153,6 @@ contract CurveFiAction is AbstractERC20Amounts {
         address src_token,
         address dest_token,
         uint dest_min_tokens,
-        uint dest_max_tokens,
         bytes calldata extra_data
     )
         external
@@ -169,10 +168,7 @@ contract CurveFiAction is AbstractERC20Amounts {
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
         require(src_amount > 0, "CurveFiAction.tradeUnderlying: NO_SOURCE_AMOUNT");
 
-        // Approve the exchange to transfer tokens from this contract to the reserve
-        require(IERC20(src_token).approve(address(_curve_fi), src_amount), "CurveFiAction.tradeUnderlying: FAILED_APPROVE");
-
-        // do the trade
+        // do the trade (approve was already called)
         _curve_fi.exchange_underlying(i, j, src_amount, dest_min_tokens);
 
         // forward the tokens that we bought

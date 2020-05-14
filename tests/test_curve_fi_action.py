@@ -25,7 +25,7 @@ def test_get_amounts(curve_fi_action, usdc_erc20, dai_erc20):
     # TODO: what should we assert?
 
 
-def test_action(curve_fi_action, dai_erc20, uniswap_action, usdc_erc20):
+def test_underlying_action(curve_fi_action, dai_erc20, uniswap_action, usdc_erc20):
     # put some ETH into the uniswap action so we can buy some DAI
     accounts[0].transfer(uniswap_action, 1e18)
     uniswap_action.tradeEtherToToken(curve_fi_action, dai_erc20, 1, 0, "")
@@ -35,13 +35,13 @@ def test_action(curve_fi_action, dai_erc20, uniswap_action, usdc_erc20):
     # our rust code will get this from getAmounts
     dai_to_usdc_extra_data = curve_fi_action.encodeExtraData(0, 1)
 
-    curve_fi_action.tradeUnderlying(curve_fi_action, dai_erc20, usdc_erc20, 1, 0, dai_to_usdc_extra_data)
+    curve_fi_action.tradeUnderlying(curve_fi_action, dai_erc20, usdc_erc20, 1, dai_to_usdc_extra_data)
 
     # TODO: check balance of usdc and dai
 
     usdc_to_dai_extra_data = curve_fi_action.encodeExtraData(1, 0)
 
-    curve_fi_action.tradeUnderlying(curve_fi_action, usdc_erc20, dai_erc20, 1, 0, usdc_to_dai_extra_data)
+    curve_fi_action.tradeUnderlying(curve_fi_action, usdc_erc20, dai_erc20, 1, usdc_to_dai_extra_data)
 
     # TODO: check balance of usdc and dai
     # TODO: actually assert things
