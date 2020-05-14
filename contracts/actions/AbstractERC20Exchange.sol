@@ -5,7 +5,7 @@
  * 
  * Rewrite this to use UniversalERC20? I'm not sure its worth it. this is pretty easy to follow.
  */
-pragma solidity 0.6.7;
+pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";

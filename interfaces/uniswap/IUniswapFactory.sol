@@ -1,4 +1,4 @@
-pragma solidity 0.6.7;
+pragma solidity 0.6.8;
 
 /* https://docs.uniswap.io/smart-contract-integration/interface#factory-interface */
 

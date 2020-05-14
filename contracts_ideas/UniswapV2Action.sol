@@ -1,4 +1,4 @@
-pragma solidity 0.6.7;
+pragma solidity 0.6.8;
 
 // import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 // import "interfaces/uniswap_v2/IUniswapFactoryV2.sol";

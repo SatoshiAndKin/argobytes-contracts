@@ -1,4 +1,4 @@
-pragma solidity 0.6.7;
+pragma solidity 0.6.8;
 
 library Strings2 {
     function toString(address x) internal pure returns (string memory) {

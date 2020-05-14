@@ -1,4 +1,4 @@
-pragma solidity 0.6.7;
+pragma solidity 0.6.8;
 
 interface ICurveFi {
     function get_virtual_price() external returns (uint256 out);

@@ -1,4 +1,4 @@
-pragma solidity 0.6.7;
+pragma solidity 0.6.8;
 
 interface IWETH9 {
     function balanceOf(address) external returns (uint256);
