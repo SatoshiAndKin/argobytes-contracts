@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * There are multitudes of possible contracts for SoloArbitrage. AbstractExchange is for interfacing with ERC20.
  * 

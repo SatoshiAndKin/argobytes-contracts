@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 // Store profits and provide them for flash lending
 pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
@@ -24,14 +25,14 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
     using Strings2 for address;
     using UniversalERC20 for IERC20;
 
-    bytes32 internal constant TRUSTED_ARBITRAGER_ROLE = keccak256("TRUSTED_ARBITRAGER_ROLE");
+    bytes32 public constant TRUSTED_ARBITRAGER_ROLE = keccak256("TRUSTED_ARBITRAGER_ROLE");
 
     IArgobytesAtomicTrade _aat;
 
     /**
      * @notice Deploy the contract.
      */
-    constructor(address gas_token, address[] memory trusted_arbitragers)
+    constructor(address gas_token, address[] memory trusted_arbitragers, address payable aat)
         public
         GasTokenBurner(gas_token)
     {
@@ -50,21 +51,20 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
             _setupRole(TRUSTED_ARBITRAGER_ROLE, trusted_arbitragers[i]);
         }
 
-        // you still need to call setArgobytesAtomicArbitrage!
-        // TODO: if we ever have multiple contracts for arbitrage, it might be worth taking the address as calldata, but this is simpler for now
+        _aat = IArgobytesAtomicTrade(aat);
     }
 
     // allow receiving tokens
     // TODO: add withdraw helpers! (otherwise we can just use the backdoor)
     receive() external payable { }
 
-    // TODO: address payable once rust's ethabi is smarter
-    function setArgobytesAtomicTrade(address aaa) public {
+    // TODO: we might need to get rid of this payable if rust's abi handling has issues
+    function setArgobytesAtomicTrade(address payable aat) public {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "ArgobytesOwnedVault: Caller is not default admin");
 
         // TODO: emit an event
 
-        _aat = IArgobytesAtomicTrade(payable(aaa));
+        _aat = IArgobytesAtomicTrade(aat);
     }
 
     function atomicArbitrage(
@@ -95,8 +95,6 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         } else if (starting_vault_balance > 0) {
             borrow_token.universalTransfer(address(_aat), starting_vault_balance);
         }
-
-        require(address(_aat) != address(0x0), "ArgobytesOwnedVault.atomicArbitrage: require setArgobytesAtomicArbitrage");
 
         // notice that this is an atomic trade. it doesn't require a profitable arbitrage. we have to check that ourself
         _aat.atomicTrade(tokens, tokenAmount, encoded_actions);

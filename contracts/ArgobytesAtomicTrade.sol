@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 // Argobytes is Satoshi & Kin's smart contract for arbitrage trading.
 // Uses flash loans so that we have near infinite liquidity.
 // Uses gas token so that we pay less in miner fees.
@@ -31,30 +32,23 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
 
     address internal constant ZERO_ADDRESS = address(0x0);
     address internal constant KOLLATERAL_ETH = address(0x0000000000000000000000000000000000000001);
-    bytes32 internal constant TRUSTED_TRADER_ROLE = keccak256("TRUSTED_TRADER_ROLE");
+    bytes32 public constant TRUSTED_TRADER_ROLE = keccak256("TRUSTED_TRADER_ROLE");
 
     // https://github.com/kollateral/kollateral/blob/master/lib/static/invoker.ts
     // they take a 6bps fee
-    IInvoker public _kollateral_invoker = IInvoker(0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01);
+    IInvoker public _kollateral_invoker;
 
     /**
      * @notice Deploy the contract.
      */
-    constructor(address kollateral_invoker, address first_vault)
+    constructor(address kollateral_invoker)
         public
     {
         // Grant the contract deployer the "default admin" role
         // it will be able to grant and revoke any roles
-        // TODO: what happened. this used to be _grantRole, but now its grantRole
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
-        // Grant a vault smart contract address the "trusted trader" role
-        // it will be able to call "atomicTrade"
-        // you could also give a bot this role, but it would be limited to using kollateral
-        // TODO: eventually, this should be entirely open
-        _setupRole(TRUSTED_TRADER_ROLE, first_vault);
-
-        // TODO: if we want this open, this should be an argument on every contract call. compare gas costs though
+        // TODO: if we want this open, this should be an argument on every contract call. compare gas costs though. maybe just allow overriding
         setKollateralInvoker(kollateral_invoker);
     }
 

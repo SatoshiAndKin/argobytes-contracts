@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /* The Depot is a place to deposit any excess sUSD for others to purchase it with ETH
 
 https://docs.synthetix.io/contracts/depot/
@@ -11,6 +12,7 @@ pragma experimental ABIEncoderV2;
 
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {Strings} from "@openzeppelin/utils/Strings.sol";
+import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
 
 import {ICurveFi} from "interfaces/curvefi/ICurveFi.sol";
 
@@ -20,6 +22,7 @@ import {Strings2} from "contracts/Strings2.sol";
 
 contract CurveFiAction is AbstractERC20Amounts {
     using UniversalERC20 for IERC20;
+    using SafeERC20 for IERC20;
     using Strings for uint;
     using Strings2 for address;
 
@@ -35,12 +38,21 @@ contract CurveFiAction is AbstractERC20Amounts {
 
         for (int128 i = 0; i < n; i++) {
             address coin = _curve_fi.coins(i);
+
+            require(coin != ZERO_ADDRESS, "CurveFiAction: Unknown coin");
+
             address underlying_coin = _curve_fi.underlying_coins(i);
 
-            // Approve the exchange to transfer tokens from this contract to the reserve
-            require(IERC20(coin).approve(address(_curve_fi), uint256(-1)), "CurveFiAction: FAILED_APPROVE");
-            require(IERC20(underlying_coin).approve(address(_curve_fi), uint256(-1)), "CurveFiAction: FAILED_APPROVE_UNDERLYING");
+            require(underlying_coin != ZERO_ADDRESS, "CurveFiAction: Unknown underlying_coin");
 
+            // Approve the transfer of tokens from this contract to the exchange contract
+            if (IERC20(coin).allowance(address(this), address(_curve_fi)) == 0) {
+                IERC20(coin).safeApprove(address(_curve_fi), uint256(-1));
+            }
+            if (IERC20(underlying_coin).allowance(address(this), address(_curve_fi)) == 0) {
+                IERC20(underlying_coin).safeApprove(address(_curve_fi), uint256(-1));
+            }
+    
             // save the coins with an index of + 1. this lets us use 0
             _coins[coin] = i + 1;
             _underlying_coins[underlying_coin] = i + 1;

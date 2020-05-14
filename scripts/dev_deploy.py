@@ -26,10 +26,13 @@ def main():
         accounts[4],
     ]
 
-    argobytes_owned_vault = ArgobytesOwnedVault.deploy(GasTokenAddress, arb_bots, {'from': accounts[0]})
-
     argobytes_atomic_trade = ArgobytesAtomicTrade.deploy(
-        KollateralInvokerAddress, argobytes_owned_vault, {'from': accounts[0]})
+        KollateralInvokerAddress, {'from': accounts[0]})
+
+    argobytes_owned_vault = ArgobytesOwnedVault.deploy(
+        GasTokenAddress, arb_bots, argobytes_atomic_trade, {'from': accounts[0]})
+
+    argobytes_atomic_trade.grantRole(argobytes_atomic_trade.TRUSTED_TRADER_ROLE(), argobytes_owned_vault)
 
     argobytes_owned_vault.setArgobytesAtomicTrade(argobytes_atomic_trade)
 

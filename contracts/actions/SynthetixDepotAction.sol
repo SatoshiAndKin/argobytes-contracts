@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /* The Depot is a place to deposit any excess sUSD for others to purchase it with ETH
 
 https://docs.synthetix.io/contracts/depot/
