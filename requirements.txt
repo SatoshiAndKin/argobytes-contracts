@@ -17,14 +17,14 @@ chardet==3.0.4            # via requests
 cytoolz==0.10.1           # via eth-keyfile, eth-utils
 eth-abi==2.1.1            # via eth-account, eth-brownie, eth-event, web3
 eth-account==0.5.2        # via web3
-eth-brownie==1.8.4        # via -r requirements.in
+eth-brownie==1.8.5        # via -r requirements.in
 eth-event==1.0.0          # via eth-brownie
 eth-hash[pycryptodome]==0.2.0  # via eth-brownie, eth-event, eth-utils, web3
 eth-keyfile==0.5.1        # via eth-account
 eth-keys==0.3.3           # via eth-account, eth-keyfile
 eth-rlp==0.1.2            # via eth-account
 eth-typing==2.2.1         # via eth-abi, eth-keys, eth-utils, web3
-eth-utils==1.8.4          # via eth-abi, eth-account, eth-brownie, eth-keyfile, eth-keys, eth-rlp, hexbytes, rlp, web3
+eth-utils==1.9.0          # via eth-abi, eth-account, eth-brownie, eth-keyfile, eth-keys, eth-rlp, hexbytes, rlp, web3
 execnet==1.7.1            # via pytest-xdist
 gitdb==4.0.5              # via gitpython
 gitpython==3.1.2          # via bandit
@@ -73,7 +73,7 @@ six==1.14.0               # via astroid, asttokens, bandit, ipfshttpclient, json
 smmap==3.0.4              # via gitdb
 sortedcontainers==2.1.0   # via hypothesis
 stevedore==1.32.0         # via bandit
-toml==0.10.0              # via pylint
+toml==0.10.1              # via pylint
 toolz==0.10.0             # via cytoolz
 tqdm==4.46.0              # via eth-brownie
 typed-ast==1.4.1          # via astroid
