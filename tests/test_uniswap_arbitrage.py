@@ -8,8 +8,8 @@ from hypothesis import settings
 # @given(
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
-def test_uniswap_arbitrage(atomic_trade, dai_erc20, owned_vault, example_action, uniswap_action, usdc_erc20):
-    assert owned_vault.balance() == 0
+def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, example_action, uniswap_action, usdc_erc20):
+    assert argobytes_owned_vault.balance() == 0
     assert example_action.balance() == 0
 
     value = 1e10
@@ -18,20 +18,20 @@ def test_uniswap_arbitrage(atomic_trade, dai_erc20, owned_vault, example_action,
     zero_address = "0x0000000000000000000000000000000000000000"
 
     # send some ETH into the vault
-    accounts[0].transfer(owned_vault, value)
+    accounts[0].transfer(argobytes_owned_vault, value)
     # send some ETH into the sweep contract to simulate arbitrage profits
     accounts[0].transfer(example_action, value)
 
     # mint some gas token
     # TODO: how much should we make?
-    owned_vault.mintGasToken()
+    argobytes_owned_vault.mintGasToken()
 
     # make sure balances match what we expect
-    assert owned_vault.balance() == value
+    assert argobytes_owned_vault.balance() == value
     assert example_action.balance() == value
 
     # sweep a bunch of times to use up gas
-    encoded_actions = atomic_trade.encodeActions(
+    encoded_actions = argobytes_atomic_trade.encodeActions(
         [
             uniswap_action,
             uniswap_action,
@@ -53,12 +53,12 @@ def test_uniswap_arbitrage(atomic_trade, dai_erc20, owned_vault, example_action,
         ],
     )
 
-    arbitrage_tx = owned_vault.atomicArbitrage([zero_address], value, encoded_actions, {'from': accounts[1]})
+    arbitrage_tx = argobytes_owned_vault.atomicArbitrage([zero_address], value, encoded_actions, {'from': accounts[1]})
 
     # make sure balances match what we expect
     # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet
     assert arbitrage_tx.return_value > 0
-    assert owned_vault.balance() > 0
+    assert argobytes_owned_vault.balance() > 0
 
     # TODO: should we compare this to running without burning gas token?
     print("gas_used_with_gastoken: ", arbitrage_tx.gas_used)

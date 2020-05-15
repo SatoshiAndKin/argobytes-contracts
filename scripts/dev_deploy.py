@@ -34,8 +34,6 @@ def main():
 
     argobytes_atomic_trade.grantRole(argobytes_atomic_trade.TRUSTED_TRADER_ROLE(), argobytes_owned_vault)
 
-    argobytes_owned_vault.setArgobytesAtomicTrade(argobytes_atomic_trade)
-
     # TODO: our rust code doesn't check our real balances yet, so just give the vault a ton of coins
     accounts[0].transfer(argobytes_owned_vault, 50 * 1e18)
     accounts[1].transfer(argobytes_owned_vault, 50 * 1e18)

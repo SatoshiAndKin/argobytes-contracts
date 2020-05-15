@@ -15,12 +15,8 @@ def isolation(fn_isolation):
 
 
 @pytest.fixture()
-def atomic_trade(ArgobytesAtomicTrade, kollateral_invoker, owned_vault):
-    atomic_trade_instance = accounts[0].deploy(ArgobytesAtomicTrade, kollateral_invoker, owned_vault)
-
-    owned_vault.setArgobytesAtomicTrade(atomic_trade_instance)
-
-    yield atomic_trade_instance
+def argobytes_atomic_trade(ArgobytesAtomicTrade, kollateral_invoker):
+    yield accounts[0].deploy(ArgobytesAtomicTrade, kollateral_invoker)
 
 
 @pytest.fixture(scope="session")
@@ -66,8 +62,8 @@ def kollateral_invoker(ExampleAction):
 
 
 @pytest.fixture()
-def kyber_action(KyberAction, kyber_network_proxy, owned_vault):
-    yield accounts[0].deploy(KyberAction, kyber_network_proxy, owned_vault)
+def kyber_action(KyberAction, kyber_network_proxy, argobytes_owned_vault):
+    yield accounts[0].deploy(KyberAction, kyber_network_proxy, argobytes_owned_vault)
 
 
 @pytest.fixture(scope="session")
@@ -95,11 +91,14 @@ def onesplit_offchain_action(OneSplitOffchainAction, onesplit):
 
 
 @pytest.fixture()
-def owned_vault(ArgobytesOwnedVault, gastoken):
-    # deployer = accounts[0]
+def argobytes_owned_vault(ArgobytesOwnedVault, argobytes_atomic_trade, gastoken):
     arb_bots = [accounts[1]]
 
-    yield accounts[0].deploy(ArgobytesOwnedVault, gastoken, arb_bots)
+    argobytes_owned_vault = accounts[0].deploy(ArgobytesOwnedVault, gastoken, arb_bots, argobytes_atomic_trade)
+
+    argobytes_atomic_trade.grantRole(argobytes_atomic_trade.TRUSTED_TRADER_ROLE(), argobytes_owned_vault)
+
+    yield argobytes_owned_vault
 
 
 @pytest.fixture(scope="session")

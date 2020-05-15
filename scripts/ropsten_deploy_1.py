@@ -101,9 +101,11 @@ def main():
         arb_bot
     ]
 
-    argobytes_owned_vault = deploy_helper(ArgobytesOwnedVault, GasTokenAddress, arb_bots)
+    argobytes_atomic_trade = ArgobytesAtomicTrade.deploy(
+        KollateralInvokerAddress, {'from': accounts[0]})
 
-    argobytes_atomic_trade = deploy_helper(ArgobytesAtomicTrade, KollateralInvokerAddress, argobytes_owned_vault)
+    argobytes_owned_vault = ArgobytesOwnedVault.deploy(
+        GasTokenAddress, arb_bots, argobytes_atomic_trade, {'from': accounts[0]})
 
     # deploy_helper(OneSplitOffchainAction, OneSplitAddress)
     deploy_helper(KyberAction, KyberNetworkProxy, argobytes_owned_vault)
@@ -117,8 +119,14 @@ def main():
     # deploy_helper(CurveFiAction, CurveSUSDV2, 4)
     # deploy_helper(CurveFiAction, CurvePAX, 4)
 
-    transaction_helper("set ArgobytesAtomicTrade on ArgobytesOwnedVault",
-                       argobytes_owned_vault, argobytes_owned_vault.setArgobytesAtomicTrade, argobytes_atomic_trade, wait_for_confirm=False)
+    transaction_helper(
+        "set trusted trader role on ArgobytesAtomicTrade",
+        argobytes_atomic_trade,
+        argobytes_atomic_trade.grantRole,
+        argobytes_atomic_trade.TRUSTED_TRADER_ROLE(),
+        argobytes_owned_vault,
+        wait_for_confirm=False,
+    )
 
     # kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWallet)
     # transaction_helper("register Kyber wallet", kyber_register_wallet,

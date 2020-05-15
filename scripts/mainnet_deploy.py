@@ -96,9 +96,11 @@ def main():
         arb_bot
     ]
 
-    argobytes_owned_vault = deploy_helper(ArgobytesOwnedVault, GasTokenAddress, arb_bots)
+    argobytes_atomic_trade = ArgobytesAtomicTrade.deploy(
+        KollateralInvokerAddress, {'from': accounts[0]})
 
-    argobytes_atomic_trade = deploy_helper(ArgobytesAtomicTrade, KollateralInvokerAddress, argobytes_owned_vault)
+    argobytes_owned_vault = ArgobytesOwnedVault.deploy(
+        GasTokenAddress, arb_bots, argobytes_atomic_trade, {'from': accounts[0]})
 
     # this one is small and should deploy fast, so do it first
     deploy_helper(Weth9Action, Weth9Address)
@@ -114,13 +116,13 @@ def main():
     deploy_helper(OneSplitOffchainAction, OneSplitAddress)
     deploy_helper(SynthetixDepotAction, SynthetixAddressResolver)
 
-    # add some security. public release won't have this since since the vault can have this arg as a constructor
-    # TODO: we should actually make that change now. this should be argobytes_atomic_trade.allow
+    # security
     transaction_helper(
-        "set ArgobytesAtomicTrade on ArgobytesOwnedVault",
-        argobytes_owned_vault,
-        argobytes_owned_vault.setArgobytesAtomicTrade,
+        "set trusted trader role on ArgobytesAtomicTrade",
         argobytes_atomic_trade,
+        argobytes_atomic_trade.grantRole,
+        argobytes_atomic_trade.TRUSTED_TRADER_ROLE(),
+        argobytes_owned_vault,
         wait_for_confirm=False,
     )
 

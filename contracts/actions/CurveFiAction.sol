@@ -96,12 +96,18 @@ contract CurveFiAction is AbstractERC20Amounts {
                 // TODO: more specific error
                 string memory err;
                 // TODO: better log that uses both i/j and underlying_i/j
-                if (i == 0 && j == 0) {
-                    err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported underlying tokens ", maker_token.toString(), " and ", taker_token.toString()));
-                } else if (i == 0) {
-                    err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported underlying taker ", taker_token.toString()));
-                } else if (j == 0) {
-                    err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported underlying maker ", maker_token.toString()));
+                if (i + j + underlying_i + underlying_j == 0) {
+                    err = string(abi.encodePacked("CurveFiAction.newAmount: entirely unsupported coins ", maker_token.toString(), " and ", taker_token.toString()));
+                } else if (i + j + underlying_i == 0 && underlying_j > 0) {
+                    err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported underlying taker coin ", taker_token.toString()));
+                } else if (i + j + underlying_j == 0 && underlying_i > 0) {
+                    err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported underlying maker coin ", maker_token.toString()));
+                } else if (i + j == 0) {
+                    err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported coins ", maker_token.toString(), " and ", taker_token.toString()));
+                } else if (i > 0) {
+                    err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported taker coin ", taker_token.toString()));
+                } else if (j > 0) {
+                    err = string(abi.encodePacked("CurveFiAction.newAmount: unsupported maker coin ", maker_token.toString()));
                 }
 
                 a.error = err;
