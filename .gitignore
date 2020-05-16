@@ -2,6 +2,7 @@ __pycache__
 .brownie
 .env
 .history
+.vscode/
 report.*.json
 .hypothesis/
 .pytest_cache/
