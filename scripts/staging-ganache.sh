@@ -1,5 +1,8 @@
 #!/bin/sh
-ganache-cli \
+
+export NODE_OPTIONS="--max-old-space-size=16384"
+
+exec ganache-cli \
     --accounts 10 \
     --hardfork istanbul \
     --fork https://eth.stytt.com \
