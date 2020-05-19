@@ -8,7 +8,7 @@ from brownie.test import given, strategy
 # parts 2: OneSplitOffchainAction.getAmounts -  avg: 945866  low: 23638  high: 1868095
 # parts 3: OneSplitOffchainAction.getAmounts -  avg: 1105818  low: 23638  high: 2187998
 # parts 10: was like 8 mil lol
-def test_get_amounts(dai_erc20, onesplit_offchain_action, usdc_erc20, weth9_erc20, skip_coverage):
+def test_get_amounts(dai_erc20, onesplit_offchain_action, usdc_erc20, weth9_erc20, skip_coverage, no_call_coverage):
     eth_amount = 1e18
     dai_amount = 1e20
     # TODO: increasing parts will be fragile. some exchanges use a LOT of gas
@@ -29,7 +29,7 @@ def test_get_amounts(dai_erc20, onesplit_offchain_action, usdc_erc20, weth9_erc2
 
 
 # we skip coverage because this can end up being a LOT of calls which crashes ganche-cli
-def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20, no_call_coverage):
+def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20, skip_coverage, no_call_coverage):
     value = 1e17
 
     # make sure balances start zeroed
