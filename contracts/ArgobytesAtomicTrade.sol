@@ -25,11 +25,6 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
     using Strings2 for address;
     using UniversalERC20 for IERC20;
 
-    struct Action {
-        address payable target;
-        bytes data;
-    }
-
     address internal constant ZERO_ADDRESS = address(0x0);
     address internal constant KOLLATERAL_ETH = address(0x0000000000000000000000000000000000000001);
     bytes32 public constant TRUSTED_TRADER_ROLE = keccak256("TRUSTED_TRADER_ROLE");
@@ -74,6 +69,15 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
         encoded_data = abi.encode(actions);
     }
 
+    // // atomicTrade that you can call from an EOA. Just approve this contract to transfer first, then transfer as your first Action.
+    // // be careful not to leave any tokens behind!
+    // function openAtomicTrade(Action[] calldata actions) external payable override {
+    //     // TODO: open this up once it has been audited
+    //     require(hasRole(TRUSTED_TRADER_ROLE, msg.sender), "ArgobytesAtomicArbitrage.openAtomicTrade: Caller is not trusted");
+
+    //     executeSolo(address(0), 0, actions);
+    // }
+
     /**
      * @notice Trade `first_amount` `tokens[0]` and return profits to msg.sender. Does NOT revert if no profit
      */
@@ -83,7 +87,6 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
         // TODO: add deadline to prevent miners doing sneaky things by broadcasting transactions late
         // TODO: if we want to use GSN, we should use `_msgSender()` instead of msg.sender
         // TODO: open this up once it has been audited
-        // TODO: this is disabled because of the truffle debugger!
         require(hasRole(TRUSTED_TRADER_ROLE, msg.sender), "ArgobytesAtomicArbitrage.atomicTrade: Caller is not trusted");
 
         require(tokens.length > 0, "ArgobytesAtomicArbitrage.atomicTrade: tokens.length must be > 0");
@@ -189,7 +192,7 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
             (bool success, bytes memory call_returned) = action_address.call{value: action_value}(actions[i].data);
 
             if (!success) {
-                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.execute: on call #", i.toString()," to ", action_address.toString(), " with ", action_value.toString(), " ETH failed: '", call_returned, "'"));
+                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.execute: on call #", i.toString()," to ", action_address.toString(), " with ", action_value.toString(), " ETH failed: '", string(call_returned), "'"));
                 revert(err);
             }
 
@@ -227,6 +230,7 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
     // TODO: private or internal?
     function executeSolo(address first_token, uint256 first_amount, bytes memory encoded_actions) private {
         // TODO: would be nice to have a revert message here if this fails to decode
+        // TODO: accept Action[] memory actions directly?
         (Action[] memory actions) = abi.decode(encoded_actions, (Action[]));
 
         // we could allow 0 actions, but why would we ever want that?
@@ -236,12 +240,10 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
         uint256 first_token_balance = IERC20(first_token).universalBalanceOf(address(this));
         require(first_token_balance >= first_amount, "ArgobytesAtomicArbitrage.executeSolo: not enough token");
 
-        // TODO: why is universalTransfer fighting me?
         IERC20(first_token).universalTransfer(actions[0].target, first_amount);
 
         // an action can do whatever it wants (liquidate, swap, refinance, etc.)
-        // all that we care about is that we can repay our debts
-        // TODO: should we check for at least some profit? I think not. It's just more gas
+        // this does NOT have to end with a profitable arbitrage. If you want that, 
         for (uint i = 0; i < actions.length; i++) {
             address action_address = actions[i].target;
 
@@ -250,7 +252,6 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
 
             // IMPORTANT! An action contract could be designed that keeps profits for itself.
             // Preventing that will be very difficult. This is why other similar contracts take a fee.
-            // TODO: make sure actions[i].contract_address is on an allow list
 
             // Generally, avoid using call
             // We need call here though because we want to call arbitrary contracts with arbitrary arguments
@@ -260,7 +261,9 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
             (bool success, bytes memory call_returned) = action_address.call(actions[i].data);
 
             if (!success) {
-                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.executeSolo: on call #", i.toString()," to ", action_address.toString(), " failed: '", call_returned, "'"));
+                // TODO: process call_returned. we need to cut the first 4 bytes off and convert to a string
+
+                string memory err = string(abi.encodePacked("ArgobytesAtomicTrade.executeSolo: on call #", i.toString()," to ", action_address.toString(), " failed: '", string(call_returned), "'"));
                 revert(err);
             }
         }

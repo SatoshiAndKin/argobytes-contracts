@@ -66,7 +66,8 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
         if (taker_token == ZERO_ADDRESS && maker_token == _sUSD) {
             // eth to sUSD
 
-            _status.requireSynthActive("SynthsUSD");
+            // TODO: figure out how to make this work
+            // _status.requireSynthActive("SynthsUSD");
 
             a.maker_wei = _depot.synthsReceivedForEther(taker_wei);
             a.selector = this.tradeEtherToSynthUSD.selector;

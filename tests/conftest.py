@@ -108,6 +108,7 @@ def susd_erc20():
 
 @pytest.fixture(scope="session")
 def synthetix_address_resolver():
+    # this is actually the ReadProxyAddressResolver
     yield Contract.from_explorer("0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2")
 
 
