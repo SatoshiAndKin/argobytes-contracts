@@ -1,4 +1,4 @@
-# Argobytes Contracts Brownie
+# Argobytes Contracts (Brownie)
 
 Open source contracts for atomic trading.
 
