@@ -6,4 +6,4 @@ set -eux
 
 rm -rf build/deployments/
 
-./venv/bin/brownie run dev_deploy --network staging
+./venv/bin/brownie run dev-deploy --network staging

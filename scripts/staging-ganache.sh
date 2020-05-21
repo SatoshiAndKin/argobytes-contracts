@@ -7,10 +7,10 @@ set -x
 exec ganache-cli \
     --accounts 10 \
     --hardfork istanbul \
-    --fork http://127.0.0.1:8545 \
+    --fork ws://127.0.0.1:8546 \
     --gasLimit 6721975 \
     --mnemonic "opinion adapt negative bone suit ill fossil alcohol razor script damp fold" \
-    --port 8565 \
+    --port 8555 \
     --verbose \
     --networkId 1 \
 ;
