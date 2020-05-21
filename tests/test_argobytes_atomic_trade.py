@@ -18,7 +18,12 @@ def test_empty_encode_actions(argobytes_atomic_trade):
 def test_encode_approve_action(argobytes_atomic_trade, usdc_erc20, dai_erc20):
 
     approve_dai = dai_erc20.approve.encode_input(argobytes_atomic_trade, 1e18)
+
+    print("approve_dai calldata:", approve_dai)
+
     approve_usdc = usdc_erc20.approve.encode_input(argobytes_atomic_trade, 1e18)
+
+    print("approve_usdc calldata:", approve_usdc)
 
     encoded_actions = argobytes_atomic_trade.encodeActions(
         [dai_erc20, usdc_erc20],

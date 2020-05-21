@@ -14,3 +14,5 @@ exec ganache-cli \
     --verbose \
     --networkId 1 \
 ;
+    # TODO: do we want this? it makes it work more like geth, but also makes debugging annoying
+    # --noVMErrorsOnRPCResponse \
