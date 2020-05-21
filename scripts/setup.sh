@@ -13,3 +13,5 @@ python3 -m venv venv
 
 pip install wheel
 pip install -r requirements.txt
+
+npm install
