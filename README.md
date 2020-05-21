@@ -8,6 +8,7 @@ My initial use for these is for atomic arbitrage, but `ArgobytesAtomicTrade.sol`
 # Install
 
 1. Install `python3-dev` and `python3-venv`
+2. Install `node` v12 and `npm` v6 (I like to use `nvm` to manage node versions)
 2. Run `./scripts/setup.sh`
 3. Make a .env:
 
