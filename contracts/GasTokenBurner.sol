@@ -6,6 +6,7 @@ import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 
 import {IGasToken} from "interfaces/gastoken/IGasToken.sol";
 
+
 contract GasTokenBurner is AccessControl {
     using SafeMath for uint256;
 
@@ -36,7 +37,7 @@ contract GasTokenBurner is AccessControl {
 
     function endFreeGasTokens(uint256 initial_gas) internal {
         if (initial_gas > 0) {
-            uint gas_spent = initial_gas.sub(gasleft());
+            uint256 gas_spent = initial_gas.sub(gasleft());
             _freeGasTokens(gas_spent);
         }
     }
@@ -44,28 +45,28 @@ contract GasTokenBurner is AccessControl {
     /**
      * @notice Based on the gas spent, free optimal number of this contract's gas tokens.
      */
-    function _freeGasTokens(uint gas_spent) internal {
+    function _freeGasTokens(uint256 gas_spent) internal {
         // calculate the optimal number of tokens to free based on gas_spent
         // TODO: this is the number that 1inch uses. Not sure where they got it. They are lame about people "copying" them, so lets do more research. It's a simple function though. they can't own that
-        uint num_tokens = (gas_spent + 14154) / 41130;
+        uint256 num_tokens = (gas_spent + 14154) / 41130;
 
         // https://github.com/projectchicago/gastoken/blob/81325843c710fbcf0d77ea5a5e8323d373b09f88/contract/gst2_free_example.sol#L8
-		// we need at least
-		//     num_tokens * (1148 + 5722 + 150) + 25710 gas before entering destroyChildren
-		//                   ^ mk_contract_address
-		//                                        ^ solidity bug constant
-		//                          ^ cost of invocation
-		//                                 ^ loop, etc...
-		// to be on the safe side, let's add another constant 2k gas
-		// for CALLing freeFrom, reading from storage, etc...
-		// so we get
-		//     gas cost to freeFromUpTo n tokens <= 27710 + n * (1148 + 5722 + 150)
+        // we need at least
+        //     num_tokens * (1148 + 5722 + 150) + 25710 gas before entering destroyChildren
+        //                   ^ mk_contract_address
+        //                                        ^ solidity bug constant
+        //                          ^ cost of invocation
+        //                                 ^ loop, etc...
+        // to be on the safe side, let's add another constant 2k gas
+        // for CALLing freeFrom, reading from storage, etc...
+        // so we get
+        //     gas cost to freeFromUpTo n tokens <= 27710 + n * (1148 + 5722 + 150)
 
-		// Note that 27710 is sufficiently large that we always have enough
-		// gas left to update s_tail, balance, etc... after we are done
-		// with destroyChildren.
+        // Note that 27710 is sufficiently large that we always have enough
+        // gas left to update s_tail, balance, etc... after we are done
+        // with destroyChildren.
 
-		uint gas = gasleft();
+        uint256 gas = gasleft();
 
         if (gas < 27710) {
             // there is not enough gas left to burn any gas tokens
@@ -73,18 +74,18 @@ contract GasTokenBurner is AccessControl {
         }
 
         // TODO: does solidity have a "max" helper?
-		uint safe_num_tokens = (gas - 27710) / (1148 + 5722 + 150);
+        uint256 safe_num_tokens = (gas - 27710) / (1148 + 5722 + 150);
 
-		if (num_tokens > safe_num_tokens) {
-			num_tokens = safe_num_tokens;
-		}
+        if (num_tokens > safe_num_tokens) {
+            num_tokens = safe_num_tokens;
+        }
 
-		if (num_tokens > 0) {
+        if (num_tokens > 0) {
             // freeUpTo instead of free in case our gasToken balance is 0 (or even just less than we need)
             // it would suck to lose arbitrage profits becase we didn't have enough gas tokens
-			_gas_token.freeUpTo(num_tokens);
-		}
-	}
+            _gas_token.freeUpTo(num_tokens);
+        }
+    }
 
     /**
      * @notice Mint `_gas_token_mint_amount` gas tokens for this contract.
@@ -94,7 +95,10 @@ contract GasTokenBurner is AccessControl {
     }
 
     function setGasToken(address gas_token) public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not default admin");
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Caller is not default admin"
+        );
 
         // TODO: emit an event
 
@@ -102,7 +106,10 @@ contract GasTokenBurner is AccessControl {
     }
 
     function setGasTokenMintAmount(uint8 gas_token_mint_amount) public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not default admin");
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Caller is not default admin"
+        );
 
         // TODO: emit an event
 

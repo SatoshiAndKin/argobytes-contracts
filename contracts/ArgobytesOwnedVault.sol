@@ -11,12 +11,16 @@ import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {GasTokenBurner} from "contracts/GasTokenBurner.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {Strings2} from "contracts/Strings2.sol";
-import {IArgobytesAtomicTrade} from "interfaces/argobytes/IArgobytesAtomicTrade.sol";
+import {
+    IArgobytesAtomicTrade
+} from "interfaces/argobytes/IArgobytesAtomicTrade.sol";
 
 // WARNING! WARNING! THIS IS NOT A SECRET! THIS IS FOR RECOVERY IN CASE OF BUGS!
 // the backdoor is temporary until this is audited and public!
 // we actually need it right now since we don't have withdraw functions on ArgobytesOwnedVault
 import {Backdoor} from "contracts/Backdoor.sol";
+
+
 // END WARNING!
 
 contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
@@ -25,17 +29,20 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
     using Strings2 for address;
     using UniversalERC20 for IERC20;
 
-    bytes32 public constant TRUSTED_ARBITRAGER_ROLE = keccak256("TRUSTED_ARBITRAGER_ROLE");
+    bytes32 public constant TRUSTED_ARBITRAGER_ROLE = keccak256(
+        "TRUSTED_ARBITRAGER_ROLE"
+    );
 
     IArgobytesAtomicTrade _aat;
 
     /**
      * @notice Deploy the contract.
      */
-    constructor(address gas_token, address[] memory trusted_arbitragers, address payable aat)
-        public
-        GasTokenBurner(gas_token)
-    {
+    constructor(
+        address gas_token,
+        address[] memory trusted_arbitragers,
+        address payable aat
+    ) public GasTokenBurner(gas_token) {
         // Grant the contract deployer the "backdoor" role
         // BEWARE! this contract can call and delegate call arbitrary functions!
         _setupRole(BACKDOOR_ROLE, msg.sender);
@@ -47,7 +54,7 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         // Grant a vault smart contract address the "trusted arbitrager" role
         // it will be able to call "atomicArbitrage" (WITH OUR FUNDS!)
         // a bot should have this role
-        for (uint i = 0; i < trusted_arbitragers.length; i++) {
+        for (uint256 i = 0; i < trusted_arbitragers.length; i++) {
             _setupRole(TRUSTED_ARBITRAGER_ROLE, trusted_arbitragers[i]);
         }
 
@@ -56,11 +63,14 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
 
     // allow receiving tokens
     // TODO: add withdraw helpers! (otherwise we can just use the backdoor)
-    receive() external payable { }
+    receive() external payable {}
 
     // TODO: we might need to get rid of this payable if rust's abi handling has issues
     function setArgobytesAtomicTrade(address payable aat) public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "ArgobytesOwnedVault: Caller is not default admin");
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault: Caller is not default admin"
+        );
 
         // TODO: emit an event
 
@@ -68,39 +78,52 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
     }
 
     function atomicArbitrage(
-        address[] calldata tokens,  // Ether or ERC20
+        address[] calldata tokens, // Ether or ERC20
         uint256 tokenAmount,
         bytes calldata encoded_actions
-    )
-        external
-        returns (uint256 primary_profit)
-    {
-        // TODO: make freeing gas tokens optional? 
+    ) external returns (uint256 primary_profit) {
+        // TODO: make freeing gas tokens optional?
         uint256 initial_gas = startFreeGasTokens();
 
-        require(hasRole(TRUSTED_ARBITRAGER_ROLE, msg.sender), "ArgobytesOwnedVault.atomicArbitrage: Caller is not trusted");
+        require(
+            hasRole(TRUSTED_ARBITRAGER_ROLE, msg.sender),
+            "ArgobytesOwnedVault.atomicArbitrage: Caller is not trusted"
+        );
 
         // TODO: debug_require? we only have these for helpful revert messages
-        require(tokens.length > 0, "ArgobytesOwnedVault.atomicArbitrage: tokens.length must be > 0");
-        require(tokenAmount > 0, "ArgobytesOwnedVault.atomicArbitrage: tokenAmount must be > 0");
+        require(
+            tokens.length > 0,
+            "ArgobytesOwnedVault.atomicArbitrage: tokens.length must be > 0"
+        );
+        require(
+            tokenAmount > 0,
+            "ArgobytesOwnedVault.atomicArbitrage: tokenAmount must be > 0"
+        );
 
         IERC20 borrow_token = IERC20(tokens[0]);
 
-        uint256 starting_vault_balance = borrow_token.universalBalanceOf(address(this));
+        uint256 starting_vault_balance = borrow_token.universalBalanceOf(
+            address(this)
+        );
 
         // transfer tokens if we have them
         // if we don't have sufficient tokens, the next contract will borrow from kollateral or some other provider
         if (tokenAmount < starting_vault_balance) {
             borrow_token.universalTransfer(address(_aat), tokenAmount);
         } else if (starting_vault_balance > 0) {
-            borrow_token.universalTransfer(address(_aat), starting_vault_balance);
+            borrow_token.universalTransfer(
+                address(_aat),
+                starting_vault_balance
+            );
         }
 
         // notice that this is an atomic trade. it doesn't require a profitable arbitrage. we have to check that ourself
         _aat.atomicTrade(tokens, tokenAmount, encoded_actions);
 
         // don't use _aat.atomicTrade's return. safer to check the balance ourselves
-        uint256 ending_vault_balance = borrow_token.universalBalanceOf(address(this));
+        uint256 ending_vault_balance = borrow_token.universalBalanceOf(
+            address(this)
+        );
 
         // we burn gas token before the very end. that way if we revert, we get more of our gas back and don't actually burn any tokens
         // TODO: is this true? if not, just use the modifier. i think this also means we can free slightly more tokens
@@ -108,8 +131,16 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
 
         // we allow this to be equal because it's possible that we got our profits somewhere else (like uniswap or kollateral LP fees)
         if (ending_vault_balance < starting_vault_balance) {
-            uint256 decreased_amount = starting_vault_balance - ending_vault_balance;
-            string memory err = string(abi.encodePacked("ArgobytesOwnedVault.atomicArbitrage: Vault balance of ", address(borrow_token).toString(), " decreased by ", decreased_amount.toString()));
+            uint256 decreased_amount = starting_vault_balance -
+                ending_vault_balance;
+            string memory err = string(
+                abi.encodePacked(
+                    "ArgobytesOwnedVault.atomicArbitrage: Vault balance of ",
+                    address(borrow_token).toString(),
+                    " decreased by ",
+                    decreased_amount.toString()
+                )
+            );
             revert(err);
         }
 
@@ -117,9 +148,16 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         primary_profit = ending_vault_balance - starting_vault_balance;
     }
 
-    function withdrawTo(IERC20 token, address to, uint256 amount) external returns(bool) {
+    function withdrawTo(
+        IERC20 token,
+        address to,
+        uint256 amount
+    ) external returns (bool) {
         // TODO: what role? it should be seperate from the deployer
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "ArgobytesOwnedVault.withdrawTo: Caller is not an admin");
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.withdrawTo: Caller is not an admin"
+        );
 
         return token.universalTransfer(to, amount);
     }
