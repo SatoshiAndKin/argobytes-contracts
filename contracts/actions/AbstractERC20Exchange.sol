@@ -138,7 +138,7 @@ abstract contract AbstractERC20Exchange is AbstractERC20Amounts {
         payable
         sweepLeftoverEther(msg.sender)
     {
-        if (to == address(0x0)) {
+        if (to == ZERO_ADDRESS) {
             to = msg.sender;
         }
 
@@ -149,7 +149,7 @@ abstract contract AbstractERC20Exchange is AbstractERC20Amounts {
         external
         sweepLeftoverToken(msg.sender, src_token)
     {
-        if (to == address(0x0)) {
+        if (to == ZERO_ADDRESS) {
             to = msg.sender;
         }
 
@@ -160,7 +160,7 @@ abstract contract AbstractERC20Exchange is AbstractERC20Amounts {
         external
         sweepLeftoverToken(msg.sender, src_token)
     {
-        if (to == address(0x0)) {
+        if (to == ZERO_ADDRESS) {
             to = msg.sender;
         }
 

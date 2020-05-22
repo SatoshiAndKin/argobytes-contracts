@@ -9,6 +9,7 @@ abstract contract IArgobytesAtomicTrade {
     }
 
     function atomicTrade(
+        address kollateral_invoker,
         address[] calldata tokens,
         uint256 first_amount,
         bytes calldata encoded_actions

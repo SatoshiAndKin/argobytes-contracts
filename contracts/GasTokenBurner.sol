@@ -14,6 +14,7 @@ contract GasTokenBurner is AccessControl {
     uint8 public _gas_token_mint_amount;
 
     constructor(address gas_token) public {
+        // TODO: accessing state often costs more than accessing calldata. refactor to use calldata for these
         _gas_token = IGasToken(gas_token);
         _gas_token_mint_amount = 26;
     }

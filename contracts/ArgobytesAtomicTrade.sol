@@ -7,8 +7,6 @@
 pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
-import {Ownable} from "@openzeppelin/access/Ownable.sol";
-import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 import {Strings} from "@openzeppelin/utils/Strings.sol";
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
@@ -20,40 +18,17 @@ import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {IArgobytesAtomicTrade} from "interfaces/argobytes/IArgobytesAtomicTrade.sol";
 import {Strings2} from "contracts/Strings2.sol";
 
+// https://github.com/kollateral/kollateral/blob/master/lib/static/invoker.ts
+// they take a 6bps fee
 
-contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, KollateralInvokable {
-    using SafeMath for uint;
-    using Strings for uint;
+contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
+    using SafeMath for uint256;
+    using Strings for uint256;
     using Strings2 for address;
     using UniversalERC20 for IERC20;
 
     address internal constant ZERO_ADDRESS = address(0x0);
     address internal constant KOLLATERAL_ETH = address(0x0000000000000000000000000000000000000001);
-    bytes32 public constant TRUSTED_TRADER_ROLE = keccak256("TRUSTED_TRADER_ROLE");
-
-    // https://github.com/kollateral/kollateral/blob/master/lib/static/invoker.ts
-    // they take a 6bps fee
-    IInvoker public _kollateral_invoker;
-
-    /**
-     * @notice Initialize the contract. This should be called from a CREATE2 deploy helper!
-     */
-    constructor(address admin, address kollateral_invoker) public {
-        // Grant an address the "default admin" role
-        // it will be able to grant and revoke any roles
-        _setupRole(DEFAULT_ADMIN_ROLE, admin);
-
-        // TODO: if we want this open, this should be an argument on every contract call. compare gas costs though. maybe just allow overriding
-        _kollateral_invoker = IInvoker(kollateral_invoker);
-    }
-
-    function setKollateralInvoker(address kollateral_invoker) public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not default admin");
-
-        // TODO: emit an event
-
-        _kollateral_invoker = IInvoker(kollateral_invoker);
-    }
 
     // TODO: get rid of this. do encoding outside of the smart contract
     // this is here because I'm having trouble encoding these types in Rust
@@ -80,14 +55,15 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
 
     /**
      * @notice Trade `first_amount` `tokens[0]` and return profits to msg.sender. Does NOT revert if no profit
+     * TODO: should we split this up into a function that does executeSolo and a function that calls kollateral? refactor this later!
      */
-    function atomicTrade(address[] calldata tokens, uint256 first_amount, bytes calldata encoded_actions)
+    function atomicTrade(address kollateral_invoker, address[] calldata tokens, uint256 first_amount, bytes calldata encoded_actions)
         external payable override
     {
         // TODO: add deadline to prevent miners doing sneaky things by broadcasting transactions late
         // TODO: if we want to use GSN, we should use `_msgSender()` instead of msg.sender
         // TODO: open this up once it has been audited
-        require(hasRole(TRUSTED_TRADER_ROLE, msg.sender), "ArgobytesAtomicArbitrage.atomicTrade: Caller is not trusted");
+        // require(hasRole(TRUSTED_TRADER_ROLE, msg.sender), "ArgobytesAtomicArbitrage.atomicTrade: Caller is not trusted");
 
         require(tokens.length > 0, "ArgobytesAtomicArbitrage.atomicTrade: tokens.length must be > 0");
         require(first_amount > 0, "ArgobytesAtomicArbitrage.atomicTrade: first_amount must be > 0");
@@ -105,9 +81,9 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
 
             if (tokens[0] == ZERO_ADDRESS) {
                 // use kollateral's address for ETH instead of the zero address we use
-                _kollateral_invoker.invoke(address(this), encoded_actions, KOLLATERAL_ETH, first_amount);
+                IInvoker(kollateral_invoker).invoke(address(this), encoded_actions, KOLLATERAL_ETH, first_amount);
             } else {
-                _kollateral_invoker.invoke(address(this), encoded_actions, tokens[0], first_amount);
+                IInvoker(kollateral_invoker).invoke(address(this), encoded_actions, tokens[0], first_amount);
             }
             
             // kollateral ensures that we repaid our debts, but it doesn't require profit beyond that

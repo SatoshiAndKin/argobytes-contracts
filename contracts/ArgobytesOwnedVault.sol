@@ -4,6 +4,7 @@ pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
 import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
+import {Create2} from "@openzeppelin/utils/Create2.sol";
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 import {Strings} from "@openzeppelin/utils/Strings.sol";
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
@@ -23,6 +24,29 @@ import {Backdoor} from "contracts/Backdoor.sol";
 
 // END WARNING!
 
+contract ArgobytesOwnedVaultDeployer {
+    // event Deployed(address argobytes_owned_vault);
+
+    // use CREATE2 to deploy ArgobytesOwnedVault with a salt
+    // TODO: steps for using ERADICATE2
+    // TODO: OpenZeppelin uses initializer functions for setup. i think we can use the constructor, but we might need to follow them
+    constructor(
+        bytes32 salt,
+        address gas_token,
+        address[] memory trusted_arbitragers
+    ) public payable {
+        ArgobytesOwnedVault deployed = new ArgobytesOwnedVault{salt: salt, value: msg.value}(msg.sender, gas_token, trusted_arbitragers);
+
+        // the vault deploys its own logs. we can grab the contract's address from there
+        // emit Deployed(address(deployed));
+
+        selfdestruct(msg.sender);
+    }
+}
+
+
+// TODO: re-write this to use the diamond standard
+// it's likely i will want to add new features and suppo
 contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
     using SafeMath for uint256;
     using Strings for uint256;
@@ -33,23 +57,22 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         "TRUSTED_ARBITRAGER_ROLE"
     );
 
-    IArgobytesAtomicTrade _aat;
-
     /**
      * @notice Deploy the contract.
+     * This is payable so that the initial deployment can fund
      */
     constructor(
+        address admin,
         address gas_token,
-        address[] memory trusted_arbitragers,
-        address payable aat
-    ) public GasTokenBurner(gas_token) {
+        address[] memory trusted_arbitragers
+    ) public payable GasTokenBurner(gas_token) {
         // Grant the contract deployer the "backdoor" role
         // BEWARE! this contract can call and delegate call arbitrary functions!
-        _setupRole(BACKDOOR_ROLE, msg.sender);
+        _setupRole(BACKDOOR_ROLE, admin);
 
         // Grant the contract deployer the "default admin" role
         // it will be able to grant and revoke any roles
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, admin);
 
         // Grant a vault smart contract address the "trusted arbitrager" role
         // it will be able to call "atomicArbitrage" (WITH OUR FUNDS!)
@@ -57,27 +80,15 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         for (uint256 i = 0; i < trusted_arbitragers.length; i++) {
             _setupRole(TRUSTED_ARBITRAGER_ROLE, trusted_arbitragers[i]);
         }
-
-        _aat = IArgobytesAtomicTrade(aat);
     }
 
     // allow receiving tokens
     // TODO: add withdraw helpers! (otherwise we can just use the backdoor)
     receive() external payable {}
 
-    // TODO: we might need to get rid of this payable if rust's abi handling has issues
-    function setArgobytesAtomicTrade(address payable aat) public {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "ArgobytesOwnedVault: Caller is not default admin"
-        );
-
-        // TODO: emit an event
-
-        _aat = IArgobytesAtomicTrade(aat);
-    }
-
     function atomicArbitrage(
+        address atomic_trader,
+        address kollateral_invoker,
         address[] calldata tokens, // Ether or ERC20
         uint256 tokenAmount,
         bytes calldata encoded_actions
@@ -109,16 +120,18 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         // transfer tokens if we have them
         // if we don't have sufficient tokens, the next contract will borrow from kollateral or some other provider
         if (tokenAmount < starting_vault_balance) {
-            borrow_token.universalTransfer(address(_aat), tokenAmount);
+            borrow_token.universalTransfer(atomic_trader, tokenAmount);
         } else if (starting_vault_balance > 0) {
             borrow_token.universalTransfer(
-                address(_aat),
+                atomic_trader,
                 starting_vault_balance
             );
         }
+        // else we don't have any of these tokens. they will all come from kollateral or some other flash loan platform
 
         // notice that this is an atomic trade. it doesn't require a profitable arbitrage. we have to check that ourself
-        _aat.atomicTrade(tokens, tokenAmount, encoded_actions);
+        // TODO: call a different function depending on if we need outside capital or not
+        IArgobytesAtomicTrade(atomic_trader).atomicTrade(kollateral_invoker, tokens, tokenAmount, encoded_actions);
 
         // don't use _aat.atomicTrade's return. safer to check the balance ourselves
         uint256 ending_vault_balance = borrow_token.universalBalanceOf(
@@ -148,6 +161,24 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         primary_profit = ending_vault_balance - starting_vault_balance;
     }
 
+    // use CREATE2 to deploy with a salt and free gas tokens
+    // TODO: OpenZeppelin uses initializer functions for setup. i think we can use the constructor, but we might need to follow them
+    // TODO: function that combines deploy2 and diamondCut
+    function deploy2(bytes32 salt, bytes memory bytecode) public payable {
+        uint256 initial_gas = startFreeGasTokens();
+
+        // TODO: what role?
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.deploy2: Caller is not an admin"
+        );
+
+        Create2.deploy(msg.value, salt, bytecode);
+
+        endFreeGasTokens(initial_gas);
+    }
+
+    // this will work for gastoken, too
     function withdrawTo(
         IERC20 token,
         address to,

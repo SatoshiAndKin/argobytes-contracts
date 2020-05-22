@@ -15,16 +15,28 @@ def isolation(fn_isolation):
 
 
 @pytest.fixture()
-def argobytes_atomic_trade(ArgobytesAtomicTrade, ArgobytesAtomicTradeDeployer, kollateral_invoker):
-    deployer = accounts[0].deploy(ArgobytesAtomicTradeDeployer)
+def argobytes_atomic_trade(ArgobytesAtomicTrade):
+    # TODO: use argobytes_owned_vault.deploy2(...) instead
+    yield accounts[0].deploy(ArgobytesAtomicTrade)
+
+
+@pytest.fixture()
+def argobytes_owned_vault(ArgobytesOwnedVault, ArgobytesOwnedVaultDeployer, gastoken):
+    arb_bots = [accounts[1]]
 
     salt = ""
 
-    deploy_tx = deployer.deploy2(salt, kollateral_invoker)
+    # TODO: refactor for gastoken incoming
+    argobytes_owned_vault_deployer_initcode = ArgobytesOwnedVaultDeployer.deploy.encode_input(salt, gastoken, arb_bots)
 
-    deployed = deploy_tx.new_contracts[0]
+    # we don't use the normal deploy function because the contract selfdestructs after deploying ArgobytesOwnedVault
+    argobytes_owned_vault_tx = accounts[0].transfer(data=argobytes_owned_vault_deployer_initcode)
 
-    yield ArgobytesAtomicTrade.at(deployed)
+    # TODO: is this the best way to get an address out? i feel like it should already be in logs
+    # argobytes_owned_vault = argobytes_owned_vault_tx.events["Deployed"]["argobytes_owned_vault"]
+    argobytes_owned_vault = argobytes_owned_vault_tx.logs[0]['address']
+
+    yield ArgobytesOwnedVault.at(argobytes_owned_vault)
 
 
 @pytest.fixture(scope="session")
@@ -96,17 +108,6 @@ def onesplit_onchain_action(OneSplitOnchainAction, onesplit):
 @pytest.fixture()
 def onesplit_offchain_action(OneSplitOffchainAction, onesplit):
     yield accounts[0].deploy(OneSplitOffchainAction, onesplit)
-
-
-@pytest.fixture()
-def argobytes_owned_vault(ArgobytesOwnedVault, argobytes_atomic_trade, gastoken):
-    arb_bots = [accounts[1]]
-
-    argobytes_owned_vault = accounts[0].deploy(ArgobytesOwnedVault, gastoken, arb_bots, argobytes_atomic_trade)
-
-    argobytes_atomic_trade.grantRole(argobytes_atomic_trade.TRUSTED_TRADER_ROLE(), argobytes_owned_vault)
-
-    yield argobytes_owned_vault
 
 
 @pytest.fixture(scope="session")
