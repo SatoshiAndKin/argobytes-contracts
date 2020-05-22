@@ -7,6 +7,7 @@
 pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
+import {Ownable} from "@openzeppelin/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 import {Strings} from "@openzeppelin/utils/Strings.sol";
@@ -18,6 +19,14 @@ import {KollateralInvokable} from "interfaces/kollateral/KollateralInvokable.sol
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {IArgobytesAtomicTrade} from "interfaces/argobytes/IArgobytesAtomicTrade.sol";
 import {Strings2} from "contracts/Strings2.sol";
+
+contract ArgobytesAtomicTradeDeployer is Ownable {
+
+    function deploy(bytes32 salt, address kollateral_invoker) public onlyOwner {
+        new ArgobytesAtomicTrade{salt: salt}(msg.sender, kollateral_invoker);
+        selfdestruct(msg.sender);
+    }
+}
 
 contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, KollateralInvokable {
     using SafeMath for uint;
@@ -34,17 +43,15 @@ contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, Kollatera
     IInvoker public _kollateral_invoker;
 
     /**
-     * @notice Deploy the contract.
+     * @notice Initialize the contract. This should be called from a CREATE2 deploy helper!
      */
-    constructor(address kollateral_invoker)
-        public
-    {
-        // Grant the contract deployer the "default admin" role
+    constructor(address admin, address kollateral_invoker) public {
+        // Grant an address the "default admin" role
         // it will be able to grant and revoke any roles
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, admin);
 
         // TODO: if we want this open, this should be an argument on every contract call. compare gas costs though. maybe just allow overriding
-        setKollateralInvoker(kollateral_invoker);
+        _kollateral_invoker = IInvoker(kollateral_invoker);
     }
 
     function setKollateralInvoker(address kollateral_invoker) public {

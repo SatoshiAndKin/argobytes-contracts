@@ -15,8 +15,16 @@ def isolation(fn_isolation):
 
 
 @pytest.fixture()
-def argobytes_atomic_trade(ArgobytesAtomicTrade, kollateral_invoker):
-    yield accounts[0].deploy(ArgobytesAtomicTrade, kollateral_invoker)
+def argobytes_atomic_trade(ArgobytesAtomicTrade, ArgobytesAtomicTradeDeployer, kollateral_invoker):
+    deployer = accounts[0].deploy(ArgobytesAtomicTradeDeployer, )
+
+    salt = ""
+
+    deploy_tx = deployer.deploy(salt, kollateral_invoker)
+
+    deployed = deploy_tx.new_contracts[0]
+
+    yield ArgobytesAtomicTrade.at(deployed)
 
 
 @pytest.fixture(scope="session")
