@@ -21,11 +21,13 @@ import {IArgobytesAtomicTrade} from "interfaces/argobytes/IArgobytesAtomicTrade.
 import {Strings2} from "contracts/Strings2.sol";
 
 contract ArgobytesAtomicTradeDeployer is Ownable {
-
-    function deploy(bytes32 salt, address kollateral_invoker) public onlyOwner {
+    // use CREATE2 to deploy with a salt
+    function deploy2(bytes32 salt, address kollateral_invoker) public onlyOwner {
         new ArgobytesAtomicTrade{salt: salt}(msg.sender, kollateral_invoker);
         selfdestruct(msg.sender);
     }
+    
+    // TODO: we might want a helper to test that the salt gives the address that we expect
 }
 
 contract ArgobytesAtomicTrade is AccessControl, IArgobytesAtomicTrade, KollateralInvokable {

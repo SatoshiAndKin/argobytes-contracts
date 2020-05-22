@@ -26,8 +26,7 @@ def main():
         accounts[4],
     ]
 
-    argobytes_atomic_trade = ArgobytesAtomicTrade.deploy(
-        KollateralInvokerAddress, {'from': accounts[0]})
+    argobytes_atomic_trade = accounts[0].deploy(ArgobytesAtomicTrade, accounts[0], KollateralInvokerAddress)
 
     argobytes_owned_vault = ArgobytesOwnedVault.deploy(
         GasTokenAddress, arb_bots, argobytes_atomic_trade, {'from': accounts[0]})
