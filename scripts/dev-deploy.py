@@ -26,57 +26,58 @@ def main():
         accounts[4],
     ]
 
-    assert "wip" == False
-
     # TODO: docs for using ERADICATE2
     salt = ""
 
+    # TODO: refactor for gastoken incoming
     argobytes_owned_vault_deployer_initcode = ArgobytesOwnedVaultDeployer.deploy.encode_input(
-        salt, KollateralInvokerAddress, arb_bots)
+        salt, GasTokenAddress, arb_bots)
 
     # we don't use the normal deploy function because the contract selfdestructs after deploying ArgobytesOwnedVault
-    argobytes_owned_vault_tx = accounts[0].transfer(data=argobytes_owned_vault_deployer_initcode)
+    argobytes_owned_vault_tx = accounts[0].transfer(data=argobytes_owned_vault_deployer_initcode, amount=50 * 1e18)
 
-    print("new contracts:", argobytes_owned_vault_tx)
+    # TODO: is this the best way to get an address out? i feel like it should already be in logs
+    # argobytes_owned_vault = argobytes_owned_vault_tx.events["Deployed"]["argobytes_owned_vault"]
+    argobytes_owned_vault = argobytes_owned_vault_tx.logs[0]['address']
 
-    argobytes_owned_vault = ArgobytesOwnedVault.at(argobytes_owned_vault_tx.new_contracts[1])
+    argobytes_owned_vault = ArgobytesOwnedVault.at(argobytes_owned_vault)
+
+    print("ArgobytesOwnedVault address:", argobytes_owned_vault)
 
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
-    argobytes_owned_vault.mintGasToken()
+    argobytes_owned_vault.mintGasToken({"from": accounts[0]})
 
     argobytes_atomic_trade_initcode = ArgobytesAtomicTrade.deploy.encode_input()
 
     # TODO: docs for using ERADICATE 2 (will be easier since we already have argobytes_owned_vault's address)
-    argobytes_atomic_trade = argobytes_owned_vault.deploy2(salt, argobytes_atomic_trade_initcode)
+    argobytes_atomic_trade = argobytes_owned_vault.deploy2(salt, argobytes_atomic_trade_initcode, {"from": accounts[0]})
 
-    # argobytes_owned_vault = ArgobytesOwnedVault.deploy(
-    #     GasTokenAddress, arb_bots, argobytes_atomic_trade, {'from': accounts[0]})
+    argobytes_atomic_trade = ArgobytesAtomicTrade.at(argobytes_atomic_trade.return_value)
 
-    # argobytes_atomic_trade.grantRole(argobytes_atomic_trade.TRUSTED_TRADER_ROLE(), argobytes_owned_vault)
+    print("ArgobytesAtomicTrade address:", argobytes_atomic_trade)
 
-    # # TODO: our rust code doesn't check our real balances yet, so just give the vault a ton of coins
-    # accounts[0].transfer(argobytes_owned_vault, 50 * 1e18)
-    # accounts[1].transfer(argobytes_owned_vault, 50 * 1e18)
-    # accounts[2].transfer(argobytes_owned_vault, 50 * 1e18)
-    # accounts[3].transfer(argobytes_owned_vault, 50 * 1e18)
+    # TODO: our rust code doesn't check our real balances yet, so just give the vault a bunch of coins
+    accounts[1].transfer(argobytes_owned_vault, 50 * 1e18)
+    accounts[2].transfer(argobytes_owned_vault, 50 * 1e18)
+    accounts[3].transfer(argobytes_owned_vault, 50 * 1e18)
 
-    # OneSplitOffchainAction.deploy(OneSplitAddress, {'from': accounts[0]})
-    # KyberAction.deploy(KyberNetworkProxy, argobytes_owned_vault, {'from': accounts[0]})
-    # UniswapAction.deploy(UniswapFactory, {'from': accounts[0]})
-    # Weth9Action.deploy(Weth9Address, {'from': accounts[0]})
-    # SynthetixDepotAction.deploy(SynthetixAddressResolver, {'from': accounts[0]})
-    # CurveFiAction.deploy(CurveCompounded, 2, {'from': accounts[0]})
-    # CurveFiAction.deploy(CurveUSDT, 3, {'from': accounts[0]})
-    # CurveFiAction.deploy(CurveY, 4, {'from': accounts[0]})
-    # CurveFiAction.deploy(CurveB, 4, {'from': accounts[0]})
-    # CurveFiAction.deploy(CurveSUSDV2, 4, {'from': accounts[0]})
-    # CurveFiAction.deploy(CurvePAX, 4, {'from': accounts[0]})
+    OneSplitOffchainAction.deploy(OneSplitAddress, {'from': accounts[0]})
+    KyberAction.deploy(KyberNetworkProxy, argobytes_owned_vault, {'from': accounts[0]})
+    UniswapAction.deploy(UniswapFactory, {'from': accounts[0]})
+    Weth9Action.deploy(Weth9Address, {'from': accounts[0]})
+    SynthetixDepotAction.deploy(SynthetixAddressResolver, {'from': accounts[0]})
+    CurveFiAction.deploy(CurveCompounded, 2, {'from': accounts[0]})
+    CurveFiAction.deploy(CurveUSDT, 3, {'from': accounts[0]})
+    CurveFiAction.deploy(CurveY, 4, {'from': accounts[0]})
+    CurveFiAction.deploy(CurveB, 4, {'from': accounts[0]})
+    CurveFiAction.deploy(CurveSUSDV2, 4, {'from': accounts[0]})
+    CurveFiAction.deploy(CurvePAX, 4, {'from': accounts[0]})
 
     # # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity even if it actually loses money
-    # accounts[1].transfer(argobytes_atomic_trade, 1e18)
+    accounts[1].transfer(argobytes_atomic_trade, 1e18)
 
-    # kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWallet, {'from': accounts[0]})
+    kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWallet, {'from': accounts[0]})
 
-    # kyber_register_wallet.registerWallet(argobytes_owned_vault, {'from': accounts[0]})
+    kyber_register_wallet.registerWallet(argobytes_owned_vault, {'from': accounts[0]})
 
-    # TODO: make sure we still have some gastoken left
+    # TODO: make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)

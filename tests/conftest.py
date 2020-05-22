@@ -15,9 +15,13 @@ def isolation(fn_isolation):
 
 
 @pytest.fixture()
-def argobytes_atomic_trade(ArgobytesAtomicTrade):
-    # TODO: use argobytes_owned_vault.deploy2(...) instead
-    yield accounts[0].deploy(ArgobytesAtomicTrade)
+def argobytes_atomic_trade(argobytes_owned_vault, ArgobytesAtomicTrade):
+    salt = ""
+    argobytes_atomic_trade_initcode = ArgobytesAtomicTrade.deploy.encode_input()
+
+    argobytes_atomic_trade = argobytes_owned_vault.deploy2(salt, argobytes_atomic_trade_initcode, {"from": accounts[0]})
+
+    yield ArgobytesAtomicTrade.at(argobytes_atomic_trade.return_value)
 
 
 @pytest.fixture()

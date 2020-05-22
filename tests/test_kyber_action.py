@@ -39,6 +39,7 @@ def test_action(kyber_action, dai_erc20, usdc_erc20):
     # tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
     kyber_action.tradeEtherToToken(kyber_action, usdc_erc20, 1, 0, "")
 
+    # TODO: check gas cost to make sure there are no regressions! (do this for all our tests!)
     # TODO: make sure ETH balance is zero (i think it will be swept back to accounts[0])
     # TODO: make sure USDC balance is non-zero
 

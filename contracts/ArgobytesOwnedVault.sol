@@ -164,7 +164,7 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
     // use CREATE2 to deploy with a salt and free gas tokens
     // TODO: OpenZeppelin uses initializer functions for setup. i think we can use the constructor, but we might need to follow them
     // TODO: function that combines deploy2 and diamondCut
-    function deploy2(bytes32 salt, bytes memory bytecode) public payable {
+    function deploy2(bytes32 salt, bytes memory bytecode) public payable returns (address deployed) {
         uint256 initial_gas = startFreeGasTokens();
 
         // TODO: what role?
@@ -173,7 +173,7 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
             "ArgobytesOwnedVault.deploy2: Caller is not an admin"
         );
 
-        Create2.deploy(msg.value, salt, bytecode);
+        deployed = Create2.deploy(msg.value, salt, bytecode);
 
         endFreeGasTokens(initial_gas);
     }

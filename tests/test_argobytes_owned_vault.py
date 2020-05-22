@@ -174,4 +174,4 @@ def test_gastoken_saves_gas(argobytes_atomic_trade, argobytes_owned_vault, examp
     assert arbitrage_tx.return_value == value
     assert argobytes_owned_vault.balance() == 2 * value
     assert gas_used_with_gastoken < gas_used_without_gastoken
-    # TODO: assert something about the number of freed gas tokens
+    # TODO: assert something about the number of freed gas tokens. i don't think we are getting optimal amounts
