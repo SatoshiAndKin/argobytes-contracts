@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: You can't license an interface
 pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 

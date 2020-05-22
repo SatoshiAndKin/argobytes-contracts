@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: You can't license an interface
 /* https://github.com/KyberNetwork/smart-contracts/blob/master/contracts/KyberNetworkProxy.sol */
 
 /* https://developer.kyber.network/docs/DappsGuide/ */
@@ -7,6 +8,7 @@ pragma solidity 0.6.8;
 // TODO: we should be able to include a smaller interface, but we need it to be named "ERC20" so that the function signatures match!
 // TODO: actually, IERC20 turns into "address" in the function signature
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
+
 
 interface IKyberNetworkProxy {
     /// @notice use token address ETH_TOKEN_ADDRESS for ether
@@ -21,30 +23,38 @@ interface IKyberNetworkProxy {
     /// @return amount of actual dest tokens
     function trade(
         IERC20 src,
-        uint src_amount,
+        uint256 src_amount,
         IERC20 dest,
         address destAddress,
-        uint maxDestAmount,
-        uint minConversionRate,
+        uint256 maxDestAmount,
+        uint256 minConversionRate,
         address wallet_id
-    )
+    ) external payable returns (uint256);
+
+    event ExecuteTrade(
+        address indexed trader,
+        IERC20 src,
+        IERC20 dest,
+        uint256 actualsrc_amount,
+        uint256 actualDestAmount
+    );
+
+    function getExpectedRate(
+        IERC20 src,
+        IERC20 dest,
+        uint256 srcQty
+    ) external view returns (uint256 expectedRate, uint256 slippageRate);
+
+    function getUserCapInWei(address user) external view returns (uint256);
+
+    function getUserCapInTokenWei(address user, IERC20 token)
         external
-        payable
-        returns(uint);
+        view
+        returns (uint256);
 
-    event ExecuteTrade(address indexed trader, IERC20 src, IERC20 dest, uint actualsrc_amount, uint actualDestAmount);
+    function maxGasPrice() external view returns (uint256);
 
-    function getExpectedRate(IERC20 src, IERC20 dest, uint srcQty)
-        external view
-        returns(uint expectedRate, uint slippageRate);
+    function enabled() external view returns (bool);
 
-    function getUserCapInWei(address user) external view returns(uint);
-
-    function getUserCapInTokenWei(address user, IERC20 token) external view returns(uint);
-
-    function maxGasPrice() external view returns(uint);
-
-    function enabled() external view returns(bool);
-
-    function info(bytes32 field) external view returns(uint);
+    function info(bytes32 field) external view returns (uint256);
 }

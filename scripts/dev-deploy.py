@@ -17,6 +17,25 @@ SynthetixAddressResolver = "0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2"
 UniswapFactory = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
 
 
+def create_helper(deployer, target_contract, target_contract_args):
+    # TODO: docs for using ERADICATE 2 (will be easier since we already have argobytes_owned_vault's address)
+    salt = ""
+
+    initcode = target_contract.deploy.encode_input(*target_contract_args)
+
+    # TODO: docs for using ERADICATE 2 (will be easier since we already have argobytes_owned_vault's address)
+    deploy_tx = deployer.deploy2(GasTokenAddress, salt, initcode, {"from": accounts[0]})
+
+    deployed_address = deploy_tx.return_value
+
+    deployed_contract = target_contract.at(deployed_address)
+
+    print("CREATE2 deployed:", deployed_contract._name, "to", deployed_contract.address)
+    print()
+
+    return deployed_contract
+
+
 def main():
     arb_bots = [
         accounts[0],
@@ -31,7 +50,7 @@ def main():
 
     # TODO: refactor for gastoken incoming
     argobytes_owned_vault_deployer_initcode = ArgobytesOwnedVaultDeployer.deploy.encode_input(
-        salt, GasTokenAddress, arb_bots)
+        salt, arb_bots)
 
     # we don't use the normal deploy function because the contract selfdestructs after deploying ArgobytesOwnedVault
     argobytes_owned_vault_tx = accounts[0].transfer(data=argobytes_owned_vault_deployer_initcode, amount=50 * 1e18)
@@ -45,39 +64,48 @@ def main():
     print("ArgobytesOwnedVault address:", argobytes_owned_vault)
 
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
-    argobytes_owned_vault.mintGasToken({"from": accounts[0]})
+    for _ in range(0, 30):
+        argobytes_owned_vault.mintGasToken(GasTokenAddress, {"from": accounts[0]})
 
-    argobytes_atomic_trade_initcode = ArgobytesAtomicTrade.deploy.encode_input()
+    gas_token = interface.IGasToken(GasTokenAddress)
 
-    # TODO: docs for using ERADICATE 2 (will be easier since we already have argobytes_owned_vault's address)
-    argobytes_atomic_trade = argobytes_owned_vault.deploy2(salt, argobytes_atomic_trade_initcode, {"from": accounts[0]})
+    gas_tokens_start = gas_token.balanceOf.call(argobytes_owned_vault)
+    print("Starting gas_token balance:", gas_tokens_start)
 
-    argobytes_atomic_trade = ArgobytesAtomicTrade.at(argobytes_atomic_trade.return_value)
-
-    print("ArgobytesAtomicTrade address:", argobytes_atomic_trade)
+    argobytes_atomic_trade = create_helper(argobytes_owned_vault, ArgobytesAtomicTrade, [])
 
     # TODO: our rust code doesn't check our real balances yet, so just give the vault a bunch of coins
     accounts[1].transfer(argobytes_owned_vault, 50 * 1e18)
     accounts[2].transfer(argobytes_owned_vault, 50 * 1e18)
     accounts[3].transfer(argobytes_owned_vault, 50 * 1e18)
 
-    OneSplitOffchainAction.deploy(OneSplitAddress, {'from': accounts[0]})
-    KyberAction.deploy(KyberNetworkProxy, argobytes_owned_vault, {'from': accounts[0]})
-    UniswapAction.deploy(UniswapFactory, {'from': accounts[0]})
-    Weth9Action.deploy(Weth9Address, {'from': accounts[0]})
-    SynthetixDepotAction.deploy(SynthetixAddressResolver, {'from': accounts[0]})
-    CurveFiAction.deploy(CurveCompounded, 2, {'from': accounts[0]})
-    CurveFiAction.deploy(CurveUSDT, 3, {'from': accounts[0]})
-    CurveFiAction.deploy(CurveY, 4, {'from': accounts[0]})
-    CurveFiAction.deploy(CurveB, 4, {'from': accounts[0]})
-    CurveFiAction.deploy(CurveSUSDV2, 4, {'from': accounts[0]})
-    CurveFiAction.deploy(CurvePAX, 4, {'from': accounts[0]})
+    # TODO: refactor all of these to not use storage and instead use calldata. its easier to upgrade without requiring admin keys this way
+    create_helper(argobytes_owned_vault, OneSplitOffchainAction, [OneSplitAddress])
+    create_helper(argobytes_owned_vault, KyberAction, [KyberNetworkProxy, argobytes_owned_vault])
+    create_helper(argobytes_owned_vault, UniswapAction, [UniswapFactory])
+    create_helper(argobytes_owned_vault, Weth9Action, [Weth9Address])
+    create_helper(argobytes_owned_vault, SynthetixDepotAction, [SynthetixAddressResolver])
+    create_helper(argobytes_owned_vault, CurveFiAction, [CurveCompounded, 2])
+    create_helper(argobytes_owned_vault, CurveFiAction, [CurveUSDT, 3])
+    create_helper(argobytes_owned_vault, CurveFiAction, [CurveY, 4])
+    create_helper(argobytes_owned_vault, CurveFiAction, [CurveB, 4])
+    create_helper(argobytes_owned_vault, CurveFiAction, [CurveSUSDV2, 4])
+    create_helper(argobytes_owned_vault, CurveFiAction, [CurvePAX, 4])
 
     # # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity even if it actually loses money
     accounts[1].transfer(argobytes_atomic_trade, 1e18)
 
+    # TODO: do this in the constructor?
     kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWallet, {'from': accounts[0]})
 
     kyber_register_wallet.registerWallet(argobytes_owned_vault, {'from': accounts[0]})
 
     # TODO: make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
+
+    gas_tokens_remaining = gas_token.balanceOf.call(argobytes_owned_vault)
+
+    print("gas_tokens_remaining:", gas_tokens_remaining)
+
+    # TODO: what should we do here?
+    assert gas_tokens_remaining > 0
+    assert gas_tokens_remaining < 10

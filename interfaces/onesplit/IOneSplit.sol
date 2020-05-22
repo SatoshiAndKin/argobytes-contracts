@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: You can't license an interface
 pragma solidity 0.6.8;
 
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
@@ -46,10 +47,7 @@ abstract contract IOneSplit is IOneSplitConsts {
         public
         virtual
         view
-        returns(
-            uint256 returnAmount,
-            uint256[] memory distribution
-        );
+        returns (uint256 returnAmount, uint256[] memory distribution);
 
     function swap(
         IERC20 fromToken,

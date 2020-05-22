@@ -32,17 +32,17 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
 
     // TODO: get rid of this. do encoding outside of the smart contract
     // this is here because I'm having trouble encoding these types in Rust
-    // function encodeActions(address payable[] memory targets, bytes[] memory targets_data) public pure returns (bytes memory encoded_data) {
-    //     require(targets.length == targets_data.length, "ArgobytesAtomicTrade.encodeActions: lengths do not match");
+    function encodeActions(address payable[] memory targets, bytes[] memory targets_data) public pure returns (bytes memory encoded_data) {
+        require(targets.length == targets_data.length, "ArgobytesAtomicTrade.encodeActions: lengths do not match");
 
-    //     Action[] memory actions = new Action[](targets.length);
+        Action[] memory actions = new Action[](targets.length);
 
-    //     for (uint i = 0; i < targets.length; i++) {
-    //         actions[i] = Action(targets[i], targets_data[i]);
-    //     }
+        for (uint i = 0; i < targets.length; i++) {
+            actions[i] = Action(targets[i], targets_data[i]);
+        }
 
-    //     encoded_data = abi.encode(actions);
-    // }
+        encoded_data = abi.encode(actions);
+    }
 
     // // atomicTrade that you can call from an EOA. Just approve this contract to transfer first, then transfer as your first Action.
     // // be careful not to leave any tokens behind!

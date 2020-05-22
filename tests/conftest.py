@@ -15,11 +15,12 @@ def isolation(fn_isolation):
 
 
 @pytest.fixture()
-def argobytes_atomic_trade(argobytes_owned_vault, ArgobytesAtomicTrade):
+def argobytes_atomic_trade(argobytes_owned_vault, ArgobytesAtomicTrade, gastoken):
     salt = ""
     argobytes_atomic_trade_initcode = ArgobytesAtomicTrade.deploy.encode_input()
 
-    argobytes_atomic_trade = argobytes_owned_vault.deploy2(salt, argobytes_atomic_trade_initcode, {"from": accounts[0]})
+    argobytes_atomic_trade = argobytes_owned_vault.deploy2(
+        gastoken, salt, argobytes_atomic_trade_initcode, {"from": accounts[0]})
 
     yield ArgobytesAtomicTrade.at(argobytes_atomic_trade.return_value)
 
@@ -31,7 +32,7 @@ def argobytes_owned_vault(ArgobytesOwnedVault, ArgobytesOwnedVaultDeployer, gast
     salt = ""
 
     # TODO: refactor for gastoken incoming
-    argobytes_owned_vault_deployer_initcode = ArgobytesOwnedVaultDeployer.deploy.encode_input(salt, gastoken, arb_bots)
+    argobytes_owned_vault_deployer_initcode = ArgobytesOwnedVaultDeployer.deploy.encode_input(salt, arb_bots)
 
     # we don't use the normal deploy function because the contract selfdestructs after deploying ArgobytesOwnedVault
     argobytes_owned_vault_tx = accounts[0].transfer(data=argobytes_owned_vault_deployer_initcode)

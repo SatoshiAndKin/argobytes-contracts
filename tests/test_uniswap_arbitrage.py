@@ -8,7 +8,7 @@ from hypothesis import settings
 # @given(
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
-def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, example_action, uniswap_action, usdc_erc20):
+def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, example_action, gastoken, kollateral_invoker, uniswap_action, usdc_erc20):
     assert argobytes_owned_vault.balance() == 0
     assert example_action.balance() == 0
 
@@ -24,7 +24,7 @@ def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_va
 
     # mint some gas token
     # TODO: how much should we make?
-    argobytes_owned_vault.mintGasToken()
+    argobytes_owned_vault.mintGasToken(gastoken, {"from": accounts[0]})
 
     # make sure balances match what we expect
     assert argobytes_owned_vault.balance() == value
@@ -53,7 +53,8 @@ def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_va
         ],
     )
 
-    arbitrage_tx = argobytes_owned_vault.atomicArbitrage([zero_address], value, encoded_actions, {'from': accounts[1]})
+    arbitrage_tx = argobytes_owned_vault.atomicArbitrage(
+        gastoken, argobytes_atomic_trade, kollateral_invoker, [zero_address], value, encoded_actions, {'from': accounts[1]})
 
     # make sure balances match what we expect
     # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet

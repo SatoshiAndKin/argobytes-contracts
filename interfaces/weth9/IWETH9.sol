@@ -1,4 +1,6 @@
+// SPDX-License-Identifier: You can't license an interface
 pragma solidity 0.6.8;
+
 
 interface IWETH9 {
     function balanceOf(address) external returns (uint256);

@@ -1,4 +1,6 @@
+// SPDX-License-Identifier: You can't license an interface
 pragma solidity 0.6.8;
+
 
 interface ISystemStatus {
     function requireSystemActive() external view;
@@ -9,5 +11,8 @@ interface ISystemStatus {
 
     function requireSynthActive(bytes32 currencyKey) external view;
 
-    function requireSynthsActive(bytes32 sourceCurrencyKey, bytes32 destinationCurrencyKey) external view;
+    function requireSynthsActive(
+        bytes32 sourceCurrencyKey,
+        bytes32 destinationCurrencyKey
+    ) external view;
 }
