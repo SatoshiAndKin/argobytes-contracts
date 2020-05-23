@@ -13,4 +13,4 @@ def main():
     #    then prompt for that salt
     # else we assume the address is the address for ArgobytesOwnedVault
 
-    # then we use ERADICATE2 to find a salt that gives all the other contract addresses when deployed from ArgobytesOwnedVault
+    # then we use ERADICATE2 to find a salt that gives all the other contract addresses lots of zeros when deployed from ArgobytesOwnedVault
