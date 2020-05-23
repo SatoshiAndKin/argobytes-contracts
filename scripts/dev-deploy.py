@@ -1,4 +1,5 @@
 from brownie import *
+import os
 
 CurveCompounded = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
 CurveUSDT = "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C"
@@ -15,15 +16,23 @@ KyberNetworkProxy = "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
 # https://contracts.synthetix.io/ReadProxyAddressResolver
 SynthetixAddressResolver = "0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2"
 UniswapFactory = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
+ZeroAddress = "0x0000000000000000000000000000000000000000"
+
+BURN_GAS_TOKEN = os.environ.get("BURN_GAS_TOKEN", "1") == "1"
 
 
-def create_helper(deployer, target_contract, target_contract_args):
+def create_helper(deployer, target_contract, target_contract_args, gas_price):
     # TODO: docs for using ERADICATE 2 (will be easier since we already have argobytes_owned_vault's address)
     salt = ""
 
     initcode = target_contract.deploy.encode_input(*target_contract_args)
 
-    deploy_tx = deployer.deploy2(GasTokenAddress, salt, initcode, {"from": accounts[0]})
+    if BURN_GAS_TOKEN:
+        gastoken = GasTokenAddress
+    else:
+        gastoken = ZeroAddress
+
+    deploy_tx = deployer.deploy2(gastoken, salt, initcode, {"from": accounts[0], "gasPrice": gas_price})
 
     deployed_address = deploy_tx.return_value
 
@@ -36,6 +45,12 @@ def create_helper(deployer, target_contract, target_contract_args):
 
 
 def main():
+    # gwei
+    expected_mainntet_mint_price = 1 * 1e9
+    expected_mainnet_gas_price = 15 * 1e9
+
+    starting_balance = accounts[0].balance()
+
     arb_bots = [
         accounts[0],
         accounts[1],
@@ -53,7 +68,9 @@ def main():
 
     # we don't use the normal deploy function because the contract selfdestructs after deploying ArgobytesOwnedVault
     # https://github.com/iamdefinitelyahuman/brownie/issues/537
-    argobytes_owned_vault_tx = accounts[0].transfer(data=argobytes_owned_vault_deployer_initcode, amount=50 * 1e18)
+    # TODO: in production, we probably want to transfer
+    argobytes_owned_vault_tx = accounts[0].transfer(
+        data=argobytes_owned_vault_deployer_initcode, amount=0, gas_price=expected_mainnet_gas_price)
 
     # TODO: is this the best way to get an address out?
     argobytes_owned_vault = argobytes_owned_vault_tx.logs[0]['address']
@@ -63,16 +80,18 @@ def main():
     print("ArgobytesOwnedVault address:", argobytes_owned_vault)
 
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
-    for _ in range(0, 30):
-        argobytes_owned_vault.mintGasToken(GasTokenAddress, {"from": accounts[0]})
+    if BURN_GAS_TOKEN:
+        for _ in range(0, 30):
+            argobytes_owned_vault.mintGasToken(
+                GasTokenAddress, {"from": accounts[0], "gasPrice": expected_mainntet_mint_price})
 
-    gas_token = interface.IGasToken(GasTokenAddress)
+        gas_token = interface.IGasToken(GasTokenAddress)
 
-    gas_tokens_start = gas_token.balanceOf.call(argobytes_owned_vault)
-    # gastoken has 2 decimals, so divide by 100
-    print("Starting gas_token balance:", gas_tokens_start/100.0)
+        gas_tokens_start = gas_token.balanceOf.call(argobytes_owned_vault)
+        # gastoken has 2 decimals, so divide by 100
+        print("Starting gas_token balance:", gas_tokens_start/100.0)
 
-    argobytes_atomic_trade = create_helper(argobytes_owned_vault, ArgobytesAtomicTrade, [])
+    argobytes_atomic_trade = create_helper(argobytes_owned_vault, ArgobytesAtomicTrade, [], expected_mainnet_gas_price)
 
     # give the vault a bunch of coins
     accounts[1].transfer(argobytes_owned_vault, 50 * 1e18)
@@ -80,32 +99,45 @@ def main():
     accounts[3].transfer(argobytes_owned_vault, 50 * 1e18)
 
     # TODO: refactor all of these to use less storage and instead use calldata. its easier to upgrade without requiring admin keys this way. gas is also less for calldata compared to SLOAD
-    create_helper(argobytes_owned_vault, OneSplitOffchainAction, [OneSplitAddress])
-    create_helper(argobytes_owned_vault, KyberAction, [KyberNetworkProxy, argobytes_owned_vault])
-    create_helper(argobytes_owned_vault, UniswapAction, [UniswapFactory])
-    create_helper(argobytes_owned_vault, Weth9Action, [Weth9Address])
-    create_helper(argobytes_owned_vault, SynthetixDepotAction, [SynthetixAddressResolver])
-    create_helper(argobytes_owned_vault, CurveFiAction, [CurveCompounded, 2])
-    create_helper(argobytes_owned_vault, CurveFiAction, [CurveUSDT, 3])
-    create_helper(argobytes_owned_vault, CurveFiAction, [CurveY, 4])
-    create_helper(argobytes_owned_vault, CurveFiAction, [CurveB, 4])
-    create_helper(argobytes_owned_vault, CurveFiAction, [CurveSUSDV2, 4])
-    create_helper(argobytes_owned_vault, CurveFiAction, [CurvePAX, 4])
+    create_helper(argobytes_owned_vault, OneSplitOffchainAction, [OneSplitAddress], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, KyberAction, [
+                  KyberNetworkProxy, argobytes_owned_vault], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, UniswapAction, [UniswapFactory], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, Weth9Action, [Weth9Address], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, SynthetixDepotAction, [SynthetixAddressResolver], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, CurveFiAction, [CurveCompounded, 2], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, CurveFiAction, [CurveUSDT, 3], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, CurveFiAction, [CurveY, 4], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, CurveFiAction, [CurveB, 4], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, CurveFiAction, [CurveSUSDV2, 4], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, CurveFiAction, [CurvePAX, 4], expected_mainnet_gas_price)
 
     # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity
     accounts[1].transfer(argobytes_atomic_trade, 1e18)
 
     # register for kyber's fee program
-    kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWallet, {'from': accounts[0]})
+    kyber_register_wallet = interface.KyberRegisterWallet(
+        KyberRegisterWallet, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
-    kyber_register_wallet.registerWallet(argobytes_owned_vault, {'from': accounts[0]})
+    kyber_register_wallet.registerWallet(
+        argobytes_owned_vault, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
-    # make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
-    gas_tokens_remaining = gas_token.balanceOf.call(argobytes_owned_vault)
+    if BURN_GAS_TOKEN:
+        # make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
+        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_owned_vault)
 
-    # gastoken has 2 decimals, so divide by 100
-    print("gas_tokens_remaining:", gas_tokens_remaining/100.0, "/", gas_tokens_start/100.0)
+        # gastoken has 2 decimals, so divide by 100
+        print("gas_tokens_remaining:", gas_tokens_remaining/100.0, "/", gas_tokens_start/100.0)
 
-    # TODO: what should we do here?
-    assert gas_tokens_remaining > 0
-    assert gas_tokens_remaining < 20
+        # TODO: what should we do here?
+        assert gas_tokens_remaining > 0
+        assert gas_tokens_remaining < 20
+    else:
+        print("gas_tokens_remaining: N/A")
+
+    print("gas used by accounts[0]:", accounts[0].gas_used)
+
+    ending_balance = accounts[0].balance()
+
+    # this isn't all used by gas. some is sent to the owned vault
+    print("ETH used by accounts[0]:", (starting_balance - ending_balance) / 1e18)

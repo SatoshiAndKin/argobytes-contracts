@@ -94,6 +94,8 @@ def send_eth_helper(to, amount, wait_for_confirm=True):
 
 
 def main():
+    assert False, "this need to be rewritten to use CREATE2"
+
     arb_bot = input(
         "Input arb bot address: [0x52517b7b19D3CA0Bd66c604BC1909D2c9951dbD5] ") or "0x52517b7b19D3CA0Bd66c604BC1909D2c9951dbD5"
 
