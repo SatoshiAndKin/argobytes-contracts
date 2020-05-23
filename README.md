@@ -26,7 +26,9 @@ Run:
     brownie compile
 
     # test development deploy scripts
-    ./scripts/test-deploy.sh
+    # burning gastoken makes the script take a lot longer and cost more total gas, but it ends up costing less ETH
+    BURN_GAS_TOKEN=1 ./scripts/test-deploy.sh
+    BURN_GAS_TOKEN=0 ./scripts/test-deploy.sh
 
     # have brownie setup a ganache and run unit tests
     ./scripts/test.sh

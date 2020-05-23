@@ -163,26 +163,35 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
     // use CREATE2 to deploy with a salt and free gas tokens
     // TODO: OpenZeppelin uses initializer functions for setup. i think we can use the constructor, but we might need to follow them
     // TODO: function that combines deploy2 and diamondCut
-    function deploy2(address gastoken, bytes32 salt, bytes memory bytecode) public payable returns (address deployed) {
-        uint256 initial_gas = startFreeGasTokens(gastoken);
-
-        // TODO: what role?
+    function deploy2(address gas_token, bytes32 salt, bytes memory bytecode) public payable freeGasTokens(gas_token) returns (address deployed) {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "ArgobytesOwnedVault.deploy2: Caller is not an admin"
         );
 
         deployed = Create2.deploy(msg.value, salt, bytecode);
-
-        endFreeGasTokens(gastoken, initial_gas);
     }
 
-    // this will work for gastoken, too
     function withdrawTo(
         IERC20 token,
         address to,
         uint256 amount
     ) external returns (bool) {
+        // TODO: what role? it should be seperate from the deployer
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.withdrawTo: Caller is not an admin"
+        );
+
+        return token.universalTransfer(to, amount);
+    }
+
+    function withdrawToFreeGas(
+        address gas_token,
+        IERC20 token,
+        address to,
+        uint256 amount
+    ) external freeGasTokens(gas_token) returns (bool) {
         // TODO: what role? it should be seperate from the deployer
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
