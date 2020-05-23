@@ -33,10 +33,12 @@ Run:
     # have brownie setup a ganache and run unit tests
     ./scripts/test.sh
 
-    # run ganache forking mainnet 
+    # run ganache forking mainnet
+    # i point my arbitrage finding code (in a seperate repo) at this node
     ./scripts/staging-ganache.sh
 
-    # deploy to staging-ganache
+    # deploy this project's contracts to staging-ganache
+    # this sets BURN_GAS_TOKEN=0 since speed is more important than saving development ETH
     ./scripts/staging-deploy.sh
 
     # export contract abi .jsons to a directory
