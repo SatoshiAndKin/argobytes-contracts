@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /*
 
     Copyright 2020 Kollateral LLC.
@@ -20,6 +21,7 @@
 
 pragma solidity 0.6.8;
 
+
 abstract contract IInvokable {
-    function execute(bytes calldata data) external payable virtual;
+    function execute(bytes calldata data) external virtual payable;
 }

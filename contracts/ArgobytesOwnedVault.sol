@@ -82,6 +82,8 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
     // TODO: add withdraw helpers! (otherwise we can just use the backdoor)
     receive() external payable {}
 
+    // TODO: function gastokenArbitrage()
+
     function atomicArbitrage(
         address gastoken,
         address atomic_trader,

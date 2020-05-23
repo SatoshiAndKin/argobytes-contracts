@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /*
 
     Copyright 2020 Kollateral LLC.
@@ -22,23 +23,38 @@ pragma solidity 0.6.8;
 
 import {IInvocationHook} from "./IInvocationHook.sol";
 
+
 abstract contract IInvoker is IInvocationHook {
-    function invoke(address invokeTo, bytes calldata invokeData, address tokenAddress, uint256 tokenAmount)
-    external
-    payable
-    virtual;
+    function invoke(
+        address invokeTo,
+        bytes calldata invokeData,
+        address tokenAddress,
+        uint256 tokenAmount
+    ) external virtual payable;
 
     function invokeCallback() external virtual;
 
     function poolReward() external virtual view returns (uint256);
 
-    function poolRewardAddress(address tokenAddress) external virtual view returns (address);
+    function poolRewardAddress(address tokenAddress)
+        external
+        virtual
+        view
+        returns (address);
 
     function platformReward() external virtual view returns (uint256);
 
     function platformVaultAddress() external virtual view returns (address);
 
-    function isTokenAddressRegistered(address tokenAddress) public virtual view returns (bool);
+    function isTokenAddressRegistered(address tokenAddress)
+        public
+        virtual
+        view
+        returns (bool);
 
-    function totalLiquidity(address tokenAddress) external virtual view returns (uint256);
+    function totalLiquidity(address tokenAddress)
+        external
+        virtual
+        view
+        returns (uint256);
 }

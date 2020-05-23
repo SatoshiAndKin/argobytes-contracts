@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /*
 
     Copyright 2020 Kollateral LLC.
@@ -22,14 +23,19 @@ import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 
 import {ExternalCaller} from "./ExternalCaller.sol";
 
+
 contract BalanceCarrier is ExternalCaller {
     address private _ethTokenAddress;
 
-    constructor (address ethTokenAddress) internal {
+    constructor(address ethTokenAddress) internal {
         _ethTokenAddress = ethTokenAddress;
     }
 
-    function transfer(address tokenAddress, address to, uint256 amount) internal returns (bool) {
+    function transfer(
+        address tokenAddress,
+        address to,
+        uint256 amount
+    ) internal returns (bool) {
         if (tokenAddress == _ethTokenAddress) {
             externalTransfer(to, amount);
             return true;

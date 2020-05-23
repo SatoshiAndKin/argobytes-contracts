@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /*
 
     Copyright 2020 Kollateral LLC.
@@ -17,6 +18,7 @@
 */
 
 pragma solidity 0.6.8;
+
 
 abstract contract IInvocationHook {
     function currentSender() external virtual view returns (address);

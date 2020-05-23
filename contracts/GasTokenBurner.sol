@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 pragma solidity 0.6.8;
 
-import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 
 import {IGasToken} from "interfaces/gastoken/IGasToken.sol";
 
 
-contract GasTokenBurner is AccessControl {
+contract GasTokenBurner {
     using SafeMath for uint256;
 
     modifier freeGasTokens(address gas_token) {
@@ -34,6 +33,7 @@ contract GasTokenBurner is AccessControl {
     function endFreeGasTokens(address gas_token, uint256 initial_gas) internal {
         if (initial_gas > 0) {
             uint256 gas_spent = initial_gas.sub(gasleft());
+
             _freeGasTokens(gas_token, gas_spent);
         }
     }
@@ -44,7 +44,7 @@ contract GasTokenBurner is AccessControl {
     function _freeGasTokens(address gas_token, uint256 gas_spent) internal {
         // calculate the optimal number of tokens to free based on gas_spent
         // TODO: this is the number that 1inch uses. Not sure where they got it. They are lame about people "copying" them, so lets do more research. It's a simple function though. they can't own that
-        // TODO: i also don't think this is the optimal amount. gastoken.io is showing that more gas should be saved
+        // TODO: i also don't think this is the optimal amount. gastoken.io is showing that more gas should be saved. maybe they didn't update their site for the last hardfork though
         uint256 num_tokens = (gas_spent + 14154) / 41130;
 
         // https://github.com/projectchicago/gastoken/blob/81325843c710fbcf0d77ea5a5e8323d373b09f88/contract/gst2_free_example.sol#L8

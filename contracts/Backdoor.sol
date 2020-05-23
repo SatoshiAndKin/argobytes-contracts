@@ -14,20 +14,20 @@ contract Backdoor is AccessControl {
      */
     function backdoor_call(address to, uint256 value, bytes calldata data) external returns (bytes memory) {
         // TODO: allow the use of GSN? seems like unnessary complexity
-        require(hasRole(BACKDOOR_ROLE, msg.sender), "Caller is not admin");
+        require(hasRole(BACKDOOR_ROLE, msg.sender), "Backdoor.backdoor_call: Caller does not have backdoor role");
 
         // calls to self still seem unnecessary even for a backdoor
-        require(to != address(this), "calls to self are not allowed");
+        require(to != address(this), "Backdoor.backdoor_call: calls to self are not allowed");
 
-        (bool success, bytes memory success_data) = to.call{value: value}(data);
+        (bool success, bytes memory return_data) = to.call{value: value}(data);
 
         if (!success) {
-            // TODO: is success_data actually return_data? is there an error in there we could surface?
+            // TODO: include the return_data in the error
             revert("backdoor call failed");
         }
 
-        // log?
-        return success_data;
+        // emit?
+        return return_data;
     }
 
     /**
@@ -35,19 +35,19 @@ contract Backdoor is AccessControl {
      */
     function backdoor_delegate_call(address to, bytes calldata data) external returns (bytes memory) {
         // TODO: allow the use of GSN? seems like unnessary complexity
-        require(hasRole(BACKDOOR_ROLE, msg.sender), "Caller is not admin");
+        require(hasRole(BACKDOOR_ROLE, msg.sender), "Backdoor.backdoor_delegate_call: Caller does not have backdoor role");
 
         // calls to self still seem unnecessary even for a backdoor
-        require(to != address(this), "calls to self are not allowed");
+        require(to != address(this), "Backdoor.backdoor_delegate_call: calls to self are not allowed");
 
-        (bool success, bytes memory success_data) = to.delegatecall(data);
+        (bool success, bytes memory return_data) = to.delegatecall(data);
 
         if (!success) {
-            // TODO: is success_data actually return_data? is there an error in there we could surface?
+            // TODO: include the return_data in the error
             revert("backdoor delegatecall failed");
         }
 
-        // log?
-        return success_data;
+        // emit?
+        return return_data;
     }
 }
