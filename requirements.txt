@@ -11,13 +11,13 @@ attrs==19.3.0             # via hypothesis, jsonschema, pytest
 autopep8==1.5.2           # via -r requirements.in
 bandit==1.6.2             # via -r requirements.in
 base58==2.0.0             # via multiaddr
-bitarray==1.2.1           # via eth-account
+bitarray==1.2.2           # via eth-account
 certifi==2020.4.5.1       # via requests
 chardet==3.0.4            # via requests
 cytoolz==0.10.1           # via eth-keyfile, eth-utils
 eth-abi==2.1.1            # via eth-account, eth-brownie, eth-event, web3
 eth-account==0.5.2        # via web3
-eth-brownie==1.8.5        # via -r requirements.in
+eth-brownie==1.8.7        # via -r requirements.in
 eth-event==1.0.0          # via eth-brownie
 eth-hash[pycryptodome]==0.2.0  # via eth-brownie, eth-event, eth-utils, web3
 eth-keyfile==0.5.1        # via eth-account
@@ -29,9 +29,8 @@ execnet==1.7.1            # via pytest-xdist
 gitdb==4.0.5              # via gitpython
 gitpython==3.1.2          # via bandit
 hexbytes==0.2.0           # via eth-account, eth-brownie, eth-event, eth-rlp, web3
-hypothesis==5.11.0        # via eth-brownie
+hypothesis==5.15.0        # via eth-brownie
 idna==2.9                 # via requests
-importlib-metadata==1.6.0  # via jsonschema, pluggy, pytest
 inflection==0.4.0         # via mythx-models, pythx
 ipfshttpclient==0.4.13.2  # via web3
 isort==4.3.21             # via pylint
@@ -39,16 +38,16 @@ jsonschema==3.2.0         # via mythx-models, web3
 lazy-object-proxy==1.4.3  # via astroid
 lru-dict==1.1.6           # via web3
 mccabe==0.6.1             # via pylint
-more-itertools==8.2.0     # via pytest
+more-itertools==8.3.0     # via pytest
 multiaddr==0.0.9          # via ipfshttpclient
 mythx-models==1.7.7       # via pythx
 netaddr==0.7.19           # via multiaddr
-packaging==20.3           # via pytest
+packaging==20.4           # via pytest
 parsimonious==0.8.1       # via eth-abi
 pbr==5.4.5                # via stevedore
 pluggy==0.13.1            # via pytest
 prompt-toolkit==3.0.5     # via eth-brownie
-protobuf==3.11.3          # via web3
+protobuf==3.12.1          # via web3
 psutil==5.7.0             # via eth-brownie
 py-solc-ast==1.2.4        # via eth-brownie
 py-solc-x==0.8.2          # via eth-brownie
@@ -69,23 +68,20 @@ pyyaml==5.3.1             # via bandit, eth-brownie
 requests==2.23.0          # via eth-brownie, ipfshttpclient, py-solc-x, pythx, web3
 rlp==1.2.0                # via eth-account, eth-rlp
 semantic-version==2.8.5   # via eth-brownie, py-solc-x
-six==1.14.0               # via astroid, asttokens, bandit, ipfshttpclient, jsonschema, multiaddr, packaging, parsimonious, protobuf, pyrsistent, pytest-xdist, python-dateutil, stevedore
+six==1.15.0               # via astroid, asttokens, bandit, ipfshttpclient, jsonschema, multiaddr, packaging, parsimonious, protobuf, pyrsistent, pytest-xdist, python-dateutil, stevedore
 smmap==3.0.4              # via gitdb
 sortedcontainers==2.1.0   # via hypothesis
 stevedore==1.32.0         # via bandit
 toml==0.10.1              # via pylint
 toolz==0.10.0             # via cytoolz
 tqdm==4.46.0              # via eth-brownie
-typed-ast==1.4.1          # via astroid
-typing-extensions==3.7.4.2  # via web3
 urllib3==1.25.9           # via requests
 varint==1.0.2             # via multiaddr
 vyper==0.1.0b17           # via eth-brownie
 wcwidth==0.1.9            # via prompt-toolkit, pytest
-web3==5.9.0               # via eth-brownie
+web3==5.10.0              # via eth-brownie
 websockets==8.1           # via web3
 wrapt==1.12.1             # via astroid
-zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

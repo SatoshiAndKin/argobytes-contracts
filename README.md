@@ -55,7 +55,8 @@ NOTE: You will want to edit `~/.brownie/network-config.yaml` to point to a local
 
 Run:
 
-    . ./scripts/activate
+    pipx install pip-tools
+
     pip-compile --upgrade
     pip install -U -r requirements.txt
     npm upgrade
