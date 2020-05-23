@@ -70,7 +70,7 @@ def main():
     gas_token = interface.IGasToken(GasTokenAddress)
 
     gas_tokens_start = gas_token.balanceOf.call(argobytes_owned_vault)
-    print("Starting gas_token balance:", gas_tokens_start)
+    print("Starting gas_token balance:", gas_tokens_start/100.0)
 
     argobytes_atomic_trade = create_helper(argobytes_owned_vault, ArgobytesAtomicTrade, [])
 
@@ -104,8 +104,8 @@ def main():
 
     gas_tokens_remaining = gas_token.balanceOf.call(argobytes_owned_vault)
 
-    print("gas_tokens_remaining:", gas_tokens_remaining)
+    print("gas_tokens_remaining:", gas_tokens_remaining/100.0, "/", gas_tokens_start/100.0)
 
     # TODO: what should we do here?
     assert gas_tokens_remaining > 0
-    assert gas_tokens_remaining < 10
+    assert gas_tokens_remaining < 20
