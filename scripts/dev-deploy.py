@@ -23,7 +23,6 @@ def create_helper(deployer, target_contract, target_contract_args):
 
     initcode = target_contract.deploy.encode_input(*target_contract_args)
 
-    # TODO: docs for using ERADICATE 2 (will be easier since we already have argobytes_owned_vault's address)
     deploy_tx = deployer.deploy2(GasTokenAddress, salt, initcode, {"from": accounts[0]})
 
     deployed_address = deploy_tx.return_value
