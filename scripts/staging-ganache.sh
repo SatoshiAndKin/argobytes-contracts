@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# export NODE_OPTIONS="--max-old-space-size=16384"
+export NODE_OPTIONS="--max-old-space-size=8192"
 
 set -x
 
