@@ -44,18 +44,18 @@ def main():
         accounts[4],
     ]
 
-    # TODO: docs for using ERADICATE2
+    # TODO: docs for figuring out the address for ArgobytesOwnedVaultDeployer and then using ERADICATE2
+    # TODO: maybe send gastoken to ArgobytesOwnedVaultDeployer before it is deployed. then burn all that token after selfdestruct?
     salt = ""
 
-    # TODO: refactor for gastoken incoming
     argobytes_owned_vault_deployer_initcode = ArgobytesOwnedVaultDeployer.deploy.encode_input(
         salt, arb_bots)
 
     # we don't use the normal deploy function because the contract selfdestructs after deploying ArgobytesOwnedVault
+    # https://github.com/iamdefinitelyahuman/brownie/issues/537
     argobytes_owned_vault_tx = accounts[0].transfer(data=argobytes_owned_vault_deployer_initcode, amount=50 * 1e18)
 
-    # TODO: is this the best way to get an address out? i feel like it should already be in logs
-    # argobytes_owned_vault = argobytes_owned_vault_tx.events["Deployed"]["argobytes_owned_vault"]
+    # TODO: is this the best way to get an address out?
     argobytes_owned_vault = argobytes_owned_vault_tx.logs[0]['address']
 
     argobytes_owned_vault = ArgobytesOwnedVault.at(argobytes_owned_vault)
@@ -69,16 +69,17 @@ def main():
     gas_token = interface.IGasToken(GasTokenAddress)
 
     gas_tokens_start = gas_token.balanceOf.call(argobytes_owned_vault)
+    # gastoken has 2 decimals, so divide by 100
     print("Starting gas_token balance:", gas_tokens_start/100.0)
 
     argobytes_atomic_trade = create_helper(argobytes_owned_vault, ArgobytesAtomicTrade, [])
 
-    # TODO: our rust code doesn't check our real balances yet, so just give the vault a bunch of coins
+    # give the vault a bunch of coins
     accounts[1].transfer(argobytes_owned_vault, 50 * 1e18)
     accounts[2].transfer(argobytes_owned_vault, 50 * 1e18)
     accounts[3].transfer(argobytes_owned_vault, 50 * 1e18)
 
-    # TODO: refactor all of these to not use storage and instead use calldata. its easier to upgrade without requiring admin keys this way
+    # TODO: refactor all of these to use less storage and instead use calldata. its easier to upgrade without requiring admin keys this way. gas is also less for calldata compared to SLOAD
     create_helper(argobytes_owned_vault, OneSplitOffchainAction, [OneSplitAddress])
     create_helper(argobytes_owned_vault, KyberAction, [KyberNetworkProxy, argobytes_owned_vault])
     create_helper(argobytes_owned_vault, UniswapAction, [UniswapFactory])
@@ -91,18 +92,18 @@ def main():
     create_helper(argobytes_owned_vault, CurveFiAction, [CurveSUSDV2, 4])
     create_helper(argobytes_owned_vault, CurveFiAction, [CurvePAX, 4])
 
-    # # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity even if it actually loses money
+    # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity
     accounts[1].transfer(argobytes_atomic_trade, 1e18)
 
-    # TODO: do this in the constructor?
+    # register for kyber's fee program
     kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWallet, {'from': accounts[0]})
 
     kyber_register_wallet.registerWallet(argobytes_owned_vault, {'from': accounts[0]})
 
-    # TODO: make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
-
+    # make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
     gas_tokens_remaining = gas_token.balanceOf.call(argobytes_owned_vault)
 
+    # gastoken has 2 decimals, so divide by 100
     print("gas_tokens_remaining:", gas_tokens_remaining/100.0, "/", gas_tokens_start/100.0)
 
     # TODO: what should we do here?
