@@ -7,14 +7,18 @@ My initial use for these is for atomic arbitrage, but `ArgobytesAtomicTrade.sol`
 
 # Install
 
-1. Install `python3-dev` and `python3-venv`
-2. Install `node` v12 and `npm` v6 (I like to use `nvm` to manage node versions)
-2. Run `./scripts/setup.sh`
-3. Make a .env:
-
+1. Install `geth` (or another node that is compatible with `ganache-cli --fork`). [Read this](https://gist.github.com/WyseNynja/89179917d209d10e6ea27c5f2f8f88f1).
+2. Install `python3-dev` and `python3-venv`
+3. Install `node` v12 (and `npm` v6) (I like to use [`nvm`](https://github.com/nvm-sh/nvm) to manage node versions)
+4. Make a `.env` file:
+    ```
+    # We use etherscan for fetching mainnet contract data
     export ETHERSCAN_TOKEN=XXX
-    export NODE_OPTIONS="--max-old-space-size=16384"
-    export WEB3_INFURA_PROJECT_ID=XXX
+    # Tracing transactions in ganache can use a lot more than the default 1.7GB
+    export NODE_OPTIONS="--max-old-space-size=8096"
+    ```
+5. Run `./scripts/setup.sh`
+6. Run `./venv/bin/brownie network import brownie-network-config.yaml True`
 
 
 # Develop
@@ -44,7 +48,7 @@ Run:
     # export contract abi .jsons to a directory
     ./scripts/export-abi.sh ../argobytes-backend/contracts/abi/argobytes
 
-NOTE: You will want to edit ~/.brownie/network-config.yaml to point to a local node. Infura (the default) is really slow in forking mode.
+NOTE: You will want to edit `~/.brownie/network-config.yaml` to point to a local node. Infura (the default) is really slow in forking mode.
 
 
 # Upgrading dependencies
