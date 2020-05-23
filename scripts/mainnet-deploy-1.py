@@ -113,7 +113,7 @@ def main():
     deploy_helper(CurveFiAction, CurveB, 4)
     deploy_helper(CurveFiAction, CurveSUSDV2, 4)
     deploy_helper(CurveFiAction, CurvePAX, 4)
-    deploy_helper(UniswapAction, UniswapFactory)
+    deploy_helper(UniswapV1Action, UniswapFactory)
     deploy_helper(KyberAction, KyberNetworkProxy, argobytes_owned_vault)
     deploy_helper(OneSplitOffchainAction, OneSplitAddress)
     deploy_helper(SynthetixDepotAction, SynthetixAddressResolver)

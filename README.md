@@ -37,6 +37,9 @@ Run:
     # deploy to staging-ganache
     ./scripts/staging-deploy.sh
 
+    # export contract abi .jsons to a directory
+    ./scripts/export-abi.sh ../argobytes-backend/contracts/abi/argobytes
+
 NOTE: You will want to edit ~/.brownie/network-config.yaml to point to a local node. Infura (the default) is really slow in forking mode.
 
 

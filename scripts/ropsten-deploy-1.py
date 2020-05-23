@@ -111,7 +111,7 @@ def main():
 
     # deploy_helper(OneSplitOffchainAction, OneSplitAddress)
     deploy_helper(KyberAction, KyberNetworkProxy, argobytes_owned_vault)
-    deploy_helper(UniswapAction, UniswapFactory)
+    deploy_helper(UniswapV1Action, UniswapFactory)
     deploy_helper(Weth9Action, Weth9Address)
     deploy_helper(SynthetixDepotAction, SynthetixAddressResolver)
     deploy_helper(CurveFiAction, CurveCompounded, 2)

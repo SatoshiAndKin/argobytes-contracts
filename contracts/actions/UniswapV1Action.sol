@@ -9,10 +9,10 @@ import {IUniswapFactory} from "interfaces/uniswap/IUniswapFactory.sol";
 import {IUniswapExchange} from "interfaces/uniswap/IUniswapExchange.sol";
 
 // TODO: do we want auth on this with setters? i think no. i think we should just have a simple contract with a constructor. if we need changes, we can deploy a new contract. less methods is less attack surface
-contract UniswapAction is AbstractERC20Exchange {
+contract UniswapV1Action is AbstractERC20Exchange {
 
     // TODO: allow trading outside of this factory
-    // TODO: or maybe we sould just want multiple UniswapActions? what about cross factory trades?
+    // TODO: or maybe we sould just want multiple UniswapV1Actions? what about cross factory trades?
     IUniswapFactory uniswapFactory;
 
     constructor(address _factoryAddress) public {
@@ -26,51 +26,51 @@ contract UniswapAction is AbstractERC20Exchange {
 
     // TODO: helper here that sets allowances and then transfers? i think IUniswapExchange might already have all the methods we need though
     function _tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory) internal override {
-        require(dest_token != ZERO_ADDRESS, "UniswapAction._tradeEtherToToken: dest_token cannot be ETH");
+        require(dest_token != ZERO_ADDRESS, "UniswapV1Action._tradeEtherToToken: dest_token cannot be ETH");
 
         uint srcBalance = address(this).balance;
 
-        require(srcBalance > 0, "UniswapAction._tradeEtherToToken: NO_BALANCE");
+        require(srcBalance > 0, "UniswapV1Action._tradeEtherToToken: NO_BALANCE");
 
         IUniswapExchange exchange = getExchange(dest_token);
-        require(address(exchange) != address(0), "UniswapAction._tradeEtherToToken: NO_EXCHANGE");
+        require(address(exchange) != address(0), "UniswapV1Action._tradeEtherToToken: NO_EXCHANGE");
 
         if (dest_max_tokens > 0) {
-            require(dest_min_tokens == 0, "UniswapAction._tradeEtherToToken: SET_MIN_OR_MAX");  // TODO: do something with dest_min_tokens?
+            require(dest_min_tokens == 0, "UniswapV1Action._tradeEtherToToken: SET_MIN_OR_MAX");  // TODO: do something with dest_min_tokens?
 
             // def ethToTokenTransferOutput(tokens_bought: uint256, deadline: timestamp, recipient: address) -> uint256(wei):
             // solium-disable-next-line security/no-block-members
             uint received = exchange.ethToTokenTransferOutput{value: srcBalance}(dest_max_tokens, block.timestamp, to);
 
-            require(received > 0, "UniswapAction._tradeEtherToToken: BAD_EXCHANGE");
+            require(received > 0, "UniswapV1Action._tradeEtherToToken: BAD_EXCHANGE");
         // TODO: should this "else" be "else if (dest_min_tokens > 0)"? less gas to just use an else. who cares if they passed 0 for dest_min_tokens. maybe slippage doesn't matter for their use
         } else {
             // dest_max_tokens is 0
             // dest_min_tokens may be 1, but is probably set to something to protect against large slippage in price
-            require(dest_min_tokens > 0, "UniswapAction._tradeEtherToToken: dest_min_tokens should not == 0");
+            require(dest_min_tokens > 0, "UniswapV1Action._tradeEtherToToken: dest_min_tokens should not == 0");
 
             // def ethToTokenTransferInput(min_tokens: uint256, deadline: timestamp, recipient: address) -> uint256
             // solium-disable-next-line security/no-block-members
             uint received = exchange.ethToTokenTransferInput{value: srcBalance}(dest_min_tokens, block.timestamp, to);
 
-            require(received > 0, "UniswapAction._tradeEtherToToken: BAD_EXCHANGE");
+            require(received > 0, "UniswapV1Action._tradeEtherToToken: BAD_EXCHANGE");
         }
     }
 
     function _tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory) internal override {
-        require(src_token != ZERO_ADDRESS, "UniswapAction._tradeTokenToToken: src_token cannot be ETH");
-        require(dest_token != ZERO_ADDRESS, "UniswapAction._tradeTokenToToken: dest_token cannot be ETH");
+        require(src_token != ZERO_ADDRESS, "UniswapV1Action._tradeTokenToToken: src_token cannot be ETH");
+        require(dest_token != ZERO_ADDRESS, "UniswapV1Action._tradeTokenToToken: dest_token cannot be ETH");
 
         uint src_balance = IERC20(src_token).balanceOf(address(this));
-        require(src_balance > 0, "UniswapAction._tradeTokenToToken: NO_BALANCE");
+        require(src_balance > 0, "UniswapV1Action._tradeTokenToToken: NO_BALANCE");
 
         IUniswapExchange exchange = getExchange(src_token);
-        require(address(exchange) != ZERO_ADDRESS, "UniswapAction._tradeTokenToToken: NO_EXCHANGE");
+        require(address(exchange) != ZERO_ADDRESS, "UniswapV1Action._tradeTokenToToken: NO_EXCHANGE");
 
-        require(IERC20(src_token).approve(address(exchange), src_balance), "UniswapAction._tradeTokenToToken: FAILED_APPROVE");
+        require(IERC20(src_token).approve(address(exchange), src_balance), "UniswapV1Action._tradeTokenToToken: FAILED_APPROVE");
 
         if (dest_max_tokens > 0) {
-            require(dest_min_tokens == 0, "UniswapAction._tradeTokenToToken: SET_MIN_OR_MAX");  // TODO: do something with dest_min_tokens instead?
+            require(dest_min_tokens == 0, "UniswapV1Action._tradeTokenToToken: SET_MIN_OR_MAX");  // TODO: do something with dest_min_tokens instead?
 
             // TODO: how should we calculate this? tokenToEthSomething? or is it fine to use a very large amount?
             // TODO: gas golf this
@@ -87,11 +87,11 @@ contract UniswapAction is AbstractERC20Exchange {
             // solium-disable-next-line security/no-block-members
             uint received = exchange.tokenToTokenTransferOutput(dest_max_tokens, src_balance, max_eth_sold, block.timestamp, to, address(dest_token));
 
-            require(received > 0, "UniswapAction._tradeTokenToToken: BAD_EXCHANGE");
+            require(received > 0, "UniswapV1Action._tradeTokenToToken: BAD_EXCHANGE");
         } else {
             // dest_max_tokens is 0
             // dest_min_tokens may be 1, but is probably set to something to protect against large slippage in price
-            require(dest_min_tokens > 0, "UniswapAction._tradeTokenToToken: dest_min_tokens should not == 0");
+            require(dest_min_tokens > 0, "UniswapV1Action._tradeTokenToToken: dest_min_tokens should not == 0");
 
             // TODO: how should we calculate this? tokenToEthSomething? or is it fine to use 1
             uint min_eth_bought = 1;
@@ -107,40 +107,40 @@ contract UniswapAction is AbstractERC20Exchange {
             // solium-disable-next-line security/no-block-members
             uint received = exchange.tokenToTokenTransferInput(src_balance, dest_min_tokens, min_eth_bought, block.timestamp, to, address(dest_token));
 
-            require(received > 0, "UniswapAction._tradeTokenToToken: BAD_EXCHANGE");
+            require(received > 0, "UniswapV1Action._tradeTokenToToken: BAD_EXCHANGE");
         }
     }
 
     function _tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory) internal override {
-        require(src_token != ZERO_ADDRESS, "UniswapAction._tradeTokenToEther: src_token cannot be ETH");
+        require(src_token != ZERO_ADDRESS, "UniswapV1Action._tradeTokenToEther: src_token cannot be ETH");
 
         uint src_balance = IERC20(src_token).balanceOf(address(this));
-        require(src_balance > 0, "UniswapAction._tradeTokenToEther: NO_BALANCE");
+        require(src_balance > 0, "UniswapV1Action._tradeTokenToEther: NO_BALANCE");
 
         IUniswapExchange exchange = getExchange(src_token);
-        require(address(exchange) != address(0), "UniswapAction._tradeTokenToEther: NO_EXCHANGE");
+        require(address(exchange) != address(0), "UniswapV1Action._tradeTokenToEther: NO_EXCHANGE");
 
         // approve transfers
-        require(IERC20(src_token).approve(address(exchange), src_balance), "UniswapAction._tradeTokenToEther: FAILED_APPROVE");
+        require(IERC20(src_token).approve(address(exchange), src_balance), "UniswapV1Action._tradeTokenToEther: FAILED_APPROVE");
 
         if (dest_max_tokens > 0) {
-            require(dest_min_tokens == 0, "UniswapAction._tradeTokenToEther: SET_MIN_OR_MAX");  // TODO: do something with dest_min_tokens?
+            require(dest_min_tokens == 0, "UniswapV1Action._tradeTokenToEther: SET_MIN_OR_MAX");  // TODO: do something with dest_min_tokens?
 
             // def tokenToEthTransferOutput(eth_bought: uint256(wei), max_tokens: uint256, deadline: timestamp, recipient: address) -> uint256:
             // solium-disable-next-line security/no-block-members
             uint received = exchange.tokenToEthTransferOutput(dest_max_tokens, src_balance, block.timestamp, to);
 
-            require(received > 0, "UniswapAction._tradeTokenToEther: BAD_EXCHANGE");
+            require(received > 0, "UniswapV1Action._tradeTokenToEther: BAD_EXCHANGE");
         } else {
             // dest_max_tokens is 0
             // dest_min_tokens may be 1, but is probably set to something to protect against large slippage in price
-            require(dest_min_tokens > 0, "UniswapAction._tradeTokenToEther: dest_min_tokens should not == 0");
+            require(dest_min_tokens > 0, "UniswapV1Action._tradeTokenToEther: dest_min_tokens should not == 0");
 
             // def tokenToEthTransferInput(tokens_sold: uint256, min_eth: uint256(wei), deadline: timestamp, recipient: address) -> uint256(wei):
             // solium-disable-next-line security/no-block-members
             uint received = exchange.tokenToEthTransferInput(src_balance, dest_min_tokens, block.timestamp, to);
 
-            require(received > 0, "UniswapAction._tradeTokenToEther: BAD_EXCHANGE");
+            require(received > 0, "UniswapV1Action._tradeTokenToEther: BAD_EXCHANGE");
         }
     }
 

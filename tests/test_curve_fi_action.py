@@ -41,10 +41,10 @@ def test_compound_get_underlying_amounts(curve_fi_compound_action, cusdc_erc20, 
     # TODO: what should we assert?
 
 
-def test_compound_action(curve_fi_compound_action, cdai_erc20, uniswap_action, cusdc_erc20, dai_erc20, usdc_erc20):
+def test_compound_action(curve_fi_compound_action, cdai_erc20, uniswap_v1_action, cusdc_erc20, dai_erc20, usdc_erc20):
     # put some ETH into the uniswap action so we can buy some DAI
-    accounts[0].transfer(uniswap_action, 1e18)
-    uniswap_action.tradeEtherToToken(curve_fi_compound_action, cdai_erc20, 1, 0, "")
+    accounts[0].transfer(uniswap_v1_action, 1e18)
+    uniswap_v1_action.tradeEtherToToken(curve_fi_compound_action, cdai_erc20, 1, 0, "")
 
     # now we have cDAI in the curve_fi_compound_action
 
@@ -64,8 +64,8 @@ def test_compound_action(curve_fi_compound_action, cdai_erc20, uniswap_action, c
 
     # TODO: the below should be in a seperate test. but for some reason we get a revert from compound about re-entrancy
     # put some ETH into the uniswap action so we can buy some DAI
-    accounts[0].transfer(uniswap_action, 1e18)
-    uniswap_action.tradeEtherToToken(curve_fi_compound_action, dai_erc20, 1, 0, "")
+    accounts[0].transfer(uniswap_v1_action, 1e18)
+    uniswap_v1_action.tradeEtherToToken(curve_fi_compound_action, dai_erc20, 1, 0, "")
 
     # now we have DAI in the curve_fi_compound_action
 

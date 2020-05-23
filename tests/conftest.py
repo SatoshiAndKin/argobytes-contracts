@@ -132,8 +132,8 @@ def synthetix_depot_action(SynthetixDepotAction, synthetix_address_resolver):
 
 
 @pytest.fixture()
-def uniswap_action(UniswapAction, uniswap_factory):
-    yield accounts[0].deploy(UniswapAction, uniswap_factory)
+def uniswap_v1_action(UniswapV1Action, uniswap_factory):
+    yield accounts[0].deploy(UniswapV1Action, uniswap_factory)
 
 
 @pytest.fixture(scope="session")

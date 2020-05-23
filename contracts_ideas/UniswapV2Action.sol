@@ -5,6 +5,6 @@ pragma solidity 0.6.8;
 // import "interfaces/uniswap_v2/IUniswapExchangeV2.sol";
 
 // TODO: do we want auth on this with setters? i think no. i think we should just have a simple contract with a constructor. if we need changes, we can deploy a new contract. less methods is less attack surface
-// contract UniswapAction is AbstractERC20Exchange {
+// contract UniswapV1Action is AbstractERC20Exchange {
 
 // }

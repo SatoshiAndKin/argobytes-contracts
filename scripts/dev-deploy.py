@@ -102,7 +102,7 @@ def main():
     create_helper(argobytes_owned_vault, OneSplitOffchainAction, [OneSplitAddress], expected_mainnet_gas_price)
     create_helper(argobytes_owned_vault, KyberAction, [
                   KyberNetworkProxy, argobytes_owned_vault], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, UniswapAction, [UniswapFactory], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, UniswapV1Action, [UniswapFactory], expected_mainnet_gas_price)
     create_helper(argobytes_owned_vault, Weth9Action, [Weth9Address], expected_mainnet_gas_price)
     create_helper(argobytes_owned_vault, SynthetixDepotAction, [SynthetixAddressResolver], expected_mainnet_gas_price)
     create_helper(argobytes_owned_vault, CurveFiAction, [CurveCompounded, 2], expected_mainnet_gas_price)
