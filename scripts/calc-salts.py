@@ -1,3 +1,7 @@
+# UNDER CONSTRUCTION
+# Calculate salts for use with CREATE2.
+# This can be used to create addresses with lots of zeros which are slightly cheaper to call.
+# This can also be used for creating vanity addresses with fun patterns.
 
 def main():
     address = "0x00000000000000000000000000000000deadbeef"

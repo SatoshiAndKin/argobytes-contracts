@@ -1,3 +1,6 @@
+# deploy all our contracts to a development network
+# rather than call this directly, you probably want to use `./scripts/test-deploy.sh` or `./scripts/staging-deploy.sh`
+
 from brownie import *
 import os
 

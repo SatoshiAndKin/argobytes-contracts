@@ -1,4 +1,5 @@
 #!/bin/bash -eux
+# Export the latest contract ABIs
 # Usage: ./scripts/export-abi.sh ../argobytes-backend/contracts/abi/argobytes
 
 DEST_DIR=$1

@@ -1,4 +1,5 @@
 #!/bin/sh
+# deploy our contracts to a node started by `./scripts/staging-ganache.sh`
 
 set -eux
 

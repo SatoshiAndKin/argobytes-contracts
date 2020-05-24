@@ -1,4 +1,5 @@
 #!/bin/bash -eux
+# setup python and node environments
 
 # make sure we are at the project root
 [ -e requirements.in ]

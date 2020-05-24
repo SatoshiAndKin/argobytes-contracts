@@ -1,4 +1,6 @@
 #!/bin/sh
+# deploy all our contracts to a temporary ganache instance
+# the instance is shut down at the end of this script. This is just for testing dev-deploy.
 
 set -eux
 

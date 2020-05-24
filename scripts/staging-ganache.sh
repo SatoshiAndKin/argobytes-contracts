@@ -1,13 +1,21 @@
-#!/bin/sh
+#!/bin/sh -eu
+# start ganache on port 8555
+# you need a local node running with websockets available on port 8546
+# set FORK_PROTO to "http" or "ws" (ws default)
+# set FORK_HOST to the host where you are running an ethereum node (localhost default)
+# set FORK_PORT to the http or ws port of the node on FORK_HOST (8546 default)
+# set FORK_AT to a block you want to fork from. Useful when using beamsync. (latest default)
 
 export NODE_OPTIONS="--max-old-space-size=8192"
+
+fork="${FORK_PROTO:-ws}://${FORK_HOST:-localhost}:${FORK_PORT:-8546}@${FORK_AT:-latest}"
 
 set -x
 
 exec ganache-cli \
     --accounts 10 \
     --hardfork istanbul \
-    --fork ws://127.0.0.1:8546 \
+    --fork "$fork" \
     --gasLimit 10000000 \
     --mnemonic "opinion adapt negative bone suit ill fossil alcohol razor script damp fold" \
     --port 8555 \

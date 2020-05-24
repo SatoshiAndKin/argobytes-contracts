@@ -1,3 +1,6 @@
+# UNDER CONSTRUCTION!
+# Helper to deploy to ropsten
+
 import json
 from brownie import *
 
@@ -12,6 +15,7 @@ KollateralInvokerAddress = "0x234A76352e816c48098F20F830A21c820085b902"
 OneSplitAddress = ""
 Weth9Address = "0xc778417e063141139fce010982780140aa0cd5ab"
 KyberNetworkProxy = "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
+# Kyber doesn't have KyberRegisterWallet on ropsten
 KyberRegisterWallet = ""
 # https://contracts.synthetix.io/ropsten/ReadProxyAddressResolver
 SynthetixAddressResolver = "0x4da3B8fb742BC69531Ec7AdBAa06effDEd1A22BA"

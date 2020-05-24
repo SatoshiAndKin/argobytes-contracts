@@ -31,13 +31,15 @@ Run:
 
     # test development deploy scripts
     # burning gastoken makes the script take a lot longer and cost more total gas, but it ends up costing less ETH
+    # make sure nothing is using localhost:8575 before running this command!
     BURN_GAS_TOKEN=1 ./scripts/test-deploy.sh
     BURN_GAS_TOKEN=0 ./scripts/test-deploy.sh
 
     # have brownie setup a ganache and run unit tests
+    # make sure nothing is using localhost:8565 before running this command!
     ./scripts/test.sh
 
-    # run ganache forking mainnet
+    # run ganache forking mainnet at localhost:8555 (http or websocket)
     # i point my arbitrage finding code (in a seperate repo) at this node
     ./scripts/staging-ganache.sh
 

@@ -1,3 +1,6 @@
+# UNDER CONSTRUCTION!
+# Helper to deploy to mainnet
+
 import json
 from brownie import *
 
