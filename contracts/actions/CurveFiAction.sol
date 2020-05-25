@@ -27,22 +27,18 @@ contract CurveFiAction is AbstractERC20Exchange {
     using Strings for uint256;
     using Strings2 for address;
 
-    ICurveFi _curve_fi;
-
     // mappings of token addresses to curve indexes PLUS ONE!
     // we add one to our indexes because fetching an unknown address will return 0!
-    mapping(address => int128) _coins;
-    mapping(address => int128) _underlying_coins;
+    mapping(address => mapping(address => int128)) _coins;
+    mapping(address => mapping(address => int128)) _underlying_coins;
 
-    constructor(address curve_fi, int128 n) public {
-        _curve_fi = ICurveFi(curve_fi);
-
+    function loadExchange(ICurveFi curve_fi, int128 n) public {
         for (int128 i = 0; i < n; i++) {
-            address coin = _curve_fi.coins(i);
+            address coin = curve_fi.coins(i);
 
             require(coin != ADDRESS_ZERO, "CurveFiAction: Unknown coin");
 
-            address underlying_coin = _curve_fi.underlying_coins(i);
+            address underlying_coin = curve_fi.underlying_coins(i);
 
             require(
                 underlying_coin != ADDRESS_ZERO,
@@ -51,35 +47,34 @@ contract CurveFiAction is AbstractERC20Exchange {
 
             // Approve the transfer of tokens from this contract to the exchange contract
             // we only do this if it isn't already set because sometimes exchanges have the same asset multiple times
-            if (
-                IERC20(coin).allowance(address(this), address(_curve_fi)) == 0
-            ) {
-                IERC20(coin).safeApprove(address(_curve_fi), uint256(-1));
+            if (IERC20(coin).allowance(address(this), address(curve_fi)) == 0) {
+                IERC20(coin).safeApprove(address(curve_fi), uint256(-1));
             }
             if (
                 IERC20(underlying_coin).allowance(
                     address(this),
-                    address(_curve_fi)
+                    address(curve_fi)
                 ) == 0
             ) {
                 IERC20(underlying_coin).safeApprove(
-                    address(_curve_fi),
+                    address(curve_fi),
                     uint256(-1)
                 );
             }
 
             // save the coins with an index of + 1. this lets us use 0
-            _coins[coin] = i + 1;
-            _underlying_coins[underlying_coin] = i + 1;
+            _coins[address(curve_fi)][coin] = i + 1;
+            _underlying_coins[address(curve_fi)][underlying_coin] = i + 1;
         }
     }
 
     function getAmounts(
         address token_a,
         uint256 token_a_amount,
-        address token_b
+        address token_b,
+        address exchange
     ) external view returns (Amount[] memory) {
-        bytes memory extra_data = "";
+        bytes memory extra_data = abi.encode(exchange);
 
         return _getAmounts(token_a, token_a_amount, token_b, extra_data);
     }
@@ -96,19 +91,21 @@ contract CurveFiAction is AbstractERC20Exchange {
         address maker_token,
         uint256 taker_wei,
         address taker_token,
-        bytes memory /* extra_data */
+        bytes memory extra_data
     ) public override view returns (Amount memory) {
+        address curve_fi = abi.decode(extra_data, (address));
+
         Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
 
         // i is the taker token
-        int128 i = _coins[taker_token];
+        int128 i = _coins[curve_fi][taker_token];
         // j is the maker token
-        int128 j = _coins[maker_token];
+        int128 j = _coins[curve_fi][maker_token];
 
         if (i == 0 || j == 0) {
             // at least one of the coins was not found
-            int128 underlying_i = _underlying_coins[taker_token];
-            int128 underlying_j = _underlying_coins[maker_token];
+            int128 underlying_i = _underlying_coins[curve_fi][taker_token];
+            int128 underlying_j = _underlying_coins[curve_fi][maker_token];
 
             if (underlying_i == 0 || underlying_j == 0) {
                 // no _coin and no _underlying_coin found. cancel
@@ -172,7 +169,7 @@ contract CurveFiAction is AbstractERC20Exchange {
             underlying_i -= 1;
             underlying_j -= 1;
 
-            a.maker_wei = _curve_fi.get_dy_underlying(
+            a.maker_wei = ICurveFi(curve_fi).get_dy_underlying(
                 underlying_i,
                 underlying_j,
                 taker_wei
@@ -185,12 +182,12 @@ contract CurveFiAction is AbstractERC20Exchange {
             i -= 1;
             j -= 1;
 
-            a.maker_wei = _curve_fi.get_dy(i, j, taker_wei);
+            a.maker_wei = ICurveFi(curve_fi).get_dy(i, j, taker_wei);
             a.selector = this.trade.selector;
         }
 
         a.trade_extra_data = this.encodeExtraData(i, j);
-        //a.exchange_data = "";
+        a.exchange_data = abi.encode(curve_fi);
 
         return a;
     }
@@ -198,6 +195,7 @@ contract CurveFiAction is AbstractERC20Exchange {
     // trade wrapped stablecoins
     // solium-disable-next-line security/no-assign-params
     function trade(
+        address curve_fi,
         address to,
         address src_token,
         address dest_token,
@@ -215,7 +213,7 @@ contract CurveFiAction is AbstractERC20Exchange {
         require(src_amount > 0, "CurveFiAction.trade: NO_SOURCE_AMOUNT");
 
         // do the trade (approve was already called)
-        _curve_fi.exchange(i, j, src_amount, dest_min_tokens);
+        ICurveFi(curve_fi).exchange(i, j, src_amount, dest_min_tokens);
 
         // forward the tokens that we bought
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
@@ -230,6 +228,7 @@ contract CurveFiAction is AbstractERC20Exchange {
     // trade stablecoins
     // solium-disable-next-line security/no-assign-params
     function tradeUnderlying(
+        address curve_fi,
         address to,
         address src_token,
         address dest_token,
@@ -250,7 +249,12 @@ contract CurveFiAction is AbstractERC20Exchange {
         );
 
         // do the trade (approve was already called)
-        _curve_fi.exchange_underlying(i, j, src_amount, dest_min_tokens);
+        ICurveFi(curve_fi).exchange_underlying(
+            i,
+            j,
+            src_amount,
+            dest_min_tokens
+        );
 
         // forward the tokens that we bought
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
