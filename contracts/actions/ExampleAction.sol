@@ -25,47 +25,6 @@ contract ExampleAction is AbstractERC20Exchange {
         token.universalTransfer(msg.sender, balance);
     }
 
-    function _tradeEtherToToken(
-        address to,
-        address dest_token,
-        uint256 dest_min_tokens,
-        uint256 dest_max_tokens,
-        bytes memory
-    ) internal override {
-        to;
-        dest_token;
-        dest_min_tokens;
-        dest_max_tokens;
-    }
-
-    function _tradeTokenToToken(
-        address to,
-        address src_token,
-        address dest_token,
-        uint256 dest_min_tokens,
-        uint256 dest_max_tokens,
-        bytes memory
-    ) internal override {
-        to;
-        src_token;
-        dest_token;
-        dest_min_tokens;
-        dest_max_tokens;
-    }
-
-    function _tradeTokenToEther(
-        address to,
-        address src_token,
-        uint256 dest_min_tokens,
-        uint256 dest_max_tokens,
-        bytes memory
-    ) internal override {
-        to;
-        src_token;
-        dest_min_tokens;
-        dest_max_tokens;
-    }
-
     function getAmounts(
         address token_a,
         uint256 token_a_amount,

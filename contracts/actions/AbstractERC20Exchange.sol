@@ -9,20 +9,21 @@
 pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
-import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
+
+import {IERC20, UniversalERC20, SafeERC20} from "contracts/UniversalERC20.sol";
 
 contract AbstractERC20Modifiers {
     using SafeERC20 for IERC20;
+    using UniversalERC20 for IERC20;
 
-    address constant ZERO_ADDRESS = address(0);
+    address constant ADDRESS_ZERO = address(0);
 
-    // this contract must be able to receive ether if it is expected to sweep it
+    // this contract must be able to receive ether if it is expected to return it
     receive() external payable { }
 
-    /// @dev after the function, send any remaining ether to an address
-    modifier sweepLeftoverEther(address payable to) {
+    /// @dev after the function, send any remaining ether back to msg.sender
+    modifier returnLeftoverEther() {
         // TODO: can we change "to" here? i'm not sure how modifiers interact
 
         _;
@@ -30,13 +31,13 @@ contract AbstractERC20Modifiers {
         uint balance = address(this).balance;
 
         if (balance > 0) {
-            (bool success, ) = to.call{value: balance}("");
-            require(success, "AbstractERC20Modifiers.sweepLeftoverEther: ETH transfer failed");
+            (bool success, ) = msg.sender.call{value: balance}("");
+            require(success, "AbstractERC20Modifiers.returnLeftoverEther: ETH transfer failed");
         }
     }
 
     /// @dev after the function, send any remaining tokens to an address
-    modifier sweepLeftoverToken(address to, address token) {
+    modifier returnLeftoverToken(address token, address approved) {
         // TODO: can we change "to" here? i'm not sure how modifiers interact
 
         _;
@@ -44,12 +45,35 @@ contract AbstractERC20Modifiers {
         uint balance = IERC20(token).balanceOf(address(this));
 
         if (balance > 0) {
-            IERC20(token).safeTransfer(to, balance);
+            IERC20(token).safeTransfer(msg.sender, balance);
+
+            if (approved != ADDRESS_ZERO) {
+                // clear the approval since we didn't trade everything
+                IERC20(token).safeApprove(approved, 0);
+            }
+        }
+    }
+
+    /// @dev after the function, send any remaining ether or tokens to an address
+    modifier returnLeftoverUniversal(address token, address approved) {
+        // TODO: can we change "to" here? i'm not sure how modifiers interact
+
+        _;
+
+        uint balance = IERC20(token).universalBalanceOf(address(this));
+
+        if (balance > 0) {
+            IERC20(token).universalTransfer(msg.sender, balance);
+
+            if (approved != ADDRESS_ZERO) {
+                // clear the approval since we didn't trade everything
+                IERC20(token).safeApprove(approved, 0);
+            }
         }
     }
 }
 
-abstract contract AbstractERC20Amounts is AbstractERC20Modifiers {
+abstract contract AbstractERC20Exchange is AbstractERC20Modifiers {
     struct Amount {
         address maker_token;
         uint256 maker_wei;
@@ -122,48 +146,48 @@ abstract contract AbstractERC20Amounts is AbstractERC20Modifiers {
     }
 }
 
-abstract contract AbstractERC20Exchange is AbstractERC20Amounts {
+// abstract contract AbstractERC20Exchange is AbstractERC20Amounts {
 
-    // TODO: i think we should get rid of these generic functions. most every function ignores at least one of the arguments. this should make cleaner contracts and not just be considered gas golfing
-    // these functions require that address(this) has an ether/token balance.
-    // these functions might have some leftover ETH or src_token in them after they finish, so be sure to use the sweep modifiers on whatever calls these
-    // TODO: decide on best order for the arguments
-    // TODO: _tradeUniversal? that won't be as gas efficient
-    function _tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
-    function _tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
-    function _tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
+//     // TODO: i think we should get rid of these generic functions. most every function ignores at least one of the arguments. this should make cleaner contracts and not just be considered gas golfing
+//     // these functions require that address(this) has an ether/token balance.
+//     // these functions might have some leftover ETH or src_token in them after they finish, so be sure to use the return modifiers on whatever calls these
+//     // TODO: decide on best order for the arguments
+//     // TODO: _tradeUniversal? that won't be as gas efficient
+//     function _tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
+//     function _tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
+//     function _tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes memory extra_data) internal virtual;
 
-    function tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
-        external
-        payable
-        sweepLeftoverEther(msg.sender)
-    {
-        if (to == ZERO_ADDRESS) {
-            to = msg.sender;
-        }
+//     function tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
+//         external
+//         payable
+//         returnLeftoverEther(msg.sender)
+//     {
+//         if (to == ADDRESS_ZERO) {
+//             to = msg.sender;
+//         }
 
-        _tradeEtherToToken(to, dest_token, dest_min_tokens, dest_max_tokens, extra_data);
-    }
+//         _tradeEtherToToken(to, dest_token, dest_min_tokens, dest_max_tokens, extra_data);
+//     }
 
-    function tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
-        external
-        sweepLeftoverToken(msg.sender, src_token)
-    {
-        if (to == ZERO_ADDRESS) {
-            to = msg.sender;
-        }
+//     function tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
+//         external
+//         returnLeftoverToken(msg.sender, src_token)
+//     {
+//         if (to == ADDRESS_ZERO) {
+//             to = msg.sender;
+//         }
 
-        _tradeTokenToToken(to, src_token, dest_token, dest_min_tokens, dest_max_tokens, extra_data);
-    }
+//         _tradeTokenToToken(to, src_token, dest_token, dest_min_tokens, dest_max_tokens, extra_data);
+//     }
 
-    function tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
-        external
-        sweepLeftoverToken(msg.sender, src_token)
-    {
-        if (to == ZERO_ADDRESS) {
-            to = msg.sender;
-        }
+//     function tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
+//         external
+//         returnLeftoverToken(msg.sender, src_token)
+//     {
+//         if (to == ADDRESS_ZERO) {
+//             to = msg.sender;
+//         }
 
-        _tradeTokenToEther(to, src_token, dest_min_tokens, dest_max_tokens, extra_data);
-    }
-}
+//         _tradeTokenToEther(to, src_token, dest_min_tokens, dest_max_tokens, extra_data);
+//     }
+// }

@@ -43,13 +43,12 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         return (expected_return, encoded);
     }
 
-    function _tradeEtherToToken(
+    function tradeEtherToToken(
         address to,
         address dest_token,
         uint256 dest_min_tokens,
-        uint256 /* dest_max_tokens */,
-        bytes memory extra_data
-    ) internal override {
+        bytes calldata extra_data
+    ) external returnLeftoverEther() {
         (uint256[] memory distribution, uint256 disable_flags) = abi.decode(extra_data, (uint256[], uint256));
 
         uint256 src_balance = address(this).balance;
@@ -58,30 +57,32 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         // no approvals are necessary since we are using ETH
 
         // do the actual swap (and send the ETH along as value)
-        _one_split.swap{value: src_balance}(IERC20(ZERO_ADDRESS), IERC20(dest_token), src_balance, dest_min_tokens, distribution, disable_flags);
+        _one_split.swap{value: src_balance}(IERC20(ADDRESS_ZERO), IERC20(dest_token), src_balance, dest_min_tokens, distribution, disable_flags);
 
         // forward the tokens that we bought
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
         require(dest_balance >= dest_min_tokens, "OneSplitOffchainAction._tradeEtherToToken: LOW_DEST_BALANCE");
 
+        if (to == ADDRESS_ZERO) {
+            to = msg.sender;
+        }
+
         IERC20(dest_token).transfer(to, dest_balance);
     }
 
-    function _tradeTokenToToken(
+    function tradeTokenToToken(
         address to,
         address src_token,
         address dest_token,
         uint256 dest_min_tokens,
-        uint256 /* dest_max_tokens */,
-        bytes memory extra_data
-    ) internal override {
+        bytes calldata extra_data
+    ) external returnLeftoverToken(src_token, address(_one_split)) {
         (uint256[] memory distribution, uint256 disable_flags) = abi.decode(extra_data, (uint256[], uint256));
 
         uint256 src_balance = IERC20(src_token).balanceOf(address(this));
         require(src_balance > 0, "OneSplitOffchainAction._tradeTokenToToken: NO_SRC_BALANCE");
 
-        // approve tokens
-        require(IERC20(src_token).approve(address(_one_split), src_balance), "OneSplitOffchainAction._tradeTokenToToken: FAILED_APPROVE");
+        IERC20(src_token).safeApprove(address(_one_split), src_balance);
 
         // do the actual swap
         _one_split.swap(IERC20(src_token), IERC20(dest_token), src_balance, dest_min_tokens, distribution, disable_flags);
@@ -90,34 +91,40 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
         require(dest_balance >= dest_min_tokens, "OneSplitOffchainAction._tradeTokenToToken: LOW_DEST_BALANCE");
 
+        if (to == ADDRESS_ZERO) {
+            to = msg.sender;
+        }
+
         IERC20(dest_token).transfer(to, dest_balance);
     }
 
-    function _tradeTokenToEther(
-        address to,
+    function tradeTokenToEther(
+        address payable to,
         address src_token,
         uint256 dest_min_tokens,
-        uint256 /* dest_max_tokens */,
-        bytes memory extra_data
-    ) internal override {
+        bytes calldata extra_data
+    ) external returnLeftoverToken(src_token, address(_one_split)) {
         (uint256[] memory distribution, uint256 disable_flags) = abi.decode(extra_data, (uint256[], uint256));
 
         uint256 src_balance = IERC20(src_token).balanceOf(address(this));
         require(src_balance > 0, "OneSplitOffchainAction._tradeTokenToEther: NO_SRC_BALANCE");
 
-        // approve tokens
-        require(IERC20(src_token).approve(address(_one_split), src_balance), "OneSplitOffchainAction._tradeTokenToEther: FAILED_APPROVE");
+        IERC20(src_token).safeApprove(address(_one_split), src_balance);
 
         // do the actual swap
         // TODO: do we need to pass dest_min_tokens since we did the check above? maybe just pass 0 or 1
-        _one_split.swap(IERC20(src_token), IERC20(ZERO_ADDRESS), src_balance, dest_min_tokens, distribution, disable_flags);
+        _one_split.swap(IERC20(src_token), IERC20(ADDRESS_ZERO), src_balance, dest_min_tokens, distribution, disable_flags);
 
         // forward the tokens that we bought
         uint256 dest_balance = address(this).balance;
         require(dest_balance >= dest_min_tokens, "OneSplitOffchainAction._tradeTokenToEther: LOW_DEST_BALANCE");
 
-        // TODO: don't use transfer. use call instead. and search for anywhere else we use transfer, too
-        payable(to).transfer(dest_balance);
+        if (to == ADDRESS_ZERO) {
+            to = msg.sender;
+        }
+
+        (bool success, ) = to.call{value: dest_balance}("");
+        require(success, "OneSplitOffchainAction.tradeTokenToEther: ETH transfer failed");
     }
 
     // TODO: i don't think we actually want to disable things. we should enable multipath since it is only called offchain
@@ -169,9 +176,9 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         a.maker_wei = expected_return;
         a.trade_extra_data = encoded;
         
-        if (maker_token == ZERO_ADDRESS) {
+        if (maker_token == ADDRESS_ZERO) {
             a.selector = this.tradeTokenToEther.selector;
-        } else if (taker_token == ZERO_ADDRESS) {
+        } else if (taker_token == ADDRESS_ZERO) {
             a.selector = this.tradeEtherToToken.selector;
         } else {
             a.selector = this.tradeTokenToToken.selector;

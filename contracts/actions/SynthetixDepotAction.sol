@@ -17,67 +17,60 @@ import {IDepot} from "interfaces/synthetix/IDepot.sol";
 import {IAddressResolver} from "interfaces/synthetix/IAddressResolver.sol";
 import {ISystemStatus} from "interfaces/synthetix/ISystemStatus.sol";
 
-import {AbstractERC20Amounts} from "./AbstractERC20Exchange.sol";
+import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {Strings2} from "contracts/Strings2.sol";
 
-contract SynthetixDepotAction is AbstractERC20Amounts {
+contract SynthetixDepotAction is AbstractERC20Exchange {
     using UniversalERC20 for IERC20;
     using Strings for uint;
     using Strings2 for address;
 
-    IAddressResolver _address_resolver;
-    ISystemStatus _status;
-    IDepot _depot;
-    address _sETH;
-    address _SNX;
-    address _sUSD;
-
-    constructor(address address_resolver) public {
-        // https://docs.synthetix.io/contracts/AddressResolver
-        _address_resolver = IAddressResolver(address_resolver);
-
-        setAddresses();
+    struct SynthetixDepotData {
+        address depot;
+        address sUSD;
     }
 
-    function setAddresses() public {
-        _depot = IDepot(_address_resolver.getAddress("Depot"));
-        _status = ISystemStatus(_address_resolver.getAddress("SystemStatus"));
-        _sETH = _address_resolver.getAddress("SynthsETH");
-        _SNX = _address_resolver.getAddress("Synthetix");
-        _sUSD = _address_resolver.getAddress("SynthsUSD");
-    }
-
-    function getAmounts(address token_a, uint256 token_a_amount, address token_b)
+    function getAmounts(address token_a, uint256 token_a_amount, address token_b, address resolver)
         external view
         returns (Amount[] memory)
     {
-        bytes memory extra_data = "";
+        bytes memory extra_data = abi.encode(resolver);
 
         return _getAmounts(token_a, token_a_amount, token_b, extra_data);
     }
 
-    function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory /* extra_data */)
+    function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory extra_data)
         public override view
         returns (Amount memory)
     {
+        (address resolver) = abi.decode(extra_data, (address));
+
         Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
 
-        if (taker_token == ZERO_ADDRESS && maker_token == _sUSD) {
+        address depot = IAddressResolver(resolver).getAddress("Depot");
+        address sUSD = IAddressResolver(resolver).getAddress("SynthsUSD");
+
+        SynthetixDepotData memory exchange_data;
+
+        exchange_data.depot = depot;
+        exchange_data.sUSD = sUSD;
+
+        if (taker_token == ADDRESS_ZERO && maker_token == sUSD) {
             // eth to sUSD
 
-            // TODO: figure out how to make this work
-            // _status.requireSynthActive("SynthsUSD");
+            // TODO: figure out how to make this work. do we even need it though?
+            // status.requireSynthActive("SynthsUSD");
 
-            a.maker_wei = _depot.synthsReceivedForEther(taker_wei);
+            a.maker_wei = IDepot(depot).synthsReceivedForEther(taker_wei);
             a.selector = this.tradeEtherToSynthUSD.selector;
         } else {
-            string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: found ", taker_token.toString(), "->", maker_token.toString(), ". supported ", ZERO_ADDRESS.toString(), "->", _sUSD.toString()));
+            string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: found ", taker_token.toString(), "->", maker_token.toString(), ". supported ", ADDRESS_ZERO.toString(), "->", sUSD.toString()));
 
-            // revert(err);
             a.error = err;
         }
 
+        a.exchange_data = abi.encode(exchange_data);
         //a.trade_extra_data = "";
 
         return a;
@@ -85,21 +78,23 @@ contract SynthetixDepotAction is AbstractERC20Amounts {
 
     // solium-disable-next-line security/no-assign-params
     // TODO: i don't think we need dest_token at all. the caller could just encode based on the selector!
-    function tradeEtherToSynthUSD(address to, uint dest_min_tokens)
+    function tradeEtherToSynthUSD(address depot, address sUSD, address to, uint dest_min_tokens)
         external
         payable
-        sweepLeftoverEther(msg.sender)
+        returnLeftoverEther()
     {
-        if (to == address(0x0)) {
+        uint src_balance = address(this).balance;
+
+        IDepot(depot).exchangeEtherForSynths{value: src_balance}();
+
+        uint256 dest_balance = IERC20(sUSD).balanceOf(address(this));
+
+        require(dest_balance >= dest_min_tokens, "SynthetixDepotAction.tradeEtherToSynthUSD: not enough sUSD received");
+
+        if (to == ADDRESS_ZERO) {
             to = msg.sender;
         }
 
-        uint src_balance = address(this).balance;
-
-        _depot.exchangeEtherForSynths{value: src_balance}();
-
-        uint dest_balance = IERC20(_sUSD).balanceOf(address(this));
-
-        require(IERC20(_sUSD).transfer(to, dest_balance), "SynthetixDepotAction.tradeEtherToSynthUSD: transfer failed");
+        require(IERC20(sUSD).transfer(to, dest_balance), "SynthetixDepotAction.tradeEtherToSynthUSD: transfer failed");
     }
 }

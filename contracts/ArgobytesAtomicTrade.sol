@@ -27,7 +27,7 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
     using Strings2 for address;
     using UniversalERC20 for IERC20;
 
-    address internal constant ZERO_ADDRESS = address(0x0);
+    address internal constant ADDRESS_ZERO = address(0x0);
     address internal constant KOLLATERAL_ETH = address(0x0000000000000000000000000000000000000001);
 
     // TODO: get rid of this. do encoding outside of the smart contract
@@ -79,7 +79,7 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
             // we do not have enough token to do this arbitrage ourselves. call kollateral for the remainder
             first_amount -= starting_amount;
 
-            if (tokens[0] == ZERO_ADDRESS) {
+            if (tokens[0] == ADDRESS_ZERO) {
                 // use kollateral's address for ETH instead of the zero address we use
                 IInvoker(kollateral_invoker).invoke(address(this), encoded_actions, KOLLATERAL_ETH, first_amount);
             } else {

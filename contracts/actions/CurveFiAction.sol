@@ -16,12 +16,12 @@ import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
 
 import {ICurveFi} from "interfaces/curvefi/ICurveFi.sol";
 
-import {AbstractERC20Amounts} from "./AbstractERC20Exchange.sol";
+import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {Strings2} from "contracts/Strings2.sol";
 
 
-contract CurveFiAction is AbstractERC20Amounts {
+contract CurveFiAction is AbstractERC20Exchange {
     using UniversalERC20 for IERC20;
     using SafeERC20 for IERC20;
     using Strings for uint256;
@@ -40,16 +40,17 @@ contract CurveFiAction is AbstractERC20Amounts {
         for (int128 i = 0; i < n; i++) {
             address coin = _curve_fi.coins(i);
 
-            require(coin != ZERO_ADDRESS, "CurveFiAction: Unknown coin");
+            require(coin != ADDRESS_ZERO, "CurveFiAction: Unknown coin");
 
             address underlying_coin = _curve_fi.underlying_coins(i);
 
             require(
-                underlying_coin != ZERO_ADDRESS,
+                underlying_coin != ADDRESS_ZERO,
                 "CurveFiAction: Unknown underlying_coin"
             );
 
             // Approve the transfer of tokens from this contract to the exchange contract
+            // we only do this if it isn't already set because sometimes exchanges have the same asset multiple times
             if (
                 IERC20(coin).allowance(address(this), address(_curve_fi)) == 0
             ) {
@@ -202,7 +203,7 @@ contract CurveFiAction is AbstractERC20Amounts {
         address dest_token,
         uint256 dest_min_tokens,
         bytes calldata extra_data
-    ) external sweepLeftoverToken(msg.sender, src_token) {
+    ) external returnLeftoverToken(src_token, ADDRESS_ZERO) {
         if (to == address(0x0)) {
             to = msg.sender;
         }
@@ -234,7 +235,7 @@ contract CurveFiAction is AbstractERC20Amounts {
         address dest_token,
         uint256 dest_min_tokens,
         bytes calldata extra_data
-    ) external sweepLeftoverToken(msg.sender, src_token) {
+    ) external returnLeftoverToken(src_token, ADDRESS_ZERO) {
         if (to == address(0x0)) {
             to = msg.sender;
         }

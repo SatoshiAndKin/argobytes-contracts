@@ -3,15 +3,14 @@ pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
 import {Ownable} from "@openzeppelin/access/Ownable.sol";
-import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
 
 import {IKyberNetworkProxy} from "interfaces/kyber/IKyberNetworkProxy.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
-import {UniversalERC20, IERC20} from "contracts/UniversalERC20.sol";
+import {IERC20, UniversalERC20, SafeERC20} from "contracts/UniversalERC20.sol";
 
 contract KyberAction is AbstractERC20Exchange, Ownable {
-    // TODO: we were using ERC20 instead of IERC20 because of kyber's interface. does this work?
+    using SafeERC20 for IERC20;
     using UniversalERC20 for IERC20;
 
     // TODO: document this
@@ -19,128 +18,25 @@ contract KyberAction is AbstractERC20Exchange, Ownable {
 
     IERC20 constant ETH_ON_KYBER = IERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
 
-    IKyberNetworkProxy _network_proxy;
     address _wallet_id;
 
-    constructor(address network_proxy, address wallet_id)
+    constructor(address wallet_id)
         Ownable()
         public
     {
-        _network_proxy = IKyberNetworkProxy(network_proxy);
-
         _wallet_id = wallet_id;
     }
 
+    // TODO: allow the wallet_id to change this? think about this more. that wont work since it is a contract
     function setWalletId(address wallet_id) public onlyOwner {
         _wallet_id = wallet_id;
     }
 
-    function _tradeEtherToToken(
-        address to,
-        address dest_token,
-        uint dest_min_tokens,
-        uint dest_max_tokens, 
-        bytes memory
-    ) internal override {
-        require(dest_token != ZERO_ADDRESS, "KyberAction._tradeEtherToToken: dest_token cannot be ZERO_ADDRESS");
-        require(IERC20(dest_token) != ETH_ON_KYBER, "KyberAction._tradeEtherToToken: dest_token cannot be ETH");
-
-        uint src_amount = address(this).balance;
-
-        require(src_amount > 0, "KyberAction._tradeEtherToToken: NO_SRC_AMOUNT");
-
-        if (dest_max_tokens == 0) {
-            // TODO: not sure about this anymore. i didn't document it well. where did it come from?
-            dest_max_tokens = MAX_QTY;
-        }
-
-        uint received = _network_proxy.trade{value: src_amount}(
-            ETH_ON_KYBER,
-            src_amount,
-            IERC20(dest_token),
-            to,
-            dest_max_tokens,
-            1,  // minConversionRate of 1 will execute the trade according to market price
-            _wallet_id
-        );
-
-        // TODO: use a real minConversionRate to ensure this?
-        require(received >= dest_min_tokens, "KyberAction._tradeTokenToToken: FAILED_TRADE");
-    }
-
-    function _tradeTokenToToken(
-        address to,
-        address src_token,
-        address dest_token,
-        uint dest_min_tokens,
-        uint dest_max_tokens, 
-        bytes memory
-    ) internal override {
-        // Use the full balance of tokens transferred from the trade executor
-        uint256 src_amount = IERC20(src_token).balanceOf(address(this));
-        require(src_amount > 0, "KyberAction._tradeTokenToToken: NO_SOURCE_AMOUNT");
-
-        // Approve the exchange to transfer tokens from this contract to the reserve
-        require(IERC20(src_token).approve(address(_network_proxy), src_amount), "KyberAction._tradeTokenToToken: FAILED_APPROVE");
-
-        if (dest_max_tokens == 0) {
-            dest_max_tokens = MAX_QTY;
-        }
-        // TODO: make sure dest_max_tokens < MAX_QTY!
-
-        uint received = _network_proxy.trade(
-            IERC20(src_token),
-            src_amount,
-            IERC20(dest_token),
-            to,
-            dest_max_tokens,
-            1,  // minConversionRate of 1 will execute the trade according to market price
-            _wallet_id
-        );
-
-        // TODO: use a real minConversionRate to ensure this?
-        require(received >= dest_min_tokens, "KyberAction._tradeTokenToToken: FAILED_TRADE");
-    }
-
-    function _tradeTokenToEther(
-        address to,
-        address src_token,
-        uint dest_min_tokens,
-        uint dest_max_tokens, 
-        bytes memory
-    ) internal override {
-        // Use the full balance of tokens transferred from the trade executor
-        uint256 src_amount = IERC20(src_token).balanceOf(address(this));
-        require(src_amount > 0, "KyberAction._tradeTokenToEther: NO_SOURCE_AMOUNT");
-
-        // Approve the exchange to transfer tokens from this contract to the reserve
-        require(IERC20(src_token).approve(address(_network_proxy), src_amount), "KyberAction._tradeTokenToEther: FAILED_APPROVE");
-
-        if (dest_max_tokens == 0) {
-            dest_max_tokens = MAX_QTY;
-        }
-        // TODO: make sure dest_max_tokens < MAX_QTY!
-
-        // TODO: maybe this should take a destination address. then we can give it to the next hop instead of back to the teller. we could even send it direct to the bank
-        uint received = _network_proxy.trade(
-            IERC20(src_token),
-            src_amount,
-            ETH_ON_KYBER,
-            to,
-            dest_max_tokens,
-            1,  // minConversionRate of 1 will execute the trade according to market price
-            _wallet_id
-        );
-
-        // TODO: use a real minConversionRate to ensure this?
-        require(received >= dest_min_tokens, "KyberAction._tradeTokenToEther: FAILED_TRADE");
-    }
-
-    function getAmounts(address token_a, uint256 token_a_amount, address token_b)
+    function getAmounts(address token_a, uint256 token_a_amount, address token_b, address network_proxy)
         external view
         returns (Amount[] memory)
     {
-        bytes memory extra_data = "";
+        bytes memory extra_data = abi.encode(network_proxy);
 
         return _getAmounts(token_a, token_a_amount, token_b, extra_data);
     }
@@ -149,22 +45,24 @@ contract KyberAction is AbstractERC20Exchange, Ownable {
         public override view
         returns (Amount memory)
     {
+        (address network_proxy) = abi.decode(extra_data, (address));
+
         Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
 
         uint expected_rate;
 
         // TODO: this only works with input amounts. do we want it to work with output amounts?
-        if (maker_token == ZERO_ADDRESS) {
+        if (maker_token == ADDRESS_ZERO) {
             // token to eth
-            (expected_rate, ) = _network_proxy.getExpectedRate(IERC20(taker_token), ETH_ON_KYBER, taker_wei);
+            (expected_rate, ) = IKyberNetworkProxy(network_proxy).getExpectedRate(IERC20(taker_token), ETH_ON_KYBER, taker_wei);
             a.selector = this.tradeTokenToEther.selector;
-        } else if (taker_token == ZERO_ADDRESS) {
+        } else if (taker_token == ADDRESS_ZERO) {
             // eth to token
-            (expected_rate, ) = _network_proxy.getExpectedRate(ETH_ON_KYBER, IERC20(maker_token), taker_wei);
+            (expected_rate, ) = IKyberNetworkProxy(network_proxy).getExpectedRate(ETH_ON_KYBER, IERC20(maker_token), taker_wei);
             a.selector = this.tradeEtherToToken.selector;
         } else {
             // token to token
-            (expected_rate, ) = _network_proxy.getExpectedRate(IERC20(taker_token), IERC20(maker_token), taker_wei);
+            (expected_rate, ) = IKyberNetworkProxy(network_proxy).getExpectedRate(IERC20(taker_token), IERC20(maker_token), taker_wei);
             a.selector = this.tradeTokenToToken.selector;
         }
 
@@ -193,4 +91,103 @@ contract KyberAction is AbstractERC20Exchange, Ownable {
 
         return a;
     }
+
+    function tradeEtherToToken(
+        address network_proxy, 
+        address to,
+        address dest_token,
+        uint256 dest_min_tokens,
+        bytes memory
+    ) public returnLeftoverEther() {
+        require(dest_token != ADDRESS_ZERO, "KyberAction.tradeEtherToToken: dest_token cannot be ADDRESS_ZERO");
+        require(IERC20(dest_token) != ETH_ON_KYBER, "KyberAction.tradeEtherToToken: dest_token cannot be ETH");
+
+        uint src_amount = address(this).balance;
+
+        require(src_amount > 0, "KyberAction.tradeEtherToToken: NO_SRC_AMOUNT");
+
+        if (to == ADDRESS_ZERO) {
+            to = msg.sender;
+        }
+
+        uint256 received = IKyberNetworkProxy(network_proxy).trade{value: src_amount}(
+            ETH_ON_KYBER,
+            src_amount,
+            IERC20(dest_token),
+            to,
+            MAX_QTY,
+            1,  // minConversionRate of 1 will execute the trade according to market price
+            _wallet_id
+        );
+
+        // TODO: use a real minConversionRate to ensure this?
+        require(received >= dest_min_tokens, "KyberAction._tradeTokenToToken: FAILED_TRADE");
+    }
+
+    function tradeTokenToToken(
+        address network_proxy, 
+        address to,
+        address src_token,
+        address dest_token,
+        uint dest_min_tokens,
+        uint dest_max_tokens
+    ) external returnLeftoverToken(src_token, network_proxy){
+        // Use the full balance of tokens transferred from the trade executor
+        uint256 src_amount = IERC20(src_token).balanceOf(address(this));
+        require(src_amount > 0, "KyberAction._tradeTokenToToken: NO_SOURCE_AMOUNT");
+
+        // Approve the exchange to transfer tokens from this contract to the reserve
+        IERC20(src_token).safeApprove(network_proxy, src_amount);
+
+        if (to == ADDRESS_ZERO) {
+            to = msg.sender;
+        }
+
+        uint received = IKyberNetworkProxy(network_proxy).trade(
+            IERC20(src_token),
+            src_amount,
+            IERC20(dest_token),
+            to,
+            MAX_QTY,
+            1,  // minConversionRate of 1 will execute the trade according to market price
+            _wallet_id
+        );
+
+        // TODO: use a real minConversionRate to ensure this?
+        require(received >= dest_min_tokens, "KyberAction._tradeTokenToToken: FAILED_TRADE");
+    }
+
+    function tradeTokenToEther(
+        address network_proxy,
+        address to,
+        address src_token,
+        uint dest_min_tokens,
+        uint dest_max_tokens
+    ) external returnLeftoverToken(src_token, network_proxy) {
+        // Use the full balance of tokens transferred from the trade executor
+        uint256 src_amount = IERC20(src_token).balanceOf(address(this));
+        require(src_amount > 0, "KyberAction._tradeTokenToEther: NO_SOURCE_AMOUNT");
+
+        // Approve the exchange to transfer tokens from this contract to the reserve
+        IERC20(src_token).safeApprove(network_proxy, src_amount);
+
+        if (to == ADDRESS_ZERO) {
+            to = msg.sender;
+        }
+
+        // TODO: maybe this should take a destination address. then we can give it to the next hop instead of back to the teller. we could even send it direct to the bank
+        uint received = IKyberNetworkProxy(network_proxy).trade(
+            IERC20(src_token),
+            src_amount,
+            ETH_ON_KYBER,
+            to,
+            dest_max_tokens,
+            1,  // minConversionRate of 1 will execute the trade according to market price
+            _wallet_id
+        );
+
+        // TODO: use a real minConversionRate to ensure this?
+        require(received >= dest_min_tokens, "KyberAction._tradeTokenToEther: FAILED_TRADE");
+    }
+
 }
