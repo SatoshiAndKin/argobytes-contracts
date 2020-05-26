@@ -26,7 +26,7 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
     using Strings for uint;
     using Strings2 for address;
 
-    struct SynthetixDepotData {
+    struct SynthetixExtraData {
         address depot;
         address sUSD;
     }
@@ -51,10 +51,10 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
         address depot = IAddressResolver(resolver).getAddress("Depot");
         address sUSD = IAddressResolver(resolver).getAddress("SynthsUSD");
 
-        SynthetixDepotData memory exchange_data;
+        SynthetixExtraData memory trade_extra_data;
 
-        exchange_data.depot = depot;
-        exchange_data.sUSD = sUSD;
+        trade_extra_data.depot = depot;
+        trade_extra_data.sUSD = sUSD;
 
         if (taker_token == ADDRESS_ZERO && maker_token == sUSD) {
             // eth to sUSD
@@ -70,24 +70,26 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
             a.error = err;
         }
 
-        a.exchange_data = abi.encode(exchange_data);
-        //a.trade_extra_data = "";
+        // a.exchange_data = abi.encode(exchange_data);
+        a.trade_extra_data = abi.encode(trade_extra_data);
 
         return a;
     }
 
     // solium-disable-next-line security/no-assign-params
     // TODO: i don't think we need dest_token at all. the caller could just encode based on the selector!
-    function tradeEtherToSynthUSD(address depot, address sUSD, address to, uint dest_min_tokens)
+    function tradeEtherToSynthUSD(address to, uint dest_min_tokens, bytes calldata extra_data)
         external
         payable
         returnLeftoverEther()
     {
         uint src_balance = address(this).balance;
 
-        IDepot(depot).exchangeEtherForSynths{value: src_balance}();
+        (SynthetixExtraData memory extra_data) = abi.decode(extra_data, (SynthetixExtraData));
 
-        uint256 dest_balance = IERC20(sUSD).balanceOf(address(this));
+        IDepot(extra_data.depot).exchangeEtherForSynths{value: src_balance}();
+
+        uint256 dest_balance = IERC20(extra_data.sUSD).balanceOf(address(this));
 
         require(dest_balance >= dest_min_tokens, "SynthetixDepotAction.tradeEtherToSynthUSD: not enough sUSD received");
 
@@ -96,6 +98,6 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
         }
 
         // we know sUSD returns a bool, so no need for safeTransfer
-        require(IERC20(sUSD).transfer(to, dest_balance), "SynthetixDepotAction.tradeEtherToSynthUSD: transfer failed");
+        require(IERC20(extra_data.sUSD).transfer(to, dest_balance), "SynthetixDepotAction.tradeEtherToSynthUSD: transfer failed");
     }
 }

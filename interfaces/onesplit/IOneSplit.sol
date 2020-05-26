@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: You can't license an interface
 pragma solidity 0.6.8;
 
-import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
-
 
 contract IOneSplitConsts {
-    // disableFlags = FLAG_DISABLE_UNISWAP + FLAG_DISABLE_KYBER + ...
+    // flags = FLAG_DISABLE_UNISWAP + FLAG_DISABLE_KYBER + ...
     uint256 public constant FLAG_DISABLE_UNISWAP = 0x01;
     uint256 public constant FLAG_DISABLE_KYBER = 0x02;
     uint256 public constant FLAG_ENABLE_KYBER_UNISWAP_RESERVE = 0x100000000; // Turned off by default
@@ -33,13 +31,32 @@ contract IOneSplitConsts {
     uint256 public constant FLAG_ENABLE_UNISWAP_CHAI = 0x200000; // Works only when ETH<>DAI or FLAG_ENABLE_MULTI_PATH_ETH
     uint256 public constant FLAG_ENABLE_UNISWAP_AAVE = 0x400000; // Works only when one of assets is ETH or FLAG_ENABLE_MULTI_PATH_ETH
     uint256 public constant FLAG_DISABLE_IDLE = 0x800000;
+    uint256 public constant FLAG_DISABLE_MOONISWAP = 0x1000000;
+    uint256 public constant FLAG_DISABLE_UNISWAP_V2_ALL = 0x1E000000;
+    uint256 public constant FLAG_DISABLE_UNISWAP_V2 = 0x2000000;
+    uint256 public constant FLAG_DISABLE_UNISWAP_V2_ETH = 0x4000000;
+    uint256 public constant FLAG_DISABLE_UNISWAP_V2_DAI = 0x8000000;
+    uint256 public constant FLAG_DISABLE_UNISWAP_V2_USDC = 0x10000000;
+    uint256 public constant FLAG_DISABLE_ALL_SPLIT_SOURCES = 0x20000000;
+    uint256 public constant FLAG_DISABLE_ALL_WRAP_SOURCES = 0x40000000;
+    uint256 public constant FLAG_DISABLE_CURVE_PAX = 0x80000000;
+    uint256 public constant FLAG_DISABLE_CURVE_RENBTC = 0x100000000;
+    uint256 public constant FLAG_DISABLE_CURVE_TBTC = 0x200000000;
+    uint256 public constant FLAG_ENABLE_MULTI_PATH_USDT = 0x400000000; // Turned off by default
+    uint256 public constant FLAG_ENABLE_MULTI_PATH_WBTC = 0x800000000; // Turned off by default
+    uint256 public constant FLAG_ENABLE_MULTI_PATH_TBTC = 0x1000000000; // Turned off by default
+    uint256 public constant FLAG_ENABLE_MULTI_PATH_RENBTC = 0x2000000000; // Turned off by default
+    uint256 public constant FLAG_DISABLE_DFORCE_SWAP = 0x4000000000;
+    uint256 public constant FLAG_DISABLE_SHELL = 0x8000000000;
+    uint256 public constant FLAG_ENABLE_CHI_BURN = 0x10000000000;
+    uint256 public constant FLAG_ENABLE_GST2_BURN = 0x20000000000;
 }
 
 
 abstract contract IOneSplit is IOneSplitConsts {
     function getExpectedReturn(
-        IERC20 fromToken,
-        IERC20 toToken,
+        address fromToken,
+        address toToken,
         uint256 amount,
         uint256 parts,
         uint256 disableFlags
@@ -50,8 +67,8 @@ abstract contract IOneSplit is IOneSplitConsts {
         returns (uint256 returnAmount, uint256[] memory distribution);
 
     function swap(
-        IERC20 fromToken,
-        IERC20 toToken,
+        address fromToken,
+        address toToken,
         uint256 amount,
         uint256 minReturn,
         uint256[] memory distribution,

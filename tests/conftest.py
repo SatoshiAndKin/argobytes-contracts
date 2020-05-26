@@ -56,7 +56,7 @@ def curve_fi_compound(CurveFiAction):
 
 @pytest.fixture()
 def curve_fi_action(CurveFiAction, curve_fi_compound):
-    curve_fi = accounts[0].deploy(CurveFiAction)
+    curve_fi = accounts[0].deploy(CurveFiAction, accounts[0])
 
     # TODO: add the other exchanges
     curve_fi.saveExchange(curve_fi_compound, 2)
@@ -112,7 +112,8 @@ def onesplit_offchain_action(OneSplitOffchainAction):
 
 @pytest.fixture(scope="session")
 def susd_erc20():
-    yield Contract.from_explorer("0x57ab1ec28d129707052df4df418d58a2d46d5f51")
+    # TODO: get this from the address resolver
+    yield Contract.from_explorer("0xae38b81459d74a8c16eaa968c792207603d84480")
 
 
 @pytest.fixture(scope="session")

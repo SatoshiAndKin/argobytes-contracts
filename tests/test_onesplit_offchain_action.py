@@ -8,7 +8,7 @@ from brownie.test import given, strategy
 # parts 2: OneSplitOffchainAction.getAmounts -  avg: 945866  low: 23638  high: 1868095
 # parts 3: OneSplitOffchainAction.getAmounts -  avg: 1105818  low: 23638  high: 2187998
 # parts 10: was like 8 mil lol
-def test_get_amounts(dai_erc20, onesplit_offchain_action, usdc_erc20, weth9_erc20, skip_coverage, no_call_coverage):
+def test_get_amounts(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action, usdc_erc20, skip_coverage, weth9_erc20):
     eth_amount = 1e18
     dai_amount = 1e20
     # TODO: increasing parts will be fragile. some exchanges use a LOT of gas
@@ -16,12 +16,12 @@ def test_get_amounts(dai_erc20, onesplit_offchain_action, usdc_erc20, weth9_erc2
     zero_address = "0x0000000000000000000000000000000000000000"
 
     # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)
-    amounts = onesplit_offchain_action.getAmounts(zero_address, eth_amount, dai_erc20, parts)
+    amounts = onesplit_offchain_action.getAmounts(zero_address, eth_amount, dai_erc20, onesplit, parts)
 
     print("amounts 1", amounts)
 
     # TODO: use amounts from the previous call
-    amounts = onesplit_offchain_action.getAmounts(dai_erc20, dai_amount, zero_address, parts)
+    amounts = onesplit_offchain_action.getAmounts(dai_erc20, dai_amount, zero_address, onesplit, parts)
 
     print("amounts 2", amounts)
 
@@ -29,7 +29,7 @@ def test_get_amounts(dai_erc20, onesplit_offchain_action, usdc_erc20, weth9_erc2
 
 
 # we skip coverage because this can end up being a LOT of calls which crashes ganche-cli
-def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20, skip_coverage, no_call_coverage):
+def test_action(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action, skip_coverage, weth9_erc20):
     value = 1e17
 
     # make sure balances start zeroed
@@ -52,11 +52,11 @@ def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20, skip
     # calculation distributions on-chain is expensive, so we do it here instead
     # function encodeExtraData(address src_token, address dest_token, uint src_amount, uint dest_min_tokens, uint256 parts)
     (expected_return_eth_to_token, extra_data_eth_to_token) = onesplit_offchain_action.encodeExtraData(
-        zero_address, weth9_erc20, value, 1, parts)
+        zero_address, weth9_erc20, value, 1, onesplit, parts)
 
     # tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
     _eth_to_token_tx = onesplit_offchain_action.tradeEtherToToken(
-        onesplit_offchain_action, weth9_erc20, 1, extra_data_eth_to_token)
+        onesplit, onesplit_offchain_action, weth9_erc20, 1, extra_data_eth_to_token)
 
     # TODO: make sure ETH balance is zero (i think it will be swept back to accounts[0])
     # TODO: make sure USDC balance is non-zero
@@ -77,11 +77,11 @@ def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20, skip
     # function encodeExtraData(address src_token, address dest_token, uint src_amount, uint dest_min_tokens, uint256 parts)
     # TODO: proper src_amount based on the previous transaction
     (expected_return_token_to_token, extra_data_token_to_token) = onesplit_offchain_action.encodeExtraData(
-        weth9_erc20, dai_erc20, weth9_balance, 1, parts)
+        weth9_erc20, dai_erc20, weth9_balance, 1, onesplit, parts)
 
     # tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
     onesplit_offchain_action.tradeTokenToToken(
-        onesplit_offchain_action, weth9_erc20, dai_erc20, 1, extra_data_token_to_token)
+        onesplit, onesplit_offchain_action, weth9_erc20, dai_erc20, 1, extra_data_token_to_token)
 
     dai_balance = dai_erc20.balanceOf.call(onesplit_offchain_action)
 
@@ -94,10 +94,11 @@ def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20, skip
     # function encodeExtraData(address src_token, address dest_token, uint src_amount, uint dest_min_tokens, uint256 parts)
     # TODO: proper src_amount based on the previous transaction
     (expected_return_token_to_eth, extra_data_token_to_eth) = onesplit_offchain_action.encodeExtraData(
-        dai_erc20, zero_address, dai_balance, 1, parts)
+        dai_erc20, zero_address, dai_balance, 1, onesplit, parts)
 
     # tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
-    onesplit_offchain_action.tradeTokenToEther(onesplit_offchain_action, dai_erc20, 1, extra_data_token_to_eth)
+    onesplit_offchain_action.tradeTokenToEther(
+        onesplit, onesplit_offchain_action, dai_erc20, 1, extra_data_token_to_eth)
 
     eth_balance = onesplit_offchain_action.balance()
 
