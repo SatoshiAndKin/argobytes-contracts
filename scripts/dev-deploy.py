@@ -108,12 +108,16 @@ def main():
     create_helper(argobytes_owned_vault, UniswapV1Action, [UniswapFactory], expected_mainnet_gas_price)
     create_helper(argobytes_owned_vault, Weth9Action, [Weth9Address], expected_mainnet_gas_price)
     create_helper(argobytes_owned_vault, SynthetixDepotAction, [SynthetixAddressResolver], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, CurveFiAction, [CurveCompounded, 2], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, CurveFiAction, [CurveUSDT, 3], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, CurveFiAction, [CurveY, 4], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, CurveFiAction, [CurveB, 4], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, CurveFiAction, [CurveSUSDV2, 4], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, CurveFiAction, [CurvePAX, 4], expected_mainnet_gas_price)
+
+    curve_fi_action = create_helper(argobytes_owned_vault, CurveFiAction, expected_mainnet_gas_price)
+    # create_helper(argobytes_owned_vault, CurveFiAction, [CurveCompounded, 2], expected_mainnet_gas_price)
+
+    curve_fi_action.saveExchange(CurveCompounded, 2)
+    curve_fi_action.saveExchange(CurveUSDT, 3)
+    curve_fi_action.saveExchange(CurveY, 4)
+    curve_fi_action.saveExchange(CurveB, 4)
+    curve_fi_action.saveExchange(CurveSUSDV2, 4)
+    curve_fi_action.saveExchange(CurvePAX, 4)
 
     # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity
     accounts[1].transfer(argobytes_atomic_trade, 1e18)

@@ -33,6 +33,6 @@ contract ZrxV3Action is AbstractERC20Modifiers {
             to = msg.sender;
         }
 
-        require(IERC20(dest_token).transfer(to, dest_balance), "ZrxV3Action.trade: dest token transfer failed");
+        IERC20(dest_token).safeTransfer(to, dest_balance);
     }
 }

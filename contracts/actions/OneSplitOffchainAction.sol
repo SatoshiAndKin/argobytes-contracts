@@ -67,7 +67,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             to = msg.sender;
         }
 
-        IERC20(dest_token).transfer(to, dest_balance);
+        IERC20(dest_token).safeTransfer(to, dest_balance);
     }
 
     function tradeTokenToToken(
@@ -95,7 +95,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             to = msg.sender;
         }
 
-        IERC20(dest_token).transfer(to, dest_balance);
+        IERC20(dest_token).safeTransfer(to, dest_balance);
     }
 
     function tradeTokenToEther(

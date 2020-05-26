@@ -1,16 +1,11 @@
 import pytest
 from brownie import *
 
-# TODO: it's dangerous out there. take this
-# import pdb
-# pdb.set_trace()
-
-# test isolation, always use!
-# be careful though! you can still leak state in other fixtures use scope="module" or scope="session"
-
 
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
+    # test isolation, always use!
+    # be careful though! you can still leak state in other fixtures use scope="module" or scope="session"
     pass
 
 
@@ -60,10 +55,13 @@ def curve_fi_compound(CurveFiAction):
 
 
 @pytest.fixture()
-def curve_fi_compound_action(CurveFiAction, curve_fi_compound):
-    curve_n = 2
+def curve_fi_action(CurveFiAction, curve_fi_compound):
+    curve_fi = accounts[0].deploy(CurveFiAction)
 
-    yield accounts[0].deploy(CurveFiAction, curve_fi_compound, curve_n)
+    # TODO: add the other exchanges
+    curve_fi.saveExchange(curve_fi_compound, 2)
+
+    yield curve_fi
 
 
 @pytest.fixture(scope="session")
@@ -87,8 +85,8 @@ def kollateral_invoker(ExampleAction):
 
 
 @pytest.fixture()
-def kyber_action(KyberAction, kyber_network_proxy, argobytes_owned_vault):
-    yield accounts[0].deploy(KyberAction, kyber_network_proxy, argobytes_owned_vault)
+def kyber_action(KyberAction, argobytes_owned_vault):
+    yield accounts[0].deploy(KyberAction, argobytes_owned_vault)
 
 
 @pytest.fixture(scope="session")
@@ -106,13 +104,8 @@ def onesplit():
 
 
 @pytest.fixture()
-def onesplit_onchain_action(OneSplitOnchainAction, onesplit):
-    yield accounts[0].deploy(OneSplitOnchainAction, onesplit)
-
-
-@pytest.fixture()
-def onesplit_offchain_action(OneSplitOffchainAction, onesplit):
-    yield accounts[0].deploy(OneSplitOffchainAction, onesplit)
+def onesplit_offchain_action(OneSplitOffchainAction):
+    yield accounts[0].deploy(OneSplitOffchainAction)
 
 
 @pytest.fixture(scope="session")
@@ -127,18 +120,49 @@ def synthetix_address_resolver():
 
 
 @pytest.fixture()
-def synthetix_depot_action(SynthetixDepotAction, synthetix_address_resolver):
-    yield accounts[0].deploy(SynthetixDepotAction, synthetix_address_resolver)
+def synthetix_depot_action(SynthetixDepotAction):
+    yield accounts[0].deploy(SynthetixDepotAction)
 
 
 @pytest.fixture()
-def uniswap_v1_action(UniswapV1Action, uniswap_factory):
-    yield accounts[0].deploy(UniswapV1Action, uniswap_factory)
+def uniswap_v1_action(UniswapV1Action):
+    yield accounts[0].deploy(UniswapV1Action)
 
 
 @pytest.fixture(scope="session")
 def uniswap_factory():
     yield Contract.from_explorer("0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95")
+
+
+@pytest.fixture(scope="session")
+def uniswap_helper(uniswap_factory, interface):
+
+    def inner_uniswap_helper(src_amount, dest_token, to):
+        # get the uniswap exchange
+        exchange = uniswap_factory.getExchange(dest_token)
+
+        exchange = interface.IUniswapExchange(exchange)
+
+        # # put some ETH into the uniswap action so we can buy some DAI
+        # accounts[0].transfer(uniswap_v1_action, 1e18)
+
+        # uniswap_v1_action.tradeEtherToToken(curve_fi_action, cdai_erc20, 1, "")
+
+        deadline = 2000000000
+
+        exchange.ethToTokenTransferInput(
+            src_amount,
+            deadline,
+            to,
+            {
+                "value": src_amount,
+                "from": accounts[0],
+            }
+        )
+
+        True
+
+    yield inner_uniswap_helper
 
 
 @pytest.fixture(scope="session")
@@ -149,8 +173,8 @@ def usdc_erc20():
 
 
 @pytest.fixture()
-def weth9_action(Weth9Action, weth9_erc20):
-    yield accounts[0].deploy(Weth9Action, weth9_erc20)
+def weth9_action(Weth9Action):
+    yield accounts[0].deploy(Weth9Action)
 
 
 @pytest.fixture(scope="session")

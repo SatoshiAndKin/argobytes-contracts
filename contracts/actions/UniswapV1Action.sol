@@ -21,7 +21,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
         uint256 ether_supply;
     }
 
-    function getExchange(address factory, address token) internal view returns(IUniswapExchange) {
+    function getExchange(address factory, address token) public view returns(IUniswapExchange) {
         return IUniswapExchange(IUniswapFactory(factory).getExchange(token));
     }
 
@@ -200,6 +200,10 @@ contract UniswapV1Action is AbstractERC20Exchange {
         require(src_balance > 0, "UniswapV1Action.tradeTokenToEther: NO_BALANCE");
 
         IERC20(src_token).safeApprove(exchange, src_balance);
+
+        if (to == ADDRESS_ZERO) {
+            to = msg.sender;
+        }
 
         if (dest_max_tokens > 0) {
             require(dest_min_tokens == 0, "UniswapV1Action.tradeTokenToEther: SET_MIN_OR_MAX");  // TODO: do something with dest_min_tokens?

@@ -9,24 +9,24 @@ from hypothesis import settings
 zero_address = "0x0000000000000000000000000000000000000000"
 
 
-def test_get_amounts(dai_erc20, kyber_action, usdc_erc20, weth9_erc20):
+def test_get_amounts(dai_erc20, kyber_action, kyber_network_proxy, usdc_erc20, weth9_erc20):
     eth_amount = 1e18
     dai_amount = 1e20
 
-    # getAmounts(address token_a, uint token_a_amount, address token_b)
-    amounts = kyber_action.getAmounts(zero_address, eth_amount, dai_erc20)
+    # getAmounts(address token_a, uint token_a_amount, address token_b, address kyber_network_proxy)
+    amounts = kyber_action.getAmounts(zero_address, eth_amount, dai_erc20, kyber_network_proxy)
 
     print("amounts 1", amounts)
 
     # TODO: use amounts from the previous call
-    amounts = kyber_action.getAmounts(dai_erc20, dai_amount, zero_address)
+    amounts = kyber_action.getAmounts(dai_erc20, dai_amount, zero_address, kyber_network_proxy)
 
     print("amounts 2", amounts)
 
     # TODO: what should we assert?
 
 
-def test_action(kyber_action, dai_erc20, usdc_erc20):
+def test_action(kyber_action, kyber_network_proxy, dai_erc20, usdc_erc20):
     value = 1e17
 
     # send some ETH into the action
@@ -36,23 +36,23 @@ def test_action(kyber_action, dai_erc20, usdc_erc20):
     assert kyber_action.balance() == value
 
     # trade ETH to USDC
-    # tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
-    kyber_action.tradeEtherToToken(kyber_action, usdc_erc20, 1, 0, "")
+    # tradeEtherToToken()
+    kyber_action.tradeEtherToToken(kyber_network_proxy, kyber_action, usdc_erc20, 1, 0)
 
     # TODO: check gas cost to make sure there are no regressions! (do this for all our tests!)
     # TODO: make sure ETH balance is zero (i think it will be swept back to accounts[0])
     # TODO: make sure USDC balance is non-zero
 
     # trade USDC to DAI
-    # tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
-    kyber_action.tradeTokenToToken(kyber_action, usdc_erc20, dai_erc20, 1, 0, "")
+    # tradeTokenToToken()
+    kyber_action.tradeTokenToToken(kyber_network_proxy, kyber_action, usdc_erc20, dai_erc20, 1, 0)
 
     # TODO: make sure USDC balance is zero (i think it will be swept back to accounts[0])
     # TODO: make sure DAI balance is non-zero
 
     # trade DAI to ETH
-    # tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
-    kyber_action.tradeTokenToEther(zero_address, dai_erc20, 1, 0, "")
+    # tradeTokenToEther()
+    kyber_action.tradeTokenToEther(kyber_network_proxy, zero_address, dai_erc20, 1, 0)
 
     # TODO: make sure DAI balance is zero (i think it will be swept back to accounts[0])
     # TODO: make sure ETH balance is non-zero for accounts[0]

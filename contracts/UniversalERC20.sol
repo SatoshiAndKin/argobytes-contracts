@@ -65,6 +65,7 @@ library UniversalERC20 {
             // TODO: should we revert if msg.value < amount?
             if (msg.value > amount) {
                 // send back any extra msg.value
+                // TODO: use call instead!
                 msg.sender.transfer(msg.value.sub(amount));
             }
         } else {

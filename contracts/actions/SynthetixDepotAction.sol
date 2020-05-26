@@ -95,6 +95,7 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
             to = msg.sender;
         }
 
+        // we know sUSD returns a bool, so no need for safeTransfer
         require(IERC20(sUSD).transfer(to, dest_balance), "SynthetixDepotAction.tradeEtherToSynthUSD: transfer failed");
     }
 }

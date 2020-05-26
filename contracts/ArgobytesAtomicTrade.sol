@@ -9,12 +9,11 @@ pragma experimental ABIEncoderV2;
 
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 import {Strings} from "@openzeppelin/utils/Strings.sol";
-import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 
 import {IInvokable} from "interfaces/kollateral/IInvokable.sol";
 import {IInvoker} from "interfaces/kollateral/IInvoker.sol";
 import {KollateralInvokable} from "interfaces/kollateral/KollateralInvokable.sol";
-import {UniversalERC20} from "contracts/UniversalERC20.sol";
+import {UniversalERC20, SafeERC20, IERC20} from "contracts/UniversalERC20.sol";
 import {IArgobytesAtomicTrade} from "interfaces/argobytes/IArgobytesAtomicTrade.sol";
 import {Strings2} from "contracts/Strings2.sol";
 
@@ -23,6 +22,7 @@ import {Strings2} from "contracts/Strings2.sol";
 
 contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
     using Strings for uint256;
     using Strings2 for address;
     using UniversalERC20 for IERC20;
@@ -144,7 +144,7 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
             // we don't need universalBalanceOf because we know this isn't ETH
             uint256 borrowed_amount = borrowed_token.balanceOf(address(this));
 
-            borrowed_token.transfer(actions[0].target, borrowed_amount);
+            borrowed_token.safeTransfer(actions[0].target, borrowed_amount);
         }
 
         // an action can do whatever it wants (liquidate, swap, refinance, etc.)

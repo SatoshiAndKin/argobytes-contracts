@@ -53,7 +53,7 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
         require(dest_balance >= dest_min_tokens, "OneSplitAction._tradeEtherToToken: LOW_DEST_BALANCE");
 
-        IERC20(dest_token).transfer(to, dest_balance);
+        IERC20(dest_token).safeTransfer(to, dest_balance);
     }
 
     function _tradeTokenToToken(
@@ -91,7 +91,7 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
         require(dest_balance >= dest_min_tokens, "OneSplitAction._tradeTokenToToken: LOW_DEST_BALANCE");
 
-        IERC20(dest_token).transfer(to, dest_balance);
+        IERC20(dest_token).safeTransfer(to, dest_balance);
     }
 
     function _tradeTokenToEther(

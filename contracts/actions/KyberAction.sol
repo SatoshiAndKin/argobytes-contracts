@@ -97,7 +97,7 @@ contract KyberAction is AbstractERC20Exchange, Ownable {
         address to,
         address dest_token,
         uint256 dest_min_tokens,
-        bytes memory
+        uint256 dest_max_tokens
     ) public returnLeftoverEther() {
         require(dest_token != ADDRESS_ZERO, "KyberAction.tradeEtherToToken: dest_token cannot be ADDRESS_ZERO");
         require(IERC20(dest_token) != ETH_ON_KYBER, "KyberAction.tradeEtherToToken: dest_token cannot be ETH");
@@ -109,13 +109,16 @@ contract KyberAction is AbstractERC20Exchange, Ownable {
         if (to == ADDRESS_ZERO) {
             to = msg.sender;
         }
+        if (dest_max_tokens == 0) {
+            dest_max_tokens = MAX_QTY;
+        }
 
         uint256 received = IKyberNetworkProxy(network_proxy).trade{value: src_amount}(
             ETH_ON_KYBER,
             src_amount,
             IERC20(dest_token),
             to,
-            MAX_QTY,
+            dest_max_tokens,
             1,  // minConversionRate of 1 will execute the trade according to market price
             _wallet_id
         );
@@ -129,8 +132,8 @@ contract KyberAction is AbstractERC20Exchange, Ownable {
         address to,
         address src_token,
         address dest_token,
-        uint dest_min_tokens,
-        uint dest_max_tokens
+        uint256 dest_min_tokens,
+        uint256 dest_max_tokens
     ) external returnLeftoverToken(src_token, network_proxy){
         // Use the full balance of tokens transferred from the trade executor
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
@@ -142,13 +145,16 @@ contract KyberAction is AbstractERC20Exchange, Ownable {
         if (to == ADDRESS_ZERO) {
             to = msg.sender;
         }
+        if (dest_max_tokens == 0) {
+            dest_max_tokens = MAX_QTY;
+        }
 
         uint received = IKyberNetworkProxy(network_proxy).trade(
             IERC20(src_token),
             src_amount,
             IERC20(dest_token),
             to,
-            MAX_QTY,
+            dest_max_tokens,
             1,  // minConversionRate of 1 will execute the trade according to market price
             _wallet_id
         );
@@ -161,8 +167,8 @@ contract KyberAction is AbstractERC20Exchange, Ownable {
         address network_proxy,
         address to,
         address src_token,
-        uint dest_min_tokens,
-        uint dest_max_tokens
+        uint256 dest_min_tokens,
+        uint256 dest_max_tokens
     ) external returnLeftoverToken(src_token, network_proxy) {
         // Use the full balance of tokens transferred from the trade executor
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
@@ -173,6 +179,9 @@ contract KyberAction is AbstractERC20Exchange, Ownable {
 
         if (to == ADDRESS_ZERO) {
             to = msg.sender;
+        }
+        if (dest_max_tokens == 0) {
+            dest_max_tokens = MAX_QTY;
         }
 
         // TODO: maybe this should take a destination address. then we can give it to the next hop instead of back to the teller. we could even send it direct to the bank

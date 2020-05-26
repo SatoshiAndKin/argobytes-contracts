@@ -56,7 +56,7 @@ def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20, skip
 
     # tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
     _eth_to_token_tx = onesplit_offchain_action.tradeEtherToToken(
-        onesplit_offchain_action, weth9_erc20, 1, 0, extra_data_eth_to_token)
+        onesplit_offchain_action, weth9_erc20, 1, extra_data_eth_to_token)
 
     # TODO: make sure ETH balance is zero (i think it will be swept back to accounts[0])
     # TODO: make sure USDC balance is non-zero
@@ -81,7 +81,7 @@ def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20, skip
 
     # tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
     onesplit_offchain_action.tradeTokenToToken(
-        onesplit_offchain_action, weth9_erc20, dai_erc20, 1, 0, extra_data_token_to_token)
+        onesplit_offchain_action, weth9_erc20, dai_erc20, 1, extra_data_token_to_token)
 
     dai_balance = dai_erc20.balanceOf.call(onesplit_offchain_action)
 
@@ -97,7 +97,7 @@ def test_action(onesplit, onesplit_offchain_action, dai_erc20, weth9_erc20, skip
         dai_erc20, zero_address, dai_balance, 1, parts)
 
     # tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
-    onesplit_offchain_action.tradeTokenToEther(onesplit_offchain_action, dai_erc20, 1, 0, extra_data_token_to_eth)
+    onesplit_offchain_action.tradeTokenToEther(onesplit_offchain_action, dai_erc20, 1, extra_data_token_to_eth)
 
     eth_balance = onesplit_offchain_action.balance()
 

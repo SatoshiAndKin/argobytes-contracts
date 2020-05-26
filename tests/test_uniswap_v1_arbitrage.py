@@ -30,6 +30,9 @@ def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_va
     assert argobytes_owned_vault.balance() == value
     assert example_action.balance() == value
 
+    usdc_exchange = uniswap_v1_action.getExchange(usdc_erc20)
+    dai_exchange = uniswap_v1_action.getExchange(usdc_erc20)
+
     # sweep a bunch of times to use up gas
     encoded_actions = argobytes_atomic_trade.encodeActions(
         [
@@ -40,14 +43,15 @@ def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_va
         ],
         [
             # trade ETH to USDC
-            # uniswap_v1_action.tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
-            uniswap_v1_action.tradeEtherToToken.encode_input(uniswap_v1_action, usdc_erc20, 1, 0, ""),
+            # uniswap_v1_action.tradeEtherToToken(address to, address exchange, address dest_token, uint dest_min_tokens, uint dest_max_tokens)
+            uniswap_v1_action.tradeEtherToToken.encode_input(uniswap_v1_action, usdc_exchange, usdc_erc20, 1, 0),
             # trade USDC to DAI
-            # uniswap_v1_action.tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
-            uniswap_v1_action.tradeTokenToToken.encode_input(uniswap_v1_action, usdc_erc20, dai_erc20, 1, 0, ""),
+            # uniswap_v1_action.tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens)
+            uniswap_v1_action.tradeTokenToToken.encode_input(
+                uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1, 0),
             # trade DAI to ETH
-            # uniswap_v1_action.tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
-            uniswap_v1_action.tradeTokenToEther.encode_input(example_action, dai_erc20, 1, 0, ""),
+            # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens, uint dest_max_tokens)
+            uniswap_v1_action.tradeTokenToEther.encode_input(example_action, dai_exchange, dai_erc20, 1, 0),
             # add some faked profits
             example_action.sweep.encode_input(zero_address),
         ],
