@@ -123,7 +123,7 @@ def test_simple_kollateral(argobytes_atomic_trade, argobytes_owned_vault, exampl
 # @given(
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
-@pytest.mark.skip(reason="our refactor made things more efficient and now gas token isn't worthwhile?")
+# @pytest.mark.skip(reason="our refactor made things more efficient and now gas token isn't worthwhile?")
 def test_gastoken_saves_gas(argobytes_atomic_trade, argobytes_owned_vault, example_action, gastoken, kollateral_invoker):
     value = 1e10
 

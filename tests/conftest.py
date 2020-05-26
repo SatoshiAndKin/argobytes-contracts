@@ -76,7 +76,9 @@ def example_action(ExampleAction):
 
 @pytest.fixture(scope="session")
 def gastoken():
-    yield Contract.from_explorer("0x0000000000b3F879cb30FE243b4Dfee438691c04")
+    # GST2 = "0x0000000000b3F879cb30FE243b4Dfee438691c04"
+    # 1inch's CHAI = "0x0000000000004946c0e9F43F4Dee607b0eF1fA1c"
+    yield Contract.from_explorer("0x0000000000004946c0e9F43F4Dee607b0eF1fA1c")
 
 
 @pytest.fixture(scope="session")
@@ -86,7 +88,7 @@ def kollateral_invoker(ExampleAction):
 
 @pytest.fixture()
 def kyber_action(KyberAction, argobytes_owned_vault):
-    yield accounts[0].deploy(KyberAction, argobytes_owned_vault)
+    yield accounts[0].deploy(KyberAction, accounts[0], argobytes_owned_vault)
 
 
 @pytest.fixture(scope="session")

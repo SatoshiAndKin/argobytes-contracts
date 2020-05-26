@@ -2,26 +2,25 @@
 pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
-import {Ownable} from "@openzeppelin/access/Ownable.sol";
 
 import {IKyberNetworkProxy} from "interfaces/kyber/IKyberNetworkProxy.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {IERC20, UniversalERC20, SafeERC20} from "contracts/UniversalERC20.sol";
+import {Ownable2} from "contracts/Ownable2.sol";
 
-contract KyberAction is AbstractERC20Exchange, Ownable {
+contract KyberAction is AbstractERC20Exchange, Ownable2 {
     using SafeERC20 for IERC20;
     using UniversalERC20 for IERC20;
 
-    // TODO: document this
-    uint internal constant MAX_QTY = 10**28;
-
-    IERC20 constant ETH_ON_KYBER = IERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
+    // TODO: document MAX_QTY
+    uint256 internal constant MAX_QTY = 10**28;
+    IERC20 internal constant ETH_ON_KYBER = IERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
 
     address _wallet_id;
 
-    constructor(address wallet_id)
-        Ownable()
+    constructor(address admin, address wallet_id)
+        Ownable2(admin)
         public
     {
         _wallet_id = wallet_id;

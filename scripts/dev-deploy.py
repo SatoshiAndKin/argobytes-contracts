@@ -10,7 +10,9 @@ CurveY = "0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51"
 CurveB = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
 CurveSUSDV2 = "0xA5407eAE9Ba41422680e2e00537571bcC53efBfD"
 CurvePAX = "0x06364f10B501e868329afBc005b3492902d6C763"
+# TODO: compare GST2 and 1inch's CHI
 GasTokenAddress = "0x0000000000b3F879cb30FE243b4Dfee438691c04"
+# GasTokenAddress = "0x0000000000004946c0e9F43F4Dee607b0eF1fA1c"
 KollateralInvokerAddress = "0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01"
 KyberRegisterWallet = "0xECa04bB23612857650D727B8ed008f80952654ee"
 OneSplitAddress = "0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E"
@@ -84,7 +86,7 @@ def main():
 
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
     if BURN_GAS_TOKEN:
-        for _ in range(0, 30):
+        for _ in range(0, 17):
             argobytes_owned_vault.mintGasToken(
                 GasTokenAddress, {"from": accounts[0], "gasPrice": expected_mainntet_mint_price})
 
@@ -92,7 +94,7 @@ def main():
 
         gas_tokens_start = gas_token.balanceOf.call(argobytes_owned_vault)
         # gastoken has 2 decimals, so divide by 100
-        print("Starting gas_token balance:", gas_tokens_start/100.0)
+        print("Starting gas_token balance:", gas_tokens_start / 100.0)
 
     argobytes_atomic_trade = create_helper(argobytes_owned_vault, ArgobytesAtomicTrade, [], expected_mainnet_gas_price)
 
@@ -102,24 +104,24 @@ def main():
     accounts[3].transfer(argobytes_owned_vault, 50 * 1e18)
 
     # TODO: refactor all of these to use less storage and instead use calldata. its easier to upgrade without requiring admin keys this way. gas is also less for calldata compared to SLOAD
-    create_helper(argobytes_owned_vault, OneSplitOffchainAction, [OneSplitAddress], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, KyberAction, [
-                  KyberNetworkProxy, argobytes_owned_vault], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, UniswapV1Action, [UniswapFactory], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, Weth9Action, [Weth9Address], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, SynthetixDepotAction, [SynthetixAddressResolver], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, OneSplitOffchainAction, [], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, KyberAction, [accounts[0], argobytes_owned_vault], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, UniswapV1Action, [], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, Weth9Action, [], expected_mainnet_gas_price)
+    create_helper(argobytes_owned_vault, SynthetixDepotAction, [], expected_mainnet_gas_price)
 
-    curve_fi_action = create_helper(argobytes_owned_vault, CurveFiAction, expected_mainnet_gas_price)
-    # create_helper(argobytes_owned_vault, CurveFiAction, [CurveCompounded, 2], expected_mainnet_gas_price)
+    curve_fi_action = create_helper(argobytes_owned_vault, CurveFiAction, [accounts[0]], expected_mainnet_gas_price)
 
-    curve_fi_action.saveExchange(CurveCompounded, 2)
-    curve_fi_action.saveExchange(CurveUSDT, 3)
-    curve_fi_action.saveExchange(CurveY, 4)
-    curve_fi_action.saveExchange(CurveB, 4)
-    curve_fi_action.saveExchange(CurveSUSDV2, 4)
-    curve_fi_action.saveExchange(CurvePAX, 4)
+    # TODO: do this through the vault so that we can burn gas token?
+    curve_fi_action.saveExchange(CurveCompounded, 2, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveUSDT, 3, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveY, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveB, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveSUSDV2, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurvePAX, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
     # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity
+    # TODO: make a script to help with this
     accounts[1].transfer(argobytes_atomic_trade, 1e18)
 
     # register for kyber's fee program
@@ -134,11 +136,11 @@ def main():
         gas_tokens_remaining = gas_token.balanceOf.call(argobytes_owned_vault)
 
         # gastoken has 2 decimals, so divide by 100
-        print("gas_tokens_remaining:", gas_tokens_remaining/100.0, "/", gas_tokens_start/100.0)
+        print("gas_tokens_remaining:", gas_tokens_remaining / 100.0, "/", gas_tokens_start / 100.0)
 
-        # TODO: what should we do here?
         assert gas_tokens_remaining > 0
-        assert gas_tokens_remaining < 20
+        # TODO: get the amount minted from the contract
+        assert gas_tokens_remaining < 26
     else:
         print("gas_tokens_remaining: N/A")
 

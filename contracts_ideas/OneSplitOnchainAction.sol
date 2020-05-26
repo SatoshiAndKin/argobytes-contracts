@@ -95,7 +95,7 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
     }
 
     function _tradeTokenToEther(
-        address to,
+        address payable to,
         address src_token,
         uint256 dest_min_tokens,
         uint256 /* dest_max_tokens */,
@@ -119,7 +119,7 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
             disable_flags
         );
 
-        require(return_amount > dest_min_tokens, "OneSplitAction._tradeTokenToEther: LOW_EXPECTED_RETURN");
+        require(return_amount > dest_min_tokens, "OneSplitAction.tradeTokenToEther: LOW_EXPECTED_RETURN");
 
         // do the actual swap
         // TODO: do we need to pass dest_min_tokens since we did the check above? maybe just pass 0 or 1
@@ -127,10 +127,10 @@ contract OneSplitOnchainAction is AbstractERC20Exchange {
 
         // forward the tokens that we bought
         uint256 dest_balance = address(this).balance;
-        require(dest_balance >= dest_min_tokens, "OneSplitAction._tradeTokenToEther: LOW_DEST_BALANCE");
+        require(dest_balance >= dest_min_tokens, "OneSplitAction.tradeTokenToEther: LOW_DEST_BALANCE");
 
-        // TODO: don't use transfer. use call instead. and search for anywhere else we use transfer, too
-        payable(to).transfer(dest_balance);
+        (bool success, ) = to.call{value: dest_balance}();
+        require(success, "OneSplitAction.tradeTokenToEther: ETH_TRANSFER_FAILED");
     }
 
     function getAmounts(address token_a, uint256 token_a_amount, address token_b, uint256 parts)

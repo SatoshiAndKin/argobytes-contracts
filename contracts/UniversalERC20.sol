@@ -65,8 +65,8 @@ library UniversalERC20 {
             // TODO: should we revert if msg.value < amount?
             if (msg.value > amount) {
                 // send back any extra msg.value
-                // TODO: use call instead!
-                msg.sender.transfer(msg.value.sub(amount));
+                (bool success, ) = msg.sender.call{value: msg.value.sub(amount)}("");
+                require(success, "UniversalERC20: universalTransferFromSenderToThis failed");
             }
         } else {
             token.safeTransferFrom(msg.sender, address(this), amount);

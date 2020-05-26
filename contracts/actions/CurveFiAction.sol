@@ -10,7 +10,6 @@ The depot is capable of trading SNX, too. However, that is only done on Testnets
 pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
-import {Ownable} from "@openzeppelin/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {Strings} from "@openzeppelin/utils/Strings.sol";
 import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
@@ -18,11 +17,12 @@ import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
 import {ICurveFi} from "interfaces/curvefi/ICurveFi.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
-import {UniversalERC20} from "contracts/UniversalERC20.sol";
+import {Ownable2} from "contracts/Ownable2.sol";
 import {Strings2} from "contracts/Strings2.sol";
+import {UniversalERC20} from "contracts/UniversalERC20.sol";
 
 
-contract CurveFiAction is AbstractERC20Exchange, Ownable {
+contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
     using UniversalERC20 for IERC20;
     using SafeERC20 for IERC20;
     using Strings for uint256;
@@ -32,6 +32,8 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable {
     // we add one to our indexes because fetching an unknown address will return 0!
     mapping(address => mapping(address => int128)) _coins;
     mapping(address => mapping(address => int128)) _underlying_coins;
+
+    constructor(address owner) public Ownable2(owner) {}
 
     function saveExchange(address exchange, int128 n) public onlyOwner {
         // i'd like this to be open, but i feel like people could grief. maybe require a fee that goes to ownedVault?
