@@ -67,6 +67,7 @@ contract AbstractERC20Modifiers {
 
             if (approved != ADDRESS_ZERO) {
                 // clear the approval since we didn't trade everything
+                // TODO: gas-golf this
                 IERC20(token).safeApprove(approved, 0);
             }
         }
@@ -140,7 +141,7 @@ abstract contract AbstractERC20Exchange is AbstractERC20Modifiers {
             error: ""
         });
 
-        // missing maker_wei and extra_data! you need to set these in your `newAmount`
+        // missing maker_wei, selector, trade_extra_data, exchange_data! you need to set these (or error) in your `newAmount`
 
         return a;
     }

@@ -10,16 +10,14 @@ The depot is capable of trading SNX, too. However, that is only done on Testnets
 pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
-import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {Strings} from "@openzeppelin/utils/Strings.sol";
-import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
 
 import {ICurveFi} from "interfaces/curvefi/ICurveFi.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {Ownable2} from "contracts/Ownable2.sol";
 import {Strings2} from "contracts/Strings2.sol";
-import {UniversalERC20} from "contracts/UniversalERC20.sol";
+import {IERC20, SafeERC20, UniversalERC20} from "contracts/UniversalERC20.sol";
 
 
 contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
@@ -41,10 +39,12 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
         for (int128 i = 0; i < n; i++) {
             address coin = ICurveFi(exchange).coins(i);
 
+            // TODO: include "i" and "n" in the revert message
             require(coin != ADDRESS_ZERO, "CurveFiAction: Unknown coin");
 
             address underlying_coin = ICurveFi(exchange).underlying_coins(i);
 
+            // TODO: include "i" and "n" in the revert message
             require(
                 underlying_coin != ADDRESS_ZERO,
                 "CurveFiAction: Unknown underlying_coin"
@@ -69,7 +69,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
 
             // TODO: save exchange to a list?
 
-            // save the coins with an index of + 1. this lets us use 0
+            // save the coins with an index of + 1. this lets us be sure that 0 means the coin is unsupported
             _coins[exchange][coin] = i + 1;
             _underlying_coins[exchange][underlying_coin] = i + 1;
         }
@@ -185,7 +185,9 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
             a.selector = this.trade.selector;
         }
 
+        // TODO: use a struct
         a.trade_extra_data = abi.encode(curve_fi, i, j);
+
         // a.exchange_data = "";
 
         return a;
@@ -260,13 +262,14 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
             dest_min_tokens
         );
 
-        // forward the tokens that we bought
+        // check that we received what we expected
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
         require(
             dest_balance >= dest_min_tokens,
             "CurveFiAction.tradeUnderlying: LOW_DEST_BALANCE"
         );
 
+        // forward the tokens that we bought
         IERC20(dest_token).safeTransfer(to, dest_balance);
     }
 }

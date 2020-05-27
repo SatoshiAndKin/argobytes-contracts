@@ -45,15 +45,15 @@ def test_action(uniswap_factory, uniswap_v1_action, dai_erc20, usdc_erc20):
     dai_exchange = uniswap_v1_action.getExchange(uniswap_factory, dai_erc20)
 
     # trade ETH to USDC
-    # tradeEtherToToken(address to, address exchange, address dest_token, uint dest_min_tokens, uint dest_max_tokens)
+    # tradeEtherToToken(address to, address exchange, address dest_token, uint256 dest_min_tokens, uint256 trade_gas)
     uniswap_v1_action.tradeEtherToToken(uniswap_v1_action, usdc_exchange, usdc_erc20, 1, 0)
 
     # TODO: make sure ETH balance is zero (i think it will be swept back to accounts[0])
     # TODO: make sure USDC balance is non-zero
 
     # trade USDC to DAI
-    # tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens)
-    uniswap_v1_action.tradeTokenToToken(uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1, 0)
+    # tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint256 dest_min_tokens)
+    uniswap_v1_action.tradeTokenToToken(uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1)
 
     # TODO: make sure USDC balance is zero (i think it will be swept back to accounts[0])
     # TODO: make sure DAI balance is non-zero
@@ -62,7 +62,7 @@ def test_action(uniswap_factory, uniswap_v1_action, dai_erc20, usdc_erc20):
     # TODO: other tests need a similar change. we really should test address_zero sends to msg.sender on all of them
 
     # trade DAI to ETH
-    # tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens, uint dest_max_tokens)
+    # tradeTokenToEther(address payable to, address exchange, address src_token, uint256 dest_min_tokens, uint256 trade_gas)
     uniswap_v1_action.tradeTokenToEther(address_zero, dai_exchange, dai_erc20, 1, 0)
 
     # TODO: make sure DAI balance is zero (i think it will be swept back to accounts[0])
