@@ -193,7 +193,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
         }
     }
 
-    function tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens, uint dest_max_tokens) external returnLeftoverToken(src_token, exchange) {
+    function tradeTokenToEther(address payable to, address exchange, address src_token, uint dest_min_tokens, uint dest_max_tokens) external returnLeftoverToken(src_token, exchange) {
         require(src_token != ADDRESS_ZERO, "UniswapV1Action.tradeTokenToEther: src_token cannot be ETH");
 
         uint src_balance = IERC20(src_token).balanceOf(address(this));
