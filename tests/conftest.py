@@ -9,6 +9,12 @@ def isolation(fn_isolation):
     pass
 
 
+@pytest.fixture(autouse=True, scope="session")
+def session_defaults():
+    # strict bytes to protect us from ourselves
+    web3.enable_strict_bytes_type_checking()
+
+
 @pytest.fixture()
 def argobytes_atomic_trade(argobytes_owned_vault, ArgobytesAtomicTrade, gastoken):
     salt = ""
@@ -112,14 +118,33 @@ def onesplit_offchain_action(OneSplitOffchainAction):
 
 @pytest.fixture(scope="session")
 def susd_erc20():
-    # TODO: get this from the address resolver
-    yield Contract.from_explorer("0xae38b81459d74a8c16eaa968c792207603d84480")
+    # # susd_bytes = web3.toBytes(text="SynthsUSD")
+
+    # # susd_address = synthetix_address_resolver.getAddress(susd_bytes)
+
+    # assert susd_address == "0xae38b81459d74a8c16eaa968c792207603d84480"
+    susd_address = "0xae38b81459d74a8c16eaa968c792207603d84480"
+
+    yield Contract.from_explorer(susd_address)
 
 
 @pytest.fixture(scope="session")
-def synthetix_address_resolver():
+def synthetix_address_resolver(interface):
     # this is actually the ReadProxyAddressResolver
-    yield Contract.from_explorer("0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2")
+    yield interface.IAddressResolver("0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2")
+
+
+@pytest.fixture(scope="session")
+def synthetix_exchange_rates(interface, synthetix_address_resolver):
+    # TODO: why isn't this working?!
+    # rates_bytes = web3.toBytes(text="ExchangeRates")
+
+    # rates = synthetix_address_resolver.getAddress(rates_bytes)
+
+    # TODO: don't hard code
+    rates = "0x9D7F70AF5DF5D5CC79780032d47a34615D1F1d77"
+
+    yield interface.IExchangeRates(rates)
 
 
 @pytest.fixture()

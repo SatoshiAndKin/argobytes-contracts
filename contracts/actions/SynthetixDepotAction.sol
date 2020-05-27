@@ -13,8 +13,9 @@ pragma experimental ABIEncoderV2;
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {Strings} from "@openzeppelin/utils/Strings.sol";
 
-import {IDepot} from "interfaces/synthetix/IDepot.sol";
 import {IAddressResolver} from "interfaces/synthetix/IAddressResolver.sol";
+import {IDepot} from "interfaces/synthetix/IDepot.sol";
+import {IExchangeRates} from "interfaces/synthetix/IExchangeRates.sol";
 import {ISystemStatus} from "interfaces/synthetix/ISystemStatus.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
@@ -25,6 +26,13 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
     using UniversalERC20 for IERC20;
     using Strings for uint;
     using Strings2 for address;
+
+    // TODO: we shouldn't need this, but i'm having trouble setting up fixture
+    bytes32 public constant BYTESTR_DEPOT = "Depot";
+    bytes32 public constant BYTESTR_EXRATES = "ExchangeRates";
+    bytes32 public constant BYTESTR_SUSD = "SynthsUSD";
+    bytes32 public constant BYTESTR_STATUS = "SystemStatus";
+    bytes32 public constant BYTESTR_ETH = "ETH";
 
     struct SynthetixExtraData {
         address depot;
@@ -48,8 +56,8 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
 
         Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
 
-        address depot = IAddressResolver(resolver).getAddress("Depot");
-        address sUSD = IAddressResolver(resolver).getAddress("SynthsUSD");
+        address depot = IAddressResolver(resolver).getAddress(BYTESTR_DEPOT);
+        address sUSD = IAddressResolver(resolver).getAddress(BYTESTR_SUSD);
 
         SynthetixExtraData memory trade_extra_data;
 
@@ -59,11 +67,29 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
         if (taker_token == ADDRESS_ZERO && maker_token == sUSD) {
             // eth to sUSD
 
-            // TODO: figure out how to make this work. do we even need it though?
-            // status.requireSynthActive("SynthsUSD");
+            {
+                address status = IAddressResolver(resolver).getAddress(BYTESTR_STATUS);
 
-            a.maker_wei = IDepot(depot).synthsReceivedForEther(taker_wei);
-            a.selector = this.tradeEtherToSynthUSD.selector;
+                require(status != ADDRESS_ZERO, "SynthetixDepotAction.newAmount: No address for SystemStatus");
+
+                ISystemStatus(status).requireSynthActive(BYTESTR_SUSD);
+            }
+
+            {
+                address rates = IAddressResolver(resolver).getAddress(BYTESTR_EXRATES);
+
+                require(rates != ADDRESS_ZERO, "SynthetixDepotAction.newAmount: No address for ExchangeRate");
+
+                if (IExchangeRates(rates).rateIsStale(BYTESTR_ETH)) {
+                    // TODO: i think ganache is doing something incorrect here. debug more
+                    string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: ETH rate is stale"));
+
+                    a.error = err;
+                } else {
+                    a.maker_wei = IDepot(depot).synthsReceivedForEther(taker_wei);
+                    a.selector = this.tradeEtherToSynthUSD.selector;
+                }
+            }
         } else {
             string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: found ", taker_token.toString(), "->", maker_token.toString(), ". supported ", ADDRESS_ZERO.toString(), "->", sUSD.toString()));
 

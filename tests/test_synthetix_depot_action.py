@@ -7,8 +7,40 @@ import brownie
 address_zero = "0x0000000000000000000000000000000000000000"
 
 
-def test_get_amounts(synthetix_address_resolver, synthetix_depot_action, susd_erc20):
+def test_byte_strs(synthetix_depot_action, web3):
+    eth_bytestr = web3.toHex(text="ETH").ljust(2+(32)*2, '0')
+
+    eth_bytestr_hardcoded = "0x4554480000000000000000000000000000000000000000000000000000000000"
+
+    assert eth_bytestr == eth_bytestr_hardcoded
+
+    eth_bytestr_contract = synthetix_depot_action.BYTESTR_ETH()
+
+    assert eth_bytestr == eth_bytestr_contract
+
+
+def reset_block_time(synthetix_exchange_rates, token_bytestr, web3):
+    last_update_time = synthetix_exchange_rates.lastRateUpdateTimes(token_bytestr)
+
+    print("last_update_time:", last_update_time)
+
+    assert last_update_time != 0
+
+    latest_block_time = web3.eth.getBlock(web3.eth.blockNumber).timestamp
+
+    print("latest_block_time:", latest_block_time)
+
+    assert latest_block_time != 0
+
+    web3.testing.mine(last_update_time)
+
+
+def test_get_amounts(synthetix_address_resolver, synthetix_depot_action, synthetix_exchange_rates, susd_erc20, web3):
     eth_amount = 1e18
+
+    eth_bytestr = synthetix_depot_action.BYTESTR_ETH()
+
+    reset_block_time(synthetix_exchange_rates, eth_bytestr, web3)
 
     # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)
     # TODO: we could call these, but there is a bug in brownie decoding their return_value!
@@ -18,17 +50,25 @@ def test_get_amounts(synthetix_address_resolver, synthetix_depot_action, susd_er
 
     # TODO: what should we assert?
 
+    # check that we have the expected error
+    assert amounts[0][7] == ""
+    assert amounts[1][7] != ""
+
     # TODO: use named keys. they aren't currently supported
     # check that the selector is set
     assert amounts[0][4] != "0x00000000"
     assert amounts[1][4] == "0x00000000"
 
 
-def test_action(synthetix_address_resolver, synthetix_depot_action, susd_erc20):
+def test_action(synthetix_address_resolver, synthetix_depot_action, synthetix_exchange_rates, susd_erc20, web3):
     eth_amount = 1e18
 
     # send some ETH into the action
     accounts[0].transfer(synthetix_depot_action, eth_amount)
+
+    eth_bytestr = synthetix_depot_action.BYTESTR_ETH()
+
+    reset_block_time(synthetix_exchange_rates, eth_bytestr, web3)
 
     # make the trade for ETH -> sUSD
     amounts = synthetix_depot_action.getAmounts(address_zero, eth_amount, susd_erc20, synthetix_address_resolver)
