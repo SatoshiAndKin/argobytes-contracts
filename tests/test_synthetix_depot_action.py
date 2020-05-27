@@ -60,7 +60,7 @@ def test_get_amounts(synthetix_address_resolver, synthetix_depot_action, synthet
     assert amounts[1][4] == "0x00000000"
 
 
-def test_action(synthetix_address_resolver, synthetix_depot_action, synthetix_exchange_rates, susd_erc20, web3):
+def test_action(no_call_coverage, skip_coverage, synthetix_address_resolver, synthetix_depot_action, synthetix_exchange_rates, susd_erc20, web3):
     eth_amount = 1e18
 
     # send some ETH into the action

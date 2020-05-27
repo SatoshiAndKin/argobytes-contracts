@@ -52,8 +52,8 @@ def test_action(uniswap_factory, uniswap_v1_action, dai_erc20, usdc_erc20):
     # TODO: make sure USDC balance is non-zero
 
     # trade USDC to DAI
-    # tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint256 dest_min_tokens)
-    uniswap_v1_action.tradeTokenToToken(uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1)
+    # tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint256 dest_min_tokens, uint256 trade_gas)
+    uniswap_v1_action.tradeTokenToToken(uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1, 0)
 
     # TODO: make sure USDC balance is zero (i think it will be swept back to accounts[0])
     # TODO: make sure DAI balance is non-zero

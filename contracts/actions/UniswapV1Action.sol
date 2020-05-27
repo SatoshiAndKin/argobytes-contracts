@@ -131,7 +131,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
     }
 
     // TODO: allow trading between 2 factories?
-    function tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint256 dest_min_tokens) external returnLeftoverToken(src_token, exchange) {
+    function tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint256 dest_min_tokens, uint256 trade_gas) external returnLeftoverToken(src_token, exchange) {
         require(src_token != ADDRESS_ZERO, "UniswapV1Action.tradeTokenToToken: src_token cannot be ETH");
         require(dest_token != ADDRESS_ZERO, "UniswapV1Action.tradeTokenToToken: dest_token cannot be ETH");
         // dest_min_tokens may be 1, but is probably set to something to protect against large slippage in price
@@ -142,13 +142,12 @@ contract UniswapV1Action is AbstractERC20Exchange {
 
         IERC20(src_token).safeApprove(exchange, src_balance);
 
+        // TODO: what gas limits? https://hackmd.io/@Uniswap/HJ9jLsfTz#Gas-Benchmarks
+        trade_gas += 140000;
+
         if (to == ADDRESS_ZERO) {
             to = msg.sender;
         }
-
-        // TODO: ah crap. stack is too deep.
-        // TODO: what gas limits? https://hackmd.io/@Uniswap/HJ9jLsfTz#Gas-Benchmarks
-        // uint256 trade_gas = 88000 + overhead for weird erc20 tokens;
 
         // tokenToTokenTransferInput(
         //     tokens_sold: uint256,
@@ -159,9 +158,10 @@ contract UniswapV1Action is AbstractERC20Exchange {
         //     token_addr: address
         // ): uint256
         // solium-disable-next-line security/no-block-members
-        uint256 received = IUniswapExchange(exchange).tokenToTokenTransferInput{gas: 100000}(src_balance, dest_min_tokens, 1, block.timestamp, to, address(dest_token));
+        IUniswapExchange(exchange).tokenToTokenTransferInput{gas: trade_gas}(src_balance, dest_min_tokens, 1, block.timestamp, to, address(dest_token));
 
-        require(received > 0, "UniswapV1Action.tradeTokenToToken: BAD_EXCHANGE");
+        // TODO: figure out how to check the received value. stack too deep
+        // require(received >= dest_min_tokens, "UniswapV1Action.tradeTokenToToken: BAD_EXCHANGE");
     }
 
     function tradeTokenToEther(address payable to, address exchange, address src_token, uint256 dest_min_tokens, uint256 trade_gas) external returnLeftoverToken(src_token, exchange) {
