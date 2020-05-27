@@ -23,7 +23,9 @@ SynthetixAddressResolver = "0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2"
 UniswapFactory = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
 ZeroAddress = "0x0000000000000000000000000000000000000000"
 
-BURN_GAS_TOKEN = os.environ.get("BURN_GAS_TOKEN", "1") == "1"
+# TODO: old versions of these contracts were cheaper to deploy with gas token. with less state, they are cheaper without gastoken though
+# TODO: i think some of them might still be. investigate more
+BURN_GAS_TOKEN = os.environ.get("BURN_GAS_TOKEN", "0") == "1"
 
 
 def create_helper(deployer, target_contract, target_contract_args, gas_price):
