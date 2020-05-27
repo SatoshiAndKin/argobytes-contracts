@@ -6,7 +6,7 @@ from hypothesis import settings
 
 # we use the zero address for ETH
 # TODO: they use 0xEeE..., but our wrapper handles the conversion
-zero_address = "0x0000000000000000000000000000000000000000"
+address_zero = "0x0000000000000000000000000000000000000000"
 
 
 def test_compound_get_amounts(curve_fi_action, curve_fi_compound, usdc_erc20, dai_erc20):

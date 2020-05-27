@@ -22,8 +22,8 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         uint256 disable_flags = allEnabled(src_token, dest_token);
 
         (uint256 expected_return, uint256[] memory distribution) = IOneSplit(exchange).getExpectedReturn(
-            IERC20(src_token),
-            IERC20(dest_token),
+            src_token,
+            dest_token,
             src_amount,
             parts,
             disable_flags
@@ -52,7 +52,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         // no approvals are necessary since we are using ETH
 
         // do the actual swap (and send the ETH along as value)
-        IOneSplit(exchange).swap{value: src_balance}(IERC20(ADDRESS_ZERO), IERC20(dest_token), src_balance, dest_min_tokens, distribution, disable_flags);
+        IOneSplit(exchange).swap{value: src_balance}(ADDRESS_ZERO, dest_token, src_balance, dest_min_tokens, distribution, disable_flags);
 
         // forward the tokens that we bought
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
@@ -81,7 +81,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         IERC20(src_token).safeApprove(exchange, src_balance);
 
         // do the actual swap
-        IOneSplit(exchange).swap(IERC20(src_token), IERC20(dest_token), src_balance, dest_min_tokens, distribution, disable_flags);
+        IOneSplit(exchange).swap(src_token, dest_token, src_balance, dest_min_tokens, distribution, disable_flags);
 
         // forward the tokens that we bought
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
@@ -110,7 +110,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
 
         // do the actual swap
         // TODO: do we need to pass dest_min_tokens since we did the check above? maybe just pass 0 or 1
-        IOneSplit(exchange).swap(IERC20(src_token), IERC20(ADDRESS_ZERO), src_balance, dest_min_tokens, distribution, disable_flags);
+        IOneSplit(exchange).swap(src_token, ADDRESS_ZERO, src_balance, dest_min_tokens, distribution, disable_flags);
 
         // forward the tokens that we bought
         uint256 dest_balance = address(this).balance;

@@ -16,7 +16,7 @@ def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_va
     value = 1e18
 
     # we use the zero address for ETH
-    zero_address = "0x0000000000000000000000000000000000000000"
+    address_zero = "0x0000000000000000000000000000000000000000"
 
     # send some ETH into the vault
     accounts[0].transfer(argobytes_owned_vault, value)
@@ -53,15 +53,15 @@ def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_va
                 uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1, 0),
             # trade DAI to ETH
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens, uint dest_max_tokens)
-            uniswap_v1_action.tradeTokenToEther.encode_input(zero_address, dai_exchange, dai_erc20, 1, 0),
+            uniswap_v1_action.tradeTokenToEther.encode_input(address_zero, dai_exchange, dai_erc20, 1, 0),
 
             # add some faked profits
-            example_action.sweep.encode_input(zero_address),
+            example_action.sweep.encode_input(address_zero),
         ],
     )
 
     arbitrage_tx = argobytes_owned_vault.atomicArbitrage(
-        gastoken, argobytes_atomic_trade, kollateral_invoker, [zero_address], value, encoded_actions, {'from': accounts[1]})
+        gastoken, argobytes_atomic_trade, kollateral_invoker, [address_zero], value, encoded_actions, {'from': accounts[1]})
 
     # make sure balances match what we expect
     # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet

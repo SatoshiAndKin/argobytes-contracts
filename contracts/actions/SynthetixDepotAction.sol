@@ -85,11 +85,11 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
     {
         uint src_balance = address(this).balance;
 
-        (SynthetixExtraData memory extra_data) = abi.decode(extra_data, (SynthetixExtraData));
+        (SynthetixExtraData memory synthetix_data) = abi.decode(extra_data, (SynthetixExtraData));
 
-        IDepot(extra_data.depot).exchangeEtherForSynths{value: src_balance}();
+        IDepot(synthetix_data.depot).exchangeEtherForSynths{value: src_balance}();
 
-        uint256 dest_balance = IERC20(extra_data.sUSD).balanceOf(address(this));
+        uint256 dest_balance = IERC20(synthetix_data.sUSD).balanceOf(address(this));
 
         require(dest_balance >= dest_min_tokens, "SynthetixDepotAction.tradeEtherToSynthUSD: not enough sUSD received");
 
@@ -98,6 +98,6 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
         }
 
         // we know sUSD returns a bool, so no need for safeTransfer
-        require(IERC20(extra_data.sUSD).transfer(to, dest_balance), "SynthetixDepotAction.tradeEtherToSynthUSD: transfer failed");
+        require(IERC20(synthetix_data.sUSD).transfer(to, dest_balance), "SynthetixDepotAction.tradeEtherToSynthUSD: transfer failed");
     }
 }

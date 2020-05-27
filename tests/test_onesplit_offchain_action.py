@@ -13,15 +13,15 @@ def test_get_amounts(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_ac
     dai_amount = 1e20
     # TODO: increasing parts will be fragile. some exchanges use a LOT of gas
     parts = 1
-    zero_address = "0x0000000000000000000000000000000000000000"
+    address_zero = "0x0000000000000000000000000000000000000000"
 
     # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)
-    amounts = onesplit_offchain_action.getAmounts(zero_address, eth_amount, dai_erc20, onesplit, parts)
+    amounts = onesplit_offchain_action.getAmounts(address_zero, eth_amount, dai_erc20, onesplit, parts)
 
     print("amounts 1", amounts)
 
     # TODO: use amounts from the previous call
-    amounts = onesplit_offchain_action.getAmounts(dai_erc20, dai_amount, zero_address, onesplit, parts)
+    amounts = onesplit_offchain_action.getAmounts(dai_erc20, dai_amount, address_zero, onesplit, parts)
 
     print("amounts 2", amounts)
 
@@ -45,7 +45,7 @@ def test_action(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action,
     assert onesplit_offchain_action.balance() == value
 
     parts = 1
-    zero_address = "0x0000000000000000000000000000000000000000"
+    address_zero = "0x0000000000000000000000000000000000000000"
 
     # trade ETH to WETH
     # this used to be USDC, but it has a weird proxy pattern
@@ -53,7 +53,7 @@ def test_action(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action,
     # calculation distributions on-chain is expensive, so we do it here instead
     # function encodeExtraData(address src_token, address dest_token, uint src_amount, uint dest_min_tokens, uint256 parts)
     (expected_return_eth_to_token, extra_data_eth_to_token) = onesplit_offchain_action.encodeExtraData(
-        zero_address, weth9_erc20, value, 1, onesplit, parts)
+        address_zero, weth9_erc20, value, 1, onesplit, parts)
 
     # tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
     _eth_to_token_tx = onesplit_offchain_action.tradeEtherToToken(
@@ -95,7 +95,7 @@ def test_action(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action,
     # function encodeExtraData(address src_token, address dest_token, uint src_amount, uint dest_min_tokens, uint256 parts)
     # TODO: proper src_amount based on the previous transaction
     (expected_return_token_to_eth, extra_data_token_to_eth) = onesplit_offchain_action.encodeExtraData(
-        dai_erc20, zero_address, dai_balance, 1, onesplit, parts)
+        dai_erc20, address_zero, dai_balance, 1, onesplit, parts)
 
     # tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
     onesplit_offchain_action.tradeTokenToEther(

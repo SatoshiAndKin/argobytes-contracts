@@ -23,7 +23,7 @@ contract GasTokenBurner {
         view
         returns (uint256 initial_gas)
     {
-        if (address(gas_token) == address(0x0)) {
+        if (address(gas_token) == address(0)) {
             initial_gas = 0;
         } else {
             initial_gas = gasleft();

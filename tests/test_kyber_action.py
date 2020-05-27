@@ -6,7 +6,7 @@ from hypothesis import settings
 
 # we use the zero address for ETH
 # TODO: they use 0xEeE..., but our wrapper handles the conversion
-zero_address = "0x0000000000000000000000000000000000000000"
+address_zero = "0x0000000000000000000000000000000000000000"
 
 
 def test_get_amounts(dai_erc20, kyber_action, kyber_network_proxy, usdc_erc20, weth9_erc20):
@@ -14,12 +14,12 @@ def test_get_amounts(dai_erc20, kyber_action, kyber_network_proxy, usdc_erc20, w
     dai_amount = 1e20
 
     # getAmounts(address token_a, uint token_a_amount, address token_b, address kyber_network_proxy)
-    amounts = kyber_action.getAmounts(zero_address, eth_amount, dai_erc20, kyber_network_proxy)
+    amounts = kyber_action.getAmounts(address_zero, eth_amount, dai_erc20, kyber_network_proxy)
 
     print("amounts 1", amounts)
 
     # TODO: use amounts from the previous call
-    amounts = kyber_action.getAmounts(dai_erc20, dai_amount, zero_address, kyber_network_proxy)
+    amounts = kyber_action.getAmounts(dai_erc20, dai_amount, address_zero, kyber_network_proxy)
 
     print("amounts 2", amounts)
 
@@ -52,7 +52,7 @@ def test_action(kyber_action, kyber_network_proxy, dai_erc20, usdc_erc20):
 
     # trade DAI to ETH
     # tradeTokenToEther()
-    kyber_action.tradeTokenToEther(kyber_network_proxy, zero_address, dai_erc20, 1, 0)
+    kyber_action.tradeTokenToEther(kyber_network_proxy, address_zero, dai_erc20, 1, 0)
 
     # TODO: make sure DAI balance is zero (i think it will be swept back to accounts[0])
     # TODO: make sure ETH balance is non-zero for accounts[0]

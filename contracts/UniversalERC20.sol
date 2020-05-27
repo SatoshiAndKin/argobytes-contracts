@@ -114,6 +114,6 @@ library UniversalERC20 {
     }
 
     function isETH(IERC20 token) internal pure returns(bool) {
-        return (address(token) == address(ADDRESS_ZERO) || address(token) == address(ETH_ADDRESS));
+        return (token == ADDRESS_ZERO || address(token) == address(ETH_ADDRESS));
     }
 }

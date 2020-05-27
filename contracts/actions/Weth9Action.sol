@@ -14,7 +14,7 @@ contract Weth9Action {
         external
         payable
     {
-        if (to == address(0x0)) {
+        if (to == address(0)) {
             to = msg.sender;
         }
 
@@ -34,7 +34,7 @@ contract Weth9Action {
     function unwrap_all_to(address weth, address payable to)
         external
     {
-        if (to == address(0x0)) {
+        if (to == address(0)) {
             to = msg.sender;
         }
 

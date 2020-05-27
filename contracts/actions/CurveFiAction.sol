@@ -200,11 +200,11 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
         uint256 dest_min_tokens,
         bytes calldata extra_data
     ) external returnLeftoverToken(src_token, ADDRESS_ZERO) {
-        if (to == address(0x0)) {
+        if (to == ADDRESS_ZERO) {
             to = msg.sender;
         }
 
-        (address curve_fi, int128 i, int128 j) = abi.decode(
+        (address exchange, int128 i, int128 j) = abi.decode(
             extra_data,
             (address, int128, int128)
         );
@@ -214,7 +214,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
         require(src_amount > 0, "CurveFiAction.trade: NO_SOURCE_AMOUNT");
 
         // do the trade (approve was already called)
-        ICurveFi(curve_fi).exchange(i, j, src_amount, dest_min_tokens);
+        ICurveFi(exchange).exchange(i, j, src_amount, dest_min_tokens);
 
         // forward the tokens that we bought
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
@@ -227,6 +227,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
     }
 
     // trade stablecoins
+    // we use ADDRESS_ZERO for returnLeftoverToken because we do NOT want to clear our infinite approvals
     // solium-disable-next-line security/no-assign-params
     function tradeUnderlying(
         address to,
@@ -235,11 +236,11 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
         uint256 dest_min_tokens,
         bytes calldata extra_data
     ) external returnLeftoverToken(src_token, ADDRESS_ZERO) {
-        if (to == address(0x0)) {
+        if (to == ADDRESS_ZERO) {
             to = msg.sender;
         }
 
-        (address curve_fi, int128 i, int128 j) = abi.decode(
+        (address exchange, int128 i, int128 j) = abi.decode(
             extra_data,
             (address, int128, int128)
         );
@@ -252,7 +253,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
         );
 
         // do the trade (approve was already called)
-        ICurveFi(curve_fi).exchange_underlying(
+        ICurveFi(exchange).exchange_underlying(
             i,
             j,
             src_amount,
