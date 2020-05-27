@@ -82,9 +82,14 @@ def example_action(ExampleAction):
 
 @pytest.fixture(scope="session")
 def gastoken():
-    # GST2 = "0x0000000000b3F879cb30FE243b4Dfee438691c04"
-    # 1inch's CHI = "0x0000000000004946c0e9F43F4Dee607b0eF1fA1c"
+    # GST2: https://gastoken.io
     yield Contract.from_explorer("0x0000000000b3F879cb30FE243b4Dfee438691c04")
+
+
+@pytest.fixture(scope="session")
+def chi():
+    # 1inch's CHI (gastoken alternative)
+    yield Contract.from_explorer("0x0000000000004946c0e9F43F4Dee607b0eF1fA1c")
 
 
 @pytest.fixture(scope="session")
