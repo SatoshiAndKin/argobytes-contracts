@@ -29,7 +29,7 @@ def test_get_amounts(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_ac
 
 
 # we skip coverage because this can end up being a LOT of calls which crashes ganche-cli
-@pytest.mark.xfail(reason="wtf revert: UniswapV2: K")
+# @pytest.mark.xfail(reason="wtf revert: UniswapV2: K")
 def test_action(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action, skip_coverage, weth9_erc20):
     value = 1e17
 

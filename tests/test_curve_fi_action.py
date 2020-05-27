@@ -41,7 +41,7 @@ def test_compound_get_underlying_amounts(curve_fi_action, curve_fi_compound, cus
     # TODO: what should we assert?
 
 
-@pytest.mark.skip(reason="uniswap_helper is under construction")
+@pytest.mark.xfail(reason="uniswap_helper is under construction")
 def test_compound_action(curve_fi_action, curve_fi_compound, cdai_erc20, uniswap_helper, cusdc_erc20, dai_erc20, usdc_erc20):
     # buy some cDAI for the curve_fi_action
     _cdai_amount = uniswap_helper(1e18, cdai_erc20, curve_fi_action)
