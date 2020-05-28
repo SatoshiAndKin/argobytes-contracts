@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "eth95": "^0.1.1",
     "ganache-cli": "^6.9.1",
     "solc": "0.6.8"
   }

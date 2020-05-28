@@ -50,6 +50,9 @@ Run:
     # export contract abi .jsons to a directory
     ./scripts/export-abi.sh ../argobytes-backend/contracts/abi/argobytes
 
+    # interact with the contracts from a fun interface
+    ./scripts/eth95.sh
+
 
 # Upgrading dependencies
 
