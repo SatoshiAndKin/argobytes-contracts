@@ -50,6 +50,7 @@ def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argo
             # uniswap_v1_action.tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint dest_min_tokens, uint trade_gas)
             uniswap_v1_action.tradeTokenToToken.encode_input(
                 uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1, 0),
+
             # trade DAI to ETH
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens, uint trade_gas)
             uniswap_v1_action.tradeTokenToEther.encode_input(address_zero, dai_exchange, dai_erc20, 1, 0),
