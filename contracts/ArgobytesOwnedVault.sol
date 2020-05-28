@@ -138,7 +138,6 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         } catch Error(string memory reason) {
             // a revert was called inside atomicTrade
             // and a reason string was provided.
-            // TODO: is this actually a string or does it have a selector on the front of it?
 
             // burn our gas token before raising the same revert
             endFreeGasTokens(gastoken, initial_gas);

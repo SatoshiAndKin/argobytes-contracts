@@ -61,12 +61,15 @@ def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argo
 
     assert argobytes_owned_vault.balance() > value
 
+    # make sure the transaction succeeded
+    # there should be a revert above if status == 0, but something is wrong
+    assert arbitrage_tx.status == 1
     assert arbitrage_tx.return_value is not None
 
-    # make sure balances match what we expect
     # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet
-    # TODO: arbitrage_tx.return_value is None
     assert arbitrage_tx.return_value > 0
 
     # TODO: should we compare this to running without burning gas token?
     print("gas_used_with_gastoken: ", arbitrage_tx.gas_used)
+
+    # TODO: make sure we didn't use all the gas token
