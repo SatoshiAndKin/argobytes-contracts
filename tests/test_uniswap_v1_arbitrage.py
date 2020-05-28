@@ -9,7 +9,7 @@ from hypothesis import settings
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
 @pytest.mark.xfail(reason="refactoring broke this")
-def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, example_action, gastoken, kollateral_invoker, uniswap_factory, uniswap_v1_action, usdc_erc20):
+def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, example_action, gastoken, kollateral_invoker, uniswap_v1_factory, uniswap_v1_action, usdc_erc20):
     assert argobytes_owned_vault.balance() == 0
     assert example_action.balance() == 0
 
@@ -31,8 +31,8 @@ def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_va
     assert argobytes_owned_vault.balance() == value
     assert example_action.balance() == value
 
-    usdc_exchange = uniswap_v1_action.getExchange(uniswap_factory, usdc_erc20)
-    dai_exchange = uniswap_v1_action.getExchange(uniswap_factory, dai_erc20)
+    usdc_exchange = uniswap_v1_action.getExchange(uniswap_v1_factory, usdc_erc20)
+    dai_exchange = uniswap_v1_action.getExchange(uniswap_v1_factory, dai_erc20)
 
     # sweep a bunch of times to use up gas
     encoded_actions = argobytes_atomic_trade.encodeActions(

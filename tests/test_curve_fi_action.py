@@ -17,6 +17,8 @@ def test_compound_get_amounts(curve_fi_action, curve_fi_compound, usdc_erc20, da
 
     print("amount 1", amounts)
 
+    # TODO: what should we assert
+
     # TODO: use maker_wei from the previous call. then these amounts should be the same, but just re-ordered
     amounts = curve_fi_action.getAmounts(dai_erc20, trade_amount, usdc_erc20, curve_fi_compound)
 
@@ -41,39 +43,44 @@ def test_compound_get_underlying_amounts(curve_fi_action, curve_fi_compound, cus
     # TODO: what should we assert?
 
 
-@pytest.mark.xfail(reason="uniswap_helper is under construction")
-def test_compound_action(curve_fi_action, curve_fi_compound, cdai_erc20, uniswap_helper, cusdc_erc20, dai_erc20, usdc_erc20):
-    # buy some cDAI for the curve_fi_action
-    _cdai_amount = uniswap_helper(1e18, cdai_erc20, curve_fi_action)
-
-    # our rust code will get this from getAmounts
-    # TODO: use getAmounts here
-    dai_to_usdc_extra_data = curve_fi_action.encodeExtraData(curve_fi_compound, 0, 1)
-
-    curve_fi_action.trade(curve_fi_action, cdai_erc20, cusdc_erc20, 1, dai_to_usdc_extra_data)
-
-    # TODO: check balance of usdc and dai
-
-    usdc_to_dai_extra_data = curve_fi_action.encodeExtraData(curve_fi_compound, 1, 0)
-
-    curve_fi_action.trade(curve_fi_action, cusdc_erc20, cdai_erc20, 1, usdc_to_dai_extra_data)
-
-    # TODO: check balance of usdc and dai
-    # TODO: actually assert things
-
+@pytest.mark.xfail(reason="revert: re-entered")
+def test_compound_underlying_action(curve_fi_action, curve_fi_compound, uniswap_v1_action, dai_erc20, onesplit_helper, usdc_erc20):
     # buy some DAI for the curve_fi_action
-    _dai_amount = uniswap_helper(1e18, dai_erc20, curve_fi_action)
+    dai_balance = onesplit_helper(1e18, dai_erc20, curve_fi_action)
 
-    # our rust code will get this from getAmounts
-    dai_to_usdc_extra_data = curve_fi_action.encodeExtraData(curve_fi_compound, 0, 1)
+    dai_to_usdc_amounts = curve_fi_action.getAmounts(dai_erc20, dai_balance, usdc_erc20, curve_fi_compound)
+
+    dai_to_usdc_extra_data = dai_to_usdc_amounts[0][5]
 
     curve_fi_action.tradeUnderlying(curve_fi_action, dai_erc20, usdc_erc20, 1, dai_to_usdc_extra_data)
 
     # TODO: check balance of usdc and dai
 
-    usdc_to_dai_extra_data = curve_fi_action.encodeExtraData(curve_fi_compound, 1, 0)
+    usdc_to_dai_extra_data = dai_to_usdc_amounts[1][5]
 
     curve_fi_action.tradeUnderlying(curve_fi_action, usdc_erc20, dai_erc20, 1, usdc_to_dai_extra_data)
+
+    # TODO: check balance of usdc and dai
+    # TODO: actually assert things
+
+
+@pytest.mark.xfail(reason="revert: UniswapV2: LOCKED")
+def test_compound_action(curve_fi_action, curve_fi_compound, cdai_erc20, uniswap_v1_action, cusdc_erc20, onesplit_helper):
+    # buy some cDAI for the curve_fi_action
+    cdai_balance = onesplit_helper(1e18, cdai_erc20, curve_fi_action)
+
+    cdai_to_cusdc_amounts = curve_fi_action.getAmounts(cdai_erc20, cdai_balance, cusdc_erc20, curve_fi_compound)
+
+    cdai_to_cusdc_extra_data = cdai_to_cusdc_amounts[0][5]
+
+    # TODO: wth. why is this reverting on transferring the cUSDC at the end?
+    curve_fi_action.trade(curve_fi_action, cdai_erc20, cusdc_erc20, 1, cdai_to_cusdc_extra_data)
+
+    # TODO: check balance of usdc and dai
+
+    cusdc_to_cdai_extra_data = cdai_to_cusdc_amounts[1][5]
+
+    curve_fi_action.trade(curve_fi_action, cusdc_erc20, cdai_erc20, 1, cusdc_to_cdai_extra_data)
 
     # TODO: check balance of usdc and dai
     # TODO: actually assert things

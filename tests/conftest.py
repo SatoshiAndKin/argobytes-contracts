@@ -15,6 +15,11 @@ def session_defaults():
     web3.enable_strict_bytes_type_checking()
 
 
+@pytest.fixture(scope="session")
+def address_zero():
+    yield "0x0000000000000000000000000000000000000000"
+
+
 @pytest.fixture()
 def argobytes_atomic_trade(argobytes_owned_vault, ArgobytesAtomicTrade, gastoken):
     salt = ""
@@ -121,6 +126,39 @@ def onesplit():
     yield Contract.from_explorer("0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E")
 
 
+@pytest.fixture(scope="session")
+def onesplit_helper(address_zero, onesplit, interface):
+
+    def inner_onesplit_helper(eth_amount, dest_token, to):
+        # TODO: actual ERC20 interface
+        dest_token = interface.IWETH9(dest_token)
+        parts = 1
+        # TODO: enable multipaths
+        flags = 0
+
+        expected_return = onesplit.getExpectedReturn(address_zero, dest_token, eth_amount, parts, flags)
+
+        expected_return_amount = expected_return[0]
+        distribution = expected_return[1]
+
+        onesplit.swap(address_zero, dest_token, eth_amount, 1,
+                      distribution, flags, {"from": accounts[0], "value": eth_amount})
+
+        # TODO: this feels too greedy. but it probably works for now. why can't we just use expected_return_amount?
+        actual_return_amount = dest_token.balanceOf.call(accounts[0])
+
+        if expected_return_amount < actual_return_amount:
+            # TODO: better warning
+            print("WARNING! expected_return_amount < actual_return_amount")
+
+        # TODO: safeTransfer?
+        dest_token.transfer(to, actual_return_amount, {"from": accounts[0]})
+
+        return expected_return_amount
+
+    yield inner_onesplit_helper
+
+
 @pytest.fixture()
 def onesplit_offchain_action(OneSplitOffchainAction):
     yield accounts[0].deploy(OneSplitOffchainAction)
@@ -168,16 +206,17 @@ def uniswap_v1_action(UniswapV1Action):
 
 
 @pytest.fixture(scope="session")
-def uniswap_factory():
+def uniswap_v1_factory():
     yield Contract.from_explorer("0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95")
 
 
 @pytest.fixture(scope="session")
-def uniswap_helper(uniswap_factory, interface):
+def uniswap_v1_helper(uniswap_v1_factory, interface):
 
-    def inner_uniswap_helper(src_amount, dest_token, to):
+    # TODO: this is reverting with an unhelpful error about JUMP
+    def inner_uniswap_v1_helper(src_amount, dest_token, to):
         # get the uniswap exchange
-        exchange = uniswap_factory.getExchange(dest_token)
+        exchange = uniswap_v1_factory.getExchange(dest_token)
 
         exchange = interface.IUniswapExchange(exchange)
 
@@ -188,7 +227,7 @@ def uniswap_helper(uniswap_factory, interface):
 
         deadline = 2000000000
 
-        exchange.ethToTokenTransferInput(
+        tx = exchange.ethToTokenTransferInput(
             src_amount,
             deadline,
             to,
@@ -198,9 +237,9 @@ def uniswap_helper(uniswap_factory, interface):
             }
         )
 
-        True
+        return tx.return_value
 
-    yield inner_uniswap_helper
+    yield inner_uniswap_v1_helper
 
 
 @pytest.fixture(scope="session")

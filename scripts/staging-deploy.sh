@@ -7,4 +7,6 @@ set -eux
 
 rm -rf build/deployments/
 
-BURN_GAS_TOKEN=0 ./venv/bin/brownie run dev-deploy --network staging "$@"
+export BURN_GAS_TOKEN=${BURN_GAS_TOKEN:-0}
+
+./venv/bin/brownie run dev-deploy --network staging "$@"

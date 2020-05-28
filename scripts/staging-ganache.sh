@@ -6,7 +6,7 @@
 # set FORK_PORT to the http or ws port of the node on FORK_HOST (8546 default)
 # set FORK_AT to a block you want to fork from. Useful when using beamsync. (latest default)
 
-export NODE_OPTIONS="--max-old-space-size=8192"
+[ -z "${NODE_OPTIONS:-}" ] && echo "If ganache-cli crashes, try setting NODE_OPTIONS in your .env and then '. ./scripts/activate'"
 
 fork="${FORK_PROTO:-ws}://${FORK_HOST:-localhost}:${FORK_PORT:-8546}@${FORK_AT:-latest}"
 

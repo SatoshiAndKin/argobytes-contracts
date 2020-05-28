@@ -111,9 +111,9 @@ contract UniswapV1Action is AbstractERC20Exchange {
         // dest_min_tokens may be 1, but is probably set to something to protect against large slippage in price
         require(dest_min_tokens > 0, "UniswapV1Action.tradeEtherToToken: dest_min_tokens should not == 0");
 
-        uint srcBalance = address(this).balance;
+        uint src_balance = address(this).balance;
 
-        require(srcBalance > 0, "UniswapV1Action.tradeEtherToToken: NO_BALANCE");
+        require(src_balance > 0, "UniswapV1Action.tradeEtherToToken: NO_BALANCE");
 
         if (to == ADDRESS_ZERO) {
             to = msg.sender;
@@ -124,10 +124,10 @@ contract UniswapV1Action is AbstractERC20Exchange {
 
         // def ethToTokenTransferInput(min_tokens: uint256, deadline: timestamp, recipient: address) -> uint256
         // solium-disable-next-line security/no-block-members
-        uint received = IUniswapExchange(exchange).ethToTokenTransferInput{value: srcBalance, gas: trade_gas}(dest_min_tokens, block.timestamp, to);
+        uint received = IUniswapExchange(exchange).ethToTokenTransferInput{value: src_balance, gas: trade_gas}(dest_min_tokens, block.timestamp, to);
 
-        require(received > 0, "UniswapV1Action.tradeEtherToToken: BAD_EXCHANGE");
-
+        // it's fine to trust their returned "received". the msg.sender should check balances at the very end
+        require(received >= dest_min_tokens, "UniswapV1Action.tradeEtherToToken: BAD_EXCHANGE");
     }
 
     // TODO: allow trading between 2 factories?
@@ -185,7 +185,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
         // solium-disable-next-line security/no-block-members
         uint256 received = IUniswapExchange(exchange).tokenToEthTransferInput{gas: trade_gas}(src_balance, dest_min_tokens, block.timestamp, to);
 
-        require(received > 0, "UniswapV1Action.tradeTokenToEther: BAD_EXCHANGE");
-
+        // it's fine to trust their returned "received". the msg.sender should check balances at the very end
+        require(received >= dest_min_tokens, "UniswapV1Action.tradeTokenToEther: BAD_EXCHANGE");
     }
 }

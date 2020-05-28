@@ -9,6 +9,6 @@ set -eux
 # we could let run compile for us, but the error messages (if any) aren't as easy to read
 ./venv/bin/brownie compile
 
-BURN_GAS_TOKEN=${BURN_GAS_TOKEN:-1}
+export BURN_GAS_TOKEN=${BURN_GAS_TOKEN:-1}
 
 ./venv/bin/brownie run dev-deploy --network mainnet-fork "$@"

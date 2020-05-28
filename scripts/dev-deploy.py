@@ -10,9 +10,8 @@ CurveY = "0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51"
 CurveB = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
 CurveSUSDV2 = "0xA5407eAE9Ba41422680e2e00537571bcC53efBfD"
 CurvePAX = "0x06364f10B501e868329afBc005b3492902d6C763"
-# TODO: compare GST2 and 1inch's CHI
-GasTokenAddress = "0x0000000000b3F879cb30FE243b4Dfee438691c04"
-# GasTokenAddress = "0x0000000000004946c0e9F43F4Dee607b0eF1fA1c"
+# GasTokenAddress = "0x0000000000b3F879cb30FE243b4Dfee438691c04"  # GST2
+GasTokenAddress = "0x0000000000004946c0e9F43F4Dee607b0eF1fA1c"  # 1inch's CHI
 KollateralInvokerAddress = "0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01"
 KyberRegisterWallet = "0xECa04bB23612857650D727B8ed008f80952654ee"
 OneSplitAddress = "0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E"
@@ -136,6 +135,8 @@ def main():
     if BURN_GAS_TOKEN:
         # make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
         gas_tokens_remaining = gas_token.balanceOf.call(argobytes_owned_vault)
+
+        print("gas token:", GasTokenAddress)
 
         # gastoken has 2 decimals, so divide by 100
         print("gas_tokens_remaining:", gas_tokens_remaining / 100.0, "/", gas_tokens_start / 100.0)
