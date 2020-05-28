@@ -90,7 +90,7 @@ def main():
     if BURN_GAS_TOKEN:
         for _ in range(0, 17):
             argobytes_owned_vault.mintGasToken(
-                GasTokenAddress, {"from": accounts[0], "gasPrice": expected_mainntet_mint_price})
+                GasTokenAddress, 26, {"from": accounts[0], "gasPrice": expected_mainntet_mint_price})
 
         gas_token = interface.IGasToken(GasTokenAddress)
 

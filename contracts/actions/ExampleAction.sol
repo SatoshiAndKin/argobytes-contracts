@@ -19,10 +19,14 @@ contract ExampleAction is AbstractERC20Exchange {
         return true;
     }
 
-    function sweep(IERC20 token) public payable {
+    function sweep(address payable to, IERC20 token) public payable {
         uint256 balance = token.universalBalanceOf(address(this));
 
-        token.universalTransfer(msg.sender, balance);
+        if (to == address(0)) {
+            token.universalTransfer(msg.sender, balance);
+        } else {
+            token.universalTransfer(to, balance);
+        }
     }
 
     function getAmounts(
@@ -41,6 +45,6 @@ contract ExampleAction is AbstractERC20Exchange {
         address taker_address,
         bytes memory extra_data
     ) public override view returns (Amount memory) {
-        revert("wip");
+        revert("ExampleAction.newAmount: unimplemented");
     }
 }

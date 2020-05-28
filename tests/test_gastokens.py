@@ -22,6 +22,7 @@ def test_chi(chi):
     tx = chi.free(value, {"from": accounts[0]})
 
 
+# @pytest.mark.xfail(reason="sometimes fails with 'out of gas'")
 def test_more_chi(chi):
     # TODO: why does minting anything more than 1 crash? is that some optimization they chose to make?
     # i see onchain transactions that mint far more

@@ -23,7 +23,7 @@ def test_access_control(example_action, argobytes_atomic_trade, argobytes_owned_
     # encode a simple action that only sweeps funds
     encoded_actions = argobytes_atomic_trade.encodeActions(
         [example_action],
-        [example_action.sweep.encode_input(address_zero)],
+        [example_action.sweep.encode_input(address_zero, address_zero)],
     )
     print("encoded_actions: ", encoded_actions)
 
@@ -48,7 +48,7 @@ def test_simple_borrow_and_sweep(argobytes_atomic_trade, argobytes_owned_vault, 
     # TODO: i don't like having to encode lke this
     encoded_actions = argobytes_atomic_trade.encodeActions(
         [example_action],
-        [example_action.sweep.encode_input(address_zero)],
+        [example_action.sweep.encode_input(address_zero, address_zero)],
     )
 
     # accounts[1] is setup as the default trusted bot
@@ -83,7 +83,7 @@ def test_profitless_kollateral_fails(argobytes_atomic_trade, argobytes_owned_vau
     # no actual arb. just call the sweep contract
     encoded_actions = argobytes_atomic_trade.encodeActions(
         [example_action],
-        [example_action.sweep.encode_input(address_zero)],
+        [example_action.sweep.encode_input(address_zero, address_zero)],
     )
 
     # accounts[1] is setup as the default trusted bot
@@ -98,7 +98,7 @@ def test_profitless_kollateral_fails(argobytes_atomic_trade, argobytes_owned_vau
 # @given(
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
-def test_simple_kollateral(argobytes_atomic_trade, argobytes_owned_vault, example_action, kollateral_invoker):
+def test_simple_kollateral(argobytes_atomic_trade, argobytes_owned_vault, example_action, example_action_2, kollateral_invoker):
     value = 1e18
 
     # make sure the arbitrage contract has no funds
@@ -109,8 +109,14 @@ def test_simple_kollateral(argobytes_atomic_trade, argobytes_owned_vault, exampl
     accounts[0].transfer(example_action, value * 2)
 
     encoded_actions = argobytes_atomic_trade.encodeActions(
-        [example_action],
-        [example_action.sweep.encode_input(address_zero)],
+        [
+            example_action,
+            example_action_2,
+        ] * 5 + [example_action],
+        [
+            example_action.sweep.encode_input(example_action_2, address_zero),
+            example_action_2.sweep.encode_input(example_action, address_zero)
+        ] * 5 + [example_action.sweep.encode_input(address_zero, address_zero)],
     )
 
     arbitrage_tx = argobytes_owned_vault.atomicArbitrage(
@@ -123,8 +129,8 @@ def test_simple_kollateral(argobytes_atomic_trade, argobytes_owned_vault, exampl
 # @given(
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
-@pytest.mark.xfail(reason="this is a flaky test")
-def test_gastoken_saves_gas(argobytes_atomic_trade, argobytes_owned_vault, example_action, gastoken, kollateral_invoker):
+# NOTE! ganache has
+def test_gastoken_saves_gas(argobytes_atomic_trade, argobytes_owned_vault, example_action, example_action_2, gastoken, kollateral_invoker):
     value = 1e10
 
     assert argobytes_owned_vault.balance() == 0
@@ -141,14 +147,20 @@ def test_gastoken_saves_gas(argobytes_atomic_trade, argobytes_owned_vault, examp
 
     # mint some gas token
     # TODO: how much should we make?
-    argobytes_owned_vault.mintGasToken(gastoken, {'from': accounts[0]})
-    argobytes_owned_vault.mintGasToken(gastoken, {'from': accounts[0]})
-    argobytes_owned_vault.mintGasToken(gastoken, {'from': accounts[0]})
+    argobytes_owned_vault.mintGasToken(gastoken, 26, {'from': accounts[0]})
+    argobytes_owned_vault.mintGasToken(gastoken, 26, {'from': accounts[0]})
+    argobytes_owned_vault.mintGasToken(gastoken, 26, {'from': accounts[0]})
 
     # sweep a bunch of times to use up gas
     encoded_actions = argobytes_atomic_trade.encodeActions(
-        [example_action] * 10,
-        [example_action.sweep.encode_input(address_zero)] * 10,
+        [
+            example_action,
+            example_action_2,
+        ] * 5 + [example_action],
+        [
+            example_action.sweep.encode_input(example_action_2, address_zero),
+            example_action_2.sweep.encode_input(example_action, address_zero)
+        ] * 5 + [example_action.sweep.encode_input(address_zero, address_zero)],
     )
 
     arbitrage_tx = argobytes_owned_vault.atomicArbitrage(

@@ -85,10 +85,10 @@ contract GasTokenBurner {
     }
 
     /**
-     * @notice Mint `_gas_token_mint_amount` gas tokens for this contract.
+     * @notice Mint `amount` gas tokens for this contract.
      * TODO: is this safe? what if someone passes a malicious address here?
      */
-    function mintGasToken(address gas_token) public {
-        IGasToken(gas_token).mint(26);
+    function mintGasToken(address gas_token, uint256 amount) public {
+        IGasToken(gas_token).mint(amount);
     }
 }

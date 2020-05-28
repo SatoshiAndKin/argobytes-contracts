@@ -80,6 +80,11 @@ def example_action(ExampleAction):
     yield accounts[0].deploy(ExampleAction)
 
 
+@pytest.fixture()
+def example_action_2(ExampleAction):
+    yield accounts[0].deploy(ExampleAction)
+
+
 @pytest.fixture(scope="session")
 def gastoken():
     # GST2: https://gastoken.io

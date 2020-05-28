@@ -17,7 +17,7 @@ chardet==3.0.4            # via requests
 cytoolz==0.10.1           # via eth-keyfile, eth-utils
 eth-abi==2.1.1            # via eth-account, eth-brownie, eth-event, web3
 eth-account==0.5.2        # via web3
-eth-brownie==1.8.9        # via -r requirements.in
+git+https://github.com/iamdefinitelyahuman/brownie@95cf14a4a24a3c2b079e06fec26d9b592164824c#egg=eth-brownie  # via -r requirements.in
 eth-event==1.0.0          # via eth-brownie
 eth-hash[pycryptodome]==0.2.0  # via eth-brownie, eth-event, eth-utils, web3
 eth-keyfile==0.5.1        # via eth-account
@@ -47,7 +47,7 @@ parsimonious==0.8.1       # via eth-abi
 pbr==5.4.5                # via stevedore
 pluggy==0.13.1            # via pytest
 prompt-toolkit==3.0.5     # via eth-brownie
-protobuf==3.12.1          # via web3
+protobuf==3.12.2          # via web3
 psutil==5.7.0             # via eth-brownie
 py-solc-ast==1.2.4        # via eth-brownie
 py-solc-x==0.8.2          # via eth-brownie

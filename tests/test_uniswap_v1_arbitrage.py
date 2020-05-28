@@ -8,7 +8,7 @@ from hypothesis import settings
 # @given(
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
-@pytest.mark.skip(reason="I broke this somehow")
+@pytest.mark.xfail(reason="refactoring broke this")
 def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, example_action, gastoken, kollateral_invoker, uniswap_factory, uniswap_v1_action, usdc_erc20):
     assert argobytes_owned_vault.balance() == 0
     assert example_action.balance() == 0
@@ -25,7 +25,7 @@ def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_va
 
     # mint some gas token
     # TODO: how much should we make?
-    argobytes_owned_vault.mintGasToken(gastoken, {"from": accounts[0]})
+    argobytes_owned_vault.mintGasToken(gastoken, 26, {"from": accounts[0]})
 
     # make sure balances match what we expect
     assert argobytes_owned_vault.balance() == value
@@ -53,10 +53,10 @@ def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_va
                 uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1, 0),
             # trade DAI to ETH
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens, uint trade_gas)
-            uniswap_v1_action.tradeTokenToEther.encode_input(address_zero, dai_exchange, dai_erc20, 1, 0),
+            uniswap_v1_action.tradeTokenToEther.encode_input(example_action, dai_exchange, dai_erc20, 1, 0),
 
             # add some faked profits
-            example_action.sweep.encode_input(address_zero),
+            example_action.sweep.encode_input(address_zero, address_zero),
         ],
     )
 

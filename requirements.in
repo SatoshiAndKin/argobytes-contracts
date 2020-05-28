@@ -1,4 +1,6 @@
-eth-brownie
+#eth-brownie
+git+https://github.com/iamdefinitelyahuman/brownie@95cf14a4a24a3c2b079e06fec26d9b592164824c#egg=eth-brownie
+
 bandit
 autopep8
 pylint
