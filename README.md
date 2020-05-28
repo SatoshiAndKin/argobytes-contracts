@@ -18,7 +18,7 @@ My initial use for these is for atomic arbitrage, but `ArgobytesAtomicTrade.sol`
     export NODE_OPTIONS="--max-old-space-size=8096"
     ```
 5. Run `./scripts/setup.sh`
-6. Run `./venv/bin/brownie network import brownie-network-config.yaml True`
+6. Run `./venv/bin/brownie networks import brownie-network-config.yaml True`
 
 
 # Develop

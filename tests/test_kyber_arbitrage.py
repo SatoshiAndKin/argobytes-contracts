@@ -6,10 +6,7 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-# @given(
-#     value=strategy('uint256', max_value=1e18, min_value=1e8),
-# )
-def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, example_action, chi, uniswap_v1_factory, uniswap_v1_action, usdc_erc20):
+def test_kyber_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, example_action, chi, kyber_network_proxy, kyber_action, usdc_erc20):
     assert argobytes_owned_vault.balance() == 0
     assert example_action.balance() == 0
 
@@ -28,37 +25,36 @@ def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argo
     assert argobytes_owned_vault.balance() == value
     assert example_action.balance() == value
 
-    usdc_exchange = uniswap_v1_action.getExchange(uniswap_v1_factory, usdc_erc20)
-    dai_exchange = uniswap_v1_action.getExchange(uniswap_v1_factory, dai_erc20)
-
     encoded_actions = argobytes_atomic_trade.encodeActions(
         [
             example_action,
-            uniswap_v1_action,
-            uniswap_v1_action,
-            uniswap_v1_action,
+            kyber_action,
+            kyber_action,
+            kyber_action,
         ],
         [
             # add some faked profits
-            example_action.sweep.encode_input(uniswap_v1_action, address_zero),
+            example_action.sweep.encode_input(kyber_action, address_zero),
 
             # trade ETH to USDC
             # uniswap_v1_action.tradeEtherToToken(address to, address exchange, address dest_token, uint dest_min_tokens, uint trade_gas)
-            uniswap_v1_action.tradeEtherToToken.encode_input(uniswap_v1_action, usdc_exchange, usdc_erc20, 1, 0),
+            kyber_action.tradeEtherToToken.encode_input(
+                kyber_network_proxy, kyber_action, usdc_erc20, 1, 0),
 
             # trade USDC to DAI
             # uniswap_v1_action.tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint dest_min_tokens, uint trade_gas)
-            uniswap_v1_action.tradeTokenToToken.encode_input(
-                uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1, 0),
+            kyber_action.tradeTokenToToken.encode_input(
+                kyber_network_proxy, kyber_action, usdc_erc20, dai_erc20, 1, 0),
 
             # trade DAI to ETH
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens, uint trade_gas)
-            uniswap_v1_action.tradeTokenToEther.encode_input(address_zero, dai_exchange, dai_erc20, 1, 0),
+            kyber_action.tradeTokenToEther.encode_input(
+                kyber_network_proxy, address_zero, dai_erc20, 1, 0),
         ],
     )
 
     arbitrage_tx = argobytes_owned_vault.atomicArbitrage(
-        address_zero, argobytes_atomic_trade, address_zero, [address_zero], value, encoded_actions, {'from': accounts[1]})
+        chi, argobytes_atomic_trade, address_zero, [address_zero], value, encoded_actions, {'from': accounts[1]})
 
     assert argobytes_owned_vault.balance() > value
 
@@ -76,5 +72,3 @@ def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argo
     print("gas_used_with_gastoken: ", arbitrage_tx.gas_used)
 
     # TODO: make sure we didn't use all the gas token
-
-    assert False

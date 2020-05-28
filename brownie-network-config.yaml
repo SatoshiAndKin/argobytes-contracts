@@ -6,7 +6,7 @@ live:
         id: staging
         host: http://127.0.0.1:8555
         explorer: https://api.etherscan.io/api
-        timeout: 120
+        timeout: 300
       - name: Mainnet (localhost)
         chainid: 1
         id: mainnet
@@ -28,7 +28,7 @@ development:
     id: mainnet-fork
     cmd: ganache-cli
     host: http://127.0.0.1
-    timeout: 120
+    timeout: 300
     cmd_settings:
       port: 8575
       gas_limit: 10000000

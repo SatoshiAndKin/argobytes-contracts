@@ -4,14 +4,12 @@ from brownie import accounts
 from brownie.test import given, strategy
 from hypothesis import settings
 
-# we use the zero address for ETH
-# TODO: they use 0xEeE..., but our wrapper handles the conversion
-address_zero = "0x0000000000000000000000000000000000000000"
 
-
-def test_get_amounts(dai_erc20, kyber_action, kyber_network_proxy, usdc_erc20, weth9_erc20):
+def test_get_amounts(address_zero, dai_erc20, kyber_action, kyber_network_proxy, usdc_erc20, weth9_erc20):
     eth_amount = 1e18
     dai_amount = 1e20
+
+    # even though kyber uses it's own 0x0000eeee... address, we use the zero address for ETH
 
     # getAmounts(address token_a, uint token_a_amount, address token_b, address kyber_network_proxy)
     amounts = kyber_action.getAmounts(address_zero, eth_amount, dai_erc20, kyber_network_proxy)
@@ -26,7 +24,7 @@ def test_get_amounts(dai_erc20, kyber_action, kyber_network_proxy, usdc_erc20, w
     # TODO: what should we assert?
 
 
-def test_action(kyber_action, kyber_network_proxy, dai_erc20, usdc_erc20):
+def test_action(address_zero, kyber_action, kyber_network_proxy, dai_erc20, usdc_erc20):
     value = 1e17
 
     # send some ETH into the action
