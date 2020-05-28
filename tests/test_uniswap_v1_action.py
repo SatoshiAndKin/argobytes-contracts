@@ -48,22 +48,33 @@ def test_action(uniswap_v1_factory, uniswap_v1_action, dai_erc20, usdc_erc20):
     # tradeEtherToToken(address to, address exchange, address dest_token, uint256 dest_min_tokens, uint256 trade_gas)
     uniswap_v1_action.tradeEtherToToken(uniswap_v1_action, usdc_exchange, usdc_erc20, 1, 0)
 
-    # TODO: make sure ETH balance is zero (i think it will be swept back to accounts[0])
-    # TODO: make sure USDC balance is non-zero
+    # make sure ETH balance on the action is zero (it will be swept back to accounts[0])
+    assert uniswap_v1_action.balance() == 0
+
+    # make sure USDC balance on the action is non-zero
+    assert usdc_erc20.balanceOf(uniswap_v1_action) > 0
 
     # trade USDC to DAI
     # tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint256 dest_min_tokens, uint256 trade_gas)
     uniswap_v1_action.tradeTokenToToken(uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1, 0)
 
-    # TODO: make sure USDC balance is zero (i think it will be swept back to accounts[0])
-    # TODO: make sure DAI balance is non-zero
+    # make sure USDC balance on the action is zero
+    assert usdc_erc20.balanceOf(uniswap_v1_action) == 0
 
-    # TODO: save ETH balance for accounts[0]
-    # TODO: other tests need a similar change. we really should test address_zero sends to msg.sender on all of them
+    # make sure DAI balance is non-zero
+    assert dai_erc20.balanceOf(uniswap_v1_action) > 0
+
+    # save ETH balance for accounts[0]
+    starting_eth_balance = accounts[0].balance()
+
+    # TODO: we really should test that setting "to" to address_zero sends to msg.sender on all of them
 
     # trade DAI to ETH
     # tradeTokenToEther(address payable to, address exchange, address src_token, uint256 dest_min_tokens, uint256 trade_gas)
     uniswap_v1_action.tradeTokenToEther(address_zero, dai_exchange, dai_erc20, 1, 0)
 
-    # TODO: make sure DAI balance is zero (i think it will be swept back to accounts[0])
-    # TODO: make sure ETH balance increased for accounts[0]
+    # make sure DAI balance on the action is zero (i think it will be swept back to accounts[0])
+    assert dai_erc20.balanceOf(uniswap_v1_action) == 0
+
+    # make sure ETH balance increased for accounts[0]
+    assert starting_eth_balance < accounts[0].balance()
