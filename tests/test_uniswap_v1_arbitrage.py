@@ -8,15 +8,11 @@ from hypothesis import settings
 # @given(
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
-@pytest.mark.xfail(reason="refactoring broke this")
-def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, example_action, gastoken, kollateral_invoker, uniswap_v1_factory, uniswap_v1_action, usdc_erc20):
+def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, example_action, chi, uniswap_v1_factory, uniswap_v1_action, usdc_erc20):
     assert argobytes_owned_vault.balance() == 0
     assert example_action.balance() == 0
 
     value = 1e18
-
-    # we use the zero address for ETH
-    address_zero = "0x0000000000000000000000000000000000000000"
 
     # send some ETH into the vault
     accounts[0].transfer(argobytes_owned_vault, value)
@@ -25,7 +21,7 @@ def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_va
 
     # mint some gas token
     # TODO: how much should we make?
-    argobytes_owned_vault.mintGasToken(gastoken, 26, {"from": accounts[0]})
+    argobytes_owned_vault.mintGasToken(chi, 26, {"from": accounts[0]})
 
     # make sure balances match what we expect
     assert argobytes_owned_vault.balance() == value
@@ -37,12 +33,15 @@ def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_va
     # sweep a bunch of times to use up gas
     encoded_actions = argobytes_atomic_trade.encodeActions(
         [
-            uniswap_v1_action,
-            uniswap_v1_action,
-            uniswap_v1_action,
             example_action,
+            uniswap_v1_action,
+            uniswap_v1_action,
+            uniswap_v1_action,
         ],
         [
+            # add some faked profits
+            example_action.sweep.encode_input(uniswap_v1_action, address_zero),
+
             # trade ETH to USDC
             # uniswap_v1_action.tradeEtherToToken(address to, address exchange, address dest_token, uint dest_min_tokens, uint trade_gas)
             uniswap_v1_action.tradeEtherToToken.encode_input(uniswap_v1_action, usdc_exchange, usdc_erc20, 1, 0),
@@ -53,20 +52,21 @@ def test_uniswap_arbitrage(argobytes_atomic_trade, dai_erc20, argobytes_owned_va
                 uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1, 0),
             # trade DAI to ETH
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens, uint trade_gas)
-            uniswap_v1_action.tradeTokenToEther.encode_input(example_action, dai_exchange, dai_erc20, 1, 0),
-
-            # add some faked profits
-            example_action.sweep.encode_input(address_zero, address_zero),
+            uniswap_v1_action.tradeTokenToEther.encode_input(address_zero, dai_exchange, dai_erc20, 1, 0),
         ],
     )
 
     arbitrage_tx = argobytes_owned_vault.atomicArbitrage(
-        gastoken, argobytes_atomic_trade, kollateral_invoker, [address_zero], value, encoded_actions, {'from': accounts[1]})
+        chi, argobytes_atomic_trade, address_zero, [address_zero], value, encoded_actions, {'from': accounts[1]})
+
+    assert argobytes_owned_vault.balance() > value
+
+    assert arbitrage_tx.return_value is not None
 
     # make sure balances match what we expect
     # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet
+    # TODO: arbitrage_tx.return_value is None
     assert arbitrage_tx.return_value > 0
-    assert argobytes_owned_vault.balance() > 0
 
     # TODO: should we compare this to running without burning gas token?
     print("gas_used_with_gastoken: ", arbitrage_tx.gas_used)

@@ -116,7 +116,7 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
 
         // transfer tokens if we have them
         // if we don't have sufficient tokens, the next contract will borrow from kollateral or some other provider
-        if (first_amount < starting_vault_balance) {
+        if (first_amount <= starting_vault_balance) {
             borrow_token.universalTransfer(atomic_trader, first_amount);
 
             // clear the kollateral invoker since we won't need it
@@ -187,6 +187,9 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
 
         // we made it to the end. burn some gas tokens
         endFreeGasTokens(gastoken, initial_gas);
+
+        // TODO: i thought this was automatic, but i'm not getting anything returned
+        return primary_profit;
     }
 
     // use CREATE2 to deploy with a salt and free gas tokens
