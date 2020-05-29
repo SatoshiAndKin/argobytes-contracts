@@ -6,36 +6,28 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-def test_kyber_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, example_action, chi, kyber_network_proxy, kyber_action, usdc_erc20):
+def test_kyber_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, kyber_network_proxy, kyber_action, usdc_erc20):
     assert argobytes_owned_vault.balance() == 0
-    assert example_action.balance() == 0
+    assert kyber_action.balance() == 0
 
     value = 1e18
 
     # send some ETH into the vault
     accounts[0].transfer(argobytes_owned_vault, value)
-    # send some ETH into the sweep contract to simulate arbitrage profits
-    accounts[0].transfer(example_action, value)
-
-    # mint some gas token
-    # TODO: how much should we make?
-    argobytes_owned_vault.mintGasToken(chi, 26, {"from": accounts[0]})
+    # send some ETH to the action to simulate arbitrage profits
+    accounts[0].transfer(kyber_action, value)
 
     # make sure balances match what we expect
     assert argobytes_owned_vault.balance() == value
-    assert example_action.balance() == value
+    assert kyber_action.balance() == value
 
     encoded_actions = argobytes_atomic_trade.encodeActions(
         [
-            example_action,
             kyber_action,
             kyber_action,
             kyber_action,
         ],
         [
-            # add some faked profits
-            example_action.sweep.encode_input(kyber_action, address_zero),
-
             # trade ETH to USDC
             # uniswap_v1_action.tradeEtherToToken(address to, address exchange, address dest_token, uint dest_min_tokens, uint trade_gas)
             kyber_action.tradeEtherToToken.encode_input(
@@ -54,7 +46,7 @@ def test_kyber_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argoby
     )
 
     arbitrage_tx = argobytes_owned_vault.atomicArbitrage(
-        chi, argobytes_atomic_trade, address_zero, [address_zero], value, encoded_actions, {'from': accounts[1]})
+        address_zero, argobytes_atomic_trade, address_zero, [address_zero], value, encoded_actions, {'from': accounts[1]})
 
     assert argobytes_owned_vault.balance() > value
 
