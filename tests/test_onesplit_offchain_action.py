@@ -30,7 +30,7 @@ def test_get_amounts(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_ac
 
 # we skip coverage because this can end up being a LOT of calls which crashes ganche-cli
 # @pytest.mark.xfail(reason="wtf revert: UniswapV2: K")
-def test_action(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action, skip_coverage, weth9_erc20):
+def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action, skip_coverage, weth9_erc20):
     value = 1e17
 
     # make sure balances start zeroed
@@ -45,7 +45,6 @@ def test_action(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action,
     assert onesplit_offchain_action.balance() == value
 
     parts = 1
-    address_zero = "0x0000000000000000000000000000000000000000"
 
     # trade ETH to WETH
     # this used to be USDC, but it has a weird proxy pattern
@@ -109,4 +108,8 @@ def test_action(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action,
     # TODO: make sure DAI balance is zero (i think it will be swept back to accounts[0])
     # TODO: make sure ETH balance is non-zero
 
-# TODO: test for onesplit_helper
+
+def test_onesplit_helper(onesplit_helper, cdai_erc20):
+    cdai_balance = onesplit_helper(1e18, cdai_erc20, accounts[0])
+
+    assert cdai_balance > 0

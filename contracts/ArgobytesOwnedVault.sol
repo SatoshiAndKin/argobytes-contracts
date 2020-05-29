@@ -142,7 +142,6 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
             // burn our gas token before raising the same revert
             endFreeGasTokens(gastoken, initial_gas);
 
-            // TODO: i bet this is going to make debugging where the revert actually came from annoying
             revert(reason);
         } catch (bytes memory /*lowLevelData*/) {
             // This is executed in case revert() was used
@@ -152,7 +151,6 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
             // burn our gas token before raising the same revert
             endFreeGasTokens(gastoken, initial_gas);
 
-            // TODO: i bet this is going to make debugging where the revert actually came from annoying
             revert("ArgobytesOwnedVault -> IArgobytesAtomicTrade.atomicTrade reverted without a reason");
         }
 

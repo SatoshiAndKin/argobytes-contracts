@@ -124,10 +124,22 @@ contract UniswapV1Action is AbstractERC20Exchange {
 
         // def ethToTokenTransferInput(min_tokens: uint256, deadline: timestamp, recipient: address) -> uint256
         // solium-disable-next-line security/no-block-members
-        uint received = IUniswapExchange(exchange).ethToTokenTransferInput{value: src_balance, gas: trade_gas}(dest_min_tokens, block.timestamp, to);
+        try IUniswapExchange(exchange).ethToTokenTransferInput{value: src_balance, gas: trade_gas}(dest_min_tokens, block.timestamp, to) returns (uint received) {
+            // the trade worked!
+            // it's fine to trust their returned "received". the msg.sender should check balances at the very end
+            require(received >= dest_min_tokens, "UniswapV1Action.tradeEtherToToken: BAD_EXCHANGE");
+        } catch Error(string memory reason) {
+            // a revert was called inside ethToTokenTransferInput
+            // and a reason string was provided.
 
-        // it's fine to trust their returned "received". the msg.sender should check balances at the very end
-        require(received >= dest_min_tokens, "UniswapV1Action.tradeEtherToToken: BAD_EXCHANGE");
+            revert(string(abi.encodePacked("UniswapV1Action.tradeEtherToToken -> IUniswapExchange.ethToTokenTransferInput: ", reason)));
+        } catch (bytes memory /*lowLevelData*/) {
+            // This is executed in case revert() was used
+            // or there was a failing assertion, division
+            // by zero, etc. inside atomicTrade.
+
+            revert("UniswapV1Action.tradeEtherToToken -> IUniswapExchange.ethToTokenTransferInput: reverted without a reason");
+        }
     }
 
     // TODO: allow trading between 2 factories?
@@ -158,10 +170,22 @@ contract UniswapV1Action is AbstractERC20Exchange {
         //     token_addr: address
         // ): uint256
         // solium-disable-next-line security/no-block-members
-        IUniswapExchange(exchange).tokenToTokenTransferInput{gas: trade_gas}(src_balance, dest_min_tokens, 1, block.timestamp, to, address(dest_token));
+        try IUniswapExchange(exchange).tokenToTokenTransferInput{gas: trade_gas}(src_balance, dest_min_tokens, 1, block.timestamp, to, address(dest_token)) returns (uint received) {
+            // the trade worked!
+            // it's fine to trust their returned "received". the msg.sender should check balances at the very end
+            require(received >= dest_min_tokens, "UniswapV1Action.tradeTokenToToken: BAD_EXCHANGE");
+        } catch Error(string memory reason) {
+            // a revert was called inside ethToTokenTransferInput
+            // and a reason string was provided.
 
-        // TODO: figure out how to check the received value. stack too deep
-        // require(received >= dest_min_tokens, "UniswapV1Action.tradeTokenToToken: BAD_EXCHANGE");
+            revert(string(abi.encodePacked("UniswapV1Action.tradeTokenToToken -> IUniswapExchange.tokenToTokenTransferInput: ", reason)));
+        } catch (bytes memory /*lowLevelData*/) {
+            // This is executed in case revert() was used
+            // or there was a failing assertion, division
+            // by zero, etc. inside atomicTrade.
+
+            revert("UniswapV1Action.tradeTokenToToken -> IUniswapExchange.tokenToTokenTransferInput: reverted without a reason");
+        }
     }
 
     function tradeTokenToEther(address payable to, address exchange, address src_token, uint256 dest_min_tokens, uint256 trade_gas) external returnLeftoverToken(src_token, exchange) {
@@ -183,9 +207,22 @@ contract UniswapV1Action is AbstractERC20Exchange {
 
         // def tokenToEthTransferInput(tokens_sold: uint256, min_eth: uint256(wei), deadline: timestamp, recipient: address) -> uint256(wei):
         // solium-disable-next-line security/no-block-members
-        uint256 received = IUniswapExchange(exchange).tokenToEthTransferInput{gas: trade_gas}(src_balance, dest_min_tokens, block.timestamp, to);
+        try IUniswapExchange(exchange).tokenToEthTransferInput{gas: trade_gas}(src_balance, dest_min_tokens, block.timestamp, to) returns (uint received) {
+            // the trade worked!
+            // it's fine to trust their returned "received". the msg.sender should check balances at the very end
+            require(received >= dest_min_tokens, "UniswapV1Action.tradeTokenToEther: BAD_EXCHANGE");
+        } catch Error(string memory reason) {
+            // a revert was called inside ethToTokenTransferInput
+            // and a reason string was provided.
 
-        // it's fine to trust their returned "received". the msg.sender should check balances at the very end
-        require(received >= dest_min_tokens, "UniswapV1Action.tradeTokenToEther: BAD_EXCHANGE");
+            // TODO: add something to this revert string
+            revert(string(abi.encodePacked("UniswapV1Action.tradeTokenToEther -> IUniswapExchange.tokenToEthTransferInput: ", reason)));
+        } catch (bytes memory /*lowLevelData*/) {
+            // This is executed in case revert() was used
+            // or there was a failing assertion, division
+            // by zero, etc. inside atomicTrade.
+
+            revert("UniswapV1Action.tradeTokenToEther -> IUniswapExchange.tokenToEthTransferInput: reverted without a reason");
+        }
     }
 }
