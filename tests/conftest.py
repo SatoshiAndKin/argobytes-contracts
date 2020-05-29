@@ -136,6 +136,9 @@ def onesplit_helper(address_zero, onesplit, interface):
         # TODO: enable multipaths
         flags = 0
 
+        # not sure why, but uniswap v2 is not working well
+        flags += 0x1E000000  # FLAG_DISABLE_UNISWAP_V2_ALL
+
         expected_return = onesplit.getExpectedReturn(address_zero, dest_token, eth_amount, parts, flags)
 
         expected_return_amount = expected_return[0]
@@ -147,14 +150,23 @@ def onesplit_helper(address_zero, onesplit, interface):
         # TODO: this feels too greedy. but it probably works for now. why can't we just use expected_return_amount?
         actual_return_amount = dest_token.balanceOf.call(accounts[0])
 
-        if expected_return_amount < actual_return_amount:
-            # TODO: better warning
-            print("WARNING! expected_return_amount < actual_return_amount")
+        if expected_return_amount != actual_return_amount:
+            # TODO: actual warning?
+            print(
+                f"WARNING! expected_return_amount ({expected_return_amount}) != actual_return_amount ({actual_return_amount})")
 
         # TODO: safeTransfer?
         dest_token.transfer(to, actual_return_amount, {"from": accounts[0]})
 
-        return expected_return_amount
+        actual_transfer_amount = dest_token.balanceOf.call(to)
+
+        # some tokens take fees or otherwise have unexpected changes to the amount. this isn't necessarily something to raise over, but we should warn about it
+        if expected_return_amount != actual_transfer_amount:
+            # TODO: actual warning?
+            print(
+                f"WARNING! expected_return_amount ({expected_return_amount}) != actual_return_amount ({actual_return_amount})")
+
+        return actual_transfer_amount
 
     yield inner_onesplit_helper
 

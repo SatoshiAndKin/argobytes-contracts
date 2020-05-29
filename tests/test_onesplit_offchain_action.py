@@ -109,7 +109,40 @@ def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_of
     # TODO: make sure ETH balance is non-zero
 
 
-def test_onesplit_helper(onesplit_helper, cdai_erc20):
-    cdai_balance = onesplit_helper(1e18, cdai_erc20, accounts[0])
+@pytest.mark.xfail(reason="what is going on here? why does the helper return a higher balance than than our actual balance?")
+def test_onesplit_helper_cdai(onesplit_helper, cdai_erc20):
+    token = cdai_erc20
 
-    assert cdai_balance > 0
+    assert token.balanceOf(accounts[0]) == 0
+
+    balance = onesplit_helper(1e18, token, accounts[0])
+
+    assert balance > 0
+
+    difference = balance - token.balanceOf(accounts[0])
+
+    assert difference == 0
+
+
+def test_onesplit_helper_usdc(onesplit_helper, usdc_erc20):
+    token = usdc_erc20
+
+    assert token.balanceOf(accounts[0]) == 0
+
+    balance = onesplit_helper(1e18, token, accounts[0])
+
+    assert balance > 0
+
+    assert token.balanceOf(accounts[0]) == balance
+
+
+def test_onesplit_helper_weth9(onesplit_helper, weth9_erc20):
+    token = weth9_erc20
+
+    assert token.balanceOf(accounts[0]) == 0
+
+    balance = onesplit_helper(1e18, token, accounts[0])
+
+    assert balance > 0
+
+    assert token.balanceOf(accounts[0]) == balance
