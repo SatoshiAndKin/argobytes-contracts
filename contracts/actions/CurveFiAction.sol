@@ -34,7 +34,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
     constructor(address owner) public Ownable2(owner) {}
 
     function saveExchange(address exchange, int128 n) public onlyOwner {
-        // i'd like this to be open, but i feel like people could grief. maybe require a fee that goes to ownedVault?
+        // i'd like this to be open, but i feel like people could grief. maybe require a fee that goes to ownedVault? or require ownership of an erc20?
 
         for (int128 i = 0; i < n; i++) {
             address coin = ICurveFi(exchange).coins(i);
@@ -42,37 +42,37 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
             // TODO: include "i" and "n" in the revert message
             require(coin != ADDRESS_ZERO, "CurveFiAction: Unknown coin");
 
-            address underlying_coin = ICurveFi(exchange).underlying_coins(i);
-
-            // TODO: include "i" and "n" in the revert message
-            require(
-                underlying_coin != ADDRESS_ZERO,
-                "CurveFiAction: Unknown underlying_coin"
-            );
-
             // Approve the transfer of tokens from this contract to the exchange contract
             // we only do this if it isn't already set because sometimes exchanges have the same asset multiple times
             if (IERC20(coin).allowance(address(this), address(exchange)) == 0) {
                 IERC20(coin).safeApprove(address(exchange), uint256(-1));
             }
-            if (
-                IERC20(underlying_coin).allowance(
-                    address(this),
-                    address(exchange)
-                ) == 0
-            ) {
-                IERC20(underlying_coin).safeApprove(
-                    address(exchange),
-                    uint256(-1)
-                );
-            }
 
-            // TODO: save exchange to a list?
-
-            // save the coins with an index of + 1. this lets us be sure that 0 means the coin is unsupported
+            // save the coin with an index of + 1. this lets us be sure that 0 means the coin is unsupported
             _coins[exchange][coin] = i + 1;
-            _underlying_coins[exchange][underlying_coin] = i + 1;
+
+            address underlying_coin = ICurveFi(exchange).underlying_coins(i);
+
+            if (underlying_coin != ADDRESS_ZERO) {
+                // not all of the exchanges have an underlying
+                if (
+                    IERC20(underlying_coin).allowance(
+                        address(this),
+                        address(exchange)
+                    ) == 0
+                ) {
+                    IERC20(underlying_coin).safeApprove(
+                        address(exchange),
+                        uint256(-1)
+                    );
+                }
+
+                // save the underlying_coin with an index of + 1. this lets us be sure that 0 means the coin is unsupported
+                _underlying_coins[exchange][underlying_coin] = i + 1;
+            }
         }
+
+        // TODO: save exchange?
     }
 
     function getAmounts(

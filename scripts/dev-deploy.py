@@ -119,9 +119,9 @@ def main():
     curve_fi_action.saveExchange(CurveBUSD, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
     curve_fi_action.saveExchange(CurveCompound, 2, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
     curve_fi_action.saveExchange(CurvePAX, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
-    curve_fi_action.saveExchange(CurveREN, 2, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    # curve_fi_action.saveExchange(CurveREN, 2, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
     curve_fi_action.saveExchange(CurveSUSDV2, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
-    curve_fi_action.saveExchange(CurveTBTC, 3, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    # curve_fi_action.saveExchange(CurveTBTC, 3, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
     curve_fi_action.saveExchange(CurveUSDT, 3, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
     curve_fi_action.saveExchange(CurveY, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
