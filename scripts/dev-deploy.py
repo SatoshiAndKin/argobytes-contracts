@@ -4,12 +4,14 @@
 from brownie import *
 import os
 
-CurveCompounded = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
+CurveBUSD = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
+CurveCompound = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
+CurvePAX = "0x06364f10B501e868329afBc005b3492902d6C763"
+CurveREN = "0x93054188d876f558f4a66B2EF1d97d16eDf0895B"
+CurveSUSDV2 = "0xA5407eAE9Ba41422680e2e00537571bcC53efBfD"
+CurveTBTC = "0x9726e9314eF1b96E45f40056bEd61A088897313E"
 CurveUSDT = "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C"
 CurveY = "0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51"
-CurveB = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
-CurveSUSDV2 = "0xA5407eAE9Ba41422680e2e00537571bcC53efBfD"
-CurvePAX = "0x06364f10B501e868329afBc005b3492902d6C763"
 # GasTokenAddress = "0x0000000000b3F879cb30FE243b4Dfee438691c04"  # GST2
 GasTokenAddress = "0x0000000000004946c0e9F43F4Dee607b0eF1fA1c"  # 1inch's CHI
 KollateralInvokerAddress = "0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01"
@@ -114,12 +116,14 @@ def main():
     curve_fi_action = create_helper(argobytes_owned_vault, CurveFiAction, [accounts[0]], expected_mainnet_gas_price)
 
     # TODO: do this through the vault so that we can burn gas token?
-    curve_fi_action.saveExchange(CurveCompounded, 2, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveBUSD, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveCompound, 2, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurvePAX, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveREN, 2, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveSUSDV2, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveTBTC, 3, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
     curve_fi_action.saveExchange(CurveUSDT, 3, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
     curve_fi_action.saveExchange(CurveY, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
-    curve_fi_action.saveExchange(CurveB, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
-    curve_fi_action.saveExchange(CurveSUSDV2, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
-    curve_fi_action.saveExchange(CurvePAX, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
     # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity
     # TODO: make a script to help with this
