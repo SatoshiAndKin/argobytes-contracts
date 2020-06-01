@@ -178,14 +178,18 @@ def onesplit_offchain_action(OneSplitOffchainAction):
 
 @pytest.fixture(scope="session")
 def susd_erc20():
+    # # proxy_susd_bytes = web3.toBytes(text="ProxyERC20sUSD")
     # # susd_bytes = web3.toBytes(text="SynthsUSD")
 
     # # susd_address = synthetix_address_resolver.getAddress(susd_bytes)
 
     # assert susd_address == "0xae38b81459d74a8c16eaa968c792207603d84480"
     susd_address = "0xae38b81459d74a8c16eaa968c792207603d84480"
+    # yield Contract.from_explorer(susd_address)
 
-    yield Contract.from_explorer(susd_address)
+    proxy_susd_address = "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51"
+
+    yield Contract.from_explorer(proxy_susd_address, as_proxy_for=susd_address)
 
 
 @pytest.fixture(scope="session")
@@ -195,7 +199,7 @@ def synthetix_address_resolver(interface):
 
 
 @pytest.fixture(scope="session")
-def synthetix_exchange_rates(interface, synthetix_address_resolver):
+def synthetix_exchange_rates(interface):
     # TODO: why isn't this working?!
     # rates_bytes = web3.toBytes(text="ExchangeRates")
 

@@ -17,6 +17,7 @@ import {IAddressResolver} from "interfaces/synthetix/IAddressResolver.sol";
 import {IDepot} from "interfaces/synthetix/IDepot.sol";
 import {IExchangeRates} from "interfaces/synthetix/IExchangeRates.sol";
 import {ISystemStatus} from "interfaces/synthetix/ISystemStatus.sol";
+import {IProxy} from "interfaces/synthetix/IProxy.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
@@ -48,55 +49,80 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
         return _getAmounts(token_a, token_a_amount, token_b, extra_data);
     }
 
-    function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory extra_data)
+    function newAmount(address maker_token_proxy, uint taker_wei, address taker_token, bytes memory extra_data)
         public override view
         returns (Amount memory)
     {
         (address resolver) = abi.decode(extra_data, (address));
 
-        Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
-
         address depot = IAddressResolver(resolver).getAddress(BYTESTR_DEPOT);
         address sUSD = IAddressResolver(resolver).getAddress(BYTESTR_SUSD);
+
+        Amount memory a = newPartialAmount(maker_token_proxy, taker_wei, taker_token);
+
+        // maker_token_proxy should be ProxysUSD, and not the underlying currency. This will let us follow synthetix's upgrades
+        if (taker_token == ADDRESS_ZERO) {
+            try IProxy(maker_token_proxy).target() returns (address maker_token) {
+
+                if (maker_token == sUSD) {
+                    // eth to sUSD
+                    a.maker_token = maker_token;
+
+                    {
+                        address status = IAddressResolver(resolver).getAddress(BYTESTR_STATUS);
+
+                        require(status != ADDRESS_ZERO, "SynthetixDepotAction.newAmount: No address for SystemStatus");
+
+                        ISystemStatus(status).requireSynthActive(BYTESTR_SUSD);
+                    }
+
+                    {
+                        address rates = IAddressResolver(resolver).getAddress(BYTESTR_EXRATES);
+
+                        require(rates != ADDRESS_ZERO, "SynthetixDepotAction.newAmount: No address for ExchangeRate");
+
+                        if (IExchangeRates(rates).rateIsStale(BYTESTR_ETH)) {
+                            // TODO: i think ganache is doing something incorrect here. debug more
+                            string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: ETH rate is stale"));
+
+                            a.error = err;
+                        } else {
+                            a.maker_wei = IDepot(depot).synthsReceivedForEther(taker_wei);
+                            a.selector = this.tradeEtherToSynthUSD.selector;
+                        }
+                    }
+                } else {
+                    string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: found ", taker_token.toString(), "->", maker_token.toString(), ". supported ", ADDRESS_ZERO.toString(), "->", sUSD.toString(), " (Via ", maker_token_proxy.toString(), ")"));
+
+                    a.error = err;
+                }
+            } catch Error(string memory reason) {
+                // This is executed in case
+                // revert was called inside getData
+                // and a reason string was provided.
+                string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: Fetching target of ", maker_token_proxy.toString(), "reverted with ", reason));
+
+                a.error = err;
+            } catch (bytes memory /*lowLevelData*/) {
+                // This is executed in case revert() was used
+                // or there was a failing assertion, division
+                // by zero, etc. inside getData.
+                string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: fetching target of ", maker_token_proxy.toString()," reverted without reason"));
+
+                a.error = err;
+            }
+        } else {
+            string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: ETH is the only supported taker token"));
+
+            a.error = err;
+
+        }
 
         SynthetixExtraData memory trade_extra_data;
 
         trade_extra_data.depot = depot;
         trade_extra_data.sUSD = sUSD;
 
-        if (taker_token == ADDRESS_ZERO && maker_token == sUSD) {
-            // eth to sUSD
-
-            {
-                address status = IAddressResolver(resolver).getAddress(BYTESTR_STATUS);
-
-                require(status != ADDRESS_ZERO, "SynthetixDepotAction.newAmount: No address for SystemStatus");
-
-                ISystemStatus(status).requireSynthActive(BYTESTR_SUSD);
-            }
-
-            {
-                address rates = IAddressResolver(resolver).getAddress(BYTESTR_EXRATES);
-
-                require(rates != ADDRESS_ZERO, "SynthetixDepotAction.newAmount: No address for ExchangeRate");
-
-                if (IExchangeRates(rates).rateIsStale(BYTESTR_ETH)) {
-                    // TODO: i think ganache is doing something incorrect here. debug more
-                    string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: ETH rate is stale"));
-
-                    a.error = err;
-                } else {
-                    a.maker_wei = IDepot(depot).synthsReceivedForEther(taker_wei);
-                    a.selector = this.tradeEtherToSynthUSD.selector;
-                }
-            }
-        } else {
-            string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: found ", taker_token.toString(), "->", maker_token.toString(), ". supported ", ADDRESS_ZERO.toString(), "->", sUSD.toString()));
-
-            a.error = err;
-        }
-
-        // a.exchange_data = abi.encode(exchange_data);
         a.trade_extra_data = abi.encode(trade_extra_data);
 
         return a;
@@ -115,6 +141,7 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
 
         IDepot(synthetix_data.depot).exchangeEtherForSynths{value: src_balance}();
 
+        // NOTE! This is sUSD, and not the proxy. This should save a little gas
         uint256 dest_balance = IERC20(synthetix_data.sUSD).balanceOf(address(this));
 
         require(dest_balance >= dest_min_tokens, "SynthetixDepotAction.tradeEtherToSynthUSD: not enough sUSD received");
