@@ -21,6 +21,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
         address exchange;
         uint256 token_supply;
         uint256 ether_supply;
+        bytes4 token_to_token_selector;
     }
 
     function getExchange(address factory, address token) public view returns(IUniswapExchange) {
@@ -60,6 +61,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
             exchange_data[0].exchange = address(exchange);
             exchange_data[0].token_supply = IERC20(taker_token).balanceOf(address(exchange));
             exchange_data[0].ether_supply = address(exchange).balance;
+            exchange_data[0].token_to_token_selector = this.tradeTokenToToken.selector;
         } else if (taker_token == ADDRESS_ZERO) {
             // eth to token
             IUniswapExchange exchange = getExchange(factory, maker_token);
@@ -73,6 +75,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
             exchange_data[0].exchange = address(exchange);
             exchange_data[0].token_supply = IERC20(maker_token).balanceOf(address(exchange));
             exchange_data[0].ether_supply = address(exchange).balance;
+            exchange_data[0].token_to_token_selector = this.tradeTokenToToken.selector;
         } else {
             // token to token
             IUniswapExchange exchange = getExchange(factory, taker_token);
