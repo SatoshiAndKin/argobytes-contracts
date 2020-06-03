@@ -225,9 +225,8 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
             "CurveFiAction.trade: LOW_DEST_BALANCE"
         );
 
-        // TODO: wth. why am i getting revert: SafeERC20: ERC20 operation did not succeed
-        // IERC20(dest_token).safeTransfer(to, dest_balance);
-        require(IERC20(dest_token).transfer(to, dest_balance));
+        // forward the tokens that we bought
+        IERC20(dest_token).safeTransfer(to, dest_balance);
     }
 
     // trade stablecoins

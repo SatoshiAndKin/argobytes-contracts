@@ -23,7 +23,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
         uint256 ether_supply;
         bytes4 token_to_token_selector;
     }
-
+   
     function getExchange(address factory, address token) public view returns(IUniswapExchange) {
         return IUniswapExchange(IUniswapFactory(factory).getExchange(token));
     }

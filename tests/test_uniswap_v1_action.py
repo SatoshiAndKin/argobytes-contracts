@@ -4,14 +4,10 @@ from brownie import accounts
 import pytest
 import brownie
 
-address_zero = "0x0000000000000000000000000000000000000000"
 
-
-def test_get_amounts(dai_erc20, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, weth9_erc20):
+def test_get_amounts(address_zero, dai_erc20, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, weth9_erc20):
     eth_amount = 1e18
     dai_amount = 1e20
-
-    address_zero = "0x0000000000000000000000000000000000000000"
 
     # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)
     # TODO: we could call these, but there is a problem decoding their return_value!
@@ -32,7 +28,21 @@ def test_get_amounts(dai_erc20, uniswap_v1_factory, uniswap_v1_action, usdc_erc2
     # TODO: what should we assert?
 
 
-def test_action(uniswap_v1_factory, uniswap_v1_action, dai_erc20, usdc_erc20):
+def test_get_exchange_weth9(address_zero, uniswap_v1_factory, uniswap_v1_action, weth9_erc20):
+    exchange = uniswap_v1_action.getExchange.call(uniswap_v1_factory, weth9_erc20)
+    print("exchange:", exchange)
+
+    assert exchange != address_zero
+
+
+def test_get_exchange_failure(address_zero, uniswap_v1_factory, uniswap_v1_action):
+    exchange = uniswap_v1_action.getExchange.call(uniswap_v1_factory, address_zero)
+    print("exchange:", exchange)
+
+    assert exchange == address_zero
+
+
+def test_action(address_zero, uniswap_v1_factory, uniswap_v1_action, dai_erc20, usdc_erc20):
     value = 1e17
 
     # send some ETH into the action
