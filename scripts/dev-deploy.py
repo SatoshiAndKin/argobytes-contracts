@@ -30,7 +30,7 @@ GasTokenAddress = CHI
 # TODO: old versions of these contracts were cheaper to deploy with gas token. with less state, they are cheaper without gastoken though
 # TODO: i think some of them might still be. investigate more
 BURN_GAS_TOKEN = os.environ.get("BURN_GAS_TOKEN", "0") == "1"
-DEPLOY_DIR = os.path.join(project.main.get_loaded_projects()[0]._path, "build", "deployments", "quick_and_dirty")
+DEPLOY_DIR = os.path.join(project.main.check_for_project('.'), "build", "deployments", "quick_and_dirty")
 
 os.makedirs(DEPLOY_DIR, exist_ok=True)
 
