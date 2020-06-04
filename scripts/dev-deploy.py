@@ -12,8 +12,8 @@ CurveSUSDV2 = "0xA5407eAE9Ba41422680e2e00537571bcC53efBfD"
 CurveTBTC = "0x9726e9314eF1b96E45f40056bEd61A088897313E"
 CurveUSDT = "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C"
 CurveY = "0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51"
-# GasTokenAddress = "0x0000000000b3F879cb30FE243b4Dfee438691c04"  # GST2
-GasTokenAddress = "0x0000000000004946c0e9F43F4Dee607b0eF1fA1c"  # 1inch's CHI
+GasToken2 = "0x0000000000b3F879cb30FE243b4Dfee438691c04"
+CHI = "0x0000000000004946c0e9F43F4Dee607b0eF1fA1c"  # 1inch's CHI
 KollateralInvokerAddress = "0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01"
 KyberRegisterWallet = "0xECa04bB23612857650D727B8ed008f80952654ee"
 OneSplitAddress = "0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E"
@@ -24,9 +24,15 @@ SynthetixAddressResolver = "0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2"
 UniswapFactory = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
 ZeroAddress = "0x0000000000000000000000000000000000000000"
 
+# GasToken, GasToken2, CHI, or probably other future coins
+GasTokenAddress = CHI
+
 # TODO: old versions of these contracts were cheaper to deploy with gas token. with less state, they are cheaper without gastoken though
 # TODO: i think some of them might still be. investigate more
 BURN_GAS_TOKEN = os.environ.get("BURN_GAS_TOKEN", "0") == "1"
+DEPLOY_DIR = os.path.join(project.main.get_loaded_projects()[0]._path, "build", "deployments", "quick_and_dirty")
+
+os.makedirs(DEPLOY_DIR, exist_ok=True)
 
 
 def create_helper(deployer, target_contract, target_contract_args, gas_price):
@@ -49,7 +55,25 @@ def create_helper(deployer, target_contract, target_contract_args, gas_price):
     print("CREATE2 deployed:", deployed_contract._name, "to", deployed_contract.address)
     print()
 
+    quick_save_contract(deployed_contract)
+
     return deployed_contract
+
+
+def quick_save_contract(contract):
+    quick_save(contract._name, contract.address)
+
+
+def quick_save(contract_name, address):
+    """quick and dirty way to save contract addresses in an easy to read format."""
+    quick_name = contract_name + ".addr"
+
+    quick_path = os.path.join(DEPLOY_DIR, quick_name)
+
+    print(f"Saving deployed address to {quick_path}")
+
+    with open(quick_path, 'w') as opened_file:
+        opened_file.write(address)
 
 
 def main():
@@ -79,6 +103,7 @@ def main():
     argobytes_owned_vault = ArgobytesOwnedVault.at(argobytes_owned_vault)
 
     print("ArgobytesOwnedVault address:", argobytes_owned_vault)
+    quick_save_contract(argobytes_owned_vault)
 
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
     if BURN_GAS_TOKEN:
@@ -150,3 +175,21 @@ def main():
 
     # this isn't all used by gas. some is sent to the owned vault
     print("ETH used by accounts[0]:", (starting_balance - ending_balance) / 1e18)
+
+    quick_save("CurveBUSD", CurveBUSD)
+    quick_save("CurveCompound", CurveCompound)
+    quick_save("CurvePAX", CurvePAX)
+    quick_save("CurveREN", CurveREN)
+    quick_save("CurveSUSDV2", CurveSUSDV2)
+    quick_save("CurveTBTC", CurveTBTC)
+    quick_save("CurveUSDT", CurveUSDT)
+    quick_save("CurveY", CurveY)
+    quick_save("GasToken2", GasToken2)
+    quick_save("CHI", CHI)
+    quick_save("KollateralInvokerAddress", KollateralInvokerAddress)
+    quick_save("KyberNetworkProxy", KyberNetworkProxy)
+    quick_save("KyberRegisterWallet", KyberRegisterWallet)
+    quick_save("OneSplitAddress", OneSplitAddress)
+    quick_save("Weth9Address", Weth9Address)
+    quick_save("SynthetixAddressResolver", SynthetixAddressResolver)
+    quick_save("UniswapFactory", UniswapFactory)
