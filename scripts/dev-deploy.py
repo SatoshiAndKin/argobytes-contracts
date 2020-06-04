@@ -71,17 +71,10 @@ def main():
     # TODO: maybe send gastoken to ArgobytesOwnedVaultDeployer before it is deployed. then burn all that token after selfdestruct?
     salt = ""
 
-    argobytes_owned_vault_deployer_initcode = ArgobytesOwnedVaultDeployer.deploy.encode_input(
-        salt, arb_bots)
+    argobytes_owned_vault_deploy_tx = ArgobytesOwnedVaultDeployer.deploy(salt, arb_bots, {"from": accounts[0]})
 
-    # we don't use the normal deploy function because the contract selfdestructs after deploying ArgobytesOwnedVault
-    # https://github.com/iamdefinitelyahuman/brownie/issues/537
-    # TODO: in production, we probably want to transfer
-    argobytes_owned_vault_tx = accounts[0].transfer(
-        data=argobytes_owned_vault_deployer_initcode, amount=0, gas_price=expected_mainnet_gas_price)
-
-    # TODO: is this the best way to get an address out?
-    argobytes_owned_vault = argobytes_owned_vault_tx.logs[0]['address']
+    # there is a tx.new_contracts, but because of how we self-destruct the Deployer, it isn't populated
+    argobytes_owned_vault = argobytes_owned_vault_deploy_tx.logs[0]['address']
 
     argobytes_owned_vault = ArgobytesOwnedVault.at(argobytes_owned_vault)
 
@@ -89,7 +82,7 @@ def main():
 
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
     if BURN_GAS_TOKEN:
-        for _ in range(0, 17):
+        for _ in range(0, 18):
             argobytes_owned_vault.mintGasToken(
                 GasTokenAddress, 26, {"from": accounts[0], "gasPrice": expected_mainntet_mint_price})
 
