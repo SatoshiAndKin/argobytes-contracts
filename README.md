@@ -47,8 +47,8 @@ Run:
     # this sets BURN_GAS_TOKEN=0 since speed is more important than saving development ETH
     ./scripts/staging-deploy.sh
 
-    # export contract abi .jsons to a directory
-    ./scripts/export-abi.sh ../argobytes-backend/contracts/abi/argobytes
+    # export contract abi .jsons and deployed addresses to ../argobytes-backend/contracts/
+    ./scripts/export.sh
 
     # interact with the contracts from a fun interface
     ./scripts/eth95.sh

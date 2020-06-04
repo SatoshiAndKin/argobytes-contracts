@@ -4,14 +4,14 @@
 from brownie import *
 import os
 
-CurveBUSD = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
-CurveCompound = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
-CurvePAX = "0x06364f10B501e868329afBc005b3492902d6C763"
-CurveREN = "0x93054188d876f558f4a66B2EF1d97d16eDf0895B"
-CurveSUSDV2 = "0xA5407eAE9Ba41422680e2e00537571bcC53efBfD"
-CurveTBTC = "0x9726e9314eF1b96E45f40056bEd61A088897313E"
-CurveUSDT = "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C"
-CurveY = "0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51"
+CurveFiBUSD = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
+CurveFiCompound = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
+CurveFiPAX = "0x06364f10B501e868329afBc005b3492902d6C763"
+CurveFiREN = "0x93054188d876f558f4a66B2EF1d97d16eDf0895B"
+CurveFiSUSDV2 = "0xA5407eAE9Ba41422680e2e00537571bcC53efBfD"
+CurveFiTBTC = "0x9726e9314eF1b96E45f40056bEd61A088897313E"
+CurveFiUSDT = "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C"
+CurveFiY = "0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51"
 GasToken2 = "0x0000000000b3F879cb30FE243b4Dfee438691c04"
 CHI = "0x0000000000004946c0e9F43F4Dee607b0eF1fA1c"  # 1inch's CHI
 KollateralInvokerAddress = "0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01"
@@ -134,14 +134,14 @@ def main():
     curve_fi_action = create_helper(argobytes_owned_vault, CurveFiAction, [accounts[0]], expected_mainnet_gas_price)
 
     # TODO: do this through the vault so that we can burn gas token?
-    curve_fi_action.saveExchange(CurveBUSD, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
-    curve_fi_action.saveExchange(CurveCompound, 2, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
-    curve_fi_action.saveExchange(CurvePAX, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
-    # curve_fi_action.saveExchange(CurveREN, 2, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
-    curve_fi_action.saveExchange(CurveSUSDV2, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
-    # curve_fi_action.saveExchange(CurveTBTC, 3, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
-    curve_fi_action.saveExchange(CurveUSDT, 3, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
-    curve_fi_action.saveExchange(CurveY, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveFiBUSD, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveFiCompound, 2, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveFiPAX, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    # curve_fi_action.saveExchange(CurveFiREN, 2, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveFiSUSDV2, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    # curve_fi_action.saveExchange(CurveFiTBTC, 3, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveFiUSDT, 3, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    curve_fi_action.saveExchange(CurveFiY, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
     # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity
     # TODO: make a script to help with this
@@ -176,14 +176,14 @@ def main():
     # this isn't all used by gas. some is sent to the owned vault
     print("ETH used by accounts[0]:", (starting_balance - ending_balance) / 1e18)
 
-    quick_save("CurveBUSD", CurveBUSD)
-    quick_save("CurveCompound", CurveCompound)
-    quick_save("CurvePAX", CurvePAX)
-    quick_save("CurveREN", CurveREN)
-    quick_save("CurveSUSDV2", CurveSUSDV2)
-    quick_save("CurveTBTC", CurveTBTC)
-    quick_save("CurveUSDT", CurveUSDT)
-    quick_save("CurveY", CurveY)
+    quick_save("CurveFiBUSD", CurveFiBUSD)
+    quick_save("CurveFiCompound", CurveFiCompound)
+    quick_save("CurveFiPAX", CurveFiPAX)
+    quick_save("CurveFiREN", CurveFiREN)
+    quick_save("CurveFiSUSDV2", CurveFiSUSDV2)
+    quick_save("CurveFiTBTC", CurveFiTBTC)
+    quick_save("CurveFiUSDT", CurveFiUSDT)
+    quick_save("CurveFiY", CurveFiY)
     quick_save("GasToken2", GasToken2)
     quick_save("CHI", CHI)
     quick_save("KollateralInvokerAddress", KollateralInvokerAddress)
