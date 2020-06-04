@@ -8,7 +8,7 @@ apipkg==1.5               # via execnet
 astroid==2.4.1            # via pylint
 asttokens==2.0.3          # via vyper
 attrs==19.3.0             # via hypothesis, jsonschema, pytest
-autopep8==1.5.2           # via -r requirements.in
+autopep8==1.5.3           # via -r requirements.in
 bandit==1.6.2             # via -r requirements.in
 base58==2.0.0             # via multiaddr
 bitarray==1.2.2           # via eth-account
@@ -17,8 +17,8 @@ chardet==3.0.4            # via requests
 cytoolz==0.10.1           # via eth-keyfile, eth-utils
 eth-abi==2.1.1            # via eth-account, eth-brownie, eth-event, web3
 eth-account==0.5.2        # via web3
-git+https://github.com/iamdefinitelyahuman/brownie@95cf14a4a24a3c2b079e06fec26d9b592164824c#egg=eth-brownie  # via -r requirements.in
-eth-event==1.0.0          # via eth-brownie
+eth-brownie==1.8.9        # via -r requirements.in
+eth-event==1.1.0          # via eth-brownie
 eth-hash[pycryptodome]==0.2.0  # via eth-brownie, eth-event, eth-utils, web3
 eth-keyfile==0.5.1        # via eth-account
 eth-keys==0.3.3           # via eth-account, eth-keyfile
@@ -27,7 +27,7 @@ eth-typing==2.2.1         # via eth-abi, eth-keys, eth-utils, web3
 eth-utils==1.9.0          # via eth-abi, eth-account, eth-brownie, eth-keyfile, eth-keys, eth-rlp, hexbytes, rlp, web3
 execnet==1.7.1            # via pytest-xdist
 gitdb==4.0.5              # via gitpython
-gitpython==3.1.2          # via bandit
+gitpython==3.1.3          # via bandit
 hexbytes==0.2.0           # via eth-account, eth-brownie, eth-event, eth-rlp, web3
 hypothesis==5.15.0        # via eth-brownie
 idna==2.9                 # via requests
@@ -68,17 +68,17 @@ pyyaml==5.3.1             # via bandit, eth-brownie
 requests==2.23.0          # via eth-brownie, ipfshttpclient, py-solc-x, pythx, web3
 rlp==1.2.0                # via eth-account, eth-rlp
 semantic-version==2.8.5   # via eth-brownie, py-solc-x
-six==1.15.0               # via astroid, asttokens, bandit, ipfshttpclient, jsonschema, multiaddr, packaging, parsimonious, protobuf, pyrsistent, pytest-xdist, python-dateutil, stevedore
+six==1.15.0               # via astroid, asttokens, bandit, ipfshttpclient, jsonschema, multiaddr, packaging, parsimonious, protobuf, pyrsistent, pytest-xdist, python-dateutil
 smmap==3.0.4              # via gitdb
 sortedcontainers==2.1.0   # via hypothesis
-stevedore==1.32.0         # via bandit
-toml==0.10.1              # via pylint
+stevedore==2.0.0          # via bandit
+toml==0.10.1              # via autopep8, pylint
 toolz==0.10.0             # via cytoolz
 tqdm==4.46.0              # via eth-brownie
 urllib3==1.25.9           # via requests
 varint==1.0.2             # via multiaddr
 vyper==0.1.0b17           # via eth-brownie
-wcwidth==0.1.9            # via prompt-toolkit, pytest
+wcwidth==0.2.3            # via prompt-toolkit, pytest
 web3==5.10.0              # via eth-brownie
 websockets==8.1           # via web3
 wrapt==1.12.1             # via astroid
