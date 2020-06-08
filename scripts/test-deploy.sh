@@ -10,5 +10,6 @@ set -eux
 ./venv/bin/brownie compile
 
 export BURN_GAS_TOKEN=${BURN_GAS_TOKEN:-1}
+export EXPORT_ARTIFACTS=0
 
 ./venv/bin/brownie run dev-deploy --network mainnet-fork "$@"

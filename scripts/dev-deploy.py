@@ -30,6 +30,7 @@ GasTokenAddress = CHI
 # TODO: old versions of these contracts were cheaper to deploy with gas token. with less state, they are cheaper without gastoken though
 # TODO: i think some of them might still be. investigate more
 BURN_GAS_TOKEN = os.environ.get("BURN_GAS_TOKEN", "0") == "1"
+EXPORT_ARTIFACTS = os.environ.get("EXPORT_ARTIFACTS", "0") == "1"
 DEPLOY_DIR = os.path.join(project.main.check_for_project('.'), "build", "deployments", "quick_and_dirty")
 
 os.makedirs(DEPLOY_DIR, exist_ok=True)
@@ -66,6 +67,9 @@ def quick_save_contract(contract):
 
 def quick_save(contract_name, address):
     """quick and dirty way to save contract addresses in an easy to read format."""
+    if EXPORT_ARTIFACTS == False:
+        return
+
     quick_name = contract_name + ".addr"
 
     quick_path = os.path.join(DEPLOY_DIR, quick_name)
@@ -79,7 +83,7 @@ def quick_save(contract_name, address):
 def main():
     # gwei
     expected_mainntet_mint_price = 1 * 1e9
-    expected_mainnet_gas_price = 15 * 1e9
+    expected_mainnet_gas_price = 25 * 1e9
 
     starting_balance = accounts[0].balance()
 
