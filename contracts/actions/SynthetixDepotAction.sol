@@ -129,7 +129,6 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
     }
 
     // solium-disable-next-line security/no-assign-params
-    // TODO: i don't think we need dest_token at all. the caller could just encode based on the selector!
     function tradeEtherToSynthUSD(address to, uint dest_min_tokens, bytes calldata extra_data)
         external
         payable
@@ -141,7 +140,7 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
 
         IDepot(synthetix_data.depot).exchangeEtherForSynths{value: src_balance}();
 
-        // NOTE! This is sUSD, and not the proxy. This should save a little gas
+        // NOTE! This is the currently active sUSD target, and not the proxy. This should save a little gas
         uint256 dest_balance = IERC20(synthetix_data.sUSD).balanceOf(address(this));
 
         require(dest_balance >= dest_min_tokens, "SynthetixDepotAction.tradeEtherToSynthUSD: not enough sUSD received");
