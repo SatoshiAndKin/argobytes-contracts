@@ -180,6 +180,8 @@ def main():
     # this isn't all used by gas. some is sent to the owned vault
     print("ETH used by accounts[0]:", (starting_balance - ending_balance) / 1e18)
 
+    # save all the addresses we might use, not just ones for own contracts
+    quick_save("CHI", CHI)
     quick_save("CurveFiBUSD", CurveFiBUSD)
     quick_save("CurveFiCompound", CurveFiCompound)
     quick_save("CurveFiPAX", CurveFiPAX)
@@ -189,11 +191,10 @@ def main():
     quick_save("CurveFiUSDT", CurveFiUSDT)
     quick_save("CurveFiY", CurveFiY)
     quick_save("GasToken2", GasToken2)
-    quick_save("CHI", CHI)
     quick_save("KollateralInvoker", KollateralInvokerAddress)
     quick_save("KyberNetworkProxy", KyberNetworkProxy)
     quick_save("KyberRegisterWallet", KyberRegisterWallet)
     quick_save("OneSplit", OneSplitAddress)
-    quick_save("Weth9", Weth9Address)
     quick_save("SynthetixAddressResolver", SynthetixAddressResolver)
     quick_save("UniswapFactory", UniswapFactory)
+    quick_save("Weth9", Weth9Address)

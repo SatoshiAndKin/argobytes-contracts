@@ -28,7 +28,7 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
     using Strings for uint;
     using Strings2 for address;
 
-    // TODO: we shouldn't need this, but i'm having trouble setting up fixture
+    // TODO: we shouldn't need this, but brownie doesn't have a helper for strings -> bytes32
     bytes32 public constant BYTESTR_DEPOT = "Depot";
     bytes32 public constant BYTESTR_EXRATES = "ExchangeRates";
     bytes32 public constant BYTESTR_SUSD = "SynthsUSD";
@@ -66,7 +66,8 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
 
                 if (maker_token == sUSD) {
                     // eth to sUSD
-                    a.maker_token = maker_token;
+
+                    // DO NOT SET a.maker_token to the target. leave it the proxy! `a.maker_token = maker_token;`
 
                     {
                         address status = IAddressResolver(resolver).getAddress(BYTESTR_STATUS);
@@ -112,10 +113,9 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
                 a.error = err;
             }
         } else {
-            string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: ETH is the only supported taker token"));
-
-            a.error = err;
-
+            // TODO: do we want a revert here? I think an empty order is better when there isn't actually an error
+            // string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: ETH is the only supported taker token"));
+            // a.error = err;
         }
 
         SynthetixExtraData memory trade_extra_data;
