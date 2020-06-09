@@ -72,7 +72,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
             }
         }
 
-        // TODO: save exchange?
+        // TODO: save the exchange address, too?
     }
 
     function getAmounts(
