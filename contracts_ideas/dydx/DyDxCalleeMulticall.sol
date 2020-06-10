@@ -1,13 +1,13 @@
 /* Like https://github.com/makerdao/multicall, but compatible with DyDx calls */
 // i thought about adding a helper function to transfer out stuck funds, but callFunction already looks generic enough
 
-pragma solidity 0.6.8;
+pragma solidity 0.6.9;
 pragma experimental ABIEncoderV2;
 
-import { DyDx_ICallee, DyDx_Account } from "./external/DyDx_ICallee.sol";
+import {DyDx_ICallee, DyDx_Account} from "./external/DyDx_ICallee.sol";
+
 
 contract DyDxCalleeMulticall is DyDx_ICallee {
-
     struct Call {
         address target;
         bytes callData;
@@ -24,9 +24,7 @@ contract DyDxCalleeMulticall is DyDx_ICallee {
         address sender,
         DyDx_Account.Info memory accountInfo,
         bytes memory data
-    )
-        public override
-    {
+    ) public override {
         // we don't need to do anything with sender
         sender;
 
@@ -34,10 +32,12 @@ contract DyDxCalleeMulticall is DyDx_ICallee {
         accountInfo;
 
         // parse data as an array of calls
-        (Call[] memory calls) = abi.decode(data, (Call[]));
+        Call[] memory calls = abi.decode(data, (Call[]));
 
-        for(uint256 i = 0; i < calls.length; i++) {
-            (bool success, bytes memory ret) = calls[i].target.call(calls[i].callData);
+        for (uint256 i = 0; i < calls.length; i++) {
+            (bool success, bytes memory ret) = calls[i].target.call(
+                calls[i].callData
+            );
 
             // at first, i thought we should check the return for a magic string or something,
             // but now, i want to let this function be as open as possible

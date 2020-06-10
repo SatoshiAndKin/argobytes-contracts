@@ -11,10 +11,10 @@
     limitations under the License.
 */
 
-pragma solidity 0.6.8;
+pragma solidity 0.6.9;
 pragma experimental ABIEncoderV2;
 
-import { DyDx_Types } from "./DyDx_Types.sol";
+import {DyDx_Types} from "./DyDx_Types.sol";
 
 
 /**
@@ -35,36 +35,25 @@ library DyDx_Account {
      * Vapor:  Has only negative (or zeroed) account values. Can be vaporized.
      *
      */
-    enum Status {
-        Normal,
-        Liquid,
-        Vapor
-    }
+    enum Status {Normal, Liquid, Vapor}
 
     // ============ Structs ============
 
     // Represents the unique key that specifies an account
     struct Info {
-        address owner;  // The address that owns the account
+        address owner; // The address that owns the account
         uint256 number; // A nonce that allows a single address to control many accounts
     }
 
     // The complete storage for any account
     struct Storage {
-        mapping (uint256 => DyDx_Types.Par) balances; // Mapping from marketId to principal
+        mapping(uint256 => DyDx_Types.Par) balances; // Mapping from marketId to principal
         Status status;
     }
 
     // ============ Library Functions ============
 
-    function equals(
-        Info memory a,
-        Info memory b
-    )
-        internal
-        pure
-        returns (bool)
-    {
+    function equals(Info memory a, Info memory b) internal pure returns (bool) {
         return a.owner == b.owner && a.number == b.number;
     }
 }

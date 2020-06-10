@@ -2,7 +2,7 @@
 // TODO: backdoor_static_call and backdoor_delegate_call
 // TODO: maybe better to just use the diamond standard EIP for upgradable contracts, but this works for now
 
-pragma solidity 0.6.8;
+pragma solidity 0.6.9;
 
 import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
 

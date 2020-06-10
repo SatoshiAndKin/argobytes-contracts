@@ -11,8 +11,9 @@
     limitations under the License.
 */
 
-pragma solidity 0.6.8;
+pragma solidity 0.6.9;
 pragma experimental ABIEncoderV2;
+
 
 /**
  * @title Types
@@ -21,12 +22,11 @@ pragma experimental ABIEncoderV2;
  * Library for interacting with the basic structs used in Solo
  */
 library DyDx_Types {
-
     // ============ AssetAmount ============
 
     enum AssetDenomination {
         Wei, // the amount is denominated in wei
-        Par  // the amount is denominated in par
+        Par // the amount is denominated in par
     }
 
     enum AssetReference {
@@ -62,5 +62,4 @@ library DyDx_Types {
         bool sign; // true if positive
         uint256 value;
     }
-
 }

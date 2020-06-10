@@ -1,8 +1,9 @@
 // https://github.com/makerdao/developerguides/blob/master/Oasis/intro-to-oasis/intro-to-oasis-maker-otc.md
 
-pragma solidity 0.6.8;
+pragma solidity 0.6.9;
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
+
 
 contract OasisAction is AbstractERC20Exchange {
     function _tradeEtherToToken(

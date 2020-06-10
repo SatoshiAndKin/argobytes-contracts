@@ -6,7 +6,7 @@
  * 
  * Rewrite this to use UniversalERC20? I'm not sure its worth it. this is pretty easy to follow.
  */
-pragma solidity 0.6.8;
+pragma solidity 0.6.9;
 pragma experimental ABIEncoderV2;
 
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";

@@ -13,10 +13,10 @@
     https://github.com/dydxprotocol/solo/blob/2d8454e02702fe5bc455b848556660629c3cad36/contracts/protocol/interfaces/ICallee.sol
 */
 
-pragma solidity 0.6.8;
+pragma solidity 0.6.9;
 pragma experimental ABIEncoderV2;
 
-import { DyDx_Account } from "./DyDx_Account.sol";
+import {DyDx_Account} from "./DyDx_Account.sol";
 
 
 /**
@@ -26,7 +26,6 @@ import { DyDx_Account } from "./DyDx_Account.sol";
  * Interface that Callees for Solo must implement in order to ingest data.
  */
 abstract contract DyDx_ICallee {
-
     // ============ Public Functions ============
 
     /**
@@ -40,6 +39,5 @@ abstract contract DyDx_ICallee {
         address sender,
         DyDx_Account.Info memory accountInfo,
         bytes memory data
-    )
-        public virtual;
+    ) public virtual;
 }

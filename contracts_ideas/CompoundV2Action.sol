@@ -1,4 +1,4 @@
-pragma solidity 0.6.8;
+pragma solidity 0.6.9;
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 

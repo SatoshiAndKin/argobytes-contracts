@@ -4,7 +4,7 @@
 // Uses gas token so that we pay less in miner fees.
 // TODO: use address payable once ethabi works with it
 // ABIEncodeV2 is not yet supported by rust's ethabi, so be careful how you use it. don't expose new encodings in function args or returns
-pragma solidity 0.6.8;
+pragma solidity 0.6.9;
 pragma experimental ABIEncoderV2;
 
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
