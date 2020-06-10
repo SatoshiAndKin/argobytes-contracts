@@ -2,3 +2,4 @@ eth-brownie
 bandit
 autopep8
 pylint
+pytest-timeout

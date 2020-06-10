@@ -6,7 +6,7 @@ from hypothesis import settings
 
 
 # TODO: coverage used to work here. why is it failing now? geth upgrade?
-def test_get_amounts(address_zero, dai_erc20, kyber_action, kyber_network_proxy, usdc_erc20, weth9_erc20, skip_coverage):
+def test_get_amounts(address_zero, dai_erc20, kyber_action, kyber_network_proxy, usdc_erc20, weth9_erc20):
     eth_amount = 1e18
     dai_amount = 1e20
 
@@ -25,7 +25,7 @@ def test_get_amounts(address_zero, dai_erc20, kyber_action, kyber_network_proxy,
     # TODO: what should we assert?
 
 
-def test_action(address_zero, kyber_action, kyber_network_proxy, dai_erc20, usdc_erc20, skip_coverage):
+def test_action(address_zero, kyber_action, kyber_network_proxy, dai_erc20, usdc_erc20):
     value = 1e17
 
     # send some ETH into the action
