@@ -81,10 +81,10 @@ def test_get_amounts(synthetix_address_resolver, synthetix_depot_action, synthet
 
     # TODO: what should we assert?
 
-    # check that we have the expected error
+    # check that we have the expected (lack of) errors
     assert amounts[0][7] == ""
-    # TODO: this used to be an error, but now it isn't
-    assert amounts[1][7] != ""
+    # this used to be an error, but now it isn't
+    assert amounts[1][7] == ""
 
     # TODO: use named keys. they aren't currently supported
     # check that the selector is set
