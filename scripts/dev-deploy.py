@@ -80,6 +80,29 @@ def quick_save(contract_name, address):
         opened_file.write(address)
 
 
+def reset_block_time(synthetix_depot_action):
+    # synthetix_address_resolver = interface.IAddressResolver(SynthetixAddressResolver)
+
+    # TODO: get this from the address resolver instead
+    synthetix_exchange_rates = Contract.from_explorer("0x9D7F70AF5DF5D5CC79780032d47a34615D1F1d77")
+
+    token_bytestr = synthetix_depot_action.BYTESTR_ETH()
+
+    last_update_time = synthetix_exchange_rates.lastRateUpdateTimes(token_bytestr)
+
+    print("last_update_time: ", last_update_time)
+
+    assert last_update_time != 0
+
+    latest_block_time = web3.eth.getBlock(web3.eth.blockNumber).timestamp
+
+    print("latest_block_time:", latest_block_time)
+
+    assert latest_block_time != 0
+
+    web3.testing.mine(last_update_time)
+
+
 def main():
     # gwei
     expected_mainntet_mint_price = 1 * 1e9
@@ -133,7 +156,7 @@ def main():
     create_helper(argobytes_owned_vault, KyberAction, [accounts[0], argobytes_owned_vault], expected_mainnet_gas_price)
     create_helper(argobytes_owned_vault, UniswapV1Action, [], expected_mainnet_gas_price)
     create_helper(argobytes_owned_vault, Weth9Action, [], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, SynthetixDepotAction, [], expected_mainnet_gas_price)
+    synthetix_depot_action = create_helper(argobytes_owned_vault, SynthetixDepotAction, [], expected_mainnet_gas_price)
 
     curve_fi_action = create_helper(argobytes_owned_vault, CurveFiAction, [accounts[0]], expected_mainnet_gas_price)
 
@@ -198,3 +221,5 @@ def main():
     quick_save("SynthetixAddressResolver", SynthetixAddressResolver)
     quick_save("UniswapFactory", UniswapFactory)
     quick_save("Weth9", Weth9Address)
+
+    reset_block_time(synthetix_depot_action)
