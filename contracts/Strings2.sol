@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 pragma solidity 0.6.9;
 
-
 library Strings2 {
     function toString(address x) internal pure returns (string memory) {
         bytes32 value = bytes32(uint256(x));

@@ -8,7 +8,7 @@
 
 [ -z "${NODE_OPTIONS:-}" ] && echo "If ganache-cli crashes, try setting NODE_OPTIONS in your .env and then '. ./scripts/activate'"
 
-fork="${FORK_PROTO:-ws}://${FORK_HOST:-localhost}:${FORK_PORT:-8546}@${FORK_AT:-latest}"
+fork="${FORK_PROTO:-ws}://${FORK_HOST:-localhost}:${FORK_PORT:-8546}@${FORK_AT:-10247885}"
 
 set -x
 

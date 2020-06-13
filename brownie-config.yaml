@@ -3,7 +3,7 @@ compiler:
     optimizer:
       enabled: false
     remappings:
-      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@3.0.1/contracts"
+      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@3.1.0-rc.0/contracts"
 
 dependencies:
-  - OpenZeppelin/openzeppelin-contracts@3.0.1
+  - OpenZeppelin/openzeppelin-contracts@3.1.0-rc.0 

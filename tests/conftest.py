@@ -17,7 +17,7 @@ def session_defaults():
 
 @pytest.fixture(scope="session")
 def address_zero():
-    yield "0x0000000000000000000000000000000000000000"
+    return "0x0000000000000000000000000000000000000000"
 
 
 @pytest.fixture()
@@ -28,7 +28,7 @@ def argobytes_atomic_trade(argobytes_owned_vault, ArgobytesAtomicTrade, gastoken
     argobytes_atomic_trade = argobytes_owned_vault.deploy2(
         gastoken, salt, argobytes_atomic_trade_initcode, {"from": accounts[0]})
 
-    yield ArgobytesAtomicTrade.at(argobytes_atomic_trade.return_value)
+    return ArgobytesAtomicTrade.at(argobytes_atomic_trade.return_value)
 
 
 @pytest.fixture()
@@ -47,22 +47,22 @@ def argobytes_owned_vault(ArgobytesOwnedVault, ArgobytesOwnedVaultDeployer, gast
     # argobytes_owned_vault = argobytes_owned_vault_tx.events["Deployed"]["argobytes_owned_vault"]
     argobytes_owned_vault = argobytes_owned_vault_tx.logs[0]['address']
 
-    yield ArgobytesOwnedVault.at(argobytes_owned_vault)
+    return ArgobytesOwnedVault.at(argobytes_owned_vault)
 
 
 @pytest.fixture(scope="session")
 def cdai_erc20():
-    yield Contract.from_explorer("0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643")
+    return Contract.from_explorer("0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643")
 
 
 @pytest.fixture(scope="session")
 def cusdc_erc20():
-    yield Contract.from_explorer("0x39aa39c021dfbae8fac545936693ac917d5e7563")
+    return Contract.from_explorer("0x39aa39c021dfbae8fac545936693ac917d5e7563")
 
 
 @pytest.fixture(scope="session")
 def curve_fi_compound(CurveFiAction):
-    yield Contract.from_explorer("0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56")
+    return Contract.from_explorer("0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56")
 
 
 @pytest.fixture()
@@ -72,58 +72,58 @@ def curve_fi_action(CurveFiAction, curve_fi_compound):
     # TODO: add the other exchanges
     curve_fi.saveExchange(curve_fi_compound, 2)
 
-    yield curve_fi
+    return curve_fi
 
 
 @pytest.fixture(scope="session")
 def dai_erc20():
-    yield Contract.from_explorer("0x6b175474e89094c44da98b954eedeac495271d0f")
+    return Contract.from_explorer("0x6b175474e89094c44da98b954eedeac495271d0f")
 
 
 @pytest.fixture()
 def example_action(ExampleAction):
-    yield accounts[0].deploy(ExampleAction)
+    return accounts[0].deploy(ExampleAction)
 
 
 @pytest.fixture()
 def example_action_2(ExampleAction):
-    yield accounts[0].deploy(ExampleAction)
+    return accounts[0].deploy(ExampleAction)
 
 
 @pytest.fixture(scope="session")
 def gastoken():
     # GST2: https://gastoken.io
-    yield Contract.from_explorer("0x0000000000b3F879cb30FE243b4Dfee438691c04")
+    return Contract.from_explorer("0x0000000000b3F879cb30FE243b4Dfee438691c04")
 
 
 @pytest.fixture(scope="session")
 def chi():
     # 1inch's CHI (gastoken alternative)
-    yield Contract.from_explorer("0x0000000000004946c0e9F43F4Dee607b0eF1fA1c")
+    return Contract.from_explorer("0x0000000000004946c0e9F43F4Dee607b0eF1fA1c")
 
 
 @pytest.fixture(scope="session")
 def kollateral_invoker(ExampleAction):
-    yield Contract.from_explorer("0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01")
+    return Contract.from_explorer("0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01")
 
 
 @pytest.fixture()
 def kyber_action(KyberAction, argobytes_owned_vault):
-    yield accounts[0].deploy(KyberAction, accounts[0], argobytes_owned_vault)
+    return accounts[0].deploy(KyberAction, accounts[0], argobytes_owned_vault)
 
 
 @pytest.fixture(scope="session")
 def kyber_network_proxy():
     # TODO: they have an "info" method and that is a reserved keyword
     # TODO: `return Contract.from_explorer("0x818E6FECD516Ecc3849DAf6845e3EC868087B755")`
-    yield "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
+    return "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
 
 
 @pytest.fixture(scope="session")
 def onesplit():
     # 1split.eth
     # TODO: does this support ENS? this is 1split.eth (although its probably better to have an address here)
-    yield Contract.from_explorer("0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E")
+    return Contract.from_explorer("0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E")
 
 
 @pytest.fixture(scope="session")
@@ -168,12 +168,12 @@ def onesplit_helper(address_zero, onesplit, interface):
 
         return actual_transfer_amount
 
-    yield inner_onesplit_helper
+    return inner_onesplit_helper
 
 
 @pytest.fixture()
 def onesplit_offchain_action(OneSplitOffchainAction):
-    yield accounts[0].deploy(OneSplitOffchainAction)
+    return accounts[0].deploy(OneSplitOffchainAction)
 
 
 @pytest.fixture(scope="session")
@@ -185,17 +185,17 @@ def susd_erc20():
 
     # assert susd_address == "0xae38b81459d74a8c16eaa968c792207603d84480"
     susd_address = "0xae38b81459d74a8c16eaa968c792207603d84480"
-    # yield Contract.from_explorer(susd_address)
+    # return Contract.from_explorer(susd_address)
 
     proxy_susd_address = "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51"
 
-    yield Contract.from_explorer(proxy_susd_address, as_proxy_for=susd_address)
+    return Contract.from_explorer(proxy_susd_address, as_proxy_for=susd_address)
 
 
 @pytest.fixture(scope="session")
 def synthetix_address_resolver(interface):
     # this is actually the ReadProxyAddressResolver
-    yield interface.IAddressResolver("0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2")
+    return interface.IAddressResolver("0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2")
 
 
 @pytest.fixture(scope="session")
@@ -208,22 +208,22 @@ def synthetix_exchange_rates(interface):
     # TODO: don't hard code
     rates = "0x9D7F70AF5DF5D5CC79780032d47a34615D1F1d77"
 
-    yield interface.IExchangeRates(rates)
+    return interface.IExchangeRates(rates)
 
 
 @pytest.fixture()
 def synthetix_depot_action(SynthetixDepotAction):
-    yield accounts[0].deploy(SynthetixDepotAction)
+    return accounts[0].deploy(SynthetixDepotAction)
 
 
 @pytest.fixture()
 def uniswap_v1_action(UniswapV1Action):
-    yield accounts[0].deploy(UniswapV1Action)
+    return accounts[0].deploy(UniswapV1Action)
 
 
 @pytest.fixture(scope="session")
 def uniswap_v1_factory():
-    yield Contract.from_explorer("0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95")
+    return Contract.from_explorer("0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95")
 
 
 @pytest.fixture(scope="session")
@@ -255,21 +255,21 @@ def uniswap_v1_helper(uniswap_v1_factory, interface):
 
         return tx.return_value
 
-    yield inner_uniswap_v1_helper
+    return inner_uniswap_v1_helper
 
 
 @pytest.fixture(scope="session")
 def usdc_erc20():
     # TODO: how did etherscan figure out the proxy address?
     # https://etherscan.io/address/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48#readProxyContract
-    yield Contract.from_explorer("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", as_proxy_for="0x0882477e7895bdc5cea7cb1552ed914ab157fe56")
+    return Contract.from_explorer("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", as_proxy_for="0x0882477e7895bdc5cea7cb1552ed914ab157fe56")
 
 
 @pytest.fixture()
 def weth9_action(Weth9Action):
-    yield accounts[0].deploy(Weth9Action)
+    return accounts[0].deploy(Weth9Action)
 
 
 @pytest.fixture(scope="session")
 def weth9_erc20():
-    yield Contract.from_explorer("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2")
+    return Contract.from_explorer("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2")

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * There are multitudes of possible contracts for SoloArbitrage. AbstractExchange is for interfacing with ERC20.
- * 
+ *
  * These contracts should also be written in a way that they can work with any flash lender
- * 
+ *
  * Rewrite this to use UniversalERC20? I'm not sure its worth it. this is pretty easy to follow.
  */
 pragma solidity 0.6.9;
@@ -20,7 +20,7 @@ contract AbstractERC20Modifiers {
     address constant ADDRESS_ZERO = address(0);
 
     // this contract must be able to receive ether if it is expected to return it
-    receive() external payable { }
+    receive() external payable {}
 
     /// @dev after the function, send any remaining ether back to msg.sender
     modifier returnLeftoverEther() {
@@ -28,11 +28,15 @@ contract AbstractERC20Modifiers {
 
         _;
 
-        uint balance = address(this).balance;
+        uint256 balance = address(this).balance;
 
         if (balance > 0) {
+            // TODO: use OpenZepplin's sendValue
             (bool success, ) = msg.sender.call{value: balance}("");
-            require(success, "AbstractERC20Modifiers.returnLeftoverEther: ETH transfer failed");
+            require(
+                success,
+                "AbstractERC20Modifiers.returnLeftoverEther: ETH transfer failed"
+            );
         }
     }
 
@@ -42,7 +46,7 @@ contract AbstractERC20Modifiers {
 
         _;
 
-        uint balance = IERC20(token).balanceOf(address(this));
+        uint256 balance = IERC20(token).balanceOf(address(this));
 
         if (balance > 0) {
             IERC20(token).safeTransfer(msg.sender, balance);
@@ -60,7 +64,7 @@ contract AbstractERC20Modifiers {
 
         _;
 
-        uint balance = IERC20(token).universalBalanceOf(address(this));
+        uint256 balance = IERC20(token).universalBalanceOf(address(this));
 
         if (balance > 0) {
             IERC20(token).universalTransfer(msg.sender, balance);
@@ -80,29 +84,39 @@ abstract contract AbstractERC20Exchange is AbstractERC20Modifiers {
         uint256 maker_wei;
         address taker_token;
         uint256 taker_wei;
-
         bytes4 selector;
         bytes trade_extra_data;
         bytes exchange_data;
         string error;
     }
 
-
-    function _getAmounts(address token_a, uint256 token_a_amount, address token_b, bytes memory extra_data)
-        internal view
-        returns (Amount[] memory)
-    {
+    function _getAmounts(
+        address token_a,
+        uint256 token_a_amount,
+        address token_b,
+        bytes memory extra_data
+    ) internal view returns (Amount[] memory) {
         require(token_a != token_b, "token_a should != token_b");
 
         Amount[] memory amounts = new Amount[](2);
 
         // TODO: think more about this. i think we need this because our contract is abstract
-        string memory newAmountSignature = "newAmount(address,uint256,address,bytes)";
+
+            string memory newAmountSignature
+         = "newAmount(address,uint256,address,bytes)";
 
         // get amounts for trading token_a -> token_b
         // use the same amounts that we used in our ETH trades to keep these all around the same value
         // we can't use try/catch with internal functions, so we have to use call instead
-        (bool success, bytes memory returnData) = address(this).staticcall(abi.encodeWithSignature(newAmountSignature, token_b, token_a_amount, token_a, extra_data));
+        (bool success, bytes memory returnData) = address(this).staticcall(
+            abi.encodeWithSignature(
+                newAmountSignature,
+                token_b,
+                token_a_amount,
+                token_a,
+                extra_data
+            )
+        );
         if (success) {
             amounts[0] = abi.decode(returnData, (Amount));
         }
@@ -112,7 +126,15 @@ abstract contract AbstractERC20Exchange is AbstractERC20Modifiers {
         // get amounts for trading token_b -> token_a
         // we can't use try/catch with internal functions, so we have to use call instead
         if (amounts[0].maker_wei > 0) {
-            (success, returnData) = address(this).staticcall(abi.encodeWithSignature(newAmountSignature, token_a, amounts[0].maker_wei, token_b, extra_data));
+            (success, returnData) = address(this).staticcall(
+                abi.encodeWithSignature(
+                    newAmountSignature,
+                    token_a,
+                    amounts[0].maker_wei,
+                    token_b,
+                    extra_data
+                )
+            );
             if (success) {
                 amounts[1] = abi.decode(returnData, (Amount));
             }
@@ -122,14 +144,18 @@ abstract contract AbstractERC20Exchange is AbstractERC20Modifiers {
         return amounts;
     }
 
-    function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory extra_data)
-        public virtual view
-        returns (Amount memory);
+    function newAmount(
+        address maker_token,
+        uint256 taker_wei,
+        address taker_token,
+        bytes memory extra_data
+    ) public virtual view returns (Amount memory);
 
-    function newPartialAmount(address maker_token, uint taker_wei, address taker_token)
-        internal pure
-        returns (Amount memory)
-    {
+    function newPartialAmount(
+        address maker_token,
+        uint256 taker_wei,
+        address taker_token
+    ) internal pure returns (Amount memory) {
         Amount memory a = Amount({
             maker_token: maker_token,
             maker_wei: 0,

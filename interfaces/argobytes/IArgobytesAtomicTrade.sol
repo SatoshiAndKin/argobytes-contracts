@@ -2,11 +2,11 @@
 pragma solidity 0.6.9;
 pragma experimental ABIEncoderV2;
 
-
 abstract contract IArgobytesAtomicTrade {
     struct Action {
         address payable target;
         bytes data;
+        bool with_value;
     }
 
     function atomicTrade(

@@ -19,7 +19,6 @@ import {Ownable2} from "contracts/Ownable2.sol";
 import {Strings2} from "contracts/Strings2.sol";
 import {IERC20, SafeERC20, UniversalERC20} from "contracts/UniversalERC20.sol";
 
-
 contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
     using UniversalERC20 for IERC20;
     using SafeERC20 for IERC20;
@@ -33,10 +32,19 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
 
     constructor(address owner) public Ownable2(owner) {}
 
+    function token_supported(address exchange, address token)
+        public
+        returns (bool)
+    {
+        return
+            _coins[exchange][token] + _underlying_coins[exchange][token] != 0;
+    }
+
     function saveExchange(address exchange, int128 n) public onlyOwner {
         // i'd like this to be open, but i feel like people could grief. maybe require a fee that goes to ownedVault? or require ownership of an erc20?
 
         for (int128 i = 0; i < n; i++) {
+            // this reverts on an invalid i
             address coin = ICurveFi(exchange).coins(i);
 
             // TODO: include "i" and "n" in the revert message
@@ -51,6 +59,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
             // save the coin with an index of + 1. this lets us be sure that 0 means the coin is unsupported
             _coins[exchange][coin] = i + 1;
 
+            // this reverts on an invalid i
             address underlying_coin = ICurveFi(exchange).underlying_coins(i);
 
             if (underlying_coin != ADDRESS_ZERO) {
@@ -92,19 +101,19 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
         address taker_token,
         bytes memory extra_data
     ) public override view returns (Amount memory) {
-        address curve_fi = abi.decode(extra_data, (address));
+        address exchange = abi.decode(extra_data, (address));
 
         Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
 
         // i is the taker token
-        int128 i = _coins[curve_fi][taker_token];
+        int128 i = _coins[exchange][taker_token];
         // j is the maker token
-        int128 j = _coins[curve_fi][maker_token];
+        int128 j = _coins[exchange][maker_token];
 
         if (i == 0 || j == 0) {
             // at least one of the coins was not found
-            int128 underlying_i = _underlying_coins[curve_fi][taker_token];
-            int128 underlying_j = _underlying_coins[curve_fi][maker_token];
+            int128 underlying_i = _underlying_coins[exchange][taker_token];
+            int128 underlying_j = _underlying_coins[exchange][maker_token];
 
             if (underlying_i == 0 || underlying_j == 0) {
                 // no _coin and no _underlying_coin found. cancel
@@ -168,7 +177,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
             underlying_i -= 1;
             underlying_j -= 1;
 
-            a.maker_wei = ICurveFi(curve_fi).get_dy_underlying(
+            a.maker_wei = ICurveFi(exchange).get_dy_underlying(
                 underlying_i,
                 underlying_j,
                 taker_wei
@@ -181,12 +190,12 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
             i -= 1;
             j -= 1;
 
-            a.maker_wei = ICurveFi(curve_fi).get_dy(i, j, taker_wei);
+            a.maker_wei = ICurveFi(exchange).get_dy(i, j, taker_wei);
             a.selector = this.trade.selector;
         }
 
         // TODO: use a struct
-        a.trade_extra_data = abi.encode(curve_fi, i, j);
+        a.trade_extra_data = abi.encode(exchange, i, j);
 
         // a.exchange_data = "";
 

@@ -16,18 +16,25 @@ contract ZrxV3Action is AbstractERC20Modifiers {
         uint256 dest_min_tokens,
         bytes memory zrx_data
     ) public payable returnLeftoverUniversal(src_token, zrx_forwarder) {
-        uint256 src_balance = IERC20(src_token).universalBalanceOf(address(this));
+        uint256 src_balance = IERC20(src_token).universalBalanceOf(
+            address(this)
+        );
 
         IERC20(src_token).universalApprove(zrx_forwarder, src_balance);
 
-        (bool success, ) = address(zrx_forwarder).call{value: msg.value}(zrx_data);
+        (bool success, ) = address(zrx_forwarder).call{value: msg.value}(
+            zrx_data
+        );
 
         // TODO: better error message
         require(success, "0x call failed");
 
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
 
-        require(dest_balance >= dest_min_tokens, "ZrxV3Action.trade: not enough destination token received");
+        require(
+            dest_balance >= dest_min_tokens,
+            "ZrxV3Action.trade: not enough destination token received"
+        );
 
         if (to == ADDRESS_ZERO) {
             to = msg.sender;

@@ -5,7 +5,6 @@ import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 
 import {IGasToken} from "interfaces/gastoken/IGasToken.sol";
 
-
 contract GasTokenBurner {
     using SafeMath for uint256;
 

@@ -2,7 +2,6 @@
 pragma solidity 0.6.9;
 pragma experimental ABIEncoderV2;
 
-
 import {IKyberNetworkProxy} from "interfaces/kyber/IKyberNetworkProxy.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
@@ -15,14 +14,13 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
 
     // TODO: document MAX_QTY
     uint256 internal constant MAX_QTY = 10**28;
-    IERC20 internal constant ETH_ON_KYBER = IERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
+    IERC20 internal constant ETH_ON_KYBER = IERC20(
+        0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+    );
 
     address _wallet_id;
 
-    constructor(address admin, address wallet_id)
-        Ownable2(admin)
-        public
-    {
+    constructor(address admin, address wallet_id) public Ownable2(admin) {
         _wallet_id = wallet_id;
     }
 
@@ -31,57 +29,74 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
         _wallet_id = wallet_id;
     }
 
-    function getAmounts(address token_a, uint256 token_a_amount, address token_b, address network_proxy)
-        external view
-        returns (Amount[] memory)
-    {
+    function getAmounts(
+        address token_a,
+        uint256 token_a_amount,
+        address token_b,
+        address network_proxy
+    ) external view returns (Amount[] memory) {
         bytes memory extra_data = abi.encode(network_proxy);
 
         return _getAmounts(token_a, token_a_amount, token_b, extra_data);
     }
 
-    function newAmount(address maker_token, uint taker_wei, address taker_token, bytes memory extra_data)
-        public override view
-        returns (Amount memory)
-    {
-        (address network_proxy) = abi.decode(extra_data, (address));
+    function newAmount(
+        address maker_token,
+        uint256 taker_wei,
+        address taker_token,
+        bytes memory extra_data
+    ) public override view returns (Amount memory) {
+        address network_proxy = abi.decode(extra_data, (address));
 
         Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
 
-        uint expected_rate;
+        uint256 expected_rate;
 
         // TODO: this only works with input amounts. do we want it to work with output amounts?
         if (maker_token == ADDRESS_ZERO) {
             // token to eth
-            (expected_rate, ) = IKyberNetworkProxy(network_proxy).getExpectedRate(IERC20(taker_token), ETH_ON_KYBER, taker_wei);
+            (expected_rate, ) = IKyberNetworkProxy(network_proxy)
+                .getExpectedRate(IERC20(taker_token), ETH_ON_KYBER, taker_wei);
             a.selector = this.tradeTokenToEther.selector;
         } else if (taker_token == ADDRESS_ZERO) {
             // eth to token
-            (expected_rate, ) = IKyberNetworkProxy(network_proxy).getExpectedRate(ETH_ON_KYBER, IERC20(maker_token), taker_wei);
+            (expected_rate, ) = IKyberNetworkProxy(network_proxy)
+                .getExpectedRate(ETH_ON_KYBER, IERC20(maker_token), taker_wei);
             a.selector = this.tradeEtherToToken.selector;
         } else {
             // token to token
-            (expected_rate, ) = IKyberNetworkProxy(network_proxy).getExpectedRate(IERC20(taker_token), IERC20(maker_token), taker_wei);
+            (expected_rate, ) = IKyberNetworkProxy(network_proxy)
+                .getExpectedRate(
+                IERC20(taker_token),
+                IERC20(maker_token),
+                taker_wei
+            );
             a.selector = this.tradeTokenToToken.selector;
         }
 
         // TODO: disable the uniswap reserve? https://github.com/CryptoManiacsZone/1split/blob/614fa1efdd647d560491671c92869daf69f158b0/contracts/OneSplitBase.sol#L532
 
-        uint maker_decimals = IERC20(maker_token).universalDecimals();
-        uint taker_decimals = IERC20(taker_token).universalDecimals();
+        uint256 maker_decimals = IERC20(maker_token).universalDecimals();
+        uint256 taker_decimals = IERC20(taker_token).universalDecimals();
 
         // https://developer.kyber.network/docs/API_ABI-TokenQuantityConversion/#calcdstqty
         // https://github.com/KyberNetwork/smart-contracts/blob/master/contracts/Utils2.sol#L28
-        uint precision = 10 ** 18;
+        uint256 precision = 10**18;
 
         // TODO: i think this is on Kyber's Utils2 contract. use that instead
-        // 
+        //
         if (maker_decimals >= taker_decimals) {
             // (srcQty * rate * (10**(dstDecimals - srcDecimals))) / PRECISION;
-            expected_rate = (taker_wei * expected_rate * (10 ** (maker_decimals - taker_decimals))) / precision;
+            expected_rate =
+                (taker_wei *
+                    expected_rate *
+                    (10**(maker_decimals - taker_decimals))) /
+                precision;
         } else {
             // (srcQty * rate) / (PRECISION * (10**(srcDecimals - dstDecimals)));
-            expected_rate = (taker_wei * expected_rate) / (precision * (10 ** (taker_decimals - maker_decimals)));
+            expected_rate =
+                (taker_wei * expected_rate) /
+                (precision * (10**(taker_decimals - maker_decimals)));
         }
 
         // TODO: use slippage_rate?
@@ -92,16 +107,22 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
     }
 
     function tradeEtherToToken(
-        address network_proxy, 
+        address network_proxy,
         address to,
         address dest_token,
         uint256 dest_min_tokens,
         uint256 dest_max_tokens
     ) public returnLeftoverEther() {
-        require(dest_token != ADDRESS_ZERO, "KyberAction.tradeEtherToToken: dest_token cannot be ADDRESS_ZERO");
-        require(IERC20(dest_token) != ETH_ON_KYBER, "KyberAction.tradeEtherToToken: dest_token cannot be ETH");
+        require(
+            dest_token != ADDRESS_ZERO,
+            "KyberAction.tradeEtherToToken: dest_token cannot be ADDRESS_ZERO"
+        );
+        require(
+            IERC20(dest_token) != ETH_ON_KYBER,
+            "KyberAction.tradeEtherToToken: dest_token cannot be ETH"
+        );
 
-        uint src_amount = address(this).balance;
+        uint256 src_amount = address(this).balance;
 
         require(src_amount > 0, "KyberAction.tradeEtherToToken: NO_SRC_AMOUNT");
 
@@ -112,31 +133,39 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
             dest_max_tokens = MAX_QTY;
         }
 
-        uint256 received = IKyberNetworkProxy(network_proxy).trade{value: src_amount}(
+        uint256 received = IKyberNetworkProxy(network_proxy).trade{
+            value: src_amount
+        }(
             ETH_ON_KYBER,
             src_amount,
             IERC20(dest_token),
             to,
             dest_max_tokens,
-            1,  // minConversionRate of 1 will execute the trade according to market price
+            1, // minConversionRate of 1 will execute the trade according to market price
             _wallet_id
         );
 
         // TODO: use a real minConversionRate to ensure this?
-        require(received >= dest_min_tokens, "KyberAction._tradeTokenToToken: FAILED_TRADE");
+        require(
+            received >= dest_min_tokens,
+            "KyberAction._tradeTokenToToken: FAILED_TRADE"
+        );
     }
 
     function tradeTokenToToken(
-        address network_proxy, 
+        address network_proxy,
         address to,
         address src_token,
         address dest_token,
         uint256 dest_min_tokens,
         uint256 dest_max_tokens
-    ) external returnLeftoverToken(src_token, network_proxy){
+    ) external returnLeftoverToken(src_token, network_proxy) {
         // Use the full balance of tokens transferred from the trade executor
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
-        require(src_amount > 0, "KyberAction._tradeTokenToToken: NO_SOURCE_AMOUNT");
+        require(
+            src_amount > 0,
+            "KyberAction._tradeTokenToToken: NO_SOURCE_AMOUNT"
+        );
 
         // Approve the exchange to transfer tokens from this contract to the reserve
         IERC20(src_token).safeApprove(network_proxy, src_amount);
@@ -148,18 +177,21 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
             dest_max_tokens = MAX_QTY;
         }
 
-        uint received = IKyberNetworkProxy(network_proxy).trade(
+        uint256 received = IKyberNetworkProxy(network_proxy).trade(
             IERC20(src_token),
             src_amount,
             IERC20(dest_token),
             to,
             dest_max_tokens,
-            1,  // minConversionRate of 1 will execute the trade according to market price
+            1, // minConversionRate of 1 will execute the trade according to market price
             _wallet_id
         );
 
         // TODO: use a real minConversionRate to ensure this?
-        require(received >= dest_min_tokens, "KyberAction._tradeTokenToToken: FAILED_TRADE");
+        require(
+            received >= dest_min_tokens,
+            "KyberAction._tradeTokenToToken: FAILED_TRADE"
+        );
     }
 
     function tradeTokenToEther(
@@ -171,7 +203,10 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
     ) external returnLeftoverToken(src_token, network_proxy) {
         // Use the full balance of tokens transferred from the trade executor
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
-        require(src_amount > 0, "KyberAction._tradeTokenToEther: NO_SOURCE_AMOUNT");
+        require(
+            src_amount > 0,
+            "KyberAction._tradeTokenToEther: NO_SOURCE_AMOUNT"
+        );
 
         // Approve the exchange to transfer tokens from this contract to the reserve
         IERC20(src_token).safeApprove(network_proxy, src_amount);
@@ -184,18 +219,20 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
         }
 
         // TODO: maybe this should take a destination address. then we can give it to the next hop instead of back to the teller. we could even send it direct to the bank
-        uint received = IKyberNetworkProxy(network_proxy).trade(
+        uint256 received = IKyberNetworkProxy(network_proxy).trade(
             IERC20(src_token),
             src_amount,
             ETH_ON_KYBER,
             to,
             dest_max_tokens,
-            1,  // minConversionRate of 1 will execute the trade according to market price
+            1, // minConversionRate of 1 will execute the trade according to market price
             _wallet_id
         );
 
         // TODO: use a real minConversionRate to ensure this?
-        require(received >= dest_min_tokens, "KyberAction._tradeTokenToEther: FAILED_TRADE");
+        require(
+            received >= dest_min_tokens,
+            "KyberAction._tradeTokenToEther: FAILED_TRADE"
+        );
     }
-
 }

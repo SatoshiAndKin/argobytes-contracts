@@ -27,7 +27,6 @@
 
 pragma solidity 0.6.9;
 
-
 contract Ownable2 {
     address private _owner;
 

@@ -12,12 +12,22 @@ contract Backdoor is AccessControl {
     /**
      * @notice Backdoor call to `to` with `value` wei and data `data`.
      */
-    function backdoor_call(address to, uint256 value, bytes calldata data) external returns (bytes memory) {
+    function backdoor_call(
+        address to,
+        uint256 value,
+        bytes calldata data
+    ) external returns (bytes memory) {
         // TODO: allow the use of GSN? seems like unnessary complexity
-        require(hasRole(BACKDOOR_ROLE, msg.sender), "Backdoor.backdoor_call: Caller does not have backdoor role");
+        require(
+            hasRole(BACKDOOR_ROLE, msg.sender),
+            "Backdoor.backdoor_call: Caller does not have backdoor role"
+        );
 
         // calls to self still seem unnecessary even for a backdoor
-        require(to != address(this), "Backdoor.backdoor_call: calls to self are not allowed");
+        require(
+            to != address(this),
+            "Backdoor.backdoor_call: calls to self are not allowed"
+        );
 
         (bool success, bytes memory return_data) = to.call{value: value}(data);
 
@@ -33,12 +43,21 @@ contract Backdoor is AccessControl {
     /**
      * @notice Backdoor delegatecall to `to` with data `data`.
      */
-    function backdoor_delegate_call(address to, bytes calldata data) external returns (bytes memory) {
+    function backdoor_delegate_call(address to, bytes calldata data)
+        external
+        returns (bytes memory)
+    {
         // TODO: allow the use of GSN? seems like unnessary complexity
-        require(hasRole(BACKDOOR_ROLE, msg.sender), "Backdoor.backdoor_delegate_call: Caller does not have backdoor role");
+        require(
+            hasRole(BACKDOOR_ROLE, msg.sender),
+            "Backdoor.backdoor_delegate_call: Caller does not have backdoor role"
+        );
 
         // calls to self still seem unnecessary even for a backdoor
-        require(to != address(this), "Backdoor.backdoor_delegate_call: calls to self are not allowed");
+        require(
+            to != address(this),
+            "Backdoor.backdoor_delegate_call: calls to self are not allowed"
+        );
 
         (bool success, bytes memory return_data) = to.delegatecall(data);
 
