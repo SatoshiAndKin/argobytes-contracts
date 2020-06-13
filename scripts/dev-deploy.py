@@ -23,6 +23,7 @@ KyberNetworkProxy = "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
 SynthetixAddressResolver = "0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2"
 UniswapFactory = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
 ZeroAddress = "0x0000000000000000000000000000000000000000"
+# ZrxFowarderAddress = "0x0000000000000000000000000000000000000000"
 
 # GasToken, GasToken2, CHI, or probably other future coins
 GasTokenAddress = CHI
@@ -155,6 +156,7 @@ def main():
     create_helper(argobytes_owned_vault, OneSplitOffchainAction, [], expected_mainnet_gas_price)
     create_helper(argobytes_owned_vault, KyberAction, [accounts[0], argobytes_owned_vault], expected_mainnet_gas_price)
     create_helper(argobytes_owned_vault, UniswapV1Action, [], expected_mainnet_gas_price)
+    # create_helper(argobytes_owned_vault, ZrxV3Action, [], expected_mainnet_gas_price)
     create_helper(argobytes_owned_vault, Weth9Action, [], expected_mainnet_gas_price)
     synthetix_depot_action = create_helper(argobytes_owned_vault, SynthetixDepotAction, [], expected_mainnet_gas_price)
 

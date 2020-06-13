@@ -210,7 +210,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
         address dest_token,
         uint256 dest_min_tokens,
         bytes calldata extra_data
-    ) external returnLeftoverToken(src_token, ADDRESS_ZERO) {
+    ) external payable returnLeftoverToken(src_token, ADDRESS_ZERO) {
         if (to == ADDRESS_ZERO) {
             to = msg.sender;
         }
@@ -247,7 +247,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
         address dest_token,
         uint256 dest_min_tokens,
         bytes calldata extra_data
-    ) external returnLeftoverToken(src_token, ADDRESS_ZERO) {
+    ) external payable returnLeftoverToken(src_token, ADDRESS_ZERO) {
         if (to == ADDRESS_ZERO) {
             to = msg.sender;
         }

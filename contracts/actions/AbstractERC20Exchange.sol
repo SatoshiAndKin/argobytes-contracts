@@ -9,11 +9,13 @@
 pragma solidity 0.6.9;
 pragma experimental ABIEncoderV2;
 
+import {Address} from "@openzeppelin/utils/Address.sol";
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 
 import {IERC20, UniversalERC20, SafeERC20} from "contracts/UniversalERC20.sol";
 
 contract AbstractERC20Modifiers {
+    using Address for address;
     using SafeERC20 for IERC20;
     using UniversalERC20 for IERC20;
 
@@ -31,12 +33,7 @@ contract AbstractERC20Modifiers {
         uint256 balance = address(this).balance;
 
         if (balance > 0) {
-            // TODO: use OpenZepplin's sendValue
-            (bool success, ) = msg.sender.call{value: balance}("");
-            require(
-                success,
-                "AbstractERC20Modifiers.returnLeftoverEther: ETH transfer failed"
-            );
+            Address.sendValue(msg.sender, balance);
         }
     }
 
@@ -101,6 +98,7 @@ abstract contract AbstractERC20Exchange is AbstractERC20Modifiers {
         Amount[] memory amounts = new Amount[](2);
 
         // TODO: think more about this. i think we need this because our contract is abstract
+
 
             string memory newAmountSignature
          = "newAmount(address,uint256,address,bytes)";

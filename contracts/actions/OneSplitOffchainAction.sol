@@ -2,6 +2,8 @@
 pragma solidity 0.6.9;
 pragma experimental ABIEncoderV2;
 
+import {Address} from "@openzeppelin/utils/Address.sol";
+
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {IERC20} from "contracts/UniversalERC20.sol";
 import {IOneSplit} from "interfaces/onesplit/IOneSplit.sol";
@@ -55,7 +57,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         address dest_token,
         uint256 dest_min_tokens,
         bytes calldata extra_data
-    ) external returnLeftoverEther() {
+    ) external payable returnLeftoverEther() {
         (uint256[] memory distribution, uint256 disable_flags) = abi.decode(
             extra_data,
             (uint256[], uint256)
@@ -100,7 +102,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         address dest_token,
         uint256 dest_min_tokens,
         bytes calldata extra_data
-    ) external returnLeftoverToken(src_token, exchange) {
+    ) external payable returnLeftoverToken(src_token, exchange) {
         (uint256[] memory distribution, uint256 disable_flags) = abi.decode(
             extra_data,
             (uint256[], uint256)
@@ -144,7 +146,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         address src_token,
         uint256 dest_min_tokens,
         bytes calldata extra_data
-    ) external returnLeftoverToken(src_token, exchange) {
+    ) external payable returnLeftoverToken(src_token, exchange) {
         (uint256[] memory distribution, uint256 disable_flags) = abi.decode(
             extra_data,
             (uint256[], uint256)
@@ -180,11 +182,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             to = msg.sender;
         }
 
-        (bool success, ) = to.call{value: dest_balance}("");
-        require(
-            success,
-            "OneSplitOffchainAction.tradeTokenToEther: ETH transfer failed"
-        );
+        Address.sendValue(to, dest_balance);
     }
 
     // TODO: i don't think we actually want to disable things. we should enable multipath since it is only called offchain

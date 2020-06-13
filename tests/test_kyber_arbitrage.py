@@ -6,7 +6,6 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-@pytest.mark.xfail(reason="reverting after refactor")
 def test_kyber_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, kyber_network_proxy, kyber_action, usdc_erc20):
     assert argobytes_owned_vault.balance() == 0
     assert kyber_action.balance() == 0

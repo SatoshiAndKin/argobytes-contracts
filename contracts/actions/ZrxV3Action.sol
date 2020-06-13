@@ -1,35 +1,46 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
+// https://0x.org/docs/guides/v3-forwarder-specification#marketsellorderswitheth
+// https://0x.org/docs/guides/introduction-to-using-0x-liquidity-in-smart-contracts#introduction-to-using-0x-liquidity-in-smart-contracts
+// https://0x.org/docs/guides/use-0x-api-liquidity-in-your-smart-contracts
 pragma solidity 0.6.9;
 pragma experimental ABIEncoderV2;
+
+import {Address} from "@openzeppelin/utils/Address.sol";
 
 import {UniversalERC20, IERC20} from "contracts/UniversalERC20.sol";
 import {AbstractERC20Modifiers} from "./AbstractERC20Exchange.sol";
 
 contract ZrxV3Action is AbstractERC20Modifiers {
+    using Address for address;
     using UniversalERC20 for IERC20;
 
-    function trade(
+    // TODO: should we trade against the exchange contract or the forwarder contract?
+    function tradeEth(
         address zrx_forwarder,
         address to,
         address src_token,
         address dest_token,
         uint256 dest_min_tokens,
         bytes memory zrx_data
-    ) public payable returnLeftoverUniversal(src_token, zrx_forwarder) {
+    ) external payable returnLeftoverUniversal(src_token, zrx_forwarder) {
         uint256 src_balance = IERC20(src_token).universalBalanceOf(
             address(this)
         );
 
         IERC20(src_token).universalApprove(zrx_forwarder, src_balance);
+        // TODO: approveMakerAssetProxy?
 
-        (bool success, ) = address(zrx_forwarder).call{value: msg.value}(
-            zrx_data
+        // TODO: use the actual interface?
+        // TODO: better error message?
+        zrx_forwarder.functionCallWithValue(
+            zrx_data,
+            src_balance,
+            "0x Forwarder call failed"
         );
 
-        // TODO: better error message
-        require(success, "0x call failed");
-
-        uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
+        uint256 dest_balance = IERC20(dest_token).universalBalanceOf(
+            address(this)
+        );
 
         require(
             dest_balance >= dest_min_tokens,
@@ -40,6 +51,6 @@ contract ZrxV3Action is AbstractERC20Modifiers {
             to = msg.sender;
         }
 
-        IERC20(dest_token).safeTransfer(to, dest_balance);
+        IERC20(dest_token).universalTransfer(to, dest_balance);
     }
 }

@@ -14,11 +14,13 @@
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 pragma solidity 0.6.9;
 
+import {Address} from "@openzeppelin/utils/Address.sol";
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
 
 library UniversalERC20 {
+    // using Address for address;
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -41,15 +43,12 @@ library UniversalERC20 {
         if (isETH(token)) {
             // https://diligence.consensys.net/blog/2019/09/stop-using-soliditys-transfer-now/
             // TODO: use OpenZepplin's sendValue
-            (bool success, ) = to.call{value: amount}("");
-            require(
-                success,
-                "UniversalERC20.universalTransfer: ETH transfer failed"
-            );
+            Address.sendValue(payable(to), amount);
         } else {
             token.safeTransfer(to, amount);
-            return true;
         }
+
+        return true;
     }
 
     function universalTransferFrom(
@@ -67,6 +66,7 @@ library UniversalERC20 {
                 from == msg.sender && msg.value >= amount,
                 "Wrong useage of ETH.universalTransferFrom()"
             );
+
             // send ETH to "to"
             if (to != address(this)) {
                 // https://diligence.consensys.net/blog/2019/09/stop-using-soliditys-transfer-now/
@@ -77,6 +77,7 @@ library UniversalERC20 {
                     "UniversalERC20.universalTransferFrom: ETH transfer failed"
                 );
             }
+
             // send back any extra msg.value
             if (msg.value > amount) {
                 // https://diligence.consensys.net/blog/2019/09/stop-using-soliditys-transfer-now/

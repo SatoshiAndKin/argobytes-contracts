@@ -5,8 +5,11 @@
 pragma solidity 0.6.9;
 
 import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
+import {Address} from "@openzeppelin/utils/Address.sol";
 
 contract Backdoor is AccessControl {
+    using Address for address;
+
     bytes32 internal constant BACKDOOR_ROLE = keccak256("BACKDOOR_ROLE");
 
     /**
@@ -23,18 +26,11 @@ contract Backdoor is AccessControl {
             "Backdoor.backdoor_call: Caller does not have backdoor role"
         );
 
-        // calls to self still seem unnecessary even for a backdoor
-        require(
-            to != address(this),
-            "Backdoor.backdoor_call: calls to self are not allowed"
+        bytes memory return_data = to.functionCallWithValue(
+            data,
+            value,
+            "backdoor call failed"
         );
-
-        (bool success, bytes memory return_data) = to.call{value: value}(data);
-
-        if (!success) {
-            // TODO: include the return_data in the error
-            revert("backdoor call failed");
-        }
 
         // emit?
         return return_data;
@@ -51,12 +47,6 @@ contract Backdoor is AccessControl {
         require(
             hasRole(BACKDOOR_ROLE, msg.sender),
             "Backdoor.backdoor_delegate_call: Caller does not have backdoor role"
-        );
-
-        // calls to self still seem unnecessary even for a backdoor
-        require(
-            to != address(this),
-            "Backdoor.backdoor_delegate_call: calls to self are not allowed"
         );
 
         (bool success, bytes memory return_data) = to.delegatecall(data);

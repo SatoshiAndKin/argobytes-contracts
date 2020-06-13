@@ -135,7 +135,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
         address dest_token,
         uint256 dest_min_tokens,
         uint256 trade_gas
-    ) external returnLeftoverEther() {
+    ) external payable returnLeftoverEther() {
         require(
             dest_token != ADDRESS_ZERO,
             "UniswapV1Action.tradeEtherToToken: dest_token cannot be ETH"
@@ -207,7 +207,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
         address dest_token,
         uint256 dest_min_tokens,
         uint256 trade_gas
-    ) external returnLeftoverToken(src_token, exchange) {
+    ) external payable returnLeftoverToken(src_token, exchange) {
         require(
             src_token != ADDRESS_ZERO,
             "UniswapV1Action.tradeTokenToToken: src_token cannot be ETH"
@@ -295,7 +295,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
         address src_token,
         uint256 dest_min_tokens,
         uint256 trade_gas
-    ) external returnLeftoverToken(src_token, exchange) {
+    ) external payable returnLeftoverToken(src_token, exchange) {
         require(
             src_token != ADDRESS_ZERO,
             "UniswapV1Action.tradeTokenToEther: src_token cannot be ETH"

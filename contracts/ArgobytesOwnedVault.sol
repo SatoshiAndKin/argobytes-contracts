@@ -21,17 +21,19 @@ import {
 // we actually need it right now since we don't have withdraw functions on ArgobytesOwnedVault
 import {Backdoor} from "contracts/Backdoor.sol";
 
-
 // END WARNING!
 
 contract ArgobytesOwnedVaultDeployer {
     // use CREATE2 to deploy ArgobytesOwnedVault with a salt
     // TODO: steps for using ERADICATE2
-    constructor(
-        bytes32 salt,
-        address[] memory trusted_arbitragers
-    ) public payable {
-        ArgobytesOwnedVault deployed = new ArgobytesOwnedVault{salt: salt, value: msg.value}(msg.sender, trusted_arbitragers);
+    constructor(bytes32 salt, address[] memory trusted_arbitragers)
+        public
+        payable
+    {
+        ArgobytesOwnedVault deployed = new ArgobytesOwnedVault{
+            salt: salt,
+            value: msg.value
+        }(msg.sender, trusted_arbitragers);
 
         // the vault deploys its own logs. we can grab the contract's address from there
         // emit Deployed(address(deployed));
@@ -40,7 +42,6 @@ contract ArgobytesOwnedVaultDeployer {
         selfdestruct(msg.sender);
     }
 }
-
 
 // TODO: re-write this to use the diamond standard
 // TODO: expect new versions of GasToken that may have different interfaces. be ready to upgrade them
@@ -60,10 +61,10 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
      * @notice Deploy the contract.
      * This is payable so that the initial deployment can fund
      */
-    constructor(
-        address admin,
-        address[] memory trusted_arbitragers
-    ) public payable {
+    constructor(address admin, address[] memory trusted_arbitragers)
+        public
+        payable
+    {
         // Grant the contract deployer the "backdoor" role
         // BEWARE! this contract can call and delegate call arbitrary functions!
         _setupRole(BACKDOOR_ROLE, admin);
@@ -86,7 +87,7 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
 
     function atomicArbitrage(
         address gastoken,
-        address atomic_trader,
+        address payable atomic_trader,
         address kollateral_invoker,
         address[] calldata tokens, // ETH (address(0)) or ERC20
         uint256 first_amount,
@@ -112,7 +113,9 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
 
         IERC20 borrow_token = IERC20(tokens[0]);
 
-        uint256 starting_vault_balance = borrow_token.universalBalanceOf(address(this));
+        uint256 starting_vault_balance = borrow_token.universalBalanceOf(
+            address(this)
+        );
 
         // transfer tokens if we have them
         // if we don't have sufficient tokens, the next contract will borrow from kollateral or some other provider
@@ -122,7 +125,10 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
             // clear the kollateral invoker since we won't need it
             kollateral_invoker = ADDRESS_ZERO;
         } else if (starting_vault_balance > 0) {
-            require(kollateral_invoker != ADDRESS_ZERO, "ArgobytesOwnedVault.atomicArbitrage: not enough funds. need kollateral_invoker");
+            require(
+                kollateral_invoker != ADDRESS_ZERO,
+                "ArgobytesOwnedVault.atomicArbitrage: not enough funds. need kollateral_invoker"
+            );
 
             borrow_token.universalTransfer(
                 atomic_trader,
@@ -133,7 +139,14 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
 
         // notice that this is an atomic trade. it doesn't require a profitable arbitrage. we have to check that ourself after it returns
         // TODO: call a different function or pass zero_address for kollateral_invoker if we don't need outside capital
-        try IArgobytesAtomicTrade(atomic_trader).atomicTrade(kollateral_invoker, tokens, first_amount, encoded_actions) {
+        try
+            IArgobytesAtomicTrade(atomic_trader).atomicTrade(
+                kollateral_invoker,
+                tokens,
+                first_amount,
+                encoded_actions
+            )
+         {
             // the trade worked!
         } catch Error(string memory reason) {
             // a revert was called inside atomicTrade
@@ -143,7 +156,9 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
             endFreeGasTokens(gastoken, initial_gas);
 
             revert(reason);
-        } catch (bytes memory /*lowLevelData*/) {
+        } catch (
+            bytes memory /*lowLevelData*/
+        ) {
             // This is executed in case revert() was used
             // or there was a failing assertion, division
             // by zero, etc. inside atomicTrade.
@@ -151,7 +166,9 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
             // burn our gas token before raising the same revert
             endFreeGasTokens(gastoken, initial_gas);
 
-            revert("ArgobytesOwnedVault -> IArgobytesAtomicTrade.atomicTrade reverted without a reason");
+            revert(
+                "ArgobytesOwnedVault -> IArgobytesAtomicTrade.atomicTrade reverted without a reason"
+            );
         }
 
         // don't trust IArgobytesAtomicTrade.atomicTrade's return. It is safer to check the balance ourselves
@@ -191,7 +208,11 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
 
     // use CREATE2 to deploy with a salt and free gas tokens
     // TODO: function that combines deploy2 and diamondCut
-    function deploy2(address gas_token, bytes32 salt, bytes memory bytecode) public payable freeGasTokens(gas_token) returns (address deployed) {
+    function deploy2(
+        address gas_token,
+        bytes32 salt,
+        bytes memory bytecode
+    ) public payable freeGasTokens(gas_token) returns (address deployed) {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "ArgobytesOwnedVault.deploy2: Caller is not an admin"
