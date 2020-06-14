@@ -43,7 +43,7 @@ def test_compound_get_underlying_amounts(curve_fi_action, curve_fi_compound, cus
     # TODO: what should we assert?
 
 
-# @pytest.mark.xfail(reason="revert: re-entered")
+# @pytest.mark.xfail(reason="revert")
 def test_compound_underlying_action(curve_fi_action, curve_fi_compound, dai_erc20, onesplit_helper, usdc_erc20):
     # buy some DAI for the curve_fi_action
     dai_balance = onesplit_helper(1e18, dai_erc20, curve_fi_action)
@@ -64,7 +64,7 @@ def test_compound_underlying_action(curve_fi_action, curve_fi_compound, dai_erc2
     # TODO: actually assert things
 
 
-# @pytest.mark.xfail(reason="revert: UniswapV2: LOCKED")
+# @pytest.mark.xfail(reason="revert: re-entered")
 def test_compound_action(curve_fi_action, curve_fi_compound, cdai_erc20, cusdc_erc20, onesplit_helper):
     # buy some cDAI for the curve_fi_action
     cdai_balance = onesplit_helper(1e18, cdai_erc20, curve_fi_action)
