@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // Argobytes is Satoshi & Kin's smart contract for flash-loaned atomic arbitrage trading.
-pragma solidity 0.6.9;
+pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";

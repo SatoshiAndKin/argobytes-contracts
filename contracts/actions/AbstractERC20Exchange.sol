@@ -6,7 +6,7 @@
  *
  * Rewrite this to use UniversalERC20? I'm not sure its worth it. this is pretty easy to follow.
  */
-pragma solidity 0.6.9;
+pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
 import {Address} from "@openzeppelin/utils/Address.sol";
@@ -91,7 +91,9 @@ abstract contract AbstractERC20Exchange is AbstractERC20Modifiers {
         Amount[] memory amounts = new Amount[](2);
 
         // we can't use try/catch with internal functions, so we use staticcall instead
-        string memory newAmountSignature = "newAmount(address,uint256,address,bytes)";
+
+            string memory newAmountSignature
+         = "newAmount(address,uint256,address,bytes)";
 
         // get amounts for trading token_a -> token_b
         // use the same amounts that we used in our ETH trades to keep these all around the same value

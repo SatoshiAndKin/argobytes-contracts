@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.6.9;
-
+pragma solidity 0.6.10;
 
 abstract contract IGasToken {
     function free(uint256 value) public virtual returns (bool success);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity 0.6.9;
+pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
 import {IKyberNetworkProxy} from "interfaces/kyber/IKyberNetworkProxy.sol";

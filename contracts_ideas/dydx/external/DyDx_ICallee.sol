@@ -13,11 +13,10 @@
     https://github.com/dydxprotocol/solo/blob/2d8454e02702fe5bc455b848556660629c3cad36/contracts/protocol/interfaces/ICallee.sol
 */
 
-pragma solidity 0.6.9;
+pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
 import {DyDx_Account} from "./DyDx_Account.sol";
-
 
 /**
  * @title ICallee

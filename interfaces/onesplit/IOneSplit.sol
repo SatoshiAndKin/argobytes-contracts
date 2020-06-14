@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.6.9;
-
+pragma solidity 0.6.10;
 
 contract IOneSplitConsts {
     // flags = FLAG_DISABLE_UNISWAP + FLAG_DISABLE_KYBER + ...
@@ -51,7 +50,6 @@ contract IOneSplitConsts {
     uint256 public constant FLAG_ENABLE_CHI_BURN = 0x10000000000;
     uint256 public constant FLAG_ENABLE_GST2_BURN = 0x20000000000;
 }
-
 
 abstract contract IOneSplit is IOneSplitConsts {
     function getExpectedReturn(

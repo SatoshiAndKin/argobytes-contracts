@@ -1,9 +1,8 @@
 // get this working in multiple phases.
 // phase 0: operate for flash loans. phase 1: operate for trading. phase 2: operate for liquidating
-pragma solidity 0.6.9;
+pragma solidity 0.6.10;
 
 import {AbstractERC20Exchange} from "../AbstractERC20Exchange.sol";
-
 
 contract DyDxAction is AbstractERC20Exchange {
     function _tradeEtherToToken(

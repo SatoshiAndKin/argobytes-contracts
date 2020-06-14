@@ -19,10 +19,9 @@
 
 */
 
-pragma solidity 0.6.9;
+pragma solidity 0.6.10;
 
 import {IInvocationHook} from "./IInvocationHook.sol";
-
 
 abstract contract IInvoker is IInvocationHook {
     function invoke(

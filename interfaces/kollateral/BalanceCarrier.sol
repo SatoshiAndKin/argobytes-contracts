@@ -17,12 +17,11 @@
 
 */
 
-pragma solidity 0.6.9;
+pragma solidity 0.6.10;
 
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 
 import {ExternalCaller} from "./ExternalCaller.sol";
-
 
 contract BalanceCarrier is ExternalCaller {
     address private _ethTokenAddress;

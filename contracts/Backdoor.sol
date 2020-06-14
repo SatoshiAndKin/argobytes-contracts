@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // TODO: maybe better to just use the diamond standard EIP for upgradable contracts, but this works for now
 
-pragma solidity 0.6.9;
+pragma solidity 0.6.10;
 
 import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
 import {Address} from "@openzeppelin/utils/Address.sol";
