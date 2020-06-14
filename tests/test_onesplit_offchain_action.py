@@ -8,20 +8,20 @@ from brownie.test import given, strategy
 # parts 2: OneSplitOffchainAction.getAmounts -  avg: 945866  low: 23638  high: 1868095
 # parts 3: OneSplitOffchainAction.getAmounts -  avg: 1105818  low: 23638  high: 2187998
 # parts 10: was like 8 mil lol
-def test_get_amounts(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action, usdc_erc20, skip_coverage, weth9_erc20):
+def test_get_amounts(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action, usdc_erc20, skip_coverage, weth9_erc20):
     eth_amount = 1e18
     dai_amount = 1e20
     # TODO: increasing parts will be fragile. some exchanges use a LOT of gas
     parts = 1
-    address_zero = "0x0000000000000000000000000000000000000000"
+    disable_flags = 0
 
     # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)
-    amounts = onesplit_offchain_action.getAmounts(address_zero, eth_amount, dai_erc20, onesplit, parts)
+    amounts = onesplit_offchain_action.getAmounts(address_zero, eth_amount, dai_erc20, onesplit, parts, disable_flags)
 
     print("amounts 1", amounts)
 
     # TODO: use amounts from the previous call
-    amounts = onesplit_offchain_action.getAmounts(dai_erc20, dai_amount, address_zero, onesplit, parts)
+    amounts = onesplit_offchain_action.getAmounts(dai_erc20, dai_amount, address_zero, onesplit, parts, disable_flags)
 
     print("amounts 2", amounts)
 
@@ -29,7 +29,6 @@ def test_get_amounts(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_ac
 
 
 # we skip coverage because this can end up being a LOT of calls which crashes ganche-cli
-# @pytest.mark.xfail(reason="wtf revert: UniswapV2: K")
 def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action, skip_coverage, weth9_erc20):
     value = 1e17
 
@@ -45,6 +44,7 @@ def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_of
     assert onesplit_offchain_action.balance() == value
 
     parts = 1
+    disable_flags = 0
 
     # trade ETH to WETH
     # this used to be USDC, but it has a weird proxy pattern
@@ -52,7 +52,7 @@ def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_of
     # calculation distributions on-chain is expensive, so we do it here instead
     # function encodeExtraData(address src_token, address dest_token, uint src_amount, uint dest_min_tokens, uint256 parts)
     (expected_return_eth_to_token, extra_data_eth_to_token) = onesplit_offchain_action.encodeExtraData(
-        address_zero, weth9_erc20, value, 1, onesplit, parts)
+        address_zero, weth9_erc20, value, 1, onesplit, parts, disable_flags)
 
     # tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
     _eth_to_token_tx = onesplit_offchain_action.tradeEtherToToken(
@@ -77,7 +77,7 @@ def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_of
     # function encodeExtraData(address src_token, address dest_token, uint src_amount, uint dest_min_tokens, uint256 parts)
     # TODO: proper src_amount based on the previous transaction
     (expected_return_token_to_token, extra_data_token_to_token) = onesplit_offchain_action.encodeExtraData(
-        weth9_erc20, dai_erc20, weth9_balance, 1, onesplit, parts)
+        weth9_erc20, dai_erc20, weth9_balance, 1, onesplit, parts, disable_flags)
 
     # tradeTokenToToken(address to, address src_token, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
     onesplit_offchain_action.tradeTokenToToken(
@@ -94,7 +94,7 @@ def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_of
     # function encodeExtraData(address src_token, address dest_token, uint src_amount, uint dest_min_tokens, uint256 parts)
     # TODO: proper src_amount based on the previous transaction
     (expected_return_token_to_eth, extra_data_token_to_eth) = onesplit_offchain_action.encodeExtraData(
-        dai_erc20, address_zero, dai_balance, 1, onesplit, parts)
+        dai_erc20, address_zero, dai_balance, 1, onesplit, parts, disable_flags)
 
     # tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
     onesplit_offchain_action.tradeTokenToEther(
@@ -109,7 +109,6 @@ def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_of
     # TODO: make sure ETH balance is non-zero
 
 
-@pytest.mark.xfail(reason="what is going on here? why does the helper return a higher balance than than our actual balance?")
 def test_onesplit_helper_cdai(onesplit_helper, cdai_erc20):
     token = cdai_erc20
 

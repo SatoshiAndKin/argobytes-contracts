@@ -48,13 +48,13 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
             // this reverts on an invalid i
             address coin = ICurveFi(exchange).coins(i);
 
-            if (coin != ADDRESS_ZERO) {
+            if (coin == ADDRESS_ZERO) {
                 string memory err = string(
                     abi.encodePacked(
                         "CurveFiAction: Exchange ",
                         exchange.toString(),
                         "is missing coin #",
-                        i
+                        uint256(i).toString()
                     )
                 );
                 revert(err);
