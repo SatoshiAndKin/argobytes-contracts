@@ -1,7 +1,10 @@
 {
-  "dependencies": {
+  "devDependencies": {
     "eth95": "^0.1.2",
-    "ganache-cli": "^6.9.0",
+    "ganache-cli": "^6.9.1",
     "solc": "0.6.10"
+  },
+  "resolutions": {
+    "**/ganache-core": "https://github.com/compound-finance/ganache-core.git#jflatow/unbreak-fork"
   }
 }

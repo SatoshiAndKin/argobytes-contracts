@@ -15,4 +15,8 @@ python3 -m venv venv
 pip install wheel
 pip install -r requirements.txt
 
-npm install
+if [ -d node_modules ]; then
+  rm -rf node_modules
+fi
+
+yarn install

@@ -10,15 +10,16 @@ My initial use for these is for atomic arbitrage, but `ArgobytesAtomicTrade.sol`
 1. Install `geth` (or another node that is compatible with `ganache-cli --fork`). [Read this](https://gist.github.com/WyseNynja/89179917d209d10e6ea27c5f2f8f88f1).
 2. Install `python3-dev` and `python3-venv`
 3. Install `node` v12 (and `npm` v6) (I like to use [`nvm`](https://github.com/nvm-sh/nvm) to manage node versions)
-4. Make a `.env` file:
+4. Install `yarn` (`npm install -g yarn`)
+5. Make a `.env` file:
     ```
     # We use etherscan for fetching mainnet contract data
     export ETHERSCAN_TOKEN=XXX
     # Tracing transactions in ganache can use a lot more than the default 1.7GB
     export NODE_OPTIONS="--max-old-space-size=8096"
     ```
-5. Run `./scripts/setup.sh`
-6. Run `./venv/bin/brownie networks import brownie-network-config.yaml True`
+6. Run `./scripts/setup.sh`
+7. Run `./venv/bin/brownie networks import brownie-network-config.yaml True`
 
 
 # Develop
