@@ -37,7 +37,8 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
         returns (bool)
     {
         return
-            _coins[exchange][token] + _underlying_coins[exchange][token] != 0;
+            (_coins[exchange][token] > 0) ||
+            (_underlying_coins[exchange][token] > 0);
     }
 
     function saveExchange(address exchange, int128 n) public onlyOwner {
@@ -47,8 +48,15 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
             // this reverts on an invalid i
             address coin = ICurveFi(exchange).coins(i);
 
-            // TODO: include "i" and "n" in the revert message
-            require(coin != ADDRESS_ZERO, "CurveFiAction: Unknown coin");
+            if (coin != ADDRESS_ZERO) {
+                string memory err = abi.encodePacked(
+                    "CurveFiAction: Exchange ",
+                    exchange.toString(),
+                    "is missing coin #",
+                    i
+                );
+                revert(err);
+            }
 
             // Approve the transfer of tokens from this contract to the exchange contract
             // we only do this if it isn't already set because sometimes exchanges have the same asset multiple times
@@ -117,9 +125,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
 
             if (underlying_i == 0 || underlying_j == 0) {
                 // no _coin and no _underlying_coin found. cancel
-                // TODO: more specific error
                 string memory err;
-                // TODO: better log that uses both i/j and underlying_i/j
                 if (i + j + underlying_i + underlying_j == 0) {
                     err = string(
                         abi.encodePacked(

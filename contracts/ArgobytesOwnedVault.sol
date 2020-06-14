@@ -82,7 +82,6 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
     }
 
     // allow receiving tokens
-    // TODO: add withdraw helpers! (otherwise we can just use the backdoor)
     receive() external payable {}
 
     function atomicArbitrage(
@@ -138,7 +137,6 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         // else we don't have any of these tokens. they will all come from kollateral or some other flash loan platform
 
         // notice that this is an atomic trade. it doesn't require a profitable arbitrage. we have to check that ourself after it returns
-        // TODO: call a different function or pass zero_address for kollateral_invoker if we don't need outside capital
         try
             IArgobytesAtomicTrade(atomic_trader).atomicTrade(
                 kollateral_invoker,
@@ -201,9 +199,6 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
 
         // we made it to the end. burn some gas tokens
         endFreeGasTokens(gastoken, initial_gas);
-
-        // TODO: i thought this was automatic, but i'm not getting anything returned
-        return primary_profit;
     }
 
     // use CREATE2 to deploy with a salt and free gas tokens

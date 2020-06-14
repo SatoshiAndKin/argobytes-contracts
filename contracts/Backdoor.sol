@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-// TODO: backdoor_static_call and backdoor_delegate_call
 // TODO: maybe better to just use the diamond standard EIP for upgradable contracts, but this works for now
 
 pragma solidity 0.6.9;
@@ -20,7 +19,6 @@ contract Backdoor is AccessControl {
         uint256 value,
         bytes calldata data
     ) external returns (bytes memory) {
-        // TODO: allow the use of GSN? seems like unnessary complexity
         require(
             hasRole(BACKDOOR_ROLE, msg.sender),
             "Backdoor.backdoor_call: Caller does not have backdoor role"
@@ -43,7 +41,6 @@ contract Backdoor is AccessControl {
         external
         returns (bytes memory)
     {
-        // TODO: allow the use of GSN? seems like unnessary complexity
         require(
             hasRole(BACKDOOR_ROLE, msg.sender),
             "Backdoor.backdoor_delegate_call: Caller does not have backdoor role"

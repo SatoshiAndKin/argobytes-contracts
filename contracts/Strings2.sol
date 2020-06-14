@@ -15,31 +15,4 @@ library Strings2 {
         }
         return string(str);
     }
-
-    /// @dev Get the revert message from a failed call
-    /// @notice This is needed in order to get the human-readable revert message from a call
-    /// @param return_data Response of the call
-    /// @return Revert message string
-    function toRevertString(bytes memory return_data)
-        internal
-        pure
-        returns (string memory)
-    {
-        // this is what authereum does
-        if (return_data.length < 68) {
-            return "Strings2: Silent revert";
-        }
-
-        string memory revert_message;
-        // this is what keep-network/tbtc does
-        assembly {
-            // A revert message is ABI-encoded as a call to Error(string)
-            // Slicing the Error() signature (4 bytes) and Data offset (4 bytes)
-            // leaves us with a pre-encoded string.
-            // We also slice off the ABI-coded length of return_data (32).
-            revert_message := add(return_data, 0x44)
-        }
-
-        return revert_message;
-    }
 }

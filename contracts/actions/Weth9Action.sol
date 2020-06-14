@@ -5,7 +5,6 @@ import {Address} from "@openzeppelin/utils/Address.sol";
 
 import {IWETH9} from "interfaces/weth9/IWETH9.sol";
 
-// TODO: do we want auth on this with setters? i think no. i think we should just have a simple contract with a constructor. if we need changes, we can deploy a new contract. less methods is less attack surface
 contract Weth9Action {
     // this function must be able to receive ether if it is expected to wrap it
     receive() external payable {}

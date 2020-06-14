@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-// Argobytes is Satoshi & Kin's smart contract for arbitrage trading.
-// Uses flash loans so that we have near infinite liquidity.
-// Uses gas token so that we pay less in miner fees.
-// TODO: use address payable once ethabi works with it
-// ABIEncodeV2 is not yet supported by rust's ethabi, so be careful how you use it. don't expose new encodings in function args or returns
+// Argobytes is Satoshi & Kin's smart contract for flash-loaned atomic arbitrage trading.
 pragma solidity 0.6.9;
 pragma experimental ABIEncoderV2;
 
@@ -39,8 +35,7 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
         0x0000000000000000000000000000000000000001
     );
 
-    // TODO: get rid of this. do encoding outside of the smart contract
-    // this is here because I'm having trouble encoding these types in Rust
+    // TODO: get rid of this once our tests don't use it anymore
     function encodeActions(
         address payable[] memory targets,
         bytes[] memory targets_data,
@@ -75,9 +70,6 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
         uint256 first_amount,
         bytes calldata encoded_actions
     ) external override payable {
-        // TODO: add deadline to prevent miners doing sneaky things by broadcasting transactions late
-        // TODO: if we want to use GSN, we should use `_msgSender()` instead of msg.sender
-
         uint256 num_tokens = tokens.length;
 
         require(
@@ -94,7 +86,6 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
             // we do not have enough token to do this trade ourselves. use kollateral for the remainder
             first_amount -= balance;
 
-            // TODO: try/catch?
             if (tokens[0] == ADDRESS_ZERO) {
                 // use kollateral's address for ETH instead of the zero address we use
                 IInvoker(kollateral_invoker).invoke(
@@ -116,12 +107,10 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
             // this could still be benificial if we are a liquidity provider on kollateral, so we allow it
         }
 
-        // this contract should now have some tokens in it
-        // TODO: it is possible all tokens went to other addresses or to repay the loan. If the caller doesn't want that, they can revert
+        // unless everything went to paying kollateral fees, this contract should now have some tokens in it
 
-        // sweep any profits to another address (likely cold storage, but could be a fancy smart wallet, but please not a hot wallet!)
+        // sweep any profits to another address
         // because there might be leftovers from some of the trades, we sweep all tokens involved
-        // TODO: move this to an internal sweep function?
         for (uint256 i = 0; i < num_tokens; i++) {
             // use univeralERC20 library functions because one of these tokens might actually be ETH
             IERC20 token = IERC20(tokens[i]);
@@ -130,7 +119,7 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
 
             // we don't emit events ourselves because token transfers already do that for us
             // ETH profits won't emit logs, but it is easy to check balance changes
-            // TODO: we could take an address instead of sending back to msg.sender, but this works for our vault which is our main user for now
+            // TODO: we could have a `address to` param instead of sending to msg.sender, but this works for our purposes for now
             token.universalTransfer(msg.sender, ending_amount);
         }
     }
@@ -140,13 +129,12 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
      * @dev https://docs.kollateral.co/implementation#creating-your-invokable-smart-contract
      */
     function execute(bytes calldata encoded_actions) external override payable {
-        // TODO: open this up once it has been audited
+        // only allow calls to execute from our `atomicTrade` function
         require(
             currentSender() == address(this),
             "ArgobytesAtomicTrade.execute: Original sender is not this contract"
         );
 
-        // TODO: can we get a revert message if the decode fails?
         Action[] memory actions = abi.decode(encoded_actions, (Action[]));
 
         uint256 num_actions = actions.length;
@@ -157,11 +145,10 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
             "ArgobytesAtomicArbitrage.execute: there must be at least one action"
         );
 
-        bool is_current_token_ether = isCurrentTokenEther();
         // IMPORTANT! THIS HAS A UNIQUE ETH ADDRESS! IT DOES NOT USE THE ZERO ADDRESS!
         IERC20 borrowed_token = IERC20(currentTokenAddress());
 
-        if (!is_current_token_ether) {
+        if (!isCurrentTokenEther()) {
             // transer tokens to the first action
             // this is easier/cheaper than doing approve+transferFrom
 
@@ -173,9 +160,10 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
         }
 
         // an action can do whatever it wants (liquidate, swap, refinance, etc.)
-        // all that we care about is that we can repay our debts
         // this doesn't have to be an arbitrage trade
+        // all that we care about is that we can repay our debts
         for (uint256 i = 0; i < num_actions; i++) {
+            // IMPORTANT! it is up to the caller to make sure that they trust this target!
             address action_address = actions[i].target;
 
             // calls to this aren't expected, so lets just block them to be safe
@@ -184,11 +172,7 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
                 "ArgobytesAtomicArbitrage.execute: calls to self are not allowed"
             );
 
-            // IMPORTANT! An action contract could be designed that keeps tokens for itself.
-            // Preventing that will be very difficult (if not impossible).
-            // it is up to the caller to make sure that they use contracts that they trust.
-
-            // TODO: this error message probably costs gas than we want. revert traces are probably more helpful
+            // TODO: this error message probably costs more gas than we want to spend
             string memory err = string(
                 abi.encodePacked(
                     "ArgobytesAtomicTrade.execute: call #",
@@ -244,14 +228,11 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
     /**
      * @notice Execute arbitrary actions when we have enough funds without borrowing from anywhere.
      */
-    // TODO: private or internal?
     function executeSolo(
         address first_token,
         uint256 first_amount,
         bytes memory encoded_actions
-    ) private {
-        // TODO: would be nice to have a revert message here if this fails to decode
-        // TODO: accept Action[] memory actions directly?
+    ) internal {
         Action[] memory actions = abi.decode(encoded_actions, (Action[]));
 
         uint256 num_actions = actions.length;
@@ -265,23 +246,23 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
         // if the first token isn't ETH, transfer it
         // if it is ETH, we will send it with functionCallWithValue
         if (first_token != ADDRESS_ZERO) {
-            uint256 first_token_balance = IERC20(first_token)
-                .universalBalanceOf(address(this));
+            // we don't need to use the universal functions here since we know this isn't ETH
+            uint256 first_token_balance = IERC20(first_token).balanceOf(
+                address(this)
+            );
 
             require(
                 first_token_balance >= first_amount,
                 "ArgobytesAtomicArbitrage.executeSolo: not enough token"
             );
 
-            IERC20(first_token).universalTransfer(
-                actions[0].target,
-                first_amount
-            );
+            // we don't need to use the universal functions here since we know this isn't ETH
+            IERC20(first_token).safeTransfer(actions[0].target, first_amount);
         }
 
         // an action can do whatever it wants (liquidate, swap, refinance, etc.)
-        // this does NOT have to end with a profitable arbitrage. If you want that,
         for (uint256 i = 0; i < num_actions; i++) {
+            // IMPORTANT! it is up to the caller to make sure that they trust this target!
             address action_address = actions[i].target;
 
             // calls to this aren't expected, so lets just block them to be safe
@@ -290,9 +271,7 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
                 "ArgobytesAtomicArbitrage.executeSolo: calls to self are not allowed"
             );
 
-            // IMPORTANT! An action contract could be designed that keeps profits for itself.
-            // Preventing that will be very difficult. This is why other similar contracts take a fee.
-
+            // TODO: this error message probably costs more gas than we want to spend
             string memory err = string(
                 abi.encodePacked(
                     "ArgobytesAtomicTrade.executeSolo: call #",

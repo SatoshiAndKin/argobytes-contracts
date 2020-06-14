@@ -102,7 +102,7 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
                         );
 
                         if (IExchangeRates(rates).rateIsStale(BYTESTR_ETH)) {
-                            // TODO: i think ganache is doing something incorrect here. debug more
+                            // rates go stale after 3 hours. If you are on a development network, be sure to reset the blocktime as needed
                             string memory err = string(
                                 abi.encodePacked(
                                     "SynthetixDepotAction.newAmount: ETH rate is stale"
@@ -166,10 +166,6 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
 
                 a.error = err;
             }
-        } else {
-            // TODO: do we want a revert here? I think an empty order is better when there isn't actually an error
-            // string memory err = string(abi.encodePacked("SynthetixDepotAction.newAmount: ETH is the only supported taker token"));
-            // a.error = err;
         }
 
         SynthetixExtraData memory trade_extra_data;

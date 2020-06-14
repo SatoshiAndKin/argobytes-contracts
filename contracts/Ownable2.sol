@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// based on openzepplin's helper
+// based on openzepplin's helper, but allows us to set the initial owner to something other than msg.sender.
 // TODO: add support for GSN?
 //
 // The MIT License (MIT)

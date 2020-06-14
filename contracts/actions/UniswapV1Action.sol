@@ -10,7 +10,6 @@ import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {IUniswapFactory} from "interfaces/uniswap/IUniswapFactory.sol";
 import {IUniswapExchange} from "interfaces/uniswap/IUniswapExchange.sol";
 
-// TODO: do we want auth on this with setters? i think no. i think we should just have a simple contract with a constructor. if we need changes, we can deploy a new contract. less methods is less attack surface
 contract UniswapV1Action is AbstractERC20Exchange {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -121,7 +120,6 @@ contract UniswapV1Action is AbstractERC20Exchange {
             a.selector = this.tradeTokenToToken.selector;
         }
 
-        // TODO: would be cool to encode the complete calldata, but we can't be sure about the "to" address. we could default to 0x0 and fill it in though
         //a.trade_extra_data = "";
 
         a.exchange_data = abi.encode(exchange_data);
@@ -341,7 +339,6 @@ contract UniswapV1Action is AbstractERC20Exchange {
             // a revert was called inside ethToTokenTransferInput
             // and a reason string was provided.
 
-            // TODO: add something to this revert string
             revert(
                 string(
                     abi.encodePacked(

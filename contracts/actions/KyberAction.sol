@@ -83,8 +83,7 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
         // https://github.com/KyberNetwork/smart-contracts/blob/master/contracts/Utils2.sol#L28
         uint256 precision = 10**18;
 
-        // TODO: i think this is on Kyber's Utils2 contract. use that instead
-        //
+        // TODO: this is on Kyber's Utils2 contract. use that instead of re-implementing here
         if (maker_decimals >= taker_decimals) {
             // (srcQty * rate * (10**(dstDecimals - srcDecimals))) / PRECISION;
             expected_rate =
@@ -145,7 +144,6 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
             _wallet_id
         );
 
-        // TODO: use a real minConversionRate to ensure this?
         require(
             received >= dest_min_tokens,
             "KyberAction._tradeTokenToToken: FAILED_TRADE"
@@ -187,7 +185,6 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
             _wallet_id
         );
 
-        // TODO: use a real minConversionRate to ensure this?
         require(
             received >= dest_min_tokens,
             "KyberAction._tradeTokenToToken: FAILED_TRADE"
@@ -218,7 +215,6 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
             dest_max_tokens = MAX_QTY;
         }
 
-        // TODO: maybe this should take a destination address. then we can give it to the next hop instead of back to the teller. we could even send it direct to the bank
         uint256 received = IKyberNetworkProxy(network_proxy).trade(
             IERC20(src_token),
             src_amount,
@@ -229,7 +225,6 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
             _wallet_id
         );
 
-        // TODO: use a real minConversionRate to ensure this?
         require(
             received >= dest_min_tokens,
             "KyberAction._tradeTokenToEther: FAILED_TRADE"

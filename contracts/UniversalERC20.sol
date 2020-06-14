@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 //
 // Based on https://github.com/CryptoManiacsZone/1split/blob/014d4a08ef746af4b4da053e9465927d151ec1fe/contracts/UniversalERC20.sol
+// TODO: This could definitely be gas-golfed. For example, we check `amount == 0` in our functions and in OpenZepplin's
 //
 // this is probably going to cost more gas than calling different functions for ETH or tokens, but this is saving me a lot of time
 // make it work, make it work right, make it work fast. gas counts as "fast"
