@@ -159,7 +159,7 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
         address dest_token,
         uint256 dest_min_tokens,
         uint256 dest_max_tokens
-    ) external payable returnLeftoverToken(src_token, network_proxy) {
+    ) external returnLeftoverToken(src_token, network_proxy) {
         // Use the full balance of tokens transferred from the trade executor
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
         require(
@@ -200,7 +200,7 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
         address src_token,
         uint256 dest_min_tokens,
         uint256 dest_max_tokens
-    ) external payable returnLeftoverToken(src_token, network_proxy) {
+    ) external returnLeftoverToken(src_token, network_proxy) {
         // Use the full balance of tokens transferred from the trade executor
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
         require(

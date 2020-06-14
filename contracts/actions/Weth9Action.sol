@@ -32,7 +32,7 @@ contract Weth9Action {
     }
 
     // there is no need for returnLeftoverToken. this will always convert everything
-    function unwrap_all_to(address weth, address payable to) external payable {
+    function unwrap_all_to(address weth, address payable to) external {
         if (to == address(0)) {
             to = msg.sender;
         }

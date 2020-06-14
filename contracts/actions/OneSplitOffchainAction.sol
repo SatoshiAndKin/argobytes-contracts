@@ -102,7 +102,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         address dest_token,
         uint256 dest_min_tokens,
         bytes calldata extra_data
-    ) external payable returnLeftoverToken(src_token, exchange) {
+    ) external returnLeftoverToken(src_token, exchange) {
         (uint256[] memory distribution, uint256 disable_flags) = abi.decode(
             extra_data,
             (uint256[], uint256)
@@ -146,7 +146,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         address src_token,
         uint256 dest_min_tokens,
         bytes calldata extra_data
-    ) external payable returnLeftoverToken(src_token, exchange) {
+    ) external returnLeftoverToken(src_token, exchange) {
         (uint256[] memory distribution, uint256 disable_flags) = abi.decode(
             extra_data,
             (uint256[], uint256)
