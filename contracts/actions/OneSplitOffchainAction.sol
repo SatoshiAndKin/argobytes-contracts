@@ -209,7 +209,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         // TODO: use a struct here
         (address exchange, uint256 parts, uint256 disable_flags) = abi.decode(
             extra_data,
-            (address, uint256)
+            (address, uint256, uint256)
         );
 
         Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
