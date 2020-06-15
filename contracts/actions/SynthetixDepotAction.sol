@@ -13,11 +13,15 @@ pragma experimental ABIEncoderV2;
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {Strings} from "@openzeppelin/utils/Strings.sol";
 
-import {IAddressResolver} from "interfaces/synthetix/IAddressResolver.sol";
-import {IDepot} from "interfaces/synthetix/IDepot.sol";
-import {IExchangeRates} from "interfaces/synthetix/IExchangeRates.sol";
-import {ISystemStatus} from "interfaces/synthetix/ISystemStatus.sol";
-import {IProxy} from "interfaces/synthetix/IProxy.sol";
+import {
+    IAddressResolver
+} from "contracts/interfaces/synthetix/IAddressResolver.sol";
+import {IDepot} from "contracts/interfaces/synthetix/IDepot.sol";
+import {
+    IExchangeRates
+} from "contracts/interfaces/synthetix/IExchangeRates.sol";
+import {ISystemStatus} from "contracts/interfaces/synthetix/ISystemStatus.sol";
+import {IProxy} from "contracts/interfaces/synthetix/IProxy.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";

@@ -14,7 +14,7 @@ import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {Strings2} from "contracts/Strings2.sol";
 import {
     IArgobytesAtomicTrade
-} from "interfaces/argobytes/IArgobytesAtomicTrade.sol";
+} from "contracts/interfaces/argobytes/IArgobytesAtomicTrade.sol";
 
 // WARNING! WARNING! THIS IS NOT A SECRET! THIS IS FOR RECOVERY IN CASE OF BUGS!
 // the backdoor is temporary until this is audited and public!

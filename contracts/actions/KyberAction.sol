@@ -2,8 +2,7 @@
 pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
-import {IKyberNetworkProxy} from "interfaces/kyber/IKyberNetworkProxy.sol";
-
+import {IKyberNetworkProxy} from "contracts/interfaces/kyber/IKyberNetworkProxy.sol";
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {IERC20, UniversalERC20, SafeERC20} from "contracts/UniversalERC20.sol";
 import {Ownable2} from "contracts/Ownable2.sol";

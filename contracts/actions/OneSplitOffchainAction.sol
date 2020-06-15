@@ -6,7 +6,7 @@ import {Address} from "@openzeppelin/utils/Address.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {IERC20} from "contracts/UniversalERC20.sol";
-import {IOneSplit} from "interfaces/onesplit/IOneSplit.sol";
+import {IOneSplit} from "contracts/interfaces/onesplit/IOneSplit.sol";
 
 contract OneSplitOffchainAction is AbstractERC20Exchange {
     // call this function offchain. do not include it in your actual transaction or the gas costs are excessive

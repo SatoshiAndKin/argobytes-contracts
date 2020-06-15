@@ -7,15 +7,15 @@ import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 import {Address} from "@openzeppelin/utils/Address.sol";
 import {Strings} from "@openzeppelin/utils/Strings.sol";
 
-import {IInvokable} from "interfaces/kollateral/IInvokable.sol";
-import {IInvoker} from "interfaces/kollateral/IInvoker.sol";
+import {IInvokable} from "contracts/interfaces/kollateral/IInvokable.sol";
+import {IInvoker} from "contracts/interfaces/kollateral/IInvoker.sol";
 import {
     KollateralInvokable
-} from "interfaces/kollateral/KollateralInvokable.sol";
+} from "contracts/interfaces/kollateral/KollateralInvokable.sol";
 import {UniversalERC20, SafeERC20, IERC20} from "contracts/UniversalERC20.sol";
 import {
     IArgobytesAtomicTrade
-} from "interfaces/argobytes/IArgobytesAtomicTrade.sol";
+} from "contracts/interfaces/argobytes/IArgobytesAtomicTrade.sol";
 import {Strings2} from "contracts/Strings2.sol";
 
 // https://github.com/kollateral/kollateral/blob/master/lib/static/invoker.ts

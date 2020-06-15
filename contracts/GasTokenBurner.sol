@@ -3,7 +3,7 @@ pragma solidity 0.6.10;
 
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 
-import {IGasToken} from "interfaces/gastoken/IGasToken.sol";
+import {IGasToken} from "contracts/interfaces/gastoken/IGasToken.sol";
 
 contract GasTokenBurner {
     using SafeMath for uint256;

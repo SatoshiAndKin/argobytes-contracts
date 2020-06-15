@@ -12,7 +12,7 @@ pragma experimental ABIEncoderV2;
 
 import {Strings} from "@openzeppelin/utils/Strings.sol";
 
-import {ICurveFi} from "interfaces/curvefi/ICurveFi.sol";
+import {ICurveFi} from "contracts/interfaces/curvefi/ICurveFi.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {Ownable2} from "contracts/Ownable2.sol";

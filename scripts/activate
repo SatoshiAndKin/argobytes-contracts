@@ -3,3 +3,8 @@
 
 . .env
 . venv/bin/activate
+
+PATH=$(pwd)/node_modules/.bin:$PATH
+
+export PATH
+
