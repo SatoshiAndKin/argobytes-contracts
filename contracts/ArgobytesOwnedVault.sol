@@ -19,8 +19,15 @@ import {Strings2} from "contracts/Strings2.sol";
 import {
     IArgobytesAtomicTrade
 } from "contracts/interfaces/argobytes/IArgobytesAtomicTrade.sol";
+import {
+    IArgobytesOwnedVault
+} from "contracts/interfaces/argobytes/IArgobytesOwnedVault.sol";
 
-contract ArgobytesOwnedVault is DiamondStorageContract, GasTokenBurner {
+contract ArgobytesOwnedVault is
+    DiamondStorageContract,
+    GasTokenBurner,
+    IArgobytesOwnedVault
+{
     using SafeMath for uint256;
     using Strings for uint256;
     using Strings2 for address;
@@ -37,6 +44,7 @@ contract ArgobytesOwnedVault is DiamondStorageContract, GasTokenBurner {
      */
     function trustArbitragers(address[] memory trusted_arbitragers)
         public
+        override
         payable
     {
         require(
@@ -52,9 +60,6 @@ contract ArgobytesOwnedVault is DiamondStorageContract, GasTokenBurner {
         }
     }
 
-    // allow receiving tokens
-    receive() external payable {}
-
     function atomicArbitrage(
         address gastoken,
         address payable atomic_trader,
@@ -62,7 +67,7 @@ contract ArgobytesOwnedVault is DiamondStorageContract, GasTokenBurner {
         address[] calldata tokens, // ETH (address(0)) or ERC20
         uint256 first_amount,
         bytes calldata encoded_actions
-    ) external returns (uint256 primary_profit) {
+    ) external override returns (uint256 primary_profit) {
         // use address(0) for gastoken to skip gas token burning
         uint256 initial_gas = startFreeGasTokens(gastoken);
 
@@ -172,13 +177,18 @@ contract ArgobytesOwnedVault is DiamondStorageContract, GasTokenBurner {
         endFreeGasTokens(gastoken, initial_gas);
     }
 
-    // use CREATE2 to deploy with a salt and free gas tokens
-    // TODO: function that combines deploy2 and diamondCut
-    function deploy2(
+    // use CREATE2 to deploy with a salt and then free gas tokens
+    function deploy2_and_burn(
         address gas_token,
         bytes32 salt,
         bytes memory bytecode
-    ) public payable freeGasTokens(gas_token) returns (address deployed) {
+    )
+        public
+        override
+        payable
+        freeGasTokens(gas_token)
+        returns (address deployed)
+    {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "ArgobytesOwnedVault.deploy2: Caller is not an admin"
@@ -187,11 +197,34 @@ contract ArgobytesOwnedVault is DiamondStorageContract, GasTokenBurner {
         deployed = Create2.deploy(msg.value, salt, bytecode);
     }
 
+    // use CREATE2 to deploy with a salt, cut the diamond, and then free gas tokens
+    function deploy2_cut_and_burn(
+        address gas_token,
+        bytes32 salt,
+        bytes memory bytecode,
+        bytes[] memory diamondCuts
+    )
+        public
+        override
+        payable
+        freeGasTokens(gas_token)
+        returns (address deployed)
+    {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.deploy2: Caller is not an admin"
+        );
+
+        deployed = Create2.deploy(msg.value, salt, bytecode);
+
+        // TODO: cut!
+    }
+
     function withdrawTo(
         IERC20 token,
         address to,
         uint256 amount
-    ) external returns (bool) {
+    ) external override returns (bool) {
         // TODO: what role? it should be seperate from the deployer
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
@@ -206,7 +239,7 @@ contract ArgobytesOwnedVault is DiamondStorageContract, GasTokenBurner {
         IERC20 token,
         address to,
         uint256 amount
-    ) external freeGasTokens(gas_token) returns (bool) {
+    ) external override freeGasTokens(gas_token) returns (bool) {
         // TODO: what role? it should be seperate from the deployer
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),

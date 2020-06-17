@@ -3,6 +3,13 @@ pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
 interface IDiamondCutter {
+    event DiamondCut(bytes[] _diamondCut);
+
+    function deploy2(bytes32 salt, bytes memory bytecode)
+        external
+        payable
+        returns (address);
+
     /// @notice _diamondCut is an array of bytes arrays.
     /// This argument is tightly packed for gas efficiency.
     /// That means no padding with zeros.
@@ -15,8 +22,6 @@ interface IDiamondCutter {
     /// facet is the address of a facet
     /// sel1, sel2, sel3 etc. are four-byte function selectors.
     function diamondCut(bytes[] calldata _diamondCut) external;
-
-    event DiamondCut(bytes[] _diamondCut);
 }
 
 // A loupe is a small magnifying glass used to look at diamonds.

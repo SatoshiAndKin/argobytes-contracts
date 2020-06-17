@@ -32,7 +32,8 @@ contract Diamond is DiamondStorageContract, IERC165 {
         // Adding cut function
         diamondCuts[0] = abi.encodePacked(
             diamondCutter,
-            diamondCutter.diamondCut.selector
+            diamondCutter.diamondCut.selector,
+            diamondCutter.deploy2.selector
         );
 
         // Adding diamond loupe functions
@@ -59,13 +60,22 @@ contract Diamond is DiamondStorageContract, IERC165 {
         (bool success, ) = address(diamondCutter).delegatecall(cutData);
         require(success, "Adding functions failed.");
 
-        // adding ERC165 data
+        // add ERC165 data
         ds.supportedInterfaces[this.supportsInterface.selector] = true;
-        ds.supportedInterfaces[diamondCutter.diamondCut.selector] = true;
-        bytes4 interfaceID = diamondLoupe.facets.selector ^
+
+        // add ERC165 data for diamondCutter
+        bytes4 interfaceID = diamondCutter.diamondCut.selector ^
+            diamondCutter.deploy2.selector;
+
+        ds.supportedInterfaces[interfaceID] = true;
+
+        // add ERC165 data for diamondLoupe
+        interfaceID =
+            diamondLoupe.facets.selector ^
             diamondLoupe.facetFunctionSelectors.selector ^
             diamondLoupe.facetAddresses.selector ^
             diamondLoupe.facetAddress.selector;
+
         ds.supportedInterfaces[interfaceID] = true;
     }
 

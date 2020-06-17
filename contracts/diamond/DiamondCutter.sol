@@ -9,6 +9,8 @@ pragma experimental ABIEncoderV2;
 * This is gas optimized by reducing storage reads and storage writes.
 /******************************************************************************/
 
+import {Create2} from "@openzeppelin/utils/Create2.sol";
+
 import {DiamondStorageContract} from "./DiamondStorageContract.sol";
 import {IDiamondCutter} from "./DiamondHeaders.sol";
 
@@ -128,5 +130,15 @@ contract DiamondCutter is DiamondStorageContract, IDiamondCutter {
             ds.selectorSlots[selectorSlotsLength] = slot.selectorSlot;
         }
         emit DiamondCut(_diamondCut);
+    }
+
+    // use CREATE2 to deploy with a salt
+    // TODO: deploy2_and_cut?
+    // TODO: deploy2_and_cut_and_burn?
+    function deploy2(
+        bytes32 salt,
+        bytes memory bytecode
+    ) public override payable returns (address deployed) {
+        return Create2.deploy(msg.value, salt, bytecode);
     }
 }
