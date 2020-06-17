@@ -13,17 +13,20 @@ contract DiamondDeployer {
         bytes32 cutter_salt,
         bytes32 loupe_salt
     ) public payable {
-        Diamond deployed = new Diamond{salt: diamond_salt, value: msg.value}(
-            msg.sender,
+        Diamond diamond = new Diamond{salt: diamond_salt, value: msg.value}(
             cutter_salt,
             loupe_salt
         );
 
         // cut functions
 
-        // transfer admin role
+        // transfer admin role to msg.sender
+        bytes32 admin_role = diamond.DEFAULT_ADMIN_ROLE();
+
+        diamond.grantRole(admin_role, msg.sender);
+        diamond.renounceRole(admin_role, address(this));
 
         // selfdestruct for the gas refund
-        selfdestruct(address(deployed));
+        selfdestruct(address(diamond));
     }
 }

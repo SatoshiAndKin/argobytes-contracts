@@ -26,8 +26,9 @@ contract DiamondCutter is DiamondStorageContract, IDiamondCutter {
     }
 
     function diamondCut(bytes[] memory _diamondCut) public override {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Must own the contract.");
+
         DiamondStorage storage ds = diamondStorage();
-        require(msg.sender == ds.contractOwner, "Must own the contract.");
         SlotInfo memory slot;
         slot.originalSelectorSlotsLength = ds.selectorSlotsLength;
         uint selectorSlotsLength = uint128(slot.originalSelectorSlotsLength);

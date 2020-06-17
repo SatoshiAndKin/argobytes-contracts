@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.6.10;
 
-contract DiamondStorageContract {
+import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
+
+contract DiamondStorageContract is AccessControl {
     struct DiamondStorage {
-        // owner of the contract
-        // TODO: use AccessControl instead of a simple address
-        address contractOwner;
         // maps function selectors to the facets that execute the functions.
         // and maps the selectors to the slot in the selectorSlots array.
         // and maps the selectors to the position in the slot.

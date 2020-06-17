@@ -20,11 +20,7 @@ import {
     IArgobytesAtomicTrade
 } from "contracts/interfaces/argobytes/IArgobytesAtomicTrade.sol";
 
-contract ArgobytesOwnedVault is
-    DiamondStorageContract,
-    AccessControl,
-    GasTokenBurner
-{
+contract ArgobytesOwnedVault is DiamondStorageContract, GasTokenBurner {
     using SafeMath for uint256;
     using Strings for uint256;
     using Strings2 for address;
@@ -39,13 +35,14 @@ contract ArgobytesOwnedVault is
      * @notice Deploy the contract.
      * This is payable so that the initial deployment can fund
      */
-    constructor(address admin, address[] memory trusted_arbitragers)
+    function trustArbitragers(address[] memory trusted_arbitragers)
         public
         payable
     {
-        // Grant the contract deployer the "default admin" role
-        // it will be able to grant and revoke any roles
-        _setupRole(DEFAULT_ADMIN_ROLE, admin);
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.trustArbitragers: Caller is not an admin"
+        );
 
         // Grant a vault smart contract address the "trusted arbitrager" role
         // it will be able to call "atomicArbitrage" (WITH OUR FUNDS!)
@@ -71,7 +68,7 @@ contract ArgobytesOwnedVault is
 
         require(
             hasRole(TRUSTED_ARBITRAGER_ROLE, msg.sender),
-            "ArgobytesOwnedVault.atomicArbitrage: Caller is not trusted"
+            "ArgobytesOwnedVault.atomicArbitrage: Caller is not a trusted arbitrager"
         );
 
         // TODO: debug_require? we only have these for helpful revert messages

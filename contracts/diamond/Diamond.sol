@@ -14,20 +14,10 @@ import "./DiamondLoupe.sol";
 import "./DiamondStorageContract.sol";
 
 contract Diamond is DiamondStorageContract, IERC165 {
-    // TODO: use OpenZeppelin's access helpers
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
+    constructor(bytes32 cutter_salt, bytes32 loupe_salt) public payable {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
-    constructor(
-        address owner,
-        bytes32 cutter_salt,
-        bytes32 loupe_salt
-    ) public payable {
         DiamondStorage storage ds = diamondStorage();
-        ds.contractOwner = owner;
-        emit OwnershipTransferred(address(0), owner);
 
         // Create a DiamondCutter contract which implements the IDiamondCutter interface
         // TODO: salt this for CREATE2?
@@ -61,6 +51,7 @@ contract Diamond is DiamondStorageContract, IERC165 {
         );
 
         // cut the diamond
+        // since this uses delegate call, msg.sender (which is used for auth) is unchanged
         bytes memory cutData = abi.encodeWithSelector(
             diamondCutter.diamondCut.selector,
             diamondCuts
