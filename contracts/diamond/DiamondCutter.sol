@@ -133,8 +133,6 @@ contract DiamondCutter is DiamondStorageContract, IDiamondCutter {
     }
 
     // use CREATE2 to deploy with a salt
-    // TODO: deploy2_and_cut?
-    // TODO: deploy2_and_cut_and_burn?
     function deploy2(
         bytes32 salt,
         bytes memory bytecode
