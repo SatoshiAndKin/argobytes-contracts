@@ -20,18 +20,22 @@ contract Diamond is DiamondStorageContract, IERC165 {
         address indexed newOwner
     );
 
-    constructor(address owner) public {
+    constructor(
+        address owner,
+        bytes32 cutter_salt,
+        bytes32 loupe_salt
+    ) public payable {
         DiamondStorage storage ds = diamondStorage();
         ds.contractOwner = owner;
         emit OwnershipTransferred(address(0), owner);
 
         // Create a DiamondCutter contract which implements the IDiamondCutter interface
         // TODO: salt this for CREATE2?
-        DiamondCutter diamondCutter = new DiamondCutter();
+        DiamondCutter diamondCutter = new DiamondCutter{salt: cutter_salt}();
 
         // Create a DiamondLoupe contract which implements the IDiamondLoupe interface
         // TODO: salt this for CREATE2?
-        DiamondLoupe diamondLoupe = new DiamondLoupe();
+        DiamondLoupe diamondLoupe = new DiamondLoupe{salt: loupe_salt}();
 
         bytes[] memory diamondCuts = new bytes[](3);
 

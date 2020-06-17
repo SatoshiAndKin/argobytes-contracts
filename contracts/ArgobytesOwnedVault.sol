@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // Store profits and provide them for flash lending
+// Burns GasToken (or compatible contracts)
 pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
@@ -9,6 +10,9 @@ import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 import {Strings} from "@openzeppelin/utils/Strings.sol";
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 
+import {
+    DiamondStorageContract
+} from "contracts/diamond/DiamondStorageContract.sol";
 import {GasTokenBurner} from "contracts/GasTokenBurner.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {Strings2} from "contracts/Strings2.sol";
@@ -16,37 +20,11 @@ import {
     IArgobytesAtomicTrade
 } from "contracts/interfaces/argobytes/IArgobytesAtomicTrade.sol";
 
-// WARNING! WARNING! THIS IS NOT A SECRET! THIS IS FOR RECOVERY IN CASE OF BUGS!
-// the backdoor is temporary until this is audited and public!
-// we actually need it right now since we don't have withdraw functions on ArgobytesOwnedVault
-import {Backdoor} from "contracts/Backdoor.sol";
-
-// END WARNING!
-
-contract ArgobytesOwnedVaultDeployer {
-    // use CREATE2 to deploy ArgobytesOwnedVault with a salt
-    // TODO: steps for using ERADICATE2
-    constructor(bytes32 salt, address[] memory trusted_arbitragers)
-        public
-        payable
-    {
-        ArgobytesOwnedVault deployed = new ArgobytesOwnedVault{
-            salt: salt,
-            value: msg.value
-        }(msg.sender, trusted_arbitragers);
-
-        // the vault deploys its own logs. we can grab the contract's address from there
-        // emit Deployed(address(deployed));
-
-        // selfdestruct for the gas refund
-        selfdestruct(msg.sender);
-    }
-}
-
-// TODO: re-write this to use the diamond standard
-// TODO: expect new versions of GasToken that may have different interfaces. be ready to upgrade them
-// it's likely i will want to add new features and suppo
-contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
+contract ArgobytesOwnedVault is
+    DiamondStorageContract,
+    AccessControl,
+    GasTokenBurner
+{
     using SafeMath for uint256;
     using Strings for uint256;
     using Strings2 for address;
@@ -65,10 +43,6 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         public
         payable
     {
-        // Grant the contract deployer the "backdoor" role
-        // BEWARE! this contract can call and delegate call arbitrary functions!
-        _setupRole(BACKDOOR_ROLE, admin);
-
         // Grant the contract deployer the "default admin" role
         // it will be able to grant and revoke any roles
         _setupRole(DEFAULT_ADMIN_ROLE, admin);

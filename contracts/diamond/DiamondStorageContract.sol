@@ -4,6 +4,7 @@ pragma solidity 0.6.10;
 contract DiamondStorageContract {
     struct DiamondStorage {
         // owner of the contract
+        // TODO: use AccessControl instead of a simple address
         address contractOwner;
         // maps function selectors to the facets that execute the functions.
         // and maps the selectors to the slot in the selectorSlots array.
