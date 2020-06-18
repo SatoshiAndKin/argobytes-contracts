@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // Store profits and provide them for flash lending
+// Burns GasToken (or compatible contracts)
 pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
@@ -9,44 +10,24 @@ import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 import {Strings} from "@openzeppelin/utils/Strings.sol";
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 
+import {
+    DiamondStorageContract
+} from "contracts/diamond/DiamondStorageContract.sol";
 import {GasTokenBurner} from "contracts/GasTokenBurner.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {Strings2} from "contracts/Strings2.sol";
 import {
     IArgobytesAtomicTrade
 } from "contracts/interfaces/argobytes/IArgobytesAtomicTrade.sol";
+import {
+    IArgobytesOwnedVault
+} from "contracts/interfaces/argobytes/IArgobytesOwnedVault.sol";
 
-// WARNING! WARNING! THIS IS NOT A SECRET! THIS IS FOR RECOVERY IN CASE OF BUGS!
-// the backdoor is temporary until this is audited and public!
-// we actually need it right now since we don't have withdraw functions on ArgobytesOwnedVault
-import {Backdoor} from "contracts/Backdoor.sol";
-
-// END WARNING!
-
-contract ArgobytesOwnedVaultDeployer {
-    // use CREATE2 to deploy ArgobytesOwnedVault with a salt
-    // TODO: steps for using ERADICATE2
-    constructor(bytes32 salt, address[] memory trusted_arbitragers)
-        public
-        payable
-    {
-        ArgobytesOwnedVault deployed = new ArgobytesOwnedVault{
-            salt: salt,
-            value: msg.value
-        }(msg.sender, trusted_arbitragers);
-
-        // the vault deploys its own logs. we can grab the contract's address from there
-        // emit Deployed(address(deployed));
-
-        // selfdestruct for the gas refund
-        selfdestruct(msg.sender);
-    }
-}
-
-// TODO: re-write this to use the diamond standard
-// TODO: expect new versions of GasToken that may have different interfaces. be ready to upgrade them
-// it's likely i will want to add new features and suppo
-contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
+contract ArgobytesOwnedVault is
+    DiamondStorageContract,
+    GasTokenBurner,
+    IArgobytesOwnedVault
+{
     using SafeMath for uint256;
     using Strings for uint256;
     using Strings2 for address;
@@ -61,17 +42,14 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
      * @notice Deploy the contract.
      * This is payable so that the initial deployment can fund
      */
-    constructor(address admin, address[] memory trusted_arbitragers)
-        public
-        payable
-    {
-        // Grant the contract deployer the "backdoor" role
-        // BEWARE! this contract can call and delegate call arbitrary functions!
-        _setupRole(BACKDOOR_ROLE, admin);
-
-        // Grant the contract deployer the "default admin" role
-        // it will be able to grant and revoke any roles
-        _setupRole(DEFAULT_ADMIN_ROLE, admin);
+    function trustArbitragers(
+        address gastoken,
+        address[] memory trusted_arbitragers
+    ) public override payable freeGasTokens(gastoken) {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.trustArbitragers: Caller is not an admin"
+        );
 
         // Grant a vault smart contract address the "trusted arbitrager" role
         // it will be able to call "atomicArbitrage" (WITH OUR FUNDS!)
@@ -81,9 +59,6 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         }
     }
 
-    // allow receiving tokens
-    receive() external payable {}
-
     function atomicArbitrage(
         address gastoken,
         address payable atomic_trader,
@@ -91,13 +66,13 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         address[] calldata tokens, // ETH (address(0)) or ERC20
         uint256 first_amount,
         bytes calldata encoded_actions
-    ) external returns (uint256 primary_profit) {
+    ) external override returns (uint256 primary_profit) {
         // use address(0) for gastoken to skip gas token burning
         uint256 initial_gas = startFreeGasTokens(gastoken);
 
         require(
             hasRole(TRUSTED_ARBITRAGER_ROLE, msg.sender),
-            "ArgobytesOwnedVault.atomicArbitrage: Caller is not trusted"
+            "ArgobytesOwnedVault.atomicArbitrage: Caller is not a trusted arbitrager"
         );
 
         // TODO: debug_require? we only have these for helpful revert messages
@@ -201,26 +176,11 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         endFreeGasTokens(gastoken, initial_gas);
     }
 
-    // use CREATE2 to deploy with a salt and free gas tokens
-    // TODO: function that combines deploy2 and diamondCut
-    function deploy2(
-        address gas_token,
-        bytes32 salt,
-        bytes memory bytecode
-    ) public payable freeGasTokens(gas_token) returns (address deployed) {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "ArgobytesOwnedVault.deploy2: Caller is not an admin"
-        );
-
-        deployed = Create2.deploy(msg.value, salt, bytecode);
-    }
-
     function withdrawTo(
         IERC20 token,
         address to,
         uint256 amount
-    ) external returns (bool) {
+    ) external override returns (bool) {
         // TODO: what role? it should be seperate from the deployer
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
@@ -230,12 +190,13 @@ contract ArgobytesOwnedVault is AccessControl, Backdoor, GasTokenBurner {
         return token.universalTransfer(to, amount);
     }
 
+    // TODO: better function name? "freeing gas" feels weird, but "burning" already has a meaning
     function withdrawToFreeGas(
-        address gas_token,
+        address gastoken,
         IERC20 token,
         address to,
         uint256 amount
-    ) external freeGasTokens(gas_token) returns (bool) {
+    ) external override freeGasTokens(gastoken) returns (bool) {
         // TODO: what role? it should be seperate from the deployer
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),

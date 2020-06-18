@@ -2,7 +2,9 @@
 # rather than call this directly, you probably want to use `./scripts/test-deploy.sh` or `./scripts/staging-deploy.sh`
 
 from brownie import *
+from eth_abi.packed import encode_abi_packed
 import os
+import binascii
 
 CurveFiBUSD = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
 CurveFiCompound = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
@@ -37,22 +39,84 @@ DEPLOY_DIR = os.path.join(project.main.check_for_project('.'), "build", "deploym
 os.makedirs(DEPLOY_DIR, exist_ok=True)
 
 
-def create_helper(deployer, target_contract, target_contract_args, gas_price):
-    # TODO: docs for using ERADICATE 2 (will be easier since we already have argobytes_owned_vault's address)
-    salt = ""
+def deploy2_and_burn(deployer, deployed_salt, deployed_contract, deployed_contract_args, gas_price):
+    deployed_initcode = deployed_contract.deploy.encode_input(*deployed_contract_args)
 
-    initcode = target_contract.deploy.encode_input(*target_contract_args)
+    # TODO: print the expected address for this target_salt and deployed_initcode
 
-    if BURN_GAS_TOKEN:
-        gastoken = GasTokenAddress
-    else:
-        gastoken = ZeroAddress
+    deploy_tx = deployer.deploy2AndBurn(
+        GasTokenAddress,
+        deployed_salt,
+        deployed_initcode,
+        {"from": accounts[0], "gasPrice": gas_price}
+    )
 
-    deploy_tx = deployer.deploy2(gastoken, salt, initcode, {"from": accounts[0], "gasPrice": gas_price})
-
+    # if hasattr(deploy_tx, "return_value"):
+    #     # this should be the normal path
     deployed_address = deploy_tx.return_value
+    # else:
+    #     # print(deploy_tx.events)
 
-    deployed_contract = target_contract.at(deployed_address)
+    #     # i think this is a bug
+    #     # no return_value, so we check logs instead
+    #     # TODO: i don't think this log should be needed
+    #     events = deploy_tx.events['Deploy'][0]
+
+    #     deployed_address = events['deployed']
+
+    deployed_contract = deployed_contract.at(deployed_address)
+
+    print("CREATE2 deployed:", deployed_contract._name, "to", deployed_contract.address)
+    print()
+
+    quick_save_contract(deployed_contract)
+
+    return deployed_contract
+
+
+def deploy2_and_cut_and_burn(deployer, deployed_salt, deployed_contract, deployed_contract_args, deployed_sigs, gas_price):
+    deployed_initcode = deployed_contract.deploy.encode_input(*deployed_contract_args)
+
+    encoded_sigs = []
+    for deployed_sig in deployed_sigs:
+        # TODO: whats the maximum number of selectors?
+        cut = binascii.unhexlify(deployed_contract.signatures[deployed_sig][2:])
+
+        encoded_sigs.append(cut)
+
+    encoded_sigs = tuple(encoded_sigs)
+
+    # TODO: whats the maximum number of selectors?
+    # abi.encodePacked(address, selector1, ..., selectorN)
+    encoded_sigs = encode_abi_packed(
+        ['bytes4'] * len(encoded_sigs),
+        tuple(encoded_sigs)
+    )
+
+    # TODO: print the expected address for this target_salt and initcode
+
+    deploy_tx = deployer.deploy2AndCutAndBurn(
+        GasTokenAddress,
+        deployed_salt,
+        deployed_initcode,
+        encoded_sigs,
+        {"from": accounts[0], "gasPrice": gas_price}
+    )
+
+    # if hasattr(deploy_tx, "return_value"):
+    #     # this should be the normal path
+    deployed_address = deploy_tx.return_value
+    # else:
+    #     # print(deploy_tx.events)
+
+    #     # i think this is a bug
+    #     # no return_value, so we check logs instead
+    #     # TODO: i don't think this log should be needed
+    #     events = deploy_tx.events['Deploy'][0]
+
+    #     deployed_address = events['deployed']
+
+    deployed_contract = deployed_contract.at(deployed_address)
 
     print("CREATE2 deployed:", deployed_contract._name, "to", deployed_contract.address)
     print()
@@ -106,7 +170,7 @@ def reset_block_time(synthetix_depot_action):
 
 def main():
     # gwei
-    expected_mainntet_mint_price = 1 * 1e9
+    expected_mainnet_mint_price = 1 * 1e9
     expected_mainnet_gas_price = 25 * 1e9
 
     starting_balance = accounts[0].balance()
@@ -119,48 +183,159 @@ def main():
         accounts[4],
     ]
 
-    # TODO: docs for figuring out the address for ArgobytesOwnedVaultDeployer and then using ERADICATE2
-    # TODO: maybe send gastoken to ArgobytesOwnedVaultDeployer before it is deployed. then burn all that token after selfdestruct?
+    # TODO: docs for figuring out the address for DiamondDeployer and then using ERADICATE2
+    # TODO: maybe send gastoken to DiamondDeployer before it is deployed. then burn/transfer that token after selfdestruct?
     salt = ""
 
-    argobytes_owned_vault_deploy_tx = ArgobytesOwnedVaultDeployer.deploy(salt, arb_bots, {"from": accounts[0]})
-
-    # there is a tx.new_contracts, but because of how we self-destruct the Deployer, it isn't populated
-    argobytes_owned_vault = argobytes_owned_vault_deploy_tx.logs[0]['address']
-
-    argobytes_owned_vault = ArgobytesOwnedVault.at(argobytes_owned_vault)
-
-    print("ArgobytesOwnedVault address:", argobytes_owned_vault)
-    quick_save_contract(argobytes_owned_vault)
-
+    # TODO: do this earlier and transfer the coins to the diamond_creator address before deployment
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
     if BURN_GAS_TOKEN:
-        for _ in range(0, 18):
-            argobytes_owned_vault.mintGasToken(
-                GasTokenAddress, 26, {"from": accounts[0], "gasPrice": expected_mainntet_mint_price})
+        mint_batch_amount = 50
 
         gas_token = interface.IGasToken(GasTokenAddress)
 
-        gas_tokens_start = gas_token.balanceOf.call(argobytes_owned_vault)
+        # TODO: only mint 1 more token than we need (instead of up to mint_batch_amount - 1 more)
+        for _ in range(1, 14):
+            # TODO: move this back to account 0 once we we calculate diamond_creator_address
+            gas_token.mint(
+                mint_batch_amount,
+                {"from": accounts[0], "gasPrice": expected_mainnet_mint_price}
+            )
+
+        gas_tokens_start = gas_token.balanceOf.call(accounts[0])
+
+        # prepare the diamond creator with some gas token
+        # TODO: how do we calculate this contract's address before we do the deployment?
+        # TODO: we need the current nonces for accounts[0] and some hashing
+        print("WARNING! calculate instead of hard code this!")
+        diamond_creator_address = "0xAF75C9E8b9c4C96053bCD5a5eBA3bC7d79dE2bC5"
+
+        gas_token.transfer(
+            diamond_creator_address,
+            gas_tokens_start,
+            {"from": accounts[0], "gasPrice": expected_mainnet_mint_price}
+        )
+
+        gas_tokens_start = gas_token.balanceOf.call(diamond_creator_address)
+
         # gastoken has 2 decimals, so divide by 100
         print("Starting gas_token balance:", gas_tokens_start / 100.0)
 
-    argobytes_atomic_trade = create_helper(argobytes_owned_vault, ArgobytesAtomicTrade, [], expected_mainnet_gas_price)
+        # TODO: proper assert
+        assert gas_tokens_start > mint_batch_amount
 
-    # give the vault a bunch of coins
-    accounts[1].transfer(argobytes_owned_vault, 50 * 1e18)
-    accounts[2].transfer(argobytes_owned_vault, 50 * 1e18)
-    accounts[3].transfer(argobytes_owned_vault, 50 * 1e18)
+    # prepare a diamond. we will add ArgobytesOwnedVault functions to this
+    diamond_initcode = Diamond.deploy.encode_input(salt, salt)
 
-    # TODO: refactor all of these to use less storage and instead use calldata. its easier to upgrade without requiring admin keys this way. gas is also less for calldata compared to SLOAD
-    create_helper(argobytes_owned_vault, OneSplitOffchainAction, [], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, KyberAction, [accounts[0], argobytes_owned_vault], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, UniswapV1Action, [], expected_mainnet_gas_price)
-    # create_helper(argobytes_owned_vault, ZrxV3Action, [], expected_mainnet_gas_price)
-    create_helper(argobytes_owned_vault, Weth9Action, [], expected_mainnet_gas_price)
-    synthetix_depot_action = create_helper(argobytes_owned_vault, SynthetixDepotAction, [], expected_mainnet_gas_price)
+    # deploy the contract that will deploy the diamond
+    # it self destructs, so handling it is non-standard
+    diamond_deploy_tx = DiamondCreator.deploy(
+        GasTokenAddress,
+        salt,
+        diamond_initcode,
+        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
+    )
 
-    curve_fi_action = create_helper(argobytes_owned_vault, CurveFiAction, [accounts[0]], expected_mainnet_gas_price)
+    # deploys have no return_value, so we check logs instead
+    diamond_address = diamond_deploy_tx.logs[0]['address']
+
+    diamond = Diamond.at(diamond_address)
+
+    # save the diamond's address
+    quick_save_contract(diamond)
+
+    # this interface matches our final cut diamond:
+    # IDiamondCutter+IDiamondLoupe+IArgobytesOwnedVault+IGasTokenBurner+IERC165
+    # not all those functions are actually available yet!
+    argobytes_diamond = interface.IArgobytesDiamond(diamond.address)
+
+    # give the diamond_creator a bunch of coins. it will forward them when deploying the diamond
+    accounts[1].transfer(argobytes_diamond, 50 * 1e18)
+    accounts[2].transfer(argobytes_diamond, 50 * 1e18)
+    accounts[3].transfer(argobytes_diamond, 50 * 1e18)
+
+    # deploy ArgobytesOwnedVault. we won't use this directly. it will be used through the diamond
+    deploy2_and_cut_and_burn(
+        argobytes_diamond,
+        salt,
+        ArgobytesOwnedVault,
+        [],
+        ["atomicArbitrage", "mintGasToken", "trustArbitragers", "withdrawTo", "withdrawToFreeGas"],
+        expected_mainnet_gas_price
+    )
+
+    # use our fresh functions
+    argobytes_diamond.trustArbitragers(
+        GasTokenAddress,
+        arb_bots,
+        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
+    )
+
+    # deploy all the other contracts
+    # these one's don't modify the diamond
+    argobytes_atomic_trade = deploy2_and_burn(
+        argobytes_diamond,
+        salt,
+        ArgobytesAtomicTrade,
+        [],
+        expected_mainnet_gas_price
+    )
+
+    deploy2_and_burn(
+        argobytes_diamond,
+        salt,
+        OneSplitOffchainAction,
+        [],
+        expected_mainnet_gas_price
+    )
+
+    deploy2_and_burn(
+        argobytes_diamond,
+        salt,
+        KyberAction,
+        [accounts[0], argobytes_diamond],
+        expected_mainnet_gas_price
+    )
+
+    deploy2_and_burn(
+        argobytes_diamond,
+        salt,
+        UniswapV1Action,
+        [],
+        expected_mainnet_gas_price
+    )
+
+    # deploy2_and_burn(
+    #     argobytes_diamond,
+    #     salt,
+    #     ZrxV3Action,
+    #     [],
+    #     expected_mainnet_gas_price
+    # )
+
+    deploy2_and_burn(
+        argobytes_diamond,
+        salt,
+        Weth9Action,
+        [],
+        expected_mainnet_gas_price
+    )
+
+    synthetix_depot_action = deploy2_and_burn(
+        argobytes_diamond,
+        salt,
+        SynthetixDepotAction,
+        [],
+        expected_mainnet_gas_price
+    )
+
+    curve_fi_action = deploy2_and_burn(
+        argobytes_diamond,
+        salt,
+        CurveFiAction,
+        [accounts[0]],
+        expected_mainnet_gas_price
+    )
 
     # TODO: do this through the vault so that we can burn gas token?
     curve_fi_action.saveExchange(CurveFiBUSD, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
@@ -172,20 +347,16 @@ def main():
     curve_fi_action.saveExchange(CurveFiUSDT, 3, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
     curve_fi_action.saveExchange(CurveFiY, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
-    # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity
-    # TODO: make a script to help with this
-    accounts[1].transfer(argobytes_atomic_trade, 1e18)
-
     # register for kyber's fee program
     kyber_register_wallet = interface.KyberRegisterWallet(
         KyberRegisterWallet, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
     kyber_register_wallet.registerWallet(
-        argobytes_owned_vault, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
+        argobytes_diamond, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
     if BURN_GAS_TOKEN:
         # make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
-        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_owned_vault)
+        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_diamond)
 
         print("gas token:", GasTokenAddress)
 
@@ -193,8 +364,7 @@ def main():
         print("gas_tokens_remaining:", gas_tokens_remaining / 100.0, "/", gas_tokens_start / 100.0)
 
         assert gas_tokens_remaining > 0
-        # TODO: get the amount minted from the contract
-        assert gas_tokens_remaining < 26
+        assert gas_tokens_remaining < mint_batch_amount
     else:
         print("gas_tokens_remaining: N/A")
 
