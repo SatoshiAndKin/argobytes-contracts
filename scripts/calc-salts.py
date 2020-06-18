@@ -4,41 +4,11 @@
 # Calculate salts for use with CREATE2.
 # This can be used to create addresses with lots of zeros which are slightly cheaper to call.
 # This can also be used for creating vanity addresses with fun patterns.
+from argobytes_util import *
 from brownie import *
 from eth_utils import keccak, to_checksum_address, to_bytes
 import os
 import rlp
-
-
-def mk_contract_address(sender: str, nonce: int) -> str:
-    """Create a contract address.
-
-    # https://ethereum.stackexchange.com/a/761/620
-    """
-    sender_bytes = to_bytes(hexstr=sender)
-    raw = rlp.encode([sender_bytes, nonce])
-    h = keccak(raw)
-    address_bytes = h[-20:]
-    return to_checksum_address(address_bytes)
-
-
-def mk_contract_address2(sender: str, salt: str, initcode: str) -> str:
-    """Create2 a contract address.
-
-    keccak256 (0xff ++ sender ++ salt ++ keccak256 (init_code)) [12:]
-
-    # TODO: this is not correct
-    """
-    raw = rlp.encode([
-        to_bytes(hexstr="0xff"),
-        to_bytes(hexstr=sender),
-        to_bytes(hexstr=salt),
-        keccak(to_bytes(hexstr=initcode)),
-    ])
-
-    address_bytes = keccak(raw)[12:]
-
-    return to_checksum_address(address_bytes)
 
 
 def main():
@@ -57,7 +27,10 @@ def main():
 
     # initcode is deployment bytecode + constructor params
     # lots of people using different terms here, but i think calling this "initcode" makes the most sense
+    #
     # cutter
+    #
+    # TODO: cutter and loupe salts can be searched in parallel
     cutter_initcode = DiamondCutter.deploy.encode_input()
 
     print("Cutter: ERADICATE2 -A", diamond_creator_address, "-I", cutter_initcode, "--zero-bytes")
@@ -75,7 +48,9 @@ def main():
 
     assert(cutter_expected_address == cutter_address)
 
+    #
     # loupe
+    #
     loupe_initcode = DiamondLoupe.deploy.encode_input()
 
     print("Loupe: ERADICATE2 -A", diamond_creator_address, "-I", loupe_initcode, "--zero-bytes")
@@ -92,6 +67,10 @@ def main():
     print("Calculated loupe address", loupe_address)
 
     assert(loupe_expected_address == loupe_address)
+
+    #
+    # diamond
+    #
 
     diamond_initcode = Diamond.deploy.encode_input(cutter_address, loupe_address)
 
@@ -110,12 +89,13 @@ def main():
 
     assert(diamond_expected_address == diamond_address)
 
-    # TODO: then what?
+    # TODO: now what?
+    # all the rest of the contracts can be searched in parallel
     assert False
 
 
 def calculate_one_salt():
-    """We don't want to always generate"""
+    """We don't want to always generate all the salts except on first deploy. Later deploys just need one contract."""
     # TODO: think about this more
 
     # first, we need to prompt what address is doing the deploy

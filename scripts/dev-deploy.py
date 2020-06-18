@@ -1,32 +1,15 @@
 # deploy all our contracts to a development network
 # rather than call this directly, you probably want to use `./scripts/test-deploy.sh` or `./scripts/staging-deploy.sh`
 
+from argobytes_util import *
+from argobytes_mainnet import *
 from brownie import *
 from eth_abi.packed import encode_abi_packed
 from eth_utils import to_bytes
 import os
 
-CurveFiBUSD = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
-CurveFiCompound = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
-CurveFiPAX = "0x06364f10B501e868329afBc005b3492902d6C763"
-CurveFiREN = "0x93054188d876f558f4a66B2EF1d97d16eDf0895B"
-CurveFiSUSDV2 = "0xA5407eAE9Ba41422680e2e00537571bcC53efBfD"
-CurveFiTBTC = "0x9726e9314eF1b96E45f40056bEd61A088897313E"
-CurveFiUSDT = "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C"
-CurveFiY = "0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51"
-GasToken2 = "0x0000000000b3F879cb30FE243b4Dfee438691c04"
-CHI = "0x0000000000004946c0e9F43F4Dee607b0eF1fA1c"  # 1inch's CHI
-KollateralInvokerAddress = "0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01"
-KyberRegisterWallet = "0xECa04bB23612857650D727B8ed008f80952654ee"
-OneSplitAddress = "0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E"
-Weth9Address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
-KyberNetworkProxy = "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
-# https://contracts.synthetix.io/ReadProxyAddressResolver
-SynthetixAddressResolver = "0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2"
-UniswapFactory = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
-ZeroAddress = "0x0000000000000000000000000000000000000000"
-# ZrxFowarderAddress = "0x0000000000000000000000000000000000000000"
 
+# TODO: set these inside main instead of using globals
 # GasToken, GasToken2, CHI, or probably other future coins
 GasTokenAddress = CHI
 
@@ -143,29 +126,6 @@ def quick_save(contract_name, address):
 
     with open(quick_path, 'w') as opened_file:
         opened_file.write(address)
-
-
-def reset_block_time(synthetix_depot_action):
-    # synthetix_address_resolver = interface.IAddressResolver(SynthetixAddressResolver)
-
-    # TODO: get this from the address resolver instead
-    synthetix_exchange_rates = Contract.from_explorer("0x9D7F70AF5DF5D5CC79780032d47a34615D1F1d77")
-
-    token_bytestr = synthetix_depot_action.BYTESTR_ETH()
-
-    last_update_time = synthetix_exchange_rates.lastRateUpdateTimes(token_bytestr)
-
-    print("last_update_time: ", last_update_time)
-
-    assert last_update_time != 0
-
-    latest_block_time = web3.eth.getBlock(web3.eth.blockNumber).timestamp
-
-    print("latest_block_time:", latest_block_time)
-
-    assert latest_block_time != 0
-
-    web3.testing.mine(last_update_time)
 
 
 def main():
