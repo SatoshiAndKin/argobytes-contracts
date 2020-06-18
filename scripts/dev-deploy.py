@@ -3,8 +3,8 @@
 
 from brownie import *
 from eth_abi.packed import encode_abi_packed
+from eth_utils import to_bytes
 import os
-import binascii
 
 CurveFiBUSD = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
 CurveFiCompound = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
@@ -51,18 +51,18 @@ def deploy2_and_burn(deployer, deployed_salt, deployed_contract, deployed_contra
         {"from": accounts[0], "gasPrice": gas_price}
     )
 
-    # if hasattr(deploy_tx, "return_value"):
-    #     # this should be the normal path
-    deployed_address = deploy_tx.return_value
-    # else:
-    #     # print(deploy_tx.events)
+    if hasattr(deploy_tx, "return_value"):
+        # this should be the normal path
+        deployed_address = deploy_tx.return_value
+    else:
+        # print(deploy_tx.events)
 
-    #     # i think this is a bug
-    #     # no return_value, so we check logs instead
-    #     # TODO: i don't think this log should be needed
-    #     events = deploy_tx.events['Deploy'][0]
+        # i think this is a bug
+        # no return_value, so we check logs instead
+        # TODO: i don't think this log should be needed
+        events = deploy_tx.events['Deploy'][0]
 
-    #     deployed_address = events['deployed']
+        deployed_address = events['deployed']
 
     deployed_contract = deployed_contract.at(deployed_address)
 
@@ -80,7 +80,7 @@ def deploy2_and_cut_and_burn(deployer, deployed_salt, deployed_contract, deploye
     encoded_sigs = []
     for deployed_sig in deployed_sigs:
         # TODO: whats the maximum number of selectors?
-        cut = binascii.unhexlify(deployed_contract.signatures[deployed_sig][2:])
+        cut = to_bytes(hexstr=deployed_contract.signatures[deployed_sig])
 
         encoded_sigs.append(cut)
 
@@ -103,18 +103,18 @@ def deploy2_and_cut_and_burn(deployer, deployed_salt, deployed_contract, deploye
         {"from": accounts[0], "gasPrice": gas_price}
     )
 
-    # if hasattr(deploy_tx, "return_value"):
-    #     # this should be the normal path
-    deployed_address = deploy_tx.return_value
-    # else:
-    #     # print(deploy_tx.events)
+    if hasattr(deploy_tx, "return_value"):
+        # this should be the normal path
+        deployed_address = deploy_tx.return_value
+    else:
+        # print(deploy_tx.events)
 
-    #     # i think this is a bug
-    #     # no return_value, so we check logs instead
-    #     # TODO: i don't think this log should be needed
-    #     events = deploy_tx.events['Deploy'][0]
+        # i think this is a bug
+        # no return_value, so we check logs instead
+        # TODO: i don't think this log should be needed
+        events = deploy_tx.events['Deploy'][0]
 
-    #     deployed_address = events['deployed']
+        deployed_address = events['deployed']
 
     deployed_contract = deployed_contract.at(deployed_address)
 
@@ -224,15 +224,13 @@ def main():
         # TODO: proper assert
         assert gas_tokens_start > mint_batch_amount
 
-    # prepare a diamond. we will add ArgobytesOwnedVault functions to this
-    diamond_initcode = Diamond.deploy.encode_input(salt, salt)
-
-    # deploy the contract that will deploy the diamond
+    # deploy the contract that will deploy the diamond (and cutter and loupe)
     # it self destructs, so handling it is non-standard
     diamond_deploy_tx = DiamondCreator.deploy(
         GasTokenAddress,
         salt,
-        diamond_initcode,
+        salt,
+        salt,
         {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
     )
 
@@ -240,6 +238,9 @@ def main():
     diamond_address = diamond_deploy_tx.logs[0]['address']
 
     diamond = Diamond.at(diamond_address)
+
+    print("Self-destructing DiamondCreator deployed Diamond to", diamond_address)
+    print()
 
     # save the diamond's address
     quick_save_contract(diamond)

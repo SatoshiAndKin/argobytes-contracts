@@ -64,3 +64,8 @@ Run:
     pip-compile --upgrade
     pip install -U -r requirements.txt
     npm upgrade
+
+
+# Reading
+
+- <https://blog.ricmoo.com/wisps-the-magical-world-of-create2-5c2177027604>

@@ -14,18 +14,16 @@ import "./DiamondLoupe.sol";
 import "./DiamondStorageContract.sol";
 
 contract Diamond is DiamondStorageContract, IERC165 {
-    constructor(bytes32 cutter_salt, bytes32 loupe_salt) public payable {
+    constructor(address cutter, address loupe) public payable {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         DiamondStorage storage ds = diamondStorage();
 
-        // Create a DiamondCutter contract which implements the IDiamondCutter interface
-        // TODO: salt this for CREATE2?
-        DiamondCutter diamondCutter = new DiamondCutter{salt: cutter_salt}();
+        // Use an already deployed DiamondCutter contract
+        IDiamondCutter diamondCutter = IDiamondCutter(cutter);
 
-        // Create a DiamondLoupe contract which implements the IDiamondLoupe interface
-        // TODO: salt this for CREATE2?
-        DiamondLoupe diamondLoupe = new DiamondLoupe{salt: loupe_salt}();
+        // Use an already deployed DiamondLoupe contract
+        IDiamondLoupe diamondLoupe = IDiamondLoupe(loupe);
 
         bytes[] memory diamondCuts = new bytes[](3);
 

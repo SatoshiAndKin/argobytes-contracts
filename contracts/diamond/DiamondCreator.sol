@@ -7,7 +7,8 @@ import {Create2} from "@openzeppelin/utils/Create2.sol";
 import {GasTokenBurner, IGasToken} from "contracts/GasTokenBurner.sol";
 
 import {Diamond} from "./Diamond.sol";
-import {IDiamondCutter} from "./DiamondHeaders.sol";
+import {DiamondCutter} from "./DiamondCutter.sol";
+import {DiamondLoupe} from "./DiamondLoupe.sol";
 
 // TODO: cute name like DiamondMine?
 contract DiamondCreator is GasTokenBurner {
@@ -19,23 +20,23 @@ contract DiamondCreator is GasTokenBurner {
     // TODO: steps for using ERADICATE2
     constructor(
         address gastoken,
-        bytes32 diamond_salt,
-        bytes memory diamond_initcode
+        bytes32 cutter_salt,
+        bytes32 loupe_salt,
+        bytes32 diamond_salt
     ) public payable {
         uint256 initial_gas = startFreeGasTokens(gastoken);
 
-        // the Diamond contract is too large to include here. put initcode into calldata instead
-        // Diamond diamond = new Diamond{salt: diamond_salt, value: msg.value}(
-        //     cutter_salt,
-        //     loupe_salt
-        // );
-        address diamond_address = Create2.deploy(
-            msg.value,
-            diamond_salt,
-            diamond_initcode
-        );
+        // TODO: what if someone else has deployed a cutter contract that we can use?
+        DiamondCutter cutter = new DiamondCutter{salt: cutter_salt}();
 
-        Diamond diamond = Diamond(payable(diamond_address));
+        // TODO: what if someone else has deployed a loupe contract that we can use?
+        DiamondLoupe loupe = new DiamondLoupe{salt: loupe_salt}();
+
+        // TODO: forward msg.value? we already do a transfer when we selfdestruct
+        Diamond diamond = new Diamond{salt: diamond_salt}(
+            address(cutter),
+            address(loupe)
+        );
 
         // transfer admin role from `this` to `msg.sender`
         bytes32 admin_role = diamond.DEFAULT_ADMIN_ROLE();
@@ -53,9 +54,10 @@ contract DiamondCreator is GasTokenBurner {
             IGasToken(gastoken).transfer(address(diamond), gastoken_balance);
         }
 
-        // // selfdestruct for the gas refund
-        // // TODO: does this have to be last?
-        // selfdestruct(address(diamond));
-        selfdestruct(msg.sender);
+        // selfdestruct for the gas refund
+        // TODO: does this have to be last?
+        // TODO: should we forward any ETH to msg.sender, or the diamond?
+        // selfdestruct(msg.sender);
+        selfdestruct(address(diamond));
     }
 }
