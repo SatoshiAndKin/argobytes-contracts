@@ -1,0 +1,40 @@
+There are too many open bugs on ganache-cli --fork that are active blocks to writing more unit tests.
+
+Even once all the open issues are fixed, I am pretty sure that there will be more bugs.
+
+I've opened an issue on geth to support forking, but that will not be quick either.
+
+So here's my current plan for tests:
+
+1. setup a long running geth fast sync node. leave this one running. maybe put it on a cloud server
+2. copy the chaindata to my local system
+3. fork geth to support mining blocks with any difficulty
+4. point brownie at this node and see how tests do
+
+And here's my current plan for staging:
+
+1. Copy the chaindata to 1 cloud server
+2. fork geth to support mining blocks with any difficulty
+3. point brownie at this node and run staging-deploy
+
+And here's my eventual plan for staging:
+
+1. Copy the chaindata to 3 cloud servers
+2. run forked geth on one of them as the primary
+3. point brownie at this node and run staging-deploy
+4. setup forked geth nodes on the other 2 servers as read-only nodes
+5. setup haproxy to load balance between them (with smart healthchecks so that we drop them if they aren't in sync)
+
+We still need to write a websocket proxy for newHeads
+actually, maybe it should proxy everything.
+- subscriptions subscribe to ALL nodes. waits to send until it receives responses from a quorom of nodes
+- standard requests go to 2 nodes. responds with whichever is fastest. on error, retry?
+- this should let us use infura as a fallback
+
+
+====
+
+should we cut the atomicTrade function directly onto the diamond? that would let us run arbitrary functions
+that doesn't have gastoken freeing though
+
+we are inconsistent with "burn" and "free" on gas token.

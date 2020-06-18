@@ -1,3 +1,4 @@
+from brownie import *
 from eth_utils import keccak, to_checksum_address, to_bytes
 import os
 import rlp
@@ -22,7 +23,7 @@ def mk_contract_address2(sender: str, salt: str, initcode: str) -> str:
 
     # TODO: this is not correct
     """
-    raw = rlp.encode([
+    raw = b"".join([
         to_bytes(hexstr="0xff"),
         to_bytes(hexstr=sender),
         to_bytes(hexstr=salt),

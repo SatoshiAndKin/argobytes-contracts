@@ -37,16 +37,19 @@ def main():
 
     input("\nPress [enter] to continue")
 
-    cutter_salt = input("Cutter salt:")
-    cutter_expected_address = input("Cutter address:")
+    # Cutter salt: 0x42a04a7c2ffd74752fcc360ccf7db1fa445029fcfe98f819d8eaa4c5d7fc2a3f
+    # Cutter address: 0xc27e53bb0041689e077600004d88000000356836
+
+    cutter_salt = input("Cutter salt: ")
+    cutter_expected_address = input("Cutter address: ")
 
     # TODO: count the zero bytes?
 
     cutter_address = mk_contract_address2(diamond_creator_address, cutter_salt, cutter_initcode)
 
-    print("Calculated cutter address", cutter_address)
+    print("Calculated cutter address:", cutter_address, "\n")
 
-    assert(cutter_expected_address == cutter_address)
+    assert(cutter_expected_address == cutter_address.lower())
 
     #
     # loupe
@@ -57,16 +60,19 @@ def main():
 
     input("\nPress [enter] to continue")
 
-    loupe_salt = input("Loupe salt:")
-    loupe_expected_address = input("Loupe address:")
+    # Loupe salt: 0x31c5a4380af0452637d7f2898e2feaf133b45888bc60907a5ecafecb7aabf5c4
+    # Loupe address: 0x0000839b00d700280000ede09d2839c7474ed616
+
+    loupe_salt = input("Loupe salt: ")
+    loupe_expected_address = input("Loupe address: ")
 
     # TODO: count the zero bytes?
 
     loupe_address = mk_contract_address2(diamond_creator_address, loupe_salt, loupe_initcode)
 
-    print("Calculated loupe address", loupe_address)
+    print("Calculated loupe address:", loupe_address, "\n")
 
-    assert(loupe_expected_address == loupe_address)
+    assert(loupe_expected_address == loupe_address.lower())
 
     #
     # diamond
@@ -74,23 +80,28 @@ def main():
 
     diamond_initcode = Diamond.deploy.encode_input(cutter_address, loupe_address)
 
-    print("ERADICATE2 -A", diamond_creator_address, "-I", loupe_initcode, "--zero-bytes")
+    print("Diamond: ERADICATE2 -A", diamond_creator_address, "-I", loupe_initcode, "--zero-bytes")
 
     input("\nPress [enter] to continue")
 
-    diamond_salt = input("Diamond salt:")
-    diamond_expected_address = input("Diamond address:")
+    # Diamond salt: 0x2df145a24dd582c3df314a9f60c1dbc9075deaf6675957c58bb5fc4d54fade1f
+    # Diamond address: 0x6b17f0bb173300607161a80000e2003292003300
+    diamond_salt = input("Diamond salt: ")
+    diamond_expected_address = input("Diamond address: ")
 
     # TODO: count the zero bytes?
 
     diamond_address = mk_contract_address2(diamond_creator_address, diamond_salt, diamond_initcode)
 
-    print("Calculated diamond_address", diamond_address)
+    print("Calculated diamond_address:", diamond_address, "\n")
 
-    assert(diamond_expected_address == diamond_address)
+    assert(diamond_expected_address == diamond_address.lower())
 
-    # TODO: now what?
     # all the rest of the contracts can be searched in parallel
+
+    # TODO: print all the salts and addresses for easy record-keeping
+
+    print("now what?")
     assert False
 
 
