@@ -4,8 +4,11 @@ pragma solidity 0.6.10;
 import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
 
 import {IGasToken} from "contracts/interfaces/gastoken/IGasToken.sol";
+import {
+    IGasTokenBurner
+} from "contracts/interfaces/argobytes/IGasTokenBurner.sol";
 
-contract GasTokenBurner {
+contract GasTokenBurner is IGasTokenBurner {
     using SafeMath for uint256;
 
     modifier freeGasTokens(address gas_token) {
@@ -86,7 +89,7 @@ contract GasTokenBurner {
      * @notice Mint `amount` gas tokens for this contract.
      * TODO: is this safe? what if someone passes a malicious address here?
      */
-    function mintGasToken(address gas_token, uint256 amount) public {
+    function mintGasToken(address gas_token, uint256 amount) public override {
         IGasToken(gas_token).mint(amount);
     }
 }

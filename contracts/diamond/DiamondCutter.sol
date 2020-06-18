@@ -137,6 +137,8 @@ contract DiamondCutter is DiamondStorageContract, IDiamondCutter {
         bytes32 salt,
         bytes memory bytecode
     ) public override payable returns (address deployed) {
-        return Create2.deploy(msg.value, salt, bytecode);
+        deployed = Create2.deploy(msg.value, salt, bytecode);
+
+        emit Deploy(deployed);
     }
 }

@@ -6,6 +6,7 @@ pragma experimental ABIEncoderV2;
 
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 
+// TODO: we are missing the GasTokenBurner functions
 interface IArgobytesOwnedVault {
     /**
      * @notice Deploy the contract.

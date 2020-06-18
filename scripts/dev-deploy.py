@@ -2,7 +2,9 @@
 # rather than call this directly, you probably want to use `./scripts/test-deploy.sh` or `./scripts/staging-deploy.sh`
 
 from brownie import *
+from eth_abi.packed import encode_abi_packed
 import os
+import binascii
 
 CurveFiBUSD = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
 CurveFiCompound = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
@@ -45,10 +47,16 @@ def create_helper(deployer, target_contract, target_contract_args, gas_price):
 
     deploy_tx = deployer.deploy2(salt, initcode, {"from": accounts[0], "gasPrice": gas_price})
 
-    if deploy_tx.return_value is None:
-        raise "why don't we have a return value?"
+    if hasattr(deploy_tx, "return_value"):
+        # this should be the normal path
+        deployed_address = deploy_tx.return_value
+    else:
+        # i think this is a bug
+        # no return_value, so we check logs instead
+        # TODO: i don't think this log should be needed
+        events = deploy_tx.events[-1]
 
-    deployed_address = deploy_tx.return_value
+        deployed_address = events['deployed']
 
     deployed_contract = target_contract.at(deployed_address)
 
@@ -155,9 +163,10 @@ def main():
     # there is a tx.new_contracts, but because of how we self-destruct the DiamondDeployer, it isn't populated
     diamond = Diamond.at(diamond_deploy_tx.logs[0]['address'])
 
+    # save the diamond's address
     quick_save_contract(diamond)
 
-    # this interface matches our final cut diamond (IDiamondCutter, IDiamondLoupe, IArgobytesOwnedVault)
+    # this interface matches our final cut diamond (IDiamondCutter+IDiamondLoupe+IArgobytesOwnedVault)
     argobytes_diamond = interface.IArgobytesDiamond(diamond.address)
 
     # deploy ArgobytesOwnedVault. we won't use this directly. it will be used through the diamond
@@ -165,19 +174,23 @@ def main():
     argobytes_owned_vault = create_helper(argobytes_diamond, ArgobytesOwnedVault, [], expected_mainnet_gas_price)
 
     cuts = [
-        # (address, selector1, ..., selectorN)
-        (
-            argobytes_owned_vault,
-            argobytes_owned_vault.trustArbitragers.selector,
-            argobytes_owned_vault.atomicArbitrage.selector,
-            argobytes_owned_vault.deploy2_and_burn.selector,
-            argobytes_owned_vault.deploy2_cut_and_burn.selector,
-            argobytes_owned_vault.withdrawTo.selector,
-            argobytes_owned_vault.withdrawToFreeGas.selector,
+        # abi.encodePacked(address, selector1, ..., selectorN)
+        encode_abi_packed(
+            ['address'] + ['bytes4'] * 7,
+            (
+                argobytes_owned_vault.address,
+                binascii.unhexlify(ArgobytesOwnedVault.signatures["trustArbitragers"][2:]),
+                binascii.unhexlify(ArgobytesOwnedVault.signatures["atomicArbitrage"][2:]),
+                binascii.unhexlify(ArgobytesOwnedVault.signatures["deploy2_and_burn"][2:]),
+                binascii.unhexlify(ArgobytesOwnedVault.signatures["deploy2_cut_and_burn"][2:]),
+                binascii.unhexlify(ArgobytesOwnedVault.signatures["withdrawTo"][2:]),
+                binascii.unhexlify(ArgobytesOwnedVault.signatures["withdrawToFreeGas"][2:]),
+                binascii.unhexlify(ArgobytesOwnedVault.signatures["mintGasToken"][2:]),
+            )
         )
     ]
 
-    argobytes_diamond.cutDiamond(cuts, {"from": accounts[0]})
+    argobytes_diamond.diamondCut(cuts, {"from": accounts[0]})
 
     # now that we've added our functions we can use the ArgobytesOwnedVault on the diamond
     argobytes_diamond.trustArbitragers(arb_bots, {"from": accounts[0]})
@@ -212,7 +225,7 @@ def main():
         argobytes_owned_vault, SynthetixDepotAction, [], expected_mainnet_gas_price)
 
     curve_fi_action = create_helper_with_gastoken(argobytes_owned_vault, CurveFiAction, [
-                                                  accounts[0]], expected_mainnet_gas_price)
+        accounts[0]], expected_mainnet_gas_price)
 
     # TODO: do this through the vault so that we can burn gas token?
     curve_fi_action.saveExchange(CurveFiBUSD, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})

@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 
 interface IDiamondCutter {
     event DiamondCut(bytes[] _diamondCut);
+    event Deploy(address deployed);
 
     function deploy2(bytes32 salt, bytes memory bytecode)
         external
