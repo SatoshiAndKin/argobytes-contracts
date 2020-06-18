@@ -139,6 +139,7 @@ contract DiamondCutter is DiamondStorageContract, IDiamondCutter {
     ) public override payable returns (address deployed) {
         deployed = Create2.deploy(msg.value, salt, bytecode);
 
+        // TODO: get rid of this once we figure out why brownie isn't setting return_value
         emit Deploy(deployed);
     }
 }

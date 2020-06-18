@@ -8,6 +8,8 @@ import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 
 // TODO: we are missing the GasTokenBurner functions
 interface IArgobytesOwnedVault {
+    event Deploy(address deployed);
+
     /**
      * @notice Deploy the contract.
      * This is payable so that the initial deployment can fund

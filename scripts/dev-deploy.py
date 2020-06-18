@@ -53,8 +53,9 @@ def create_helper(deployer, target_contract, target_contract_args, gas_price):
     else:
         # i think this is a bug
         # no return_value, so we check logs instead
-        # TODO: i don't think this log should be needed
-        events = deploy_tx.events[-1]
+
+        # print(deploy_tx.events)
+        events = deploy_tx.events['Deploy'][0]
 
         deployed_address = events['deployed']
 
@@ -81,7 +82,18 @@ def create_helper_with_gastoken(deployer, target_contract, target_contract_args,
 
     deploy_tx = deployer.deploy2_and_burn(gastoken, salt, initcode, {"from": accounts[0], "gasPrice": gas_price})
 
-    deployed_address = deploy_tx.return_value
+    if hasattr(deploy_tx, "return_value"):
+        # this should be the normal path
+        deployed_address = deploy_tx.return_value
+    else:
+        # print(deploy_tx.events)
+
+        # i think this is a bug
+        # no return_value, so we check logs instead
+        # TODO: i don't think this log should be needed
+        events = deploy_tx.events['Deploy'][0]
+
+        deployed_address = events['deployed']
 
     deployed_contract = target_contract.at(deployed_address)
 
@@ -197,9 +209,13 @@ def main():
 
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
     if BURN_GAS_TOKEN:
-        for _ in range(0, 18):
+        mint_amount = 50
+
+        # TODO: this is costing us way more gas token...
+        # TODO: wtf. this is way too much gas token. something is definitely not right
+        for _ in range(1, 10):
             argobytes_diamond.mintGasToken(
-                GasTokenAddress, 26, {"from": accounts[0], "gasPrice": expected_mainnet_mint_price})
+                GasTokenAddress, mint_amount, {"from": accounts[0], "gasPrice": expected_mainnet_mint_price})
 
         gas_token = interface.IGasToken(GasTokenAddress)
 
@@ -250,7 +266,7 @@ def main():
 
     if BURN_GAS_TOKEN:
         # make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
-        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_owned_vault)
+        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_diamond)
 
         print("gas token:", GasTokenAddress)
 
@@ -258,8 +274,7 @@ def main():
         print("gas_tokens_remaining:", gas_tokens_remaining / 100.0, "/", gas_tokens_start / 100.0)
 
         assert gas_tokens_remaining > 0
-        # TODO: get the amount minted from the contract
-        assert gas_tokens_remaining < 26
+        assert gas_tokens_remaining < mint_amount
     else:
         print("gas_tokens_remaining: N/A")
 

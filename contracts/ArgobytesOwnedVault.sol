@@ -195,6 +195,9 @@ contract ArgobytesOwnedVault is
         );
 
         deployed = Create2.deploy(msg.value, salt, bytecode);
+
+        // TODO: get rid of this once we figure out why brownie isn't setting return_value
+        emit Deploy(deployed);
     }
 
     // use CREATE2 to deploy with a salt, cut the diamond, and then free gas tokens
@@ -218,6 +221,9 @@ contract ArgobytesOwnedVault is
         deployed = Create2.deploy(msg.value, salt, bytecode);
 
         // TODO: cut!
+
+        // TODO: get rid of this once we figure out why brownie isn't setting return_value
+        emit Deploy(deployed);
     }
 
     function withdrawTo(
