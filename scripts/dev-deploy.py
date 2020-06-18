@@ -203,28 +203,28 @@ def main():
 
         gas_token = interface.IGasToken(GasTokenAddress)
 
-        gas_tokens_start = gas_token.balanceOf.call(argobytes_owned_vault)
+        gas_tokens_start = gas_token.balanceOf.call(argobytes_diamond)
         # gastoken has 2 decimals, so divide by 100
         print("Starting gas_token balance:", gas_tokens_start / 100.0)
 
     argobytes_atomic_trade = create_helper_with_gastoken(
-        argobytes_owned_vault, ArgobytesAtomicTrade, [], expected_mainnet_gas_price)
+        argobytes_diamond, ArgobytesAtomicTrade, [], expected_mainnet_gas_price)
 
     # give the vault a bunch of coins
-    accounts[1].transfer(argobytes_owned_vault, 50 * 1e18)
-    accounts[2].transfer(argobytes_owned_vault, 50 * 1e18)
-    accounts[3].transfer(argobytes_owned_vault, 50 * 1e18)
+    accounts[1].transfer(argobytes_diamond, 50 * 1e18)
+    accounts[2].transfer(argobytes_diamond, 50 * 1e18)
+    accounts[3].transfer(argobytes_diamond, 50 * 1e18)
 
-    create_helper_with_gastoken(argobytes_owned_vault, OneSplitOffchainAction, [], expected_mainnet_gas_price)
-    create_helper_with_gastoken(argobytes_owned_vault, KyberAction, [
-                                accounts[0], argobytes_owned_vault], expected_mainnet_gas_price)
-    create_helper_with_gastoken(argobytes_owned_vault, UniswapV1Action, [], expected_mainnet_gas_price)
-    # create_helper(argobytes_owned_vault, ZrxV3Action, [], expected_mainnet_gas_price)
-    create_helper_with_gastoken(argobytes_owned_vault, Weth9Action, [], expected_mainnet_gas_price)
+    create_helper_with_gastoken(argobytes_diamond, OneSplitOffchainAction, [], expected_mainnet_gas_price)
+    create_helper_with_gastoken(argobytes_diamond, KyberAction, [
+                                accounts[0], argobytes_diamond], expected_mainnet_gas_price)
+    create_helper_with_gastoken(argobytes_diamond, UniswapV1Action, [], expected_mainnet_gas_price)
+    # create_helper(argobytes_diamond, ZrxV3Action, [], expected_mainnet_gas_price)
+    create_helper_with_gastoken(argobytes_diamond, Weth9Action, [], expected_mainnet_gas_price)
     synthetix_depot_action = create_helper_with_gastoken(
-        argobytes_owned_vault, SynthetixDepotAction, [], expected_mainnet_gas_price)
+        argobytes_diamond, SynthetixDepotAction, [], expected_mainnet_gas_price)
 
-    curve_fi_action = create_helper_with_gastoken(argobytes_owned_vault, CurveFiAction, [
+    curve_fi_action = create_helper_with_gastoken(argobytes_diamond, CurveFiAction, [
         accounts[0]], expected_mainnet_gas_price)
 
     # TODO: do this through the vault so that we can burn gas token?
@@ -246,7 +246,7 @@ def main():
         KyberRegisterWallet, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
     kyber_register_wallet.registerWallet(
-        argobytes_owned_vault, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
+        argobytes_diamond, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
     if BURN_GAS_TOKEN:
         # make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
