@@ -44,14 +44,22 @@ contract DiamondCreator is GasTokenBurner {
         diamond.grantRole(admin_role, msg.sender);
         diamond.renounceRole(admin_role, address(this));
 
-        endFreeGasTokens(gastoken, initial_gas);
+        if (initial_gas > 0) {
+            // TODO: since we are going to self destruct and get 200k back, we need to tweak how much we free. think about this more
+            endFreeGasTokens(gastoken, initial_gas + 400000);
 
-        // transfer any leftover gasToken to the diamond
-        uint256 gastoken_balance = IGasToken(gastoken).balanceOf(address(this));
+            // transfer any leftover gasToken to the diamond
+            uint256 gastoken_balance = IGasToken(gastoken).balanceOf(
+                address(this)
+            );
 
-        // TODO: require this to succeed? that would be an expensive revert
-        if (gastoken_balance > 0) {
-            IGasToken(gastoken).transfer(address(diamond), gastoken_balance);
+            // TODO: require this to succeed? that would be an expensive revert
+            if (gastoken_balance > 0) {
+                IGasToken(gastoken).transfer(
+                    address(diamond),
+                    gastoken_balance
+                );
+            }
         }
 
         // selfdestruct for the gas refund (~200k gas)
