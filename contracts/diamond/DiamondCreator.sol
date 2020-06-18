@@ -63,9 +63,8 @@ contract DiamondCreator is GasTokenBurner {
         }
 
         // selfdestruct for the gas refund (~200k gas)
+        // this forwards any ETH in this contract to the diamond
         // this must be last!
-        // TODO: are we freeing more gas token than necessary?
-        // TODO: should we forward any ETH to msg.sender, or the diamond?
         selfdestruct(address(diamond));
     }
 }
