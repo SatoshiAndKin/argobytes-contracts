@@ -29,11 +29,13 @@ contract Diamond is DiamondStorageContract, IERC165 {
 
         bytes[] memory diamondCuts = new bytes[](3);
 
-        // Adding cut function
+        // Adding diamond cutter functions
         diamondCuts[0] = abi.encodePacked(
             diamondCutter,
             diamondCutter.diamondCut.selector,
-            diamondCutter.deploy2.selector
+            diamondCutter.deploy2.selector,
+            diamondCutter.deploy2AndBurn.selector,
+            diamondCutter.deploy2AndCutAndBurn.selector
         );
 
         // Adding diamond loupe functions

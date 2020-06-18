@@ -42,11 +42,10 @@ contract ArgobytesOwnedVault is
      * @notice Deploy the contract.
      * This is payable so that the initial deployment can fund
      */
-    function trustArbitragers(address[] memory trusted_arbitragers)
-        public
-        override
-        payable
-    {
+    function trustArbitragers(
+        address gastoken,
+        address[] memory trusted_arbitragers
+    ) public override payable freeGasTokens(gastoken) {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "ArgobytesOwnedVault.trustArbitragers: Caller is not an admin"
@@ -177,55 +176,6 @@ contract ArgobytesOwnedVault is
         endFreeGasTokens(gastoken, initial_gas);
     }
 
-    // use CREATE2 to deploy with a salt and then free gas tokens
-    function deploy2_and_burn(
-        address gas_token,
-        bytes32 salt,
-        bytes memory bytecode
-    )
-        public
-        override
-        payable
-        freeGasTokens(gas_token)
-        returns (address deployed)
-    {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "ArgobytesOwnedVault.deploy2: Caller is not an admin"
-        );
-
-        deployed = Create2.deploy(msg.value, salt, bytecode);
-
-        // TODO: get rid of this once we figure out why brownie isn't setting return_value
-        emit Deploy(deployed);
-    }
-
-    // use CREATE2 to deploy with a salt, cut the diamond, and then free gas tokens
-    function deploy2_cut_and_burn(
-        address gas_token,
-        bytes32 salt,
-        bytes memory bytecode,
-        bytes[] memory diamondCuts
-    )
-        public
-        override
-        payable
-        freeGasTokens(gas_token)
-        returns (address deployed)
-    {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "ArgobytesOwnedVault.deploy2: Caller is not an admin"
-        );
-
-        deployed = Create2.deploy(msg.value, salt, bytecode);
-
-        // TODO: cut!
-
-        // TODO: get rid of this once we figure out why brownie isn't setting return_value
-        emit Deploy(deployed);
-    }
-
     function withdrawTo(
         IERC20 token,
         address to,
@@ -240,12 +190,13 @@ contract ArgobytesOwnedVault is
         return token.universalTransfer(to, amount);
     }
 
+    // TODO: better function name? "freeing gas" feels weird, but "burning" already has a meaning
     function withdrawToFreeGas(
-        address gas_token,
+        address gastoken,
         IERC20 token,
         address to,
         uint256 amount
-    ) external override freeGasTokens(gas_token) returns (bool) {
+    ) external override freeGasTokens(gastoken) returns (bool) {
         // TODO: what role? it should be seperate from the deployer
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),

@@ -7,14 +7,20 @@ pragma experimental ABIEncoderV2;
 *
 * Implementation of Diamond facet.
 * This is gas optimized by reducing storage reads and storage writes.
+*
+* In addition to the standard cut function, there are also functions for
+* deploying contracts and burning gas token
 /******************************************************************************/
 
 import {Create2} from "@openzeppelin/utils/Create2.sol";
 
+import {GasTokenBurner} from "contracts/GasTokenBurner.sol";
+
 import {DiamondStorageContract} from "./DiamondStorageContract.sol";
 import {IDiamondCutter} from "./DiamondHeaders.sol";
 
-contract DiamondCutter is DiamondStorageContract, IDiamondCutter {
+
+contract DiamondCutter is DiamondStorageContract, IDiamondCutter, GasTokenBurner {
     bytes32 constant CLEAR_ADDRESS_MASK = 0x0000000000000000000000000000000000000000ffffffffffffffffffffffff;
     bytes32 constant CLEAR_SELECTOR_MASK = 0xffffffff00000000000000000000000000000000000000000000000000000000;
 
@@ -133,11 +139,61 @@ contract DiamondCutter is DiamondStorageContract, IDiamondCutter {
     }
 
     // use CREATE2 to deploy with a salt
+    // this function is completely open
     function deploy2(
         bytes32 salt,
-        bytes memory bytecode
+        bytes memory initcode
     ) public override payable returns (address deployed) {
-        deployed = Create2.deploy(msg.value, salt, bytecode);
+        deployed = Create2.deploy(msg.value, salt, initcode);
+
+        // TODO: get rid of this once we figure out why brownie isn't setting return_value
+        emit Deploy(deployed);
+    }
+
+    // use CREATE2 to deploy with a salt and then free gas tokens
+    function deploy2AndBurn(
+        address gas_token,
+        bytes32 salt,
+        bytes memory initcode
+    )
+        public
+        override
+        payable
+        freeGasTokens(gas_token)
+        returns (address deployed)
+    {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.deploy2: Caller is not an admin"
+        );
+
+        deployed = Create2.deploy(msg.value, salt, initcode);
+
+        // TODO: get rid of this once we figure out why brownie isn't setting return_value
+        emit Deploy(deployed);
+    }
+
+    // use CREATE2 to deploy with a salt, cut the diamond, and then free gas tokens
+    function deploy2AndCutAndBurn(
+        address gas_token,
+        bytes32 salt,
+        bytes memory facet_initcode,
+        bytes memory facet_sigs
+    )
+        public
+        override
+        payable
+        freeGasTokens(gas_token)
+        returns (address deployed)
+    {
+        // no need for permissions check here since diamondCut does one
+
+        deployed = Create2.deploy(msg.value, salt, facet_initcode);
+
+        bytes[] memory cuts = new bytes[](1);
+        cuts[0] = abi.encodePacked(deployed, facet_sigs);
+
+        diamondCut(cuts);
 
         // TODO: get rid of this once we figure out why brownie isn't setting return_value
         emit Deploy(deployed);

@@ -21,4 +21,8 @@ interface IGasToken {
         returns (bool success);
 
     function balanceOf(address owner) external returns (uint256 balance);
+
+    function transfer(address to, uint256 amount)
+        external
+        returns (bool success);
 }

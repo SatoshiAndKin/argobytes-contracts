@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LGPL-3.0-or-later
+// SPDX-License-Identifier: You can't license an interface
 // Store profits and provide them for flash lending
 // Burns GasToken (or compatible contracts)
 pragma solidity 0.6.10;
@@ -14,9 +14,10 @@ interface IArgobytesOwnedVault {
      * @notice Deploy the contract.
      * This is payable so that the initial deployment can fund
      */
-    function trustArbitragers(address[] memory trusted_arbitragers)
-        external
-        payable;
+    function trustArbitragers(
+        address gastoken,
+        address[] memory trusted_arbitragers
+    ) external payable;
 
     function atomicArbitrage(
         address gastoken,
@@ -27,21 +28,6 @@ interface IArgobytesOwnedVault {
         bytes calldata encoded_actions
     ) external returns (uint256 primary_profit);
 
-    // use CREATE2 to deploy with a salt and free gas tokens
-    function deploy2_and_burn(
-        address gas_token,
-        bytes32 salt,
-        bytes memory bytecode
-    ) external payable returns (address deployed);
-
-    // use CREATE2 to deploy with a salt, cut the diamond, and free gas tokens
-    function deploy2_cut_and_burn(
-        address gas_token,
-        bytes32 salt,
-        bytes memory bytecode,
-        bytes[] memory diamondCuts
-    ) external payable returns (address deployed);
-
     function withdrawTo(
         IERC20 token,
         address to,
@@ -49,7 +35,7 @@ interface IArgobytesOwnedVault {
     ) external returns (bool);
 
     function withdrawToFreeGas(
-        address gas_token,
+        address gastoken,
         IERC20 token,
         address to,
         uint256 amount

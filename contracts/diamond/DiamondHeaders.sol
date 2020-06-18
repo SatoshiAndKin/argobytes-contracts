@@ -6,10 +6,23 @@ interface IDiamondCutter {
     event DiamondCut(bytes[] _diamondCut);
     event Deploy(address deployed);
 
-    function deploy2(bytes32 salt, bytes memory bytecode)
+    function deploy2(bytes32 salt, bytes memory initcode)
         external
         payable
         returns (address);
+
+    function deploy2AndBurn(
+        address gas_token,
+        bytes32 salt,
+        bytes memory initcode
+    ) external payable returns (address);
+
+    function deploy2AndCutAndBurn(
+        address gas_token,
+        bytes32 salt,
+        bytes memory facet_initcode,
+        bytes memory facet_sigs
+    ) external payable returns (address);
 
     /// @notice _diamondCut is an array of bytes arrays.
     /// This argument is tightly packed for gas efficiency.
