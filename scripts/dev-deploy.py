@@ -51,18 +51,18 @@ def deploy2_and_burn(deployer, deployed_salt, deployed_contract, deployed_contra
         {"from": accounts[0], "gasPrice": gas_price}
     )
 
-    if hasattr(deploy_tx, "return_value"):
-        # this should be the normal path
-        deployed_address = deploy_tx.return_value
-    else:
-        # print(deploy_tx.events)
+    # if hasattr(deploy_tx, "return_value"):
+    #     # this should be the normal path
+    deployed_address = deploy_tx.return_value
+    # else:
+    #     # print(deploy_tx.events)
 
-        # i think this is a bug
-        # no return_value, so we check logs instead
-        # TODO: i don't think this log should be needed
-        events = deploy_tx.events['Deploy'][0]
+    #     # i think this is a bug
+    #     # no return_value, so we check logs instead
+    #     # TODO: i don't think this log should be needed
+    #     events = deploy_tx.events['Deploy'][0]
 
-        deployed_address = events['deployed']
+    #     deployed_address = events['deployed']
 
     deployed_contract = deployed_contract.at(deployed_address)
 
@@ -103,56 +103,20 @@ def deploy2_and_cut_and_burn(deployer, deployed_salt, deployed_contract, deploye
         {"from": accounts[0], "gasPrice": gas_price}
     )
 
-    if hasattr(deploy_tx, "return_value"):
-        # this should be the normal path
-        deployed_address = deploy_tx.return_value
-    else:
-        # print(deploy_tx.events)
+    # if hasattr(deploy_tx, "return_value"):
+    #     # this should be the normal path
+    deployed_address = deploy_tx.return_value
+    # else:
+    #     # print(deploy_tx.events)
 
-        # i think this is a bug
-        # no return_value, so we check logs instead
-        # TODO: i don't think this log should be needed
-        events = deploy_tx.events['Deploy'][0]
+    #     # i think this is a bug
+    #     # no return_value, so we check logs instead
+    #     # TODO: i don't think this log should be needed
+    #     events = deploy_tx.events['Deploy'][0]
 
-        deployed_address = events['deployed']
+    #     deployed_address = events['deployed']
 
     deployed_contract = deployed_contract.at(deployed_address)
-
-    print("CREATE2 deployed:", deployed_contract._name, "to", deployed_contract.address)
-    print()
-
-    quick_save_contract(deployed_contract)
-
-    return deployed_contract
-
-
-def create_helper_with_gastoken(deployer, target_contract, target_contract_args, gas_price):
-    # TODO: docs for using ERADICATE 2 (will be easier since we already have argobytes_owned_vault's address)
-    salt = ""
-
-    initcode = target_contract.deploy.encode_input(*target_contract_args)
-
-    if BURN_GAS_TOKEN:
-        gastoken = GasTokenAddress
-    else:
-        gastoken = ZeroAddress
-
-    deploy_tx = deployer.deploy2_and_burn(gastoken, salt, initcode, {"from": accounts[0], "gasPrice": gas_price})
-
-    if hasattr(deploy_tx, "return_value"):
-        # this should be the normal path
-        deployed_address = deploy_tx.return_value
-    else:
-        # print(deploy_tx.events)
-
-        # i think this is a bug
-        # no return_value, so we check logs instead
-        # TODO: i don't think this log should be needed
-        events = deploy_tx.events['Deploy'][0]
-
-        deployed_address = events['deployed']
-
-    deployed_contract = target_contract.at(deployed_address)
 
     print("CREATE2 deployed:", deployed_contract._name, "to", deployed_contract.address)
     print()
