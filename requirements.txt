@@ -41,7 +41,7 @@ mccabe==0.6.1             # via pylint
 more-itertools==8.4.0     # via pytest
 multiaddr==0.0.9          # via ipfshttpclient
 mythx-models==1.7.7       # via pythx
-netaddr==0.7.19           # via multiaddr
+netaddr==0.7.20           # via multiaddr
 packaging==20.4           # via pytest
 parsimonious==0.8.1       # via eth-abi
 pbr==5.4.5                # via stevedore
@@ -50,8 +50,8 @@ prompt-toolkit==3.0.5     # via eth-brownie
 protobuf==3.12.2          # via web3
 psutil==5.7.0             # via eth-brownie
 py-solc-ast==1.2.4        # via eth-brownie
-py-solc-x==0.9.0          # via eth-brownie
-py==1.8.1                 # via eth-brownie, pytest
+py-solc-x==0.10.0         # via eth-brownie
+py==1.8.2                 # via eth-brownie, pytest
 pycodestyle==2.6.0        # via autopep8
 pycryptodome==3.9.7       # via eth-hash, eth-keyfile, vyper
 pygments==2.6.1           # via eth-brownie
@@ -60,13 +60,13 @@ pylint==2.5.3             # via -r requirements.in
 pyparsing==2.4.7          # via packaging
 pyrsistent==0.16.0        # via jsonschema
 pytest-forked==1.1.3      # via pytest-xdist
-pytest-timeout==1.4.0     # via -r requirements.in
+pytest-timeout==1.4.1     # via -r requirements.in
 pytest-xdist==1.32.0      # via eth-brownie
 pytest==5.4.3             # via eth-brownie, pytest-forked, pytest-timeout, pytest-xdist
 python-dateutil==2.8.1    # via mythx-models, pythx
 pythx==1.5.7              # via eth-brownie
 pyyaml==5.3.1             # via bandit, eth-brownie
-requests==2.23.0          # via eth-brownie, ipfshttpclient, py-solc-x, pythx, web3
+requests==2.24.0          # via eth-brownie, ipfshttpclient, py-solc-x, pythx, web3
 rlp==1.2.0                # via eth-account, eth-rlp
 semantic-version==2.8.5   # via eth-brownie, py-solc-x
 six==1.15.0               # via astroid, asttokens, bandit, ipfshttpclient, jsonschema, multiaddr, packaging, parsimonious, protobuf, pyrsistent, pytest-xdist, python-dateutil

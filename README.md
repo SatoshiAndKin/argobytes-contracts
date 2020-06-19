@@ -63,7 +63,7 @@ Run:
 
     pip-compile --upgrade
     pip install -U -r requirements.txt
-    npm upgrade
+    yarn upgrade
 
 
 # Reading
