@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.6.10;
 
-import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
+import {AccessControl} from "@OpenZeppelin/access/AccessControl.sol";
 
 contract DiamondStorageContract is AccessControl {
     struct DiamondStorage {

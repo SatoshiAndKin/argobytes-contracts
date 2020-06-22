@@ -1,26 +1,10 @@
 # UNDER CONSTRUCTION!
+# TODO: this needs to be completely re-written now that we are using the diamond standard
 # Helper to deploy to mainnet
 
 import json
 from brownie import *
-
-CurveCompounded = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
-CurveUSDT = "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C"
-CurveY = "0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51"
-CurveB = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
-CurveSUSDV2 = "0xA5407eAE9Ba41422680e2e00537571bcC53efBfD"
-CurvePAX = "0x06364f10B501e868329afBc005b3492902d6C763"
-# GasTokenAddress = "0x0000000000b3F879cb30FE243b4Dfee438691c04"  # gastoken.io GST2
-GasTokenAddress = "0x0000000000004946c0e9F43F4Dee607b0eF1fA1c"  # 1inch's CHI
-KollateralInvokerAddress = "0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01"
-KyberRegisterWallet = "0xECa04bB23612857650D727B8ed008f80952654ee"
-OneSplitAddress = "0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E"
-Weth9Address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
-KyberNetworkProxy = "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
-# https://contracts.synthetix.io/ReadProxyAddressResolver
-SynthetixAddressResolver = "0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2"
-UniswapFactory = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
-
+from argobytes_mainnet import *
 
 def query_until_yes(question, default=None):
     """Ask a yes/no question via raw_input() and return their answer.

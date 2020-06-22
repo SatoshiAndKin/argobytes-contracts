@@ -2,16 +2,16 @@
 pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
-import {Create2} from "@openzeppelin/utils/Create2.sol";
+import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
-import {LiquidGasTokenBurner} from "contracts/LiquidGasTokenBurner.sol";
+import {LiquidGasTokenBuyer} from "contracts/LiquidGasTokenBuyer.sol";
 
 import {Diamond} from "./Diamond.sol";
 import {DiamondCutter} from "./DiamondCutter.sol";
 import {DiamondLoupe} from "./DiamondLoupe.sol";
 
 // TODO: cute name like DiamondMine?
-contract DiamondCreator is LiquidGasTokenBurner {
+contract DiamondCreator is LiquidGasTokenBuyer {
     // TODO: better to hard code this or pass as calldata?
     // TODO: this is actually CHI's address. LGT isn't on mainnet yet
     // address constant LGT = 0x000000000000c1cb11d5c062901f32d06248ce48;

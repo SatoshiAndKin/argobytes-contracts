@@ -12,15 +12,15 @@ pragma experimental ABIEncoderV2;
 * deploying contracts and burning gas token
 /******************************************************************************/
 
-import {Create2} from "@openzeppelin/utils/Create2.sol";
+import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
-import {LiquidGasTokenBurner} from "contracts/LiquidGasTokenBurner.sol";
+import {LiquidGasTokenBuyer} from "contracts/LiquidGasTokenBuyer.sol";
 
 import {DiamondStorageContract} from "./DiamondStorageContract.sol";
 import {IDiamondCutter} from "./DiamondHeaders.sol";
 
 
-contract DiamondCutter is DiamondStorageContract, IDiamondCutter, LiquidGasTokenBurner {
+contract DiamondCutter is DiamondStorageContract, IDiamondCutter, LiquidGasTokenBuyer {
     bytes32 constant CLEAR_ADDRESS_MASK = 0x0000000000000000000000000000000000000000ffffffffffffffffffffffff;
     bytes32 constant CLEAR_SELECTOR_MASK = 0xffffffff00000000000000000000000000000000000000000000000000000000;
 

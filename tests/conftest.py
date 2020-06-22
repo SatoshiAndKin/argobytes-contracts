@@ -22,37 +22,26 @@ def address_zero():
 
 @pytest.fixture()
 def argobytes_atomic_trade(argobytes_owned_vault, ArgobytesAtomicTrade, gastoken):
-    salt = ""
-    argobytes_atomic_trade_initcode = ArgobytesAtomicTrade.deploy.encode_input()
-
-    argobytes_atomic_trade = argobytes_owned_vault.deploy2(
-        gastoken, salt, argobytes_atomic_trade_initcode, {"from": accounts[0]})
-
-    return ArgobytesAtomicTrade.at(argobytes_atomic_trade.return_value)
+    return ArgobytesAtomicTrade.deploy({"from": accounts[0]})
 
 
 @pytest.fixture()
-def argobytes_owned_vault(ArgobytesOwnedVault, ArgobytesOwnedVaultDeployer, gastoken):
+def argobytes_owned_vault(ArgobytesOwnedVault):
+    # TODO: rewrite this to use the diamond standard
     arb_bots = [accounts[1]]
 
-    salt = ""
-
-    # TODO: refactor for gastoken incoming
-    argobytes_owned_vault_deployer_initcode = ArgobytesOwnedVaultDeployer.deploy.encode_input(salt, arb_bots)
-
-    # we don't use the normal deploy function because the contract selfdestructs after deploying ArgobytesOwnedVault
-    argobytes_owned_vault_tx = accounts[0].transfer(data=argobytes_owned_vault_deployer_initcode)
-
-    # TODO: is this the best way to get an address out? i feel like it should already be in logs
-    # argobytes_owned_vault = argobytes_owned_vault_tx.events["Deployed"]["argobytes_owned_vault"]
-    argobytes_owned_vault = argobytes_owned_vault_tx.logs[0]['address']
-
-    return ArgobytesOwnedVault.at(argobytes_owned_vault)
+    return ArgobytesOwnedVault.deploy(arb_bots, {"from": accounts[0]})
 
 
 @pytest.fixture(scope="session")
 def cdai_erc20():
     return Contract.from_explorer("0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643")
+
+
+@pytest.fixture(scope="session")
+def chi():
+    # 1inch's CHI (gastoken alternative)
+    return Contract.from_explorer("0x0000000000004946c0e9F43F4Dee607b0eF1fA1c")
 
 
 @pytest.fixture(scope="session")
@@ -92,14 +81,17 @@ def example_action_2(ExampleAction):
 
 @pytest.fixture(scope="session")
 def gastoken():
-    # GST2: https://gastoken.io
     return Contract.from_explorer("0x0000000000b3F879cb30FE243b4Dfee438691c04")
 
 
 @pytest.fixture(scope="session")
-def chi():
-    # 1inch's CHI (gastoken alternative)
-    return Contract.from_explorer("0x0000000000004946c0e9F43F4Dee607b0eF1fA1c")
+def liquidgastoken(LiquidGasToken):
+    # TODO: once this is deployed to mainnet, use Contract.from_explorer
+    # return Contract.from_explorer("0x000000000000c1cb11d5c062901f32d06248ce48")
+    lgt_deployer = accounts.add("0x7d4cbcfd42fe584226a17f385f734b046090f3e9d9fd95b2e10ef53acbbc39e2")
+    accounts[9].transfer("0x000000000049091f98692b2460500b6d133ae31f", "0.001 ether")
+    accounts[9].transfer(lgt_deployer, "10 ether")
+    return lgt_deployer.deploy(LiquidGasToken)
 
 
 @pytest.fixture(scope="session")

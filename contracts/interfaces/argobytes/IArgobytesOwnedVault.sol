@@ -4,20 +4,11 @@
 pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
-import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
+import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
-// TODO: we are missing the GasTokenBurner functions
+// TODO: we are missing the GasTokenBuyer functions
 interface IArgobytesOwnedVault {
     event Deploy(address deployed);
-
-    /**
-     * @notice Deploy the contract.
-     * This is payable so that the initial deployment can fund
-     */
-    function trustArbitragers(
-        address gas_token,
-        address[] memory trusted_arbitragers
-    ) external payable;
 
     function atomicArbitrage(
         address gas_token,
@@ -26,12 +17,12 @@ interface IArgobytesOwnedVault {
         address[] calldata tokens, // ETH (address(0)) or ERC20
         uint256 first_amount,
         bytes calldata encoded_actions
-    ) external returns (uint256 primary_profit);
+    ) external payable returns (uint256 primary_profit);
 
     function withdrawTo(
         address gas_token,
         IERC20 token,
         address to,
         uint256 amount
-    ) external returns (bool);
+    ) external payable returns (bool);
 }

@@ -3,9 +3,9 @@
 pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
-import {Address} from "@openzeppelin/utils/Address.sol";
-import {Strings} from "@openzeppelin/utils/Strings.sol";
+import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
+import {Address} from "@OpenZeppelin/utils/Address.sol";
+// import {Strings} from "@OpenZeppelin/utils/Strings.sol";
 
 import {IInvokable} from "contracts/interfaces/kollateral/IInvokable.sol";
 import {IInvoker} from "contracts/interfaces/kollateral/IInvoker.sol";
@@ -16,7 +16,8 @@ import {UniversalERC20, SafeERC20, IERC20} from "contracts/UniversalERC20.sol";
 import {
     IArgobytesAtomicTrade
 } from "contracts/interfaces/argobytes/IArgobytesAtomicTrade.sol";
-import {Strings2} from "contracts/Strings2.sol";
+
+// import {Strings2} from "contracts/Strings2.sol";
 
 // https://github.com/kollateral/kollateral/blob/master/lib/static/invoker.ts
 // they take a 6bps fee
@@ -25,8 +26,8 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
     using Address for address;
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-    using Strings for uint256;
-    using Strings2 for address;
+    // using Strings for uint256;
+    // using Strings2 for address;
     // using Strings2 for bytes;    // we don't need this now that OpenZepplin has call helpers
     using UniversalERC20 for IERC20;
 
@@ -173,24 +174,27 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
             );
 
             // TODO: this error message probably costs more gas than we want to spend
-            string memory err = string(
-                abi.encodePacked(
-                    "ArgobytesAtomicTrade.execute: call #",
-                    i.toString(),
-                    " to ",
-                    action_address.toString(),
-                    " failed"
-                )
-            );
+            // string memory err = string(
+            //     abi.encodePacked(
+            //         "ArgobytesAtomicTrade.execute: call #",
+            //         i.toString(),
+            //         " to ",
+            //         action_address.toString(),
+            //         " failed"
+            //     )
+            // );
 
             if (actions[i].with_value) {
                 action_address.functionCallWithValue(
                     actions[i].data,
                     address(this).balance,
-                    err
+                    "ArgobytesAtomicTrade.execute: external call with value failed"
                 );
             } else {
-                action_address.functionCall(actions[i].data, err);
+                action_address.functionCall(
+                    actions[i].data,
+                    "ArgobytesAtomicTrade.execute: external call failed"
+                );
             }
         }
 
@@ -272,24 +276,27 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
             );
 
             // TODO: this error message probably costs more gas than we want to spend
-            string memory err = string(
-                abi.encodePacked(
-                    "ArgobytesAtomicTrade.executeSolo: call #",
-                    i.toString(),
-                    " to ",
-                    action_address.toString(),
-                    " failed"
-                )
-            );
+            // string memory err = string(
+            //     abi.encodePacked(
+            //         "ArgobytesAtomicTrade.executeSolo: call #",
+            //         i.toString(),
+            //         " to ",
+            //         action_address.toString(),
+            //         " failed"
+            //     )
+            // );
 
             if (actions[i].with_value) {
                 action_address.functionCallWithValue(
                     actions[i].data,
                     address(this).balance,
-                    err
+                    "ArgobytesAtomicTrade.execute: external call with value failed"
                 );
             } else {
-                action_address.functionCall(actions[i].data, err);
+                action_address.functionCall(
+                    actions[i].data,
+                    "ArgobytesAtomicTrade.execute: external call failed"
+                );
             }
         }
     }

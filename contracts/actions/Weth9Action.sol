@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 pragma solidity 0.6.10;
 
-import {Address} from "@openzeppelin/utils/Address.sol";
+import {Address} from "@OpenZeppelin/utils/Address.sol";
 
 import {IWETH9} from "contracts/interfaces/weth9/IWETH9.sol";
 

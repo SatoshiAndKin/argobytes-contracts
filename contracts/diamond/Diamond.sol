@@ -6,7 +6,7 @@ pragma experimental ABIEncoderV2;
 * Based on https://github.com/mudgen/Diamond By Author: Nick Mudge
 /******************************************************************************/
 
-import {IERC165} from "@openzeppelin/introspection/IERC165.sol";
+import {IERC165} from "@OpenZeppelin/introspection/IERC165.sol";
 
 import "./DiamondCutter.sol";
 import "./DiamondHeaders.sol";

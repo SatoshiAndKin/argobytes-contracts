@@ -4,16 +4,16 @@
 pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
-import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
-import {Create2} from "@openzeppelin/utils/Create2.sol";
-import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
-import {Strings} from "@openzeppelin/utils/Strings.sol";
-import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
+import {AccessControl} from "@OpenZeppelin/access/AccessControl.sol";
+import {Create2} from "@OpenZeppelin/utils/Create2.sol";
+import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
+import {Strings} from "@OpenZeppelin/utils/Strings.sol";
+import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
 import {
     DiamondStorageContract
 } from "contracts/diamond/DiamondStorageContract.sol";
-import {LiquidGasTokenBurner} from "contracts/LiquidGasTokenBurner.sol";
+import {LiquidGasTokenBuyer} from "contracts/LiquidGasTokenBuyer.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {Strings2} from "contracts/Strings2.sol";
 import {
@@ -25,7 +25,7 @@ import {
 
 contract ArgobytesOwnedVault is
     DiamondStorageContract,
-    LiquidGasTokenBurner,
+    LiquidGasTokenBuyer,
     IArgobytesOwnedVault
 {
     using SafeMath for uint256;
@@ -33,31 +33,28 @@ contract ArgobytesOwnedVault is
     using Strings2 for address;
     using UniversalERC20 for IERC20;
 
-    address internal constant ADDRESS_ZERO = address(0x0);
+    address internal constant ADDRESS_ZERO = address(0);
     bytes32 internal constant TRUSTED_ARBITRAGER_ROLE = keccak256(
         "TRUSTED_ARBITRAGER_ROLE"
     );
 
     /**
      * @notice Deploy the contract.
-     * This is payable so that the initial deployment can fund
      */
-    function trustArbitragers(
-        address gas_token,
-        address[] memory trusted_arbitragers
-    ) public override payable freeGasTokensModifier(gas_token) {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "ArgobytesOwnedVault.trustArbitragers: Caller is not an admin"
-        );
+    constructor(address[] memory trusted_arbitragers) public payable {
+        // Grant the contract deployer the default admin role: it will be able
+        // to grant and revoke any roles
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
-        // Grant a vault smart contract address the "trusted arbitrager" role
-        // it will be able to call "atomicArbitrage" (WITH OUR FUNDS!)
-        // a bot should have this role
+        // Grant some addresses the "trusted arbitrager" role
+        // they will be able to call "atomicArbitrage" (WITH OUR FUNDS!)
         for (uint256 i = 0; i < trusted_arbitragers.length; i++) {
             _setupRole(TRUSTED_ARBITRAGER_ROLE, trusted_arbitragers[i]);
         }
     }
+
+    // this contract must be able to receive ether if it is expected to trade it
+    receive() external payable {}
 
     function atomicArbitrage(
         address gas_token,
@@ -66,7 +63,7 @@ contract ArgobytesOwnedVault is
         address[] calldata tokens, // ETH (address(0)) or ERC20
         uint256 first_amount,
         bytes calldata encoded_actions
-    ) external override returns (uint256 primary_profit) {
+    ) external override payable returns (uint256 primary_profit) {
         // use address(0) for gas_token to skip gas token burning
         uint256 initial_gas = initialGas(gas_token);
 
@@ -184,7 +181,13 @@ contract ArgobytesOwnedVault is
         IERC20 token,
         address to,
         uint256 amount
-    ) external override freeGasTokensModifier(gas_token) returns (bool) {
+    )
+        external
+        override
+        payable
+        freeGasTokensModifier(gas_token)
+        returns (bool)
+    {
         // TODO: what role? it should be seperate from the deployer
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),

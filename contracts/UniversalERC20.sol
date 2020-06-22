@@ -15,10 +15,10 @@
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 pragma solidity 0.6.10;
 
-import {Address} from "@openzeppelin/utils/Address.sol";
-import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
-import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
+import {Address} from "@OpenZeppelin/utils/Address.sol";
+import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
+import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
 
 library UniversalERC20 {
     // using Address for address;

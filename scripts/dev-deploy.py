@@ -17,93 +17,6 @@ EXPORT_ARTIFACTS = os.environ.get("EXPORT_ARTIFACTS", "0") == "1"
 DEPLOY_DIR = os.path.join(project.main.check_for_project('.'), "build", "deployments", "quick_and_dirty")
 
 
-def deploy2_and_free(deployer, deployed_salt, deployed_contract, deployed_contract_args, gas_price):
-    deployed_initcode = deployed_contract.deploy.encode_input(*deployed_contract_args)
-
-    # TODO: print the expected address for this target_salt and deployed_initcode
-
-    deploy_tx = deployer.deploy2AndFree(
-        GasTokenAddress,
-        deployed_salt,
-        deployed_initcode,
-        {"from": accounts[0], "gasPrice": gas_price}
-    )
-
-    if hasattr(deploy_tx, "return_value"):
-        # this should be the normal path
-        deployed_address = deploy_tx.return_value
-    else:
-        # print(deploy_tx.events)
-
-        # i think this is a bug
-        # no return_value, so we check logs instead
-        # TODO: i don't think this log should be needed
-        events = deploy_tx.events['Deploy'][0]
-
-        deployed_address = events['deployed']
-
-    deployed_contract = deployed_contract.at(deployed_address)
-
-    print("CREATE2 deployed:", deployed_contract._name, "to", deployed_contract.address)
-    print()
-
-    quick_save_contract(deployed_contract)
-
-    return deployed_contract
-
-
-def deploy2_and_cut_and_free(deployer, deployed_salt, deployed_contract, deployed_contract_args, deployed_sigs, gas_price):
-    deployed_initcode = deployed_contract.deploy.encode_input(*deployed_contract_args)
-
-    encoded_sigs = []
-    for deployed_sig in deployed_sigs:
-        # TODO: whats the maximum number of selectors?
-        cut = to_bytes(hexstr=deployed_contract.signatures[deployed_sig])
-
-        encoded_sigs.append(cut)
-
-    encoded_sigs = tuple(encoded_sigs)
-
-    # TODO: whats the maximum number of selectors?
-    # abi.encodePacked(address, selector1, ..., selectorN)
-    encoded_sigs = encode_abi_packed(
-        ['bytes4'] * len(encoded_sigs),
-        tuple(encoded_sigs)
-    )
-
-    # TODO: print the expected address for this target_salt and initcode
-
-    deploy_tx = deployer.deploy2AndCutAndFree(
-        GasTokenAddress,
-        deployed_salt,
-        deployed_initcode,
-        encoded_sigs,
-        {"from": accounts[0], "gasPrice": gas_price}
-    )
-
-    if hasattr(deploy_tx, "return_value"):
-        # this should be the normal path
-        deployed_address = deploy_tx.return_value
-    else:
-        # print(deploy_tx.events)
-
-        # i think this is a bug
-        # no return_value, so we check logs instead
-        # TODO: i don't think this log should be needed
-        events = deploy_tx.events['Deploy'][0]
-
-        deployed_address = events['deployed']
-
-    deployed_contract = deployed_contract.at(deployed_address)
-
-    print("CREATE2 deployed:", deployed_contract._name, "to", deployed_contract.address)
-    print()
-
-    quick_save_contract(deployed_contract)
-
-    return deployed_contract
-
-
 def quick_save_contract(contract):
     quick_save(contract._name, contract.address)
 
@@ -149,7 +62,7 @@ def main():
     if BURN_GAS_TOKEN:
         mint_batch_amount = 50
 
-        gas_token = interface.ILGT(LiquidGasToken)
+        gas_token = interface.ILiquidGasToken(LiquidGasToken)
 
         # prepare the diamond creator with some gas token
         # TODO: how do we calculate this contract's address before we do the deployment?
@@ -197,7 +110,7 @@ def main():
     quick_save_contract(diamond)
 
     # this interface matches our final cut diamond:
-    # IDiamondCutter+IDiamondLoupe+IArgobytesOwnedVault+IGasTokenBurner+IERC165
+    # IDiamondCutter+IDiamondLoupe+IArgobytesOwnedVault+ILiquidGasTokenBuyer+IERC165
     # not all those functions are actually available yet!
     argobytes_diamond = interface.IArgobytesDiamond(diamond.address)
 
@@ -211,16 +124,9 @@ def main():
         argobytes_diamond,
         salt,
         ArgobytesOwnedVault,
-        [],
-        ["atomicArbitrage", "mintGasToken", "trustArbitragers", "withdrawTo", "withdrawToFreeGas"],
+        [arb_bots],
+        ["atomicArbitrage", "mintGasToken", "withdrawTo", "withdrawToFreeGas"],
         expected_mainnet_gas_price
-    )
-
-    # use our fresh functions
-    argobytes_diamond.trustArbitragers(
-        GasTokenAddress,
-        arb_bots,
-        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
     )
 
     # deploy all the other contracts

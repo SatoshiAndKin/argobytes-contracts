@@ -36,3 +36,19 @@ def test_gastoken(gastoken, value):
     assert value == balance
 
     tx = gastoken.free(value, {"from": accounts[0]})
+
+
+
+@given(value=strategy('uint8', min_value=1, max_value=30))
+def test_liquidgastoken(liquidgastoken, value):
+    tx = liquidgastoken.mint(value, {"from": accounts[0]})
+
+    print("gas spent", tx.gas_used)
+
+    balance = liquidgastoken.balanceOf(accounts[0])
+
+    print("LGT balance:", balance)
+
+    assert value == balance
+
+    tx = liquidgastoken.free(value, {"from": accounts[0]})

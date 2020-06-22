@@ -17,17 +17,17 @@ def test_access_control(address_zero, example_action, argobytes_atomic_trade, ar
     # encode a simple action that only sweeps funds
     encoded_actions = argobytes_atomic_trade.encodeActions(
         [example_action],
-        [example_action.sweep.encode_input(address_zero, address_zero)],
+        [example_action.sweep.encode_input(address_zero, address_zero, 0)],
         [True],
     )
     print("encoded_actions: ", encoded_actions)
 
-    with brownie.reverts("ArgobytesOwnedVault.atomicArbitrage: Caller is not trusted"):
+    with brownie.reverts("ArgobytesOwnedVault.atomicArbitrage: Caller is not a trusted arbitrager"):
         argobytes_owned_vault.atomicArbitrage(
             address_zero, address_zero, address_zero, [address_zero], value, encoded_actions, {'from': accounts[0]})
 
 
-def test_simple_borrow_and_sweep(address_zero, argobytes_atomic_trade, argobytes_owned_vault, example_action, gastoken, kollateral_invoker):
+def test_simple_borrow_and_sweep(address_zero, argobytes_atomic_trade, argobytes_owned_vault, example_action, kollateral_invoker):
     value = 1
 
     # make sure the arbitrage contract has no funds
@@ -40,13 +40,13 @@ def test_simple_borrow_and_sweep(address_zero, argobytes_atomic_trade, argobytes
     # TODO: i don't like having to encode lke this
     encoded_actions = argobytes_atomic_trade.encodeActions(
         [example_action],
-        [example_action.sweep.encode_input(address_zero, address_zero)],
+        [example_action.sweep.encode_input(address_zero, address_zero, 0)],
         [True],
     )
 
     # accounts[1] is setup as the default trusted bot
     atomic_arbitrage_tx = argobytes_owned_vault.atomicArbitrage(
-        gastoken,
+        address_zero,
         argobytes_atomic_trade,
         kollateral_invoker,
         [address_zero],
@@ -63,7 +63,7 @@ def test_simple_borrow_and_sweep(address_zero, argobytes_atomic_trade, argobytes
     assert profit == 0
 
 
-def test_profitless_kollateral_fails(address_zero, argobytes_atomic_trade, argobytes_owned_vault, example_action, gastoken, kollateral_invoker):
+def test_profitless_kollateral_fails(address_zero, argobytes_atomic_trade, argobytes_owned_vault, example_action, kollateral_invoker):
     value = 1e18
 
     # make sure the arbitrage contract has no funds
@@ -73,14 +73,14 @@ def test_profitless_kollateral_fails(address_zero, argobytes_atomic_trade, argob
     # no actual arb. just call the sweep contract
     encoded_actions = argobytes_atomic_trade.encodeActions(
         [example_action],
-        [example_action.sweep.encode_input(address_zero, address_zero)],
+        [example_action.sweep.encode_input(address_zero, address_zero, 0)],
         [True]
     )
 
     # accounts[1] is setup as the default trusted bot
     with brownie.reverts("ExternalCaller: insufficient ether balance"):
         argobytes_owned_vault.atomicArbitrage(
-            gastoken, argobytes_atomic_trade, kollateral_invoker, [address_zero], value, encoded_actions, {'from': accounts[1]})
+            address_zero, argobytes_atomic_trade, kollateral_invoker, [address_zero], value, encoded_actions, {'from': accounts[1]})
 
 
 def test_simple_kollateral(address_zero, argobytes_atomic_trade, argobytes_owned_vault, example_action, example_action_2, kollateral_invoker):
@@ -100,9 +100,9 @@ def test_simple_kollateral(address_zero, argobytes_atomic_trade, argobytes_owned
             example_action,
         ],
         [
-            example_action.sweep.encode_input(example_action_2, address_zero),
-            example_action_2.sweep.encode_input(example_action, address_zero),
-            example_action.sweep.encode_input(address_zero, address_zero),
+            example_action.sweep.encode_input(example_action_2, address_zero, 0),
+            example_action_2.sweep.encode_input(example_action, address_zero, 0),
+            example_action.sweep.encode_input(address_zero, address_zero, 0),
         ],
         [True, False, False],
     )
@@ -114,7 +114,7 @@ def test_simple_kollateral(address_zero, argobytes_atomic_trade, argobytes_owned
     assert arbitrage_tx.return_value > 0
 
 
-def test_gastoken_saves_gas(address_zero, argobytes_atomic_trade, argobytes_owned_vault, example_action, example_action_2, gastoken, kollateral_invoker):
+def test_liquidgastoken_saves_gas(address_zero, argobytes_atomic_trade, argobytes_owned_vault, example_action, example_action_2, liquidgastoken, kollateral_invoker):
     value = 1e18
 
     assert argobytes_owned_vault.balance() == 0
@@ -129,10 +129,6 @@ def test_gastoken_saves_gas(address_zero, argobytes_atomic_trade, argobytes_owne
     assert argobytes_owned_vault.balance() == value
     assert example_action.balance() == value
 
-    # mint some gas token
-    # TODO: how much should we make?
-    argobytes_owned_vault.mintGasToken(gastoken, 26, {'from': accounts[0]})
-
     # sweep a bunch of times to use up gas
     encoded_actions = argobytes_atomic_trade.encodeActions(
         [
@@ -141,9 +137,9 @@ def test_gastoken_saves_gas(address_zero, argobytes_atomic_trade, argobytes_owne
             example_action,
         ],
         [
-            example_action.sweep.encode_input(example_action_2, address_zero),
-            example_action_2.sweep.encode_input(example_action, address_zero),
-            example_action.sweep.encode_input(address_zero, address_zero),
+            example_action.sweep.encode_input(example_action_2, address_zero, 0),
+            example_action_2.sweep.encode_input(example_action, address_zero, 0),
+            example_action.sweep.encode_input(address_zero, address_zero, 100000),
         ],
         [True, False, False],
     )
@@ -159,24 +155,34 @@ def test_gastoken_saves_gas(address_zero, argobytes_atomic_trade, argobytes_owne
 
     print("gas_used_without_gastoken: ", gas_used_without_gastoken)
 
-    # move the arb return back to the sweep contract
-    argobytes_owned_vault.withdrawTo(address_zero, example_action, value, {'from': accounts[0]})
+    # move the ETH arb return back to the sweep contract
+    argobytes_owned_vault.withdrawTo(address_zero, address_zero, example_action, value, {'from': accounts[0]})
 
     # make sure balances match what we expect
     assert argobytes_owned_vault.balance() == value
     assert example_action.balance() == value
 
-    # TODO: use gastoken interface to get the number of gas tokens available
+    # mint some gas token
+    # TODO: how much should we make?
+    # TODO: should we mintToSell to make it cheaper?
+    # liquidgastoken.mintToLiquidity(100, 0, 999999999999999, accounts[0], {'from': accounts[0], 'value': 1e19})
+    liquidgastoken.mintFor(100, argobytes_owned_vault, {'from': accounts[0]})
 
     # do the faked arbitrage trade again (but this time with gas tokens)
     arbitrage_tx = argobytes_owned_vault.atomicArbitrage(
-        gastoken, argobytes_atomic_trade, kollateral_invoker, [address_zero], value, encoded_actions, {'from': accounts[1]})
+        liquidgastoken, argobytes_atomic_trade, kollateral_invoker, [address_zero], value, encoded_actions, {
+            'from': accounts[1],
+            'gas_price': 150,
+        })
 
     gas_used_with_gastoken = arbitrage_tx.gas_used
 
     print("gas_used_with_gastoken: ", gas_used_with_gastoken)
 
+    # TODO: value should actually be value - cost of gastokens that we bought and freed
     assert arbitrage_tx.return_value == value
-    assert argobytes_owned_vault.balance() == 2 * value
+    # TODO: figure out the cost of gas tokens
+    # assert argobytes_owned_vault.balance() == 2 * value
+    assert argobytes_owned_vault.balance() > 1.5 * value
     assert gas_used_with_gastoken < gas_used_without_gastoken
     # TODO: assert something about the number of freed gas tokens. i don't think we are getting optimal amounts

@@ -10,8 +10,8 @@ The depot is capable of trading SNX, too. However, that is only done on Testnets
 pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
-import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
-import {Strings} from "@openzeppelin/utils/Strings.sol";
+import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
+import {Strings} from "@OpenZeppelin/utils/Strings.sol";
 
 import {
     IAddressResolver

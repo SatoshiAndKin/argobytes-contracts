@@ -2,13 +2,17 @@
 pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
-import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/token/ERC20/SafeERC20.sol";
-import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
+import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
+import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
-import {IUniswapFactory} from "contracts/interfaces/uniswap/IUniswapFactory.sol";
-import {IUniswapExchange} from "contracts/interfaces/uniswap/IUniswapExchange.sol";
+import {
+    IUniswapFactory
+} from "contracts/interfaces/uniswap/IUniswapFactory.sol";
+import {
+    IUniswapExchange
+} from "contracts/interfaces/uniswap/IUniswapExchange.sol";
 
 contract UniswapV1Action is AbstractERC20Exchange {
     using SafeERC20 for IERC20;

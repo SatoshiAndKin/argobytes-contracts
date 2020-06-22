@@ -4,6 +4,99 @@ import os
 import rlp
 
 
+def deploy2_and_free(diamond_contract, deploy_salt, contract_to_deploy, contract_to_deploy_args, gas_price):
+    """Use a diamond's deploy2 and free helper function.
+    
+    """
+    contract_initcode = contract_to_deploy.deploy.encode_input(*contract_to_deploy_args)
+
+    # TODO: print the expected address for this target_salt and contract_initcode
+
+    # TODO: switch to using LiquidGasToken's helper instead
+    deploy_tx = diamond_contract.deploy2AndFree(
+        GasTokenAddress,
+        deploy_salt,
+        contract_initcode,
+        {"from": accounts[0], "gasPrice": gas_price}
+    )
+
+    if hasattr(deploy_tx, "return_value"):
+        # this should be the normal path
+        deployed_address = deploy_tx.return_value
+    else:
+        # print(deploy_tx.events)
+
+        # i think this is a bug
+        # no return_value, so we check logs instead
+        # TODO: i don't think this log should be needed
+        events = deploy_tx.events['Deploy'][0]
+
+        deployed_address = events['deployed']
+
+    contract_to_deploy = contract_to_deploy.at(deployed_address)
+
+    print("CREATE2 deployed:", contract_to_deploy._name, "to", contract_to_deploy.address)
+    print()
+
+    quick_save_contract(contract_to_deploy)
+
+    return contract_to_deploy
+
+
+def deploy2_and_cut_and_free(diamond_contract, deploy_salt, contract_to_deploy, contract_to_deploy_args, deployed_sigs, gas_price):
+    contract_initcode = contract_to_deploy.deploy.encode_input(*contract_to_deploy_args)
+
+    encoded_sigs = []
+    for deployed_sig in deployed_sigs:
+        # TODO: whats the maximum number of selectors?
+        cut = to_bytes(hexstr=contract_to_deploy.signatures[deployed_sig])
+
+        encoded_sigs.append(cut)
+
+    encoded_sigs = tuple(encoded_sigs)
+
+    # TODO: whats the maximum number of selectors?
+    # abi.encodePacked(address, selector1, ..., selectorN)
+    encoded_sigs = encode_abi_packed(
+        ['bytes4'] * len(encoded_sigs),
+        tuple(encoded_sigs)
+    )
+
+    # TODO: print the expected address for this target_salt and initcode
+
+    deploy_tx = diamond_contract.deploy2AndCutAndFree(
+        GasTokenAddress,
+        deploy_salt,
+        contract_initcode,
+        encoded_sigs,
+        {"from": accounts[0], "gasPrice": gas_price}
+    )
+
+    if hasattr(deploy_tx, "return_value"):
+        # this should be the normal path
+        deployed_address = deploy_tx.return_value
+    else:
+        # print(deploy_tx.events)
+
+        # i think this is a bug
+        # no return_value, so we check logs instead
+        # TODO: i don't think this log should be needed
+        events = deploy_tx.events['Deploy'][0]
+
+        deployed_address = events['deployed']
+
+    # TODO: make sure we got the address that we expected
+
+    contract_to_deploy = contract_to_deploy.at(deployed_address)
+
+    print("CREATE2 deployed:", contract_to_deploy._name, "to", contract_to_deploy.address)
+    print()
+
+    quick_save_contract(contract_to_deploy)
+
+    return contract_to_deploy
+
+
 def mk_contract_address(sender: str, nonce: int) -> str:
     """Create a contract address.
 

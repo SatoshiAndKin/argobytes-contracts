@@ -23,7 +23,7 @@ import {BalanceCarrier} from "./BalanceCarrier.sol";
 import {IInvocationHook} from "./IInvocationHook.sol";
 import {IInvokable} from "./IInvokable.sol";
 
-import {SafeMath} from "@openzeppelin/math/SafeMath.sol";
+import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
 
 abstract contract KollateralInvokable is IInvokable, BalanceCarrier {
     using SafeMath for uint256;

@@ -19,7 +19,7 @@
 
 pragma solidity 0.6.10;
 
-import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
+import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
 import {ExternalCaller} from "./ExternalCaller.sol";
 
