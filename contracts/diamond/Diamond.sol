@@ -31,7 +31,7 @@ contract Diamond is DiamondStorageContract, IERC165 {
         diamondCuts[0] = abi.encodePacked(
             diamondCutter,
             diamondCutter.diamondCut.selector,
-            // TODO: do we actually want deploy2+deploy2AndFree?  That's available on the
+            // TODO: do we actually want deploy2+deploy2AndFree? That's available on the lgt contracts
             diamondCutter.deploy2.selector,
             diamondCutter.deploy2AndFree.selector,
             diamondCutter.deploy2AndCutAndFree.selector
@@ -40,10 +40,10 @@ contract Diamond is DiamondStorageContract, IERC165 {
         // Adding diamond loupe functions
         diamondCuts[1] = abi.encodePacked(
             diamondLoupe,
-            diamondLoupe.facetFunctionSelectors.selector,
-            diamondLoupe.facets.selector,
             diamondLoupe.facetAddress.selector,
-            diamondLoupe.facetAddresses.selector
+            diamondLoupe.facetAddresses.selector,
+            diamondLoupe.facetFunctionSelectors.selector,
+            diamondLoupe.facets.selector
         );
 
         // Adding supportsInterface function
@@ -66,16 +66,18 @@ contract Diamond is DiamondStorageContract, IERC165 {
 
         // add ERC165 data for diamondCutter
         bytes4 interfaceID = diamondCutter.diamondCut.selector ^
-            diamondCutter.deploy2.selector;
+            diamondCutter.deploy2.selector ^
+            diamondCutter.deploy2AndFree.selector ^
+            diamondCutter.deploy2AndCutAndFree.selector;
 
         ds.supportedInterfaces[interfaceID] = true;
 
         // add ERC165 data for diamondLoupe
         interfaceID =
-            diamondLoupe.facets.selector ^
             diamondLoupe.facetFunctionSelectors.selector ^
             diamondLoupe.facetAddresses.selector ^
-            diamondLoupe.facetAddress.selector;
+            diamondLoupe.facetAddress.selector ^
+            diamondLoupe.facets.selector;
 
         ds.supportedInterfaces[interfaceID] = true;
     }
