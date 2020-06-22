@@ -14,13 +14,13 @@ pragma experimental ABIEncoderV2;
 
 import {Create2} from "@openzeppelin/utils/Create2.sol";
 
-import {GasTokenBurner} from "contracts/GasTokenBurner.sol";
+import {LiquidGasTokenBurner} from "contracts/LiquidGasTokenBurner.sol";
 
 import {DiamondStorageContract} from "./DiamondStorageContract.sol";
 import {IDiamondCutter} from "./DiamondHeaders.sol";
 
 
-contract DiamondCutter is DiamondStorageContract, IDiamondCutter, GasTokenBurner {
+contract DiamondCutter is DiamondStorageContract, IDiamondCutter, LiquidGasTokenBurner {
     bytes32 constant CLEAR_ADDRESS_MASK = 0x0000000000000000000000000000000000000000ffffffffffffffffffffffff;
     bytes32 constant CLEAR_SELECTOR_MASK = 0xffffffff00000000000000000000000000000000000000000000000000000000;
 
@@ -151,7 +151,7 @@ contract DiamondCutter is DiamondStorageContract, IDiamondCutter, GasTokenBurner
     }
 
     // use CREATE2 to deploy with a salt and then free gas tokens
-    function deploy2AndBurn(
+    function deploy2AndFree(
         address gas_token,
         bytes32 salt,
         bytes memory initcode
@@ -159,7 +159,7 @@ contract DiamondCutter is DiamondStorageContract, IDiamondCutter, GasTokenBurner
         public
         override
         payable
-        freeGasTokens(gas_token)
+        freeGasTokensModifier(gas_token)
         returns (address deployed)
     {
         require(
@@ -174,7 +174,7 @@ contract DiamondCutter is DiamondStorageContract, IDiamondCutter, GasTokenBurner
     }
 
     // use CREATE2 to deploy with a salt, cut the diamond, and then free gas tokens
-    function deploy2AndCutAndBurn(
+    function deploy2AndCutAndFree(
         address gas_token,
         bytes32 salt,
         bytes memory facet_initcode,
@@ -183,7 +183,7 @@ contract DiamondCutter is DiamondStorageContract, IDiamondCutter, GasTokenBurner
         public
         override
         payable
-        freeGasTokens(gas_token)
+        freeGasTokensModifier(gas_token)
         returns (address deployed)
     {
         // no need for permissions check here since diamondCut does one

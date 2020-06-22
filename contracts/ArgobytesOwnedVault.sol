@@ -13,7 +13,7 @@ import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {
     DiamondStorageContract
 } from "contracts/diamond/DiamondStorageContract.sol";
-import {GasTokenBurner} from "contracts/GasTokenBurner.sol";
+import {LiquidGasTokenBurner} from "contracts/LiquidGasTokenBurner.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {Strings2} from "contracts/Strings2.sol";
 import {
@@ -25,7 +25,7 @@ import {
 
 contract ArgobytesOwnedVault is
     DiamondStorageContract,
-    GasTokenBurner,
+    LiquidGasTokenBurner,
     IArgobytesOwnedVault
 {
     using SafeMath for uint256;
@@ -43,9 +43,9 @@ contract ArgobytesOwnedVault is
      * This is payable so that the initial deployment can fund
      */
     function trustArbitragers(
-        address gastoken,
+        address gas_token,
         address[] memory trusted_arbitragers
-    ) public override payable freeGasTokens(gastoken) {
+    ) public override payable freeGasTokensModifier(gas_token) {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "ArgobytesOwnedVault.trustArbitragers: Caller is not an admin"
@@ -60,15 +60,15 @@ contract ArgobytesOwnedVault is
     }
 
     function atomicArbitrage(
-        address gastoken,
+        address gas_token,
         address payable atomic_trader,
         address kollateral_invoker,
         address[] calldata tokens, // ETH (address(0)) or ERC20
         uint256 first_amount,
         bytes calldata encoded_actions
     ) external override returns (uint256 primary_profit) {
-        // use address(0) for gastoken to skip gas token burning
-        uint256 initial_gas = startFreeGasTokens(gastoken);
+        // use address(0) for gas_token to skip gas token burning
+        uint256 initial_gas = initialGas(gas_token);
 
         require(
             hasRole(TRUSTED_ARBITRAGER_ROLE, msg.sender),
@@ -126,7 +126,8 @@ contract ArgobytesOwnedVault is
             // and a reason string was provided.
 
             // burn our gas token before raising the same revert
-            endFreeGasTokens(gastoken, initial_gas);
+            // TODO: confirm that this actually saves us gas!
+            freeGasTokens(gas_token, initial_gas);
 
             revert(reason);
         } catch (
@@ -137,7 +138,8 @@ contract ArgobytesOwnedVault is
             // by zero, etc. inside atomicTrade.
 
             // burn our gas token before raising the same revert
-            endFreeGasTokens(gastoken, initial_gas);
+            // TODO: confirm that this actually saves us gas!
+            freeGasTokens(gas_token, initial_gas);
 
             revert(
                 "ArgobytesOwnedVault -> IArgobytesAtomicTrade.atomicTrade reverted without a reason"
@@ -164,7 +166,7 @@ contract ArgobytesOwnedVault is
 
             // we burn gas token before the very end. that way if we revert, we get more of our gas back and don't actually burn any tokens
             // TODO: is this true? if not, just use the modifier. i think this also means we can free slightly more tokens
-            endFreeGasTokens(gastoken, initial_gas);
+            freeGasTokens(gas_token, initial_gas);
 
             revert(err);
         }
@@ -173,30 +175,16 @@ contract ArgobytesOwnedVault is
         primary_profit = ending_vault_balance - starting_vault_balance;
 
         // we made it to the end. burn some gas tokens
-        endFreeGasTokens(gastoken, initial_gas);
+        // TODO: if our primary_profit was for ETH, and we buy guy tokens here, we need to adjust primary_profit!
+        freeGasTokens(gas_token, initial_gas);
     }
 
     function withdrawTo(
+        address gas_token,
         IERC20 token,
         address to,
         uint256 amount
-    ) external override returns (bool) {
-        // TODO: what role? it should be seperate from the deployer
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "ArgobytesOwnedVault.withdrawTo: Caller is not an admin"
-        );
-
-        return token.universalTransfer(to, amount);
-    }
-
-    // TODO: better function name? "freeing gas" feels weird, but "burning" already has a meaning
-    function withdrawToFreeGas(
-        address gastoken,
-        IERC20 token,
-        address to,
-        uint256 amount
-    ) external override freeGasTokens(gastoken) returns (bool) {
+    ) external override freeGasTokensModifier(gas_token) returns (bool) {
         // TODO: what role? it should be seperate from the deployer
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),

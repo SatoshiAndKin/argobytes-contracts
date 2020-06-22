@@ -11,13 +11,13 @@ interface IDiamondCutter {
         payable
         returns (address);
 
-    function deploy2AndBurn(
+    function deploy2AndFree(
         address gas_token,
         bytes32 salt,
         bytes memory initcode
     ) external payable returns (address);
 
-    function deploy2AndCutAndBurn(
+    function deploy2AndCutAndFree(
         address gas_token,
         bytes32 salt,
         bytes memory facet_initcode,

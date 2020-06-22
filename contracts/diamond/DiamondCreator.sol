@@ -4,35 +4,34 @@ pragma experimental ABIEncoderV2;
 
 import {Create2} from "@openzeppelin/utils/Create2.sol";
 
-import {GasTokenBurner, IGasToken} from "contracts/GasTokenBurner.sol";
+import {LiquidGasTokenBurner} from "contracts/LiquidGasTokenBurner.sol";
 
 import {Diamond} from "./Diamond.sol";
 import {DiamondCutter} from "./DiamondCutter.sol";
 import {DiamondLoupe} from "./DiamondLoupe.sol";
 
 // TODO: cute name like DiamondMine?
-contract DiamondCreator is GasTokenBurner {
+contract DiamondCreator is LiquidGasTokenBurner {
     // TODO: better to hard code this or pass as calldata?
-    // address CHI = 0x0000000000004946c0e9F43F4Dee607b0eF1fA1c;
+    // TODO: this is actually CHI's address. LGT isn't on mainnet yet
+    // address constant LGT = 0x000000000000c1cb11d5c062901f32d06248ce48;
 
-    // use CREATE2 to deploy ArgobytesOwnedVault with a salt
-    // use GasToken (or compatable alternative) to save some gas fees
+    // use CREATE2 to deploy a diamond with an efficient address
+    // use LiquidGasToken to save some gas fees
     // TODO: steps for using ERADICATE2
     constructor(
-        address gastoken,
+        address gas_token,
         bytes32 cutter_salt,
         bytes32 loupe_salt,
         bytes32 diamond_salt
     ) public payable {
-        uint256 initial_gas = startFreeGasTokens(gastoken);
+        uint256 initial_gas = initialGas(gas_token);
 
-        // TODO: what if someone else has deployed a cutter contract that we can use?
+        // TODO: have an alternative DiamondCreator contract that uses pre-deployed addresses for cutter/loupe
         DiamondCutter cutter = new DiamondCutter{salt: cutter_salt}();
-
-        // TODO: what if someone else has deployed a loupe contract that we can use?
         DiamondLoupe loupe = new DiamondLoupe{salt: loupe_salt}();
 
-        // TODO: forward msg.value? we already do a transfer when we selfdestruct
+        // any ETH left in this Creator contract will be forwarded to the diamond via selfdestruct
         Diamond diamond = new Diamond{salt: diamond_salt}(
             address(cutter),
             address(loupe)
@@ -42,24 +41,12 @@ contract DiamondCreator is GasTokenBurner {
         bytes32 admin_role = diamond.DEFAULT_ADMIN_ROLE();
 
         diamond.grantRole(admin_role, msg.sender);
+        // TODO: since we selfdestruct, do we really need renounceRole? probably safest to do it
         diamond.renounceRole(admin_role, address(this));
 
         if (initial_gas > 0) {
             // TODO: since we are going to self destruct and get 200k back, we need to tweak how much we free. think about this more
-            endFreeGasTokens(gastoken, initial_gas + 400000);
-
-            // transfer any leftover gasToken to the diamond
-            uint256 gastoken_balance = IGasToken(gastoken).balanceOf(
-                address(this)
-            );
-
-            // TODO: require this to succeed? that would be an expensive revert
-            if (gastoken_balance > 0) {
-                IGasToken(gastoken).transfer(
-                    address(diamond),
-                    gastoken_balance
-                );
-            }
+            freeGasTokens(gas_token, initial_gas + 400000);
         }
 
         // selfdestruct for the gas refund (~200k gas)

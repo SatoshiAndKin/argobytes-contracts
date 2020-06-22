@@ -31,9 +31,10 @@ contract Diamond is DiamondStorageContract, IERC165 {
         diamondCuts[0] = abi.encodePacked(
             diamondCutter,
             diamondCutter.diamondCut.selector,
+            // TODO: do we actually want deploy2+deploy2AndFree?  That's available on the
             diamondCutter.deploy2.selector,
-            diamondCutter.deploy2AndBurn.selector,
-            diamondCutter.deploy2AndCutAndBurn.selector
+            diamondCutter.deploy2AndFree.selector,
+            diamondCutter.deploy2AndCutAndFree.selector
         );
 
         // Adding diamond loupe functions

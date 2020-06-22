@@ -10,24 +10,19 @@ import os
 
 
 # TODO: set these inside main instead of using globals
-# GasToken, GasToken2, CHI, or probably other future coins
-GasTokenAddress = CHI
-
 # TODO: old versions of these contracts were cheaper to deploy with gas token. with less state, they are cheaper without gastoken though
 # TODO: i think some of them might still be. investigate more
 BURN_GAS_TOKEN = os.environ.get("BURN_GAS_TOKEN", "0") == "1"
 EXPORT_ARTIFACTS = os.environ.get("EXPORT_ARTIFACTS", "0") == "1"
 DEPLOY_DIR = os.path.join(project.main.check_for_project('.'), "build", "deployments", "quick_and_dirty")
 
-os.makedirs(DEPLOY_DIR, exist_ok=True)
 
-
-def deploy2_and_burn(deployer, deployed_salt, deployed_contract, deployed_contract_args, gas_price):
+def deploy2_and_free(deployer, deployed_salt, deployed_contract, deployed_contract_args, gas_price):
     deployed_initcode = deployed_contract.deploy.encode_input(*deployed_contract_args)
 
     # TODO: print the expected address for this target_salt and deployed_initcode
 
-    deploy_tx = deployer.deploy2AndBurn(
+    deploy_tx = deployer.deploy2AndFree(
         GasTokenAddress,
         deployed_salt,
         deployed_initcode,
@@ -57,7 +52,7 @@ def deploy2_and_burn(deployer, deployed_salt, deployed_contract, deployed_contra
     return deployed_contract
 
 
-def deploy2_and_cut_and_burn(deployer, deployed_salt, deployed_contract, deployed_contract_args, deployed_sigs, gas_price):
+def deploy2_and_cut_and_free(deployer, deployed_salt, deployed_contract, deployed_contract_args, deployed_sigs, gas_price):
     deployed_initcode = deployed_contract.deploy.encode_input(*deployed_contract_args)
 
     encoded_sigs = []
@@ -78,7 +73,7 @@ def deploy2_and_cut_and_burn(deployer, deployed_salt, deployed_contract, deploye
 
     # TODO: print the expected address for this target_salt and initcode
 
-    deploy_tx = deployer.deploy2AndCutAndBurn(
+    deploy_tx = deployer.deploy2AndCutAndFree(
         GasTokenAddress,
         deployed_salt,
         deployed_initcode,
@@ -129,6 +124,8 @@ def quick_save(contract_name, address):
 
 
 def main():
+    os.makedirs(DEPLOY_DIR, exist_ok=True)
+
     # gwei
     expected_mainnet_mint_price = 1 * 1e9
     expected_mainnet_gas_price = 25 * 1e9
@@ -152,17 +149,7 @@ def main():
     if BURN_GAS_TOKEN:
         mint_batch_amount = 50
 
-        gas_token = interface.IGasToken(GasTokenAddress)
-
-        # TODO: only mint 1 more token than we need (instead of up to mint_batch_amount - 1 more)
-        for _ in range(1, 14):
-            # TODO: move this back to account 0 once we we calculate diamond_creator_address
-            gas_token.mint(
-                mint_batch_amount,
-                {"from": accounts[0], "gasPrice": expected_mainnet_mint_price}
-            )
-
-        gas_tokens_start = gas_token.balanceOf.call(accounts[0])
+        gas_token = interface.ILGT(LiquidGasToken)
 
         # prepare the diamond creator with some gas token
         # TODO: how do we calculate this contract's address before we do the deployment?
@@ -170,18 +157,22 @@ def main():
         print("WARNING! calculate instead of hard code this!")
         diamond_creator_address = "0xAF75C9E8b9c4C96053bCD5a5eBA3bC7d79dE2bC5"
 
-        gas_token.transfer(
-            diamond_creator_address,
-            gas_tokens_start,
-            {"from": accounts[0], "gasPrice": expected_mainnet_mint_price}
-        )
+        # TODO: only mint 1 more token than we need (instead of up to mint_batch_amount - 1 more)
+        for _ in range(1, 20):
+            # TODO: move this back to account 0? im still not positive we want mintToLiqudity instead of mintTo
+            # TODO: keep track of gas spent minting liquidity
+            gas_token.mintToLiquidity(
+                mint_batch_amount,
+                diamond_creator_address,
+                {"from": accounts[1], "gasPrice": expected_mainnet_mint_price}
+            )
 
-        gas_tokens_start = gas_token.balanceOf.call(diamond_creator_address)
+        gas_tokens_start = gas_token.balanceOf.call(gas_token)
 
         # gastoken has 2 decimals, so divide by 100
         print("Starting gas_token balance:", gas_tokens_start / 100.0)
 
-        # TODO: proper assert
+        # TODO: proper assert. mint_batch_amount is not the right amount to check
         assert gas_tokens_start > mint_batch_amount
 
     # deploy the contract that will deploy the diamond (and cutter and loupe)
@@ -215,8 +206,8 @@ def main():
     accounts[2].transfer(argobytes_diamond, 50 * 1e18)
     accounts[3].transfer(argobytes_diamond, 50 * 1e18)
 
-    # deploy ArgobytesOwnedVault. we won't use this directly. it will be used through the diamond
-    deploy2_and_cut_and_burn(
+    # deploy ArgobytesOwnedVault and add it to the diamond
+    deploy2_and_cut_and_free(
         argobytes_diamond,
         salt,
         ArgobytesOwnedVault,
@@ -234,7 +225,7 @@ def main():
 
     # deploy all the other contracts
     # these one's don't modify the diamond
-    argobytes_atomic_trade = deploy2_and_burn(
+    argobytes_atomic_trade = deploy2_and_free(
         argobytes_diamond,
         salt,
         ArgobytesAtomicTrade,
@@ -242,7 +233,7 @@ def main():
         expected_mainnet_gas_price
     )
 
-    deploy2_and_burn(
+    deploy2_and_free(
         argobytes_diamond,
         salt,
         OneSplitOffchainAction,
@@ -250,7 +241,7 @@ def main():
         expected_mainnet_gas_price
     )
 
-    deploy2_and_burn(
+    deploy2_and_free(
         argobytes_diamond,
         salt,
         KyberAction,
@@ -258,7 +249,7 @@ def main():
         expected_mainnet_gas_price
     )
 
-    deploy2_and_burn(
+    deploy2_and_free(
         argobytes_diamond,
         salt,
         UniswapV1Action,
@@ -266,7 +257,7 @@ def main():
         expected_mainnet_gas_price
     )
 
-    # deploy2_and_burn(
+    # deploy2_and_free(
     #     argobytes_diamond,
     #     salt,
     #     ZrxV3Action,
@@ -274,7 +265,7 @@ def main():
     #     expected_mainnet_gas_price
     # )
 
-    deploy2_and_burn(
+    deploy2_and_free(
         argobytes_diamond,
         salt,
         Weth9Action,
@@ -282,7 +273,7 @@ def main():
         expected_mainnet_gas_price
     )
 
-    synthetix_depot_action = deploy2_and_burn(
+    synthetix_depot_action = deploy2_and_free(
         argobytes_diamond,
         salt,
         SynthetixDepotAction,
@@ -290,7 +281,7 @@ def main():
         expected_mainnet_gas_price
     )
 
-    curve_fi_action = deploy2_and_burn(
+    curve_fi_action = deploy2_and_free(
         argobytes_diamond,
         salt,
         CurveFiAction,

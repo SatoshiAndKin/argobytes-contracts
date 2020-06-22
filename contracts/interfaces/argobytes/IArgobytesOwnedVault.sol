@@ -15,12 +15,12 @@ interface IArgobytesOwnedVault {
      * This is payable so that the initial deployment can fund
      */
     function trustArbitragers(
-        address gastoken,
+        address gas_token,
         address[] memory trusted_arbitragers
     ) external payable;
 
     function atomicArbitrage(
-        address gastoken,
+        address gas_token,
         address payable atomic_trader,
         address kollateral_invoker,
         address[] calldata tokens, // ETH (address(0)) or ERC20
@@ -29,13 +29,7 @@ interface IArgobytesOwnedVault {
     ) external returns (uint256 primary_profit);
 
     function withdrawTo(
-        IERC20 token,
-        address to,
-        uint256 amount
-    ) external returns (bool);
-
-    function withdrawToFreeGas(
-        address gastoken,
+        address gas_token,
         IERC20 token,
         address to,
         uint256 amount
