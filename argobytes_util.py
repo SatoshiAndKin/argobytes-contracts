@@ -15,7 +15,8 @@ def deploy_liquidgastoken(lgt_contract):
     accounts[9].transfer(lgt_deployer, "10 ether")
 
     # set the initial cost of 1 token (make it super cheap so tests can definitely use it)
-    accounts[9].transfer(expected_address, "0.0000001 ether")
+    # TODO: what cost should we set?
+    accounts[9].transfer(expected_address, "0.000004 ether")
 
     # deploy the actual contract
     lgt = lgt_deployer.deploy(lgt_contract)

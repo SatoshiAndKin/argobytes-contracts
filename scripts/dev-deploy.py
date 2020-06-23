@@ -59,8 +59,6 @@ def main():
     # TODO: do this earlier and transfer the coins to the diamond_creator address before deployment
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
     if BURN_GAS_TOKEN:
-        mint_batch_amount = 50
-
         # TODO: once this is deployed on mainnet, just use the interface
         # gas_token = interface.ILiquidGasToken(LiquidGasTokenAddress)
         gas_token = deploy_liquidgastoken(LiquidGasToken)
@@ -73,8 +71,9 @@ def main():
 
         deadline = 999999999999999
 
-        # TODO: only mint 1 more token than we need (instead of up to mint_batch_amount - 1 more)
-        for _ in range(1, 20):
+        # TODO: how many tokens should we mint? what size liquidity pool and at what price do we expect to see?
+        mint_batch_amount = 150
+        for _ in range(1, 30):
             # TODO: move this back to account 0? im still not positive we want mintToLiqudity instead of mintTo
             # TODO: keep track of gas spent minting liquidity
             gas_token.mintToLiquidity(mint_batch_amount, 0, deadline, diamond_creator_address, {'from': accounts[1], 'value': 1e19, "gasPrice": expected_mainnet_mint_price})
