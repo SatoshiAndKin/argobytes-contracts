@@ -102,6 +102,7 @@ def main():
     print()
 
     # save the diamond's address
+    # TODO: save this as ArgobytesDiamond?
     quick_save_contract(diamond)
 
     # this interface matches our final cut diamond:
@@ -257,6 +258,7 @@ def main():
     quick_save("KollateralInvoker", KollateralInvokerAddress)
     quick_save("KyberNetworkProxy", KyberNetworkProxy)
     quick_save("KyberRegisterWallet", KyberRegisterWallet)
+    quick_save("LiquidGasToken", LiquidGasTokenAddress)
     quick_save("OneSplit", OneSplitAddress)
     quick_save("SynthetixAddressResolver", SynthetixAddressResolver)
     quick_save("UniswapFactory", UniswapFactory)
