@@ -63,14 +63,9 @@ def main():
         # gas_token = interface.ILiquidGasToken(LiquidGasTokenAddress)
         gas_token = deploy_liquidgastoken(LiquidGasToken)
 
-        # prepare the diamond creator with some gas token
-        # TODO: how do we calculate this contract's address before we do the deployment?
-        # TODO: we need the current nonces for accounts[0] and some hashing
-        print("WARNING! calculate instead of hard code this!")
-        diamond_creator_address = "0x0F00F5Af520ebD3255141f24aDd53D34A4D9955C"
-
         deadline = 999999999999999
 
+        # add some LGT liquidity
         # TODO: how many tokens should we mint? what size liquidity pool and at what price do we expect to see?
         mint_batch_amount = 150
         for _ in range(1, 30):
