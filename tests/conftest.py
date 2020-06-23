@@ -84,14 +84,28 @@ def gastoken():
     return Contract.from_explorer("0x0000000000b3F879cb30FE243b4Dfee438691c04")
 
 
-@pytest.fixture(scope="session")
+# TODO: with a larger scope, i'm getting "This contract no longer exists"
+@pytest.fixture(scope="function")
 def liquidgastoken(LiquidGasToken):
     # TODO: once this is deployed to mainnet, use Contract.from_explorer
     # return Contract.from_explorer("0x000000000000c1cb11d5c062901f32d06248ce48")
+
+    # for now, we deploy the contract ourselves
     lgt_deployer = accounts.add("0x7d4cbcfd42fe584226a17f385f734b046090f3e9d9fd95b2e10ef53acbbc39e2")
-    accounts[9].transfer("0x000000000049091f98692b2460500b6d133ae31f", "0.001 ether")
+    expected_address = "0x000000000049091f98692b2460500b6d133ae31f"
+
+    # give the deploying address some funds
     accounts[9].transfer(lgt_deployer, "10 ether")
-    return lgt_deployer.deploy(LiquidGasToken)
+
+    # set the initial cost of 1 token
+    accounts[9].transfer(expected_address, "0.0001 ether")
+
+    # deploy the actual contract
+    lgt = lgt_deployer.deploy(LiquidGasToken)
+
+    assert(lgt == expected_address)
+
+    return lgt
 
 
 @pytest.fixture(scope="session")
