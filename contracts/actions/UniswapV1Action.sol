@@ -3,8 +3,6 @@ pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
-import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {
@@ -15,9 +13,6 @@ import {
 } from "contracts/interfaces/uniswap/IUniswapExchange.sol";
 
 contract UniswapV1Action is AbstractERC20Exchange {
-    using SafeERC20 for IERC20;
-    using SafeMath for uint256;
-
     struct UniswapExchangeData {
         address token;
         address factory;
@@ -230,7 +225,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
             "UniswapV1Action.tradeTokenToToken: NO_BALANCE"
         );
 
-        IERC20(src_token).safeApprove(exchange, src_balance);
+        IERC20(src_token).approve(exchange, src_balance);
 
         // TODO: what gas limits? https://hackmd.io/@Uniswap/HJ9jLsfTz#Gas-Benchmarks
         trade_gas += 140000;
@@ -314,7 +309,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
             "UniswapV1Action.tradeTokenToEther: NO_BALANCE"
         );
 
-        IERC20(src_token).safeApprove(exchange, src_balance);
+        IERC20(src_token).approve(exchange, src_balance);
 
         if (to == ADDRESS_ZERO) {
             to = msg.sender;

@@ -4,7 +4,6 @@
 from argobytes_util import *
 from argobytes_mainnet import *
 from brownie import *
-from eth_abi.packed import encode_abi_packed
 from eth_utils import to_bytes
 import os
 
@@ -40,8 +39,8 @@ def main():
     os.makedirs(DEPLOY_DIR, exist_ok=True)
 
     # gwei
-    expected_mainnet_mint_price = 1 * 1e9
-    expected_mainnet_gas_price = 25 * 1e9
+    expected_mainnet_mint_price = "1 gwei"
+    expected_mainnet_gas_price = "15 gwei"
 
     starting_balance = accounts[0].balance()
 
@@ -62,40 +61,42 @@ def main():
     if BURN_GAS_TOKEN:
         mint_batch_amount = 50
 
-        gas_token = interface.ILiquidGasToken(LiquidGasToken)
+        # TODO: once this is deployed on mainnet, just use the interface
+        # gas_token = interface.ILiquidGasToken(LiquidGasTokenAddress)
+        gas_token = deploy_liquidgastoken(LiquidGasToken)
 
         # prepare the diamond creator with some gas token
         # TODO: how do we calculate this contract's address before we do the deployment?
         # TODO: we need the current nonces for accounts[0] and some hashing
         print("WARNING! calculate instead of hard code this!")
-        diamond_creator_address = "0xAF75C9E8b9c4C96053bCD5a5eBA3bC7d79dE2bC5"
+        diamond_creator_address = "0x0F00F5Af520ebD3255141f24aDd53D34A4D9955C"
+
+        deadline = 999999999999999
 
         # TODO: only mint 1 more token than we need (instead of up to mint_batch_amount - 1 more)
         for _ in range(1, 20):
             # TODO: move this back to account 0? im still not positive we want mintToLiqudity instead of mintTo
             # TODO: keep track of gas spent minting liquidity
-            gas_token.mintToLiquidity(
-                mint_batch_amount,
-                diamond_creator_address,
-                {"from": accounts[1], "gasPrice": expected_mainnet_mint_price}
-            )
+            gas_token.mintToLiquidity(mint_batch_amount, 0, deadline, diamond_creator_address, {'from': accounts[1], 'value': 1e19, "gasPrice": expected_mainnet_mint_price})
 
-        gas_tokens_start = gas_token.balanceOf.call(gas_token)
+        # gas_tokens_start = gas_token.balanceOf.call(diamond_creator_address)
 
-        # gastoken has 2 decimals, so divide by 100
-        print("Starting gas_token balance:", gas_tokens_start / 100.0)
+        # # gastoken has 2 decimals, so divide by 100
+        # print("Starting gas_token balance:", gas_tokens_start / 100.0)
 
-        # TODO: proper assert. mint_batch_amount is not the right amount to check
-        assert gas_tokens_start > mint_batch_amount
+        # # TODO: proper assert. mint_batch_amount is not the right amount to check
+        # assert gas_tokens_start > mint_batch_amount
+    else:
+        gas_token = "0x0000000000000000000000000000000000000000"
 
     # deploy the contract that will deploy the diamond (and cutter and loupe)
     # it self destructs, so handling it is non-standard
     diamond_deploy_tx = DiamondCreator.deploy(
-        GasTokenAddress,
+        gas_token,
         salt,
         salt,
         salt,
-        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
+        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price, "value": 1e18}
     )
 
     # deploys have no return_value, so we check logs instead
@@ -114,86 +115,99 @@ def main():
     # not all those functions are actually available yet!
     argobytes_diamond = interface.IArgobytesDiamond(diamond.address)
 
-    # give the diamond_creator a bunch of coins. it will forward them when deploying the diamond
-    accounts[1].transfer(argobytes_diamond, 50 * 1e18)
-    accounts[2].transfer(argobytes_diamond, 50 * 1e18)
-    accounts[3].transfer(argobytes_diamond, 50 * 1e18)
-
     # deploy ArgobytesOwnedVault and add it to the diamond
-    deploy2_and_cut_and_free(
+    argobytes_owned_vault = deploy2_and_cut_and_free(
+        gas_token,
         argobytes_diamond,
         salt,
         ArgobytesOwnedVault,
         [arb_bots],
-        ["atomicArbitrage", "mintGasToken", "withdrawTo", "withdrawToFreeGas"],
+        ["atomicArbitrage", "withdrawTo"],
         expected_mainnet_gas_price
     )
+    quick_save_contract(argobytes_owned_vault)
 
     # deploy all the other contracts
     # these one's don't modify the diamond
     argobytes_atomic_trade = deploy2_and_free(
+        gas_token,
         argobytes_diamond,
         salt,
         ArgobytesAtomicTrade,
         [],
         expected_mainnet_gas_price
     )
+    quick_save_contract(argobytes_atomic_trade)
 
-    deploy2_and_free(
+    onesplit_offchain_action = deploy2_and_free(
+        gas_token,
         argobytes_diamond,
         salt,
         OneSplitOffchainAction,
         [],
         expected_mainnet_gas_price
     )
+    quick_save_contract(onesplit_offchain_action)
 
-    deploy2_and_free(
+    kyber_action = deploy2_and_free(
+        gas_token,
         argobytes_diamond,
         salt,
         KyberAction,
         [accounts[0], argobytes_diamond],
         expected_mainnet_gas_price
     )
+    quick_save_contract(kyber_action)
 
-    deploy2_and_free(
+    uniswap_v1_action = deploy2_and_free(
+        gas_token,
         argobytes_diamond,
         salt,
         UniswapV1Action,
         [],
         expected_mainnet_gas_price
     )
+    quick_save_contract(uniswap_v1_action)
 
-    # deploy2_and_free(
+    # zrx_v3_action = deploy2_and_free(
+    #     gas_token,
     #     argobytes_diamond,
     #     salt,
     #     ZrxV3Action,
     #     [],
     #     expected_mainnet_gas_price
     # )
+    # quick_save_contract(zrx_v3_action)
 
-    deploy2_and_free(
+    weth9_action = deploy2_and_free(
+        gas_token,
         argobytes_diamond,
         salt,
         Weth9Action,
         [],
         expected_mainnet_gas_price
     )
+    quick_save_contract(weth9_action)
 
     synthetix_depot_action = deploy2_and_free(
+        gas_token,
         argobytes_diamond,
         salt,
         SynthetixDepotAction,
         [],
         expected_mainnet_gas_price
     )
+    quick_save_contract(synthetix_depot_action)
 
     curve_fi_action = deploy2_and_free(
+        gas_token,
         argobytes_diamond,
         salt,
         CurveFiAction,
         [accounts[0]],
         expected_mainnet_gas_price
     )
+    quick_save_contract(curve_fi_action)
 
     # TODO: do this through the vault so that we can burn gas token?
     curve_fi_action.saveExchange(CurveFiBUSD, 4, {"from": accounts[0], 'gasPrice': expected_mainnet_gas_price})
@@ -213,22 +227,24 @@ def main():
         argobytes_diamond, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
     if BURN_GAS_TOKEN:
-        # make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
-        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_diamond)
+        # # TODO: make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
+        # gas_tokens_remaining = gas_token.balanceOf.call(argobytes_diamond)
 
-        print("gas token:", GasTokenAddress)
+        print("gas token:", LiquidGasTokenAddress)
 
-        # gastoken has 2 decimals, so divide by 100
-        print("gas_tokens_remaining:", gas_tokens_remaining / 100.0, "/", gas_tokens_start / 100.0)
+        # # gastoken has 2 decimals, so divide by 100
+        # print("gas_tokens_remaining:", gas_tokens_remaining / 100.0, "/", gas_tokens_start / 100.0)
 
-        assert gas_tokens_remaining > 0
-        assert gas_tokens_remaining < mint_batch_amount
+        # assert gas_tokens_remaining > 0
+        # assert gas_tokens_remaining < mint_batch_amount
     else:
         print("gas_tokens_remaining: N/A")
 
     print("gas used by accounts[0]:", accounts[0].gas_used)
 
-    ending_balance = accounts[0].balance()
+    ending_balance = accounts[0].balance() + diamond.balance()
+
+    assert ending_balance < starting_balance
 
     # this isn't all used by gas. some is sent to the owned vault
     print("ETH used by accounts[0]:", (starting_balance - ending_balance) / 1e18)
@@ -251,5 +267,10 @@ def main():
     quick_save("SynthetixAddressResolver", SynthetixAddressResolver)
     quick_save("UniswapFactory", UniswapFactory)
     quick_save("Weth9", Weth9Address)
+
+    # give the argobytes_diamond a bunch of coins. it will forward them when deploying the diamond
+    accounts[1].transfer(argobytes_diamond, 50 * 1e18)
+    accounts[2].transfer(argobytes_diamond, 50 * 1e18)
+    accounts[3].transfer(argobytes_diamond, 50 * 1e18)
 
     reset_block_time(synthetix_depot_action)

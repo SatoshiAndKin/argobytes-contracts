@@ -1,10 +1,32 @@
 from brownie import *
+from eth_abi.packed import encode_abi_packed
 from eth_utils import keccak, to_checksum_address, to_bytes
 import os
 import rlp
 
 
-def deploy2_and_free(diamond_contract, deploy_salt, contract_to_deploy, contract_to_deploy_args, gas_price):
+def deploy_liquidgastoken(lgt_contract):
+    # once this is on mainnet, we can just use an interface
+    # for now, we deploy the contract ourselves
+    lgt_deployer = accounts.add("0x7d4cbcfd42fe584226a17f385f734b046090f3e9d9fd95b2e10ef53acbbc39e2")
+    expected_address = "0x000000000049091f98692b2460500b6d133ae31f"
+
+    # give the deploying address some funds
+    accounts[9].transfer(lgt_deployer, "10 ether")
+
+    # set the initial cost of 1 token (make it super cheap so tests can definitely use it)
+    accounts[9].transfer(expected_address, "0.0000001 ether")
+
+    # deploy the actual contract
+    lgt = lgt_deployer.deploy(lgt_contract)
+
+    # make sure the deployed address matches where we sent ETH
+    assert(lgt == expected_address)
+
+    return lgt
+
+
+def deploy2_and_free(gas_token, diamond_contract, deploy_salt, contract_to_deploy, contract_to_deploy_args, gas_price):
     """Use a diamond's deploy2 and free helper function.
     
     """
@@ -14,7 +36,7 @@ def deploy2_and_free(diamond_contract, deploy_salt, contract_to_deploy, contract
 
     # TODO: switch to using LiquidGasToken's helper instead
     deploy_tx = diamond_contract.deploy2AndFree(
-        GasTokenAddress,
+        gas_token,
         deploy_salt,
         contract_initcode,
         {"from": accounts[0], "gasPrice": gas_price}
@@ -38,12 +60,10 @@ def deploy2_and_free(diamond_contract, deploy_salt, contract_to_deploy, contract
     print("CREATE2 deployed:", contract_to_deploy._name, "to", contract_to_deploy.address)
     print()
 
-    quick_save_contract(contract_to_deploy)
-
     return contract_to_deploy
 
 
-def deploy2_and_cut_and_free(diamond_contract, deploy_salt, contract_to_deploy, contract_to_deploy_args, deployed_sigs, gas_price):
+def deploy2_and_cut_and_free(gas_token, diamond_contract, deploy_salt, contract_to_deploy, contract_to_deploy_args, deployed_sigs, gas_price):
     contract_initcode = contract_to_deploy.deploy.encode_input(*contract_to_deploy_args)
 
     encoded_sigs = []
@@ -65,7 +85,7 @@ def deploy2_and_cut_and_free(diamond_contract, deploy_salt, contract_to_deploy, 
     # TODO: print the expected address for this target_salt and initcode
 
     deploy_tx = diamond_contract.deploy2AndCutAndFree(
-        GasTokenAddress,
+        gas_token,
         deploy_salt,
         contract_initcode,
         encoded_sigs,
@@ -91,8 +111,6 @@ def deploy2_and_cut_and_free(diamond_contract, deploy_salt, contract_to_deploy, 
 
     print("CREATE2 deployed:", contract_to_deploy._name, "to", contract_to_deploy.address)
     print()
-
-    quick_save_contract(contract_to_deploy)
 
     return contract_to_deploy
 

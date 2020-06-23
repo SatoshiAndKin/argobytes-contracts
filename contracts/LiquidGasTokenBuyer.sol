@@ -2,12 +2,14 @@
 pragma solidity 0.6.10;
 
 import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
+import {Strings} from "@OpenZeppelin/utils/Strings.sol";
 
 import {
     ILiquidGasToken
 } from "contracts/interfaces/liquidgastoken/ILiquidGasToken.sol";
 
 contract LiquidGasTokenBuyer {
+    using Strings for uint256;
     using SafeMath for uint256;
 
     modifier freeGasTokensModifier(address gas_token) {
@@ -35,17 +37,14 @@ contract LiquidGasTokenBuyer {
     // TODO: return success boolean? revert?
     function freeGasTokens(address gas_token, uint256 initial_gas) internal {
         if (initial_gas > 0) {
-            // i think that there will be times of extreme gas prices where liquidity in the pool dries up
-            // lets prefer paying for other's coins if it saves us money
-            // fallback to using our own supply
-            // if prices go very high, we can sell our supply then
+            // if initial_gas is set, we can assume gas_token is set
+
+            // TODO: think about this more. we might want an option to _freeGasTokens
             if (_buyAndFreeGasTokens(gas_token, initial_gas)) {
-                return;
-            } else if (_freeGasTokens(gas_token, initial_gas)) {
                 return;
             } else {
                 // TODO: we probably don't actually want to revert. but this makes debugging right now simpler
-                revert("");
+                revert("LiquidGasTokenBuyer.freeGasTokens: DEBUGGING");
             }
         }
     }
@@ -63,50 +62,48 @@ contract LiquidGasTokenBuyer {
 
         // TODO: GST2 code checked that we had enough gas to even try burning. do we need that here, too?
 
-        if (optimal_tokens > 0) {
-            // getEthToTokenOutputPrice reverts if optimal_tokens aren't available
-            try
-                ILiquidGasToken(gas_token).getEthToTokenOutputPrice(
-                    optimal_tokens
-                )
-            returns (uint256 buy_cost) {
-                // TODO: these numbers are going to change
-                if (
-                    buy_cost < ((18145 * optimal_tokens) - 24000) * tx.gasprice
-                ) {
-                    // buying and freeing tokens is profitable
-                    try
-                        ILiquidGasToken(gas_token).buyAndFree22457070633{
-                            value: buy_cost
-                        }(optimal_tokens)
-                     {
-                        // gas token was bought and freed
-                        // TODO: I think if we sent the wrong value, this would actually not have freed anything. but we did the check in this transaction so should be safe
-                        return true;
-                    } catch Error(string memory reason) {
-                        // a revert was called inside buyAndFree22457070633
-                        // and a reason string was provided.
-                    } catch (
-                        bytes memory /*lowLevelData*/
-                    ) {
-                        // This is executed in case revert() was used
-                        // or there was a failing assertion, division
-                        // by zero, etc. inside buyAndFree22457070633.
-                    }
-                }
-            } catch Error(string memory reason) {
-                // a revert was called inside getEthToTokenOutputPrice
-                // and a reason string was provided.
-            } catch (
-                bytes memory /*lowLevelData*/
-            ) {
-                // This is executed in case revert() was used
-                // or there was a failing assertion, division
-                // by zero, etc. inside getEthToTokenOutputPrice.
-            }
-
-            return false;
+        if (optimal_tokens == 0) {
+            return true;
         }
+
+        // getEthToTokenOutputPrice reverts if optimal_tokens aren't available
+        try
+            ILiquidGasToken(gas_token).getEthToTokenOutputPrice(optimal_tokens)
+        returns (uint256 buy_cost) {
+            // TODO: these numbers are going to change
+            if (buy_cost < ((18145 * optimal_tokens) - 24000) * tx.gasprice) {
+                // buying and freeing tokens is profitable
+                try
+                    ILiquidGasToken(gas_token).buyAndFree22457070633{
+                        value: buy_cost
+                    }(optimal_tokens)
+                 {
+                    // gas token was bought and freed
+                    // TODO: I think if we sent the wrong value, this would actually not have freed anything. but we did the check in this transaction so should be safe
+                    return true;
+                } catch Error(string memory reason) {
+                    // a revert was called inside buyAndFree22457070633
+                    // and a reason string was provided.
+                } catch (
+                    bytes memory /*lowLevelData*/
+                ) {
+                    // This is executed in case revert() was used
+                    // or there was a failing assertion, division
+                    // by zero, etc. inside buyAndFree22457070633.
+                }
+            }
+        } catch Error(string memory reason) {
+            // a revert was called inside getEthToTokenOutputPrice
+            // and a reason string was provided.
+        } catch (
+            bytes memory /*lowLevelData*/
+        ) {
+            // This is executed in case revert() was used
+            // or there was a failing assertion, division
+            // by zero, etc. inside getEthToTokenOutputPrice.
+        }
+
+        return false;
     }
 
     /**

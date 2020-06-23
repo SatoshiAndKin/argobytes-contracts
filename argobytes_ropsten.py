@@ -8,7 +8,7 @@ KollateralInvokerAddress = "0x234A76352e816c48098F20F830A21c820085b902"
 KyberNetworkProxy = "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
 # Kyber doesn't have KyberRegisterWallet on ropsten
 KyberRegisterWallet = ""
-LiquidGasToken = "0x000000000000c1cb11d5c062901f32d06248ce48" # gastoken.io GST2
+LiquidGasTokenAddress = "0x000000000000c1cb11d5c062901f32d06248ce48"
 OneSplitAddress = ""
 # https://contracts.synthetix.io/ropsten/ReadProxyAddressResolver
 SynthetixAddressResolver = "0x4da3B8fb742BC69531Ec7AdBAa06effDEd1A22BA"

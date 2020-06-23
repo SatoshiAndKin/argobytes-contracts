@@ -139,7 +139,7 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_atomic_trade, argobyte
         [
             example_action.sweep.encode_input(example_action_2, address_zero, 0),
             example_action_2.sweep.encode_input(example_action, address_zero, 0),
-            example_action.sweep.encode_input(address_zero, address_zero, 100000),
+            example_action.sweep.encode_input(address_zero, address_zero, 0),
         ],
         [True, False, False],
     )
@@ -163,26 +163,28 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_atomic_trade, argobyte
     assert example_action.balance() == value
 
     # mint some gas token
+    # TODO: check the liquidgastoken price
     # TODO: how much should we make?
     # TODO: should we mintToSell to make it cheaper?
-    # liquidgastoken.mintToLiquidity(100, 0, 999999999999999, accounts[0], {'from': accounts[0], 'value': 1e19})
-    liquidgastoken.mintFor(100, argobytes_owned_vault, {'from': accounts[0]})
+    liquidgastoken.mintToLiquidity(150, 0, 999999999999999, accounts[0], {'from': accounts[0], 'value': 1e19})
+    # liquidgastoken.mintFor(100, argobytes_owned_vault, {'from': accounts[0]})
 
     # do the faked arbitrage trade again (but this time with gas tokens)
     arbitrage_tx = argobytes_owned_vault.atomicArbitrage(
         liquidgastoken, argobytes_atomic_trade, kollateral_invoker, [address_zero], value, encoded_actions, {
             'from': accounts[1],
-            'gas_price': 150,
+            'gas_price': 150 * 1e9,
         })
 
     gas_used_with_gastoken = arbitrage_tx.gas_used
 
     print("gas_used_with_gastoken: ", gas_used_with_gastoken)
 
-    # TODO: value should actually be value - cost of gastokens that we bought and freed
-    assert arbitrage_tx.return_value == value
     # TODO: figure out the cost of gas tokens
+    # TODO: value should actually be value - cost of gastokens that we bought and freed
+    assert arbitrage_tx.return_value > value * 0.9995
     # assert argobytes_owned_vault.balance() == 2 * value
-    assert argobytes_owned_vault.balance() > 1.5 * value
+    assert argobytes_owned_vault.balance() > 1.9995 * value
     assert gas_used_with_gastoken < gas_used_without_gastoken
+    # TODO: checking the gas used isn't enough. we need to check that the overall gas cost was less, too
     # TODO: assert something about the number of freed gas tokens. i don't think we are getting optimal amounts

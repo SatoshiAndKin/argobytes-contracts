@@ -11,7 +11,7 @@ GasToken2 = "0x0000000000b3F879cb30FE243b4Dfee438691c04"
 KollateralInvokerAddress = "0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01"
 KyberNetworkProxy = "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
 KyberRegisterWallet = "0xECa04bB23612857650D727B8ed008f80952654ee"
-LiquidGasToken = "0x000000000000c1cb11d5c062901f32d06248ce48"
+LiquidGasTokenAddress = "0x000000000000c1cb11d5c062901f32d06248ce48"
 OneSplitAddress = "0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E"
 # https://contracts.synthetix.io/ReadProxyAddressResolver
 SynthetixAddressResolver = "0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2"

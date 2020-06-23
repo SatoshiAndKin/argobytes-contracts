@@ -152,6 +152,8 @@ contract ArgobytesOwnedVault is
         if (ending_vault_balance < starting_vault_balance) {
             uint256 decreased_amount = starting_vault_balance -
                 ending_vault_balance;
+
+            // TODO: this error message costs too much gas. use it for debugging, but get rid of it in production
             string memory err = string(
                 abi.encodePacked(
                     "ArgobytesOwnedVault.atomicArbitrage: Vault balance of ",
@@ -169,11 +171,32 @@ contract ArgobytesOwnedVault is
         }
 
         // TODO: return the profit in all tokens so a caller can decide if the trade is worthwhile?
+        // TODO: can the caller get that now? Is that data available inside eth_call's return?
+        // we do not need checked subtraction here because we check for < above
         primary_profit = ending_vault_balance - starting_vault_balance;
 
-        // we made it to the end. burn some gas tokens
-        // TODO: if our primary_profit was for ETH, and we buy guy tokens here, we need to adjust primary_profit!
-        freeGasTokens(gas_token, initial_gas);
+        if (gas_token != ADDRESS_ZERO) {
+            // we made it to the end. burn some gas tokens
+
+            // if our primary_profit was in ETH and we buyAndFree gas tokens, we need to adjust primary_profit!
+            if (address(borrow_token) == ADDRESS_ZERO) {
+                // keep any calculations done after this to a minimum
+                freeGasTokens(gas_token, initial_gas);
+
+                ending_vault_balance = address(this).balance;
+
+                if (ending_vault_balance < starting_vault_balance) {
+                    revert(
+                        "ArgobytesOwnedVault.atomicArbitrage: freeGasTokens made this trade no longer profitable"
+                    );
+                }
+
+                primary_profit = ending_vault_balance - starting_vault_balance;
+            } else {
+                // keep any calculations done after this to a minimum
+                freeGasTokens(gas_token, initial_gas);
+            }
+        }
     }
 
     function withdrawTo(
