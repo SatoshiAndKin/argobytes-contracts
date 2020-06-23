@@ -71,7 +71,7 @@ def main():
         for _ in range(1, 30):
             # TODO: move this back to account 0? im still not positive we want mintToLiqudity instead of mintTo
             # TODO: keep track of gas spent minting liquidity
-            gas_token.mintToLiquidity(mint_batch_amount, 0, deadline, diamond_creator_address, {'from': accounts[1], 'value': 1e19, "gasPrice": expected_mainnet_mint_price})
+            gas_token.mintToLiquidity(mint_batch_amount, 0, deadline, accounts[1], {'from': accounts[1], 'value': 1e19, "gasPrice": expected_mainnet_mint_price})
 
         # gas_tokens_start = gas_token.balanceOf.call(diamond_creator_address)
 
