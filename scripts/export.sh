@@ -21,7 +21,7 @@ function export_argobytes_abi() {
 # we don't need to export all abis. we just need the abi's for our contracts
 export_argobytes_abi AbstractERC20Exchange
 export_argobytes_abi ArgobytesAtomicTrade
-export_argobytes_abi ArgobytesOwnedVault
+export_argobytes_abi IArgobytesDiamond
 export_argobytes_abi CurveFiAction
 export_argobytes_abi ExampleAction
 export_argobytes_abi KyberAction

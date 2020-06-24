@@ -102,8 +102,7 @@ def main():
     print()
 
     # save the diamond's address
-    # TODO: save this as ArgobytesDiamond?
-    quick_save_contract(diamond)
+    quick_save("ArgobytesDiamond", diamond.address)
 
     # this interface matches our final cut diamond:
     # IDiamondCutter+IDiamondLoupe+IArgobytesOwnedVault+ILiquidGasTokenBuyer+IERC165
