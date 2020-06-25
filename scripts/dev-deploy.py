@@ -39,10 +39,11 @@ def main():
     os.makedirs(DEPLOY_DIR, exist_ok=True)
 
     # gwei
-    # gas price should be at least 3.5x the mint price
+    # gas price should be 3.0x to 3.5x the mint price
     # TODO: double check and document why its 3.5x
-    expected_mainnet_mint_price = "5 gwei"
-    expected_mainnet_gas_price = "20 gwei"
+    # unless you are in a rush, it is better to just deploy at low gas prices
+    expected_mainnet_mint_price = "10 gwei"
+    expected_mainnet_gas_price = "10 gwei"
 
     starting_balance = accounts[0].balance()
 
