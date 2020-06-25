@@ -58,7 +58,7 @@ contract ArgobytesOwnedVault is
 
     function atomicActions(
         address gas_token,
-        address payable atomic_trader,
+        address atomic_trader,
         bytes calldata encoded_actions
     ) external override {
         // use address(0) for gas_token to skip gas token burning
@@ -67,39 +67,41 @@ contract ArgobytesOwnedVault is
         // this role check is very important! anyone would be able to burn our gas token without it!
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "ArgobytesOwnedVault.atomicArbitrage: Caller is not an admin"
+            "ArgobytesOwnedVault.atomicActions: Caller is not an admin"
         );
 
-        try
-            IArgobytesAtomicActions(atomic_trader).atomicActions(
+        // delgatecall is dangerous! be careful!
+        (bool success, bytes memory returndata) = atomic_trader.delegatecall(
+            abi.encodeWithSelector(
+                IArgobytesAtomicActions.atomicActions.selector,
                 encoded_actions
             )
-         {
-            // the actions succeeded
-        } catch Error(string memory reason) {
-            // a revert was called inside atomicActions
-            // and a reason string was provided.
+        );
 
-            // burn our gas token before raising the same revert
-            // TODO: confirm that this actually saves us gas!
-            freeGasTokens(gas_token, initial_gas);
+        if (success) {
+            return;
+        } else {
+            // Look for revert reason and bubble it up if present
+            if (returndata.length > 0) {
+                freeGasTokens(gas_token, initial_gas);
 
-            revert(reason);
-        } catch (
-            bytes memory /*lowLevelData*/
-        ) {
-            // This is executed in case revert() was used
-            // or there was a failing assertion, division
-            // by zero, etc. inside atomicActions.
+                // The easiest way to bubble the revert reason is using memory via assembly
 
-            // burn our gas token before raising the same revert
-            // TODO: confirm that this actually saves us gas!
-            freeGasTokens(gas_token, initial_gas);
+                // solhint-disable-next-line no-inline-assembly
+                assembly {
+                    let returndata_size := mload(returndata)
+                    revert(add(32, returndata), returndata_size)
+                }
+            } else {
+                freeGasTokens(gas_token, initial_gas);
 
-            revert(
-                "ArgobytesOwnedVault -> IArgobytesAtomicActions.atomicActions reverted without a reason"
-            );
+                revert(
+                    "ArgobytesOwnedVault.atomicActions: delegatecall of IArgobytesAtomicActions"
+                );
+            }
         }
+
+        freeGasTokens(gas_token, initial_gas);
     }
 
     function atomicArbitrage(

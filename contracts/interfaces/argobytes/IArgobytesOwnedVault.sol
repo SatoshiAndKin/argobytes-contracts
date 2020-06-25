@@ -12,7 +12,7 @@ interface IArgobytesOwnedVault {
 
     function atomicActions(
         address gas_token,
-        address payable atomic_trader,
+        address atomic_trader,
         bytes calldata encoded_actions
     ) external;
 
