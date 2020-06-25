@@ -88,8 +88,8 @@ def gastoken():
 
 # TODO: with a larger scope, i'm getting "This contract no longer exists"
 @pytest.fixture(scope="function")
-def liquidgastoken():
-    return Contract.from_explorer(LiquidGasTokenAddress)
+def liquidgastoken(interface):
+    return interface.ILiquidGasToken(LiquidGasTokenAddress)
 
 
 @pytest.fixture(scope="session")
@@ -97,9 +97,10 @@ def kollateral_invoker():
     return Contract.from_explorer(KollateralInvokerAddress)
 
 
+# TODO: diamond instead of argobytes_owned_vault
 @pytest.fixture()
-def kyber_action(KyberAction, argobytes_diamond):
-    return accounts[0].deploy(KyberAction, accounts[0], argobytes_diamond)
+def kyber_action(KyberAction, argobytes_owned_vault):
+    return accounts[0].deploy(KyberAction, accounts[0], argobytes_owned_vault)
 
 
 @pytest.fixture(scope="session")
@@ -259,4 +260,4 @@ def weth9_action(Weth9Action):
 
 @pytest.fixture(scope="session")
 def weth9_erc20():
-    return Contract.from_explorer(Weth9AddressAddress)
+    return Contract.from_explorer(Weth9Address)
