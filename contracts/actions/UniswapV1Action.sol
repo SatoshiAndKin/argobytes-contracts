@@ -126,6 +126,13 @@ contract UniswapV1Action is AbstractERC20Exchange {
         return a;
     }
 
+    function token_supported(address exchange, address token)
+        public override
+        returns (bool)
+    {
+        revert("wip");
+    }
+
     function tradeEtherToToken(
         address to,
         address exchange,

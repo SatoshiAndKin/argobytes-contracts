@@ -33,7 +33,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
     constructor(address owner) public Ownable2(owner) {}
 
     function token_supported(address exchange, address token)
-        public
+        public override
         returns (bool)
     {
         return

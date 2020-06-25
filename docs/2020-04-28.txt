@@ -53,4 +53,4 @@ if buidler releases --fork support, we could probably use them instead of ganach
 
 # bugs in my contracts
 - i made uniswap intentionally fail to get a message. it seems return_data has /something/ at the front of it. i'm not sure what those bytes mean
-    brownie.exceptions.VirtualMachineError: ArgobytesAtomicTrade.executeSolo: on call #2 to 0x090982118bb67fa9c2c51c1eaa3b422dd54dfa99 failed: �y� 9UniswapV1Action._tradeTokenToEther: src_token cannot be ETH'
+    brownie.exceptions.VirtualMachineError: ArgobytesAtomicActions.executeSolo: on call #2 to 0x090982118bb67fa9c2c51c1eaa3b422dd54dfa99 failed: �y� 9UniswapV1Action._tradeTokenToEther: src_token cannot be ETH'

@@ -8,7 +8,7 @@ import {
     ILiquidGasToken
 } from "contracts/interfaces/liquidgastoken/ILiquidGasToken.sol";
 
-contract LiquidGasTokenBuyer {
+contract LiquidGasTokenUser {
     using Strings for uint256;
     using SafeMath for uint256;
 
@@ -39,12 +39,15 @@ contract LiquidGasTokenBuyer {
         if (initial_gas > 0) {
             // if initial_gas is set, we can assume gas_token is set
 
-            // TODO: think about this more. we might want an option to _freeGasTokens
-            if (_buyAndFreeGasTokens(gas_token, initial_gas)) {
+            // TODO: think about this more. we might want an enum to make the order of these configurable
+            // the problem is that we are at the stack limit on some of our functions. so we can't just add another arg
+            if (_freeGasTokens(gas_token, initial_gas)) {
+                return;
+            } else if (_buyAndFreeGasTokens(gas_token, initial_gas)) {
                 return;
             } else {
-                // TODO: we probably don't actually want to revert. but this makes debugging right now simpler
-                revert("LiquidGasTokenBuyer.freeGasTokens: DEBUGGING");
+                // TODO: we probably don't actually want to revert. but this makes debugging simpler. delete
+                revert("LiquidGasTokenUser.freeGasTokens: DEBUGGING");
             }
         }
     }

@@ -2,7 +2,7 @@
 
 Open source contracts for atomic trading.
 
-My initial use for these is for atomic arbitrage, but `ArgobytesAtomicTrade.sol` can be useful for combining all sorts of actions.
+My initial use for these is for atomic arbitrage, but `ArgobytesAtomicActions.sol` can be useful for combining all sorts of actions.
 
 
 # Install

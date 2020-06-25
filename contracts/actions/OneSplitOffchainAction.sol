@@ -46,6 +46,14 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         return (expected_return, encoded);
     }
 
+    function token_supported(address exchange, address token)
+        public
+        override
+        returns (bool)
+    {
+        revert("wip");
+    }
+
     function tradeEtherToToken(
         address exchange,
         address to,

@@ -51,6 +51,14 @@ contract ExampleAction is AbstractERC20Exchange {
         burnGas(extra_gas);
     }
 
+    function token_supported(address exchange, address token)
+        public
+        override
+        returns (bool)
+    {
+        revert("wip");
+    }
+
     function getAmounts(
         address token_a,
         uint256 token_a_amount,

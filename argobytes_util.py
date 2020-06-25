@@ -5,31 +5,9 @@ import os
 import rlp
 
 
-def deploy_liquidgastoken(lgt_contract):
-    # once this is on mainnet, we can just use an interface
-    # for now, we deploy the contract ourselves
-    lgt_deployer = accounts.add("0x7d4cbcfd42fe584226a17f385f734b046090f3e9d9fd95b2e10ef53acbbc39e2")
-    expected_address = "0x000000000049091f98692b2460500b6d133ae31f"
-
-    # give the deploying address some funds
-    accounts[9].transfer(lgt_deployer, "10 ether")
-
-    # set the initial cost of 1 token (make it super cheap so tests can definitely use it)
-    # TODO: what cost should we set?
-    accounts[9].transfer(expected_address, "0.000004 ether")
-
-    # deploy the actual contract
-    lgt = lgt_deployer.deploy(lgt_contract)
-
-    # make sure the deployed address matches where we sent ETH
-    assert(lgt == expected_address)
-
-    return lgt
-
-
 def deploy2_and_free(gas_token, diamond_contract, deploy_salt, contract_to_deploy, contract_to_deploy_args, gas_price):
     """Use a diamond's deploy2 and free helper function.
-    
+
     """
     contract_initcode = contract_to_deploy.deploy.encode_input(*contract_to_deploy_args)
 

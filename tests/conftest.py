@@ -1,6 +1,7 @@
 import pytest
 from argobytes_util import *
 from brownie import *
+from argobytes_mainnet import *
 
 
 @pytest.fixture(autouse=True)
@@ -18,12 +19,12 @@ def session_defaults():
 
 @pytest.fixture(scope="session")
 def address_zero():
-    return "0x0000000000000000000000000000000000000000"
+    return ZeroAddress
 
 
 @pytest.fixture()
-def argobytes_atomic_trade(argobytes_owned_vault, ArgobytesAtomicTrade, gastoken):
-    return ArgobytesAtomicTrade.deploy({"from": accounts[0]})
+def argobytes_atomic_trade(argobytes_owned_vault, ArgobytesAtomicActions, gastoken):
+    return ArgobytesAtomicActions.deploy({"from": accounts[0]})
 
 
 @pytest.fixture()
@@ -36,23 +37,23 @@ def argobytes_owned_vault(ArgobytesOwnedVault):
 
 @pytest.fixture(scope="session")
 def cdai_erc20():
-    return Contract.from_explorer("0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643")
+    return Contract.from_explorer(cDAIAddress)
 
 
 @pytest.fixture(scope="session")
 def chi():
     # 1inch's CHI (gastoken alternative)
-    return Contract.from_explorer("0x0000000000004946c0e9F43F4Dee607b0eF1fA1c")
+    return Contract.from_explorer(CHIAddress)
 
 
 @pytest.fixture(scope="session")
 def cusdc_erc20():
-    return Contract.from_explorer("0x39aa39c021dfbae8fac545936693ac917d5e7563")
+    return Contract.from_explorer(cUSDCAddress)
 
 
 @pytest.fixture(scope="session")
 def curve_fi_compound(CurveFiAction):
-    return Contract.from_explorer("0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56")
+    return Contract.from_explorer(CurveFiCompoundAddress)
 
 
 @pytest.fixture()
@@ -67,7 +68,7 @@ def curve_fi_action(CurveFiAction, curve_fi_compound):
 
 @pytest.fixture(scope="session")
 def dai_erc20():
-    return Contract.from_explorer("0x6b175474e89094c44da98b954eedeac495271d0f")
+    return Contract.from_explorer(DAIAddress)
 
 
 @pytest.fixture()
@@ -82,37 +83,37 @@ def example_action_2(ExampleAction):
 
 @pytest.fixture(scope="session")
 def gastoken():
-    return Contract.from_explorer("0x0000000000b3F879cb30FE243b4Dfee438691c04")
+    return Contract.from_explorer(GasToken2Address)
 
 
 # TODO: with a larger scope, i'm getting "This contract no longer exists"
 @pytest.fixture(scope="function")
-def liquidgastoken(LiquidGasToken):
-    return deploy_liquidgastoken(LiquidGasToken)
+def liquidgastoken():
+    return Contract.from_explorer(LiquidGasTokenAddress)
 
 
 @pytest.fixture(scope="session")
-def kollateral_invoker(ExampleAction):
-    return Contract.from_explorer("0x06d1f34fd7C055aE5CA39aa8c6a8E10100a45c01")
+def kollateral_invoker():
+    return Contract.from_explorer(KollateralInvokerAddress)
 
 
 @pytest.fixture()
-def kyber_action(KyberAction, argobytes_owned_vault):
-    return accounts[0].deploy(KyberAction, accounts[0], argobytes_owned_vault)
+def kyber_action(KyberAction, argobytes_diamond):
+    return accounts[0].deploy(KyberAction, accounts[0], argobytes_diamond)
 
 
 @pytest.fixture(scope="session")
 def kyber_network_proxy():
     # TODO: they have an "info" method and that is a reserved keyword
-    # TODO: `return Contract.from_explorer("0x818E6FECD516Ecc3849DAf6845e3EC868087B755")`
-    return "0x818E6FECD516Ecc3849DAf6845e3EC868087B755"
+    # TODO: `return Contract.from_explorer(KyberNetworkProxyAddress)`
+    return KyberNetworkProxyAddress
 
 
 @pytest.fixture(scope="session")
 def onesplit():
     # 1split.eth
     # TODO: does this support ENS? this is 1split.eth (although its probably better to have an address here)
-    return Contract.from_explorer("0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E")
+    return Contract.from_explorer(OneSplitAddress)
 
 
 @pytest.fixture(scope="session")
@@ -167,35 +168,31 @@ def onesplit_offchain_action(OneSplitOffchainAction):
 
 @pytest.fixture(scope="session")
 def susd_erc20():
+    # TODO: web3.toPaddedBytes
     # # proxy_susd_bytes = web3.toBytes(text="ProxyERC20sUSD")
     # # susd_bytes = web3.toBytes(text="SynthsUSD")
 
     # # susd_address = synthetix_address_resolver.getAddress(susd_bytes)
 
-    # assert susd_address == "0xae38b81459d74a8c16eaa968c792207603d84480"
-    susd_address = "0xae38b81459d74a8c16eaa968c792207603d84480"
-    # return Contract.from_explorer(susd_address)
+    # assert susd_address == sUSDAddress
 
-    proxy_susd_address = "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51"
-
-    return Contract.from_explorer(proxy_susd_address, as_proxy_for=susd_address)
+    return Contract.from_explorer(ProxysUSDAddress, as_proxy_for=sUSDAddress)
 
 
 @pytest.fixture(scope="session")
 def synthetix_address_resolver(interface):
     # this is actually the ReadProxyAddressResolver
-    return interface.IAddressResolver("0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2")
+    return interface.IAddressResolver(SynthetixAddressResolverAddress)
 
 
 @pytest.fixture(scope="session")
 def synthetix_exchange_rates(interface):
-    # TODO: why isn't this working?!
+    # TODO: use padded bytes
     # rates_bytes = web3.toBytes(text="ExchangeRates")
 
     # rates = synthetix_address_resolver.getAddress(rates_bytes)
 
-    # TODO: don't hard code
-    rates = "0x9D7F70AF5DF5D5CC79780032d47a34615D1F1d77"
+    rates = SynthetixExchangeRatesAddress
 
     return interface.IExchangeRates(rates)
 
@@ -212,7 +209,7 @@ def uniswap_v1_action(UniswapV1Action):
 
 @pytest.fixture(scope="session")
 def uniswap_v1_factory():
-    return Contract.from_explorer("0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95")
+    return Contract.from_explorer(UniswapV1FactoryAddress)
 
 
 @pytest.fixture(scope="session")
@@ -230,7 +227,7 @@ def uniswap_v1_helper(uniswap_v1_factory, interface):
 
         # uniswap_v1_action.tradeEtherToToken(curve_fi_action, cdai_erc20, 1, "")
 
-        deadline = 2000000000
+        deadline = 9000000000
 
         tx = exchange.ethToTokenTransferInput(
             src_amount,
@@ -251,7 +248,8 @@ def uniswap_v1_helper(uniswap_v1_factory, interface):
 def usdc_erc20():
     # TODO: how did etherscan figure out the proxy address?
     # https://etherscan.io/address/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48#readProxyContract
-    return Contract.from_explorer("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", as_proxy_for="0x0882477e7895bdc5cea7cb1552ed914ab157fe56")
+    # TODO: better names for "USDCAddress" and "USDCProxiedAddress"
+    return Contract.from_explorer(USDCAddress, as_proxy_for=USDCProxiedAddress)
 
 
 @pytest.fixture()
@@ -261,4 +259,4 @@ def weth9_action(Weth9Action):
 
 @pytest.fixture(scope="session")
 def weth9_erc20():
-    return Contract.from_explorer("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2")
+    return Contract.from_explorer(Weth9AddressAddress)

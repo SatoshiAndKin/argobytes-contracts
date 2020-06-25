@@ -182,6 +182,14 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
         return a;
     }
 
+    function token_supported(address exchange, address token)
+        public
+        override
+        returns (bool)
+    {
+        revert("wip");
+    }
+
     // solium-disable-next-line security/no-assign-params
     function tradeEtherToSynthUSD(
         address to,

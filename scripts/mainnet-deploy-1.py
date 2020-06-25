@@ -6,6 +6,7 @@ import json
 from brownie import *
 from argobytes_mainnet import *
 
+
 def query_until_yes(question, default=None):
     """Ask a yes/no question via raw_input() and return their answer.
 
@@ -86,7 +87,7 @@ def main():
         arb_bot
     ]
 
-    argobytes_atomic_trade = ArgobytesAtomicTrade.deploy(
+    argobytes_atomic_trade = ArgobytesAtomicActions.deploy(
         KollateralInvokerAddress, {'from': accounts[0]})
 
     argobytes_owned_vault = ArgobytesOwnedVault.deploy(
@@ -108,7 +109,7 @@ def main():
 
     # security
     transaction_helper(
-        "set trusted trader role on ArgobytesAtomicTrade",
+        "set trusted trader role on ArgobytesAtomicActions",
         argobytes_atomic_trade,
         argobytes_atomic_trade.grantRole,
         argobytes_atomic_trade.TRUSTED_TRADER_ROLE(),

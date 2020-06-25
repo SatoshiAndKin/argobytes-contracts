@@ -13,19 +13,19 @@ import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 import {
     DiamondStorageContract
 } from "contracts/diamond/DiamondStorageContract.sol";
-import {LiquidGasTokenBuyer} from "contracts/LiquidGasTokenBuyer.sol";
+import {LiquidGasTokenUser} from "contracts/LiquidGasTokenUser.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
 import {Strings2} from "contracts/Strings2.sol";
 import {
-    IArgobytesAtomicTrade
-} from "contracts/interfaces/argobytes/IArgobytesAtomicTrade.sol";
+    IArgobytesAtomicActions
+} from "contracts/interfaces/argobytes/IArgobytesAtomicActions.sol";
 import {
     IArgobytesOwnedVault
 } from "contracts/interfaces/argobytes/IArgobytesOwnedVault.sol";
 
 contract ArgobytesOwnedVault is
     DiamondStorageContract,
-    LiquidGasTokenBuyer,
+    LiquidGasTokenUser,
     IArgobytesOwnedVault
 {
     using SafeMath for uint256;
@@ -55,6 +55,52 @@ contract ArgobytesOwnedVault is
 
     // this contract must be able to receive ether if it is expected to trade it
     receive() external payable {}
+
+    function atomicActions(
+        address gas_token,
+        address payable atomic_trader,
+        bytes calldata encoded_actions
+    ) external override {
+        // use address(0) for gas_token to skip gas token burning
+        uint256 initial_gas = initialGas(gas_token);
+
+        // this role check is very important! anyone would be able to burn our gas token without it!
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.atomicArbitrage: Caller is not an admin"
+        );
+
+        try
+            IArgobytesAtomicActions(atomic_trader).atomicActions(
+                encoded_actions
+            )
+         {
+            // the actions succeeded
+        } catch Error(string memory reason) {
+            // a revert was called inside atomicActions
+            // and a reason string was provided.
+
+            // burn our gas token before raising the same revert
+            // TODO: confirm that this actually saves us gas!
+            freeGasTokens(gas_token, initial_gas);
+
+            revert(reason);
+        } catch (
+            bytes memory /*lowLevelData*/
+        ) {
+            // This is executed in case revert() was used
+            // or there was a failing assertion, division
+            // by zero, etc. inside atomicActions.
+
+            // burn our gas token before raising the same revert
+            // TODO: confirm that this actually saves us gas!
+            freeGasTokens(gas_token, initial_gas);
+
+            revert(
+                "ArgobytesOwnedVault -> IArgobytesAtomicActions.atomicActions reverted without a reason"
+            );
+        }
+    }
 
     function atomicArbitrage(
         address gas_token,
@@ -89,13 +135,11 @@ contract ArgobytesOwnedVault is
         );
 
         // transfer tokens if we have them
-        // if we don't have sufficient tokens, the next contract will borrow from kollateral or some other provider
         if (first_amount <= starting_vault_balance) {
+            // we won't need to invoke kollateral
             borrow_token.universalTransfer(atomic_trader, first_amount);
-
-            // clear the kollateral invoker since we won't need it
-            kollateral_invoker = ADDRESS_ZERO;
         } else if (starting_vault_balance > 0) {
+            // we don't have enough funds to do the trade without kollateral. but we do have some
             require(
                 kollateral_invoker != ADDRESS_ZERO,
                 "ArgobytesOwnedVault.atomicArbitrage: not enough funds. need kollateral_invoker"
@@ -106,11 +150,11 @@ contract ArgobytesOwnedVault is
                 starting_vault_balance
             );
         }
-        // else we don't have any of these tokens. they will all come from kollateral or some other flash loan platform
+        // else we don't have any of these tokens. they will all come from kollateral
 
         // notice that this is an atomic trade. it doesn't require a profitable arbitrage. we have to check that ourself after it returns
         try
-            IArgobytesAtomicTrade(atomic_trader).atomicTrade(
+            IArgobytesAtomicActions(atomic_trader).atomicTrades(
                 kollateral_invoker,
                 tokens,
                 first_amount,
@@ -119,7 +163,7 @@ contract ArgobytesOwnedVault is
          {
             // the trade worked!
         } catch Error(string memory reason) {
-            // a revert was called inside atomicTrade
+            // a revert was called inside atomicActions
             // and a reason string was provided.
 
             // burn our gas token before raising the same revert
@@ -132,42 +176,45 @@ contract ArgobytesOwnedVault is
         ) {
             // This is executed in case revert() was used
             // or there was a failing assertion, division
-            // by zero, etc. inside atomicTrade.
+            // by zero, etc. inside atomicActions.
 
             // burn our gas token before raising the same revert
             // TODO: confirm that this actually saves us gas!
             freeGasTokens(gas_token, initial_gas);
 
             revert(
-                "ArgobytesOwnedVault -> IArgobytesAtomicTrade.atomicTrade reverted without a reason"
+                "ArgobytesOwnedVault -> IArgobytesAtomicActions.atomicActions reverted without a reason"
             );
         }
 
-        // don't trust IArgobytesAtomicTrade.atomicTrade's return. It is safer to check the balance ourselves
+        // don't trust IArgobytesAtomicActions.atomicActions's return. It is safer to check the balance ourselves
         uint256 ending_vault_balance = borrow_token.universalBalanceOf(
             address(this)
         );
 
-        // we allow this to be equal because it's possible that we got our profits somewhere else (like uniswap or kollateral LP fees)
+        // TODO: think about this more
+        // we used to allow this to be equal because it's possible that we got our profits somewhere else (like uniswap or kollateral LP fees)
         if (ending_vault_balance < starting_vault_balance) {
             uint256 decreased_amount = starting_vault_balance -
                 ending_vault_balance;
 
-            // TODO: this error message costs too much gas. use it for debugging, but get rid of it in production
-            string memory err = string(
-                abi.encodePacked(
-                    "ArgobytesOwnedVault.atomicArbitrage: Vault balance of ",
-                    address(borrow_token).toString(),
-                    " decreased by ",
-                    decreased_amount.toString()
-                )
-            );
+            // // TODO: this error message costs too much gas. use it for debugging, but get rid of it in production
+            // string memory err = string(
+            //     abi.encodePacked(
+            //         "ArgobytesOwnedVault.atomicArbitrage: Vault balance of ",
+            //         address(borrow_token).toString(),
+            //         " decreased by ",
+            //         decreased_amount.toString()
+            //     )
+            // );
 
             // we burn gas token before the very end. that way if we revert, we get more of our gas back and don't actually burn any tokens
             // TODO: is this true? if not, just use the modifier. i think this also means we can free slightly more tokens
             freeGasTokens(gas_token, initial_gas);
 
-            revert(err);
+            revert(
+                "ArgobytesOwnedVault.atomicArbitrage: Vault balance did not increase"
+            );
         }
 
         // TODO: return the profit in all tokens so a caller can decide if the trade is worthwhile?

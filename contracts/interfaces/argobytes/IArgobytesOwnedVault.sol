@@ -10,6 +10,12 @@ import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 interface IArgobytesOwnedVault {
     event Deploy(address deployed);
 
+    function atomicActions(
+        address gas_token,
+        address payable atomic_trader,
+        bytes calldata encoded_actions
+    ) external;
+
     function atomicArbitrage(
         address gas_token,
         address payable atomic_trader,

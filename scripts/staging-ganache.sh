@@ -16,7 +16,7 @@ exec ganache-cli \
     --accounts 10 \
     --hardfork istanbul \
     --fork "$fork" \
-    --gasLimit 10000000 \
+    --gasLimit 12000000 \
     --mnemonic "opinion adapt negative bone suit ill fossil alcohol razor script damp fold" \
     --port 8555 \
     --verbose \

@@ -4,21 +4,22 @@ pragma experimental ABIEncoderV2;
 
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
-import {LiquidGasTokenBuyer} from "contracts/LiquidGasTokenBuyer.sol";
+import {LiquidGasTokenUser} from "contracts/LiquidGasTokenUser.sol";
 
 import {Diamond} from "./Diamond.sol";
 import {DiamondCutter} from "./DiamondCutter.sol";
 import {DiamondLoupe} from "./DiamondLoupe.sol";
+import {
+    ILiquidGasToken
+} from "contracts/interfaces/liquidgastoken/ILiquidGasToken.sol";
 
 // TODO: cute name like DiamondMine?
-contract DiamondCreator is LiquidGasTokenBuyer {
+contract DiamondCreator is LiquidGasTokenUser {
     // TODO: better to hard code this or pass as calldata?
-    // TODO: this is actually CHI's address. LGT isn't on mainnet yet
     // address constant LGT = 0x000000000000c1cb11d5c062901f32d06248ce48;
 
     // use CREATE2 to deploy a diamond with an efficient address
     // use LiquidGasToken to save some gas fees
-    // TODO: steps for using ERADICATE2
     constructor(
         address gas_token,
         bytes32 cutter_salt,
@@ -46,7 +47,20 @@ contract DiamondCreator is LiquidGasTokenBuyer {
 
         if (initial_gas > 0) {
             // TODO: since we are going to self destruct and get 200k back, we need to tweak how much we free. think about this more
-            freeGasTokens(gas_token, initial_gas + 400000);
+            freeGasTokens(gas_token, initial_gas + 420000);
+
+            // transfer any remaining gas tokens
+            uint256 gas_token_balance = ILiquidGasToken(gas_token).balanceOf(
+                address(this)
+            );
+
+            if (gas_token_balance > 0) {
+                // i don't think its worth checking this return
+                ILiquidGasToken(gas_token).transfer(
+                    address(diamond),
+                    gas_token_balance
+                );
+            }
         }
 
         // selfdestruct for the gas refund (~200k gas)

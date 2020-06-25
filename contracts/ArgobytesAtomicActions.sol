@@ -14,15 +14,18 @@ import {
 } from "contracts/interfaces/kollateral/KollateralInvokable.sol";
 import {UniversalERC20, SafeERC20, IERC20} from "contracts/UniversalERC20.sol";
 import {
-    IArgobytesAtomicTrade
-} from "contracts/interfaces/argobytes/IArgobytesAtomicTrade.sol";
+    IArgobytesAtomicActions
+} from "contracts/interfaces/argobytes/IArgobytesAtomicActions.sol";
 
 // import {Strings2} from "contracts/Strings2.sol";
 
 // https://github.com/kollateral/kollateral/blob/master/lib/static/invoker.ts
 // they take a 6bps fee
 
-contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
+contract ArgobytesAtomicActions is
+    IArgobytesAtomicActions,
+    KollateralInvokable
+{
     using Address for address;
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -46,11 +49,11 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
 
         require(
             length == targets_data.length,
-            "ArgobytesAtomicTrade.encodeActions: data length does not match targets length"
+            "ArgobytesAtomicActions.encodeActions: data length does not match targets length"
         );
         require(
             length == with_values.length,
-            "ArgobytesAtomicTrade.encodeActions: with_values length does not match targets length"
+            "ArgobytesAtomicActions.encodeActions: with_values length does not match targets length"
         );
 
         Action[] memory actions = new Action[](length);
@@ -62,10 +65,14 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
         encoded_data = abi.encode(actions);
     }
 
+    function atomicActions(bytes calldata encoded_actions) external override {
+        _executeSolo(ADDRESS_ZERO, 0, encoded_actions);
+    }
+
     /**
-     * @notice Trade `first_amount` `tokens[0]` and return profits to msg.sender.
+     * @notice Transfer `first_amount` `tokens[0]`, call some functions, and return tokens to msg.sender.
      */
-    function atomicTrade(
+    function atomicTrades(
         address kollateral_invoker,
         address[] calldata tokens,
         uint256 first_amount,
@@ -75,14 +82,14 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
 
         require(
             num_tokens > 0,
-            "ArgobytesAtomicArbitrage.atomicTrade: tokens.length must be > 0"
+            "ArgobytesAtomicArbitrage.atomicActions: tokens.length must be > 0"
         );
 
         uint256 balance = IERC20(tokens[0]).universalBalanceOf(address(this));
 
         if (balance >= first_amount) {
             // we have all the funds that we need
-            executeSolo(tokens[0], first_amount, encoded_actions);
+            _executeSolo(tokens[0], first_amount, encoded_actions);
         } else {
             // we do not have enough token to do this trade ourselves. use kollateral for the remainder
             first_amount -= balance;
@@ -130,10 +137,10 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
      * @dev https://docs.kollateral.co/implementation#creating-your-invokable-smart-contract
      */
     function execute(bytes calldata encoded_actions) external override payable {
-        // only allow calls to execute from our `atomicTrade` function
+        // only allow calls to execute from our `atomicActions` function
         require(
             currentSender() == address(this),
-            "ArgobytesAtomicTrade.execute: Original sender is not this contract"
+            "ArgobytesAtomicActions.execute: Original sender is not this contract"
         );
 
         Action[] memory actions = abi.decode(encoded_actions, (Action[]));
@@ -176,7 +183,7 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
             // TODO: this error message probably costs more gas than we want to spend
             // string memory err = string(
             //     abi.encodePacked(
-            //         "ArgobytesAtomicTrade.execute: call #",
+            //         "ArgobytesAtomicActions.execute: call #",
             //         i.toString(),
             //         " to ",
             //         action_address.toString(),
@@ -188,12 +195,12 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
                 action_address.functionCallWithValue(
                     actions[i].data,
                     address(this).balance,
-                    "ArgobytesAtomicTrade.execute: external call with value failed"
+                    "ArgobytesAtomicActions.execute: external call with value failed"
                 );
             } else {
                 action_address.functionCall(
                     actions[i].data,
-                    "ArgobytesAtomicTrade.execute: external call failed"
+                    "ArgobytesAtomicActions.execute: external call failed"
                 );
             }
         }
@@ -205,23 +212,23 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
         //         uint256 balance = address(this).balance;
         //         if (balance == 0) {
         //             revert(
-        //                 "ArgobytesAtomicTrade.execute: No ETH balance was returned by the last action"
+        //                 "ArgobytesAtomicActions.execute: No ETH balance was returned by the last action"
         //             );
         //         }
         //         require(
         //             balance >= repay_amount,
-        //             "ArgobytesAtomicTrade.execute: Not enough ETH balance to repay kollateral"
+        //             "ArgobytesAtomicActions.execute: Not enough ETH balance to repay kollateral"
         //         );
         //     } else {
         //         uint256 balance = borrowed_token.balanceOf(address(this));
         //         if (balance == 0) {
         //             revert(
-        //                 "ArgobytesAtomicTrade.execute: No token balance was returned by the last action"
+        //                 "ArgobytesAtomicActions.execute: No token balance was returned by the last action"
         //             );
         //         }
         //         require(
         //             balance >= repay_amount,
-        //             "ArgobytesAtomicTrade.execute: Not enough token balance to repay kollateral"
+        //             "ArgobytesAtomicActions.execute: Not enough token balance to repay kollateral"
         //         );
         //     }
         // }
@@ -232,7 +239,7 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
     /**
      * @notice Execute arbitrary actions when we have enough funds without borrowing from anywhere.
      */
-    function executeSolo(
+    function _executeSolo(
         address first_token,
         uint256 first_amount,
         bytes memory encoded_actions
@@ -244,7 +251,7 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
         // we could allow 0 actions, but why would we ever want that?
         require(
             num_actions > 0,
-            "ArgobytesAtomicArbitrage.executeSolo: there must be at least one action"
+            "ArgobytesAtomicArbitrage._executeSolo: there must be at least one action"
         );
 
         // if the first token isn't ETH, transfer it
@@ -257,7 +264,7 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
 
             require(
                 first_token_balance >= first_amount,
-                "ArgobytesAtomicArbitrage.executeSolo: not enough token"
+                "ArgobytesAtomicArbitrage._executeSolo: not enough token"
             );
 
             // we don't need to use the universal functions here since we know this isn't ETH
@@ -272,13 +279,13 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
             // calls to this aren't expected, so lets just block them to be safe
             require(
                 action_address != address(this),
-                "ArgobytesAtomicArbitrage.executeSolo: calls to self are not allowed"
+                "ArgobytesAtomicArbitrage._executeSolo: calls to self are not allowed"
             );
 
             // TODO: this error message probably costs more gas than we want to spend
             // string memory err = string(
             //     abi.encodePacked(
-            //         "ArgobytesAtomicTrade.executeSolo: call #",
+            //         "ArgobytesAtomicActions._executeSolo: call #",
             //         i.toString(),
             //         " to ",
             //         action_address.toString(),
@@ -290,12 +297,12 @@ contract ArgobytesAtomicTrade is IArgobytesAtomicTrade, KollateralInvokable {
                 action_address.functionCallWithValue(
                     actions[i].data,
                     address(this).balance,
-                    "ArgobytesAtomicTrade.execute: external call with value failed"
+                    "ArgobytesAtomicActions.execute: external call with value failed"
                 );
             } else {
                 action_address.functionCall(
                     actions[i].data,
-                    "ArgobytesAtomicTrade.execute: external call failed"
+                    "ArgobytesAtomicActions.execute: external call failed"
                 );
             }
         }

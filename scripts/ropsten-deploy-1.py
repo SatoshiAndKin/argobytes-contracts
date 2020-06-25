@@ -86,7 +86,7 @@ def main():
         arb_bot
     ]
 
-    argobytes_atomic_trade = ArgobytesAtomicTrade.deploy(
+    argobytes_atomic_trade = ArgobytesAtomicActions.deploy(
         KollateralInvokerAddress, {'from': accounts[0]})
 
     argobytes_owned_vault = ArgobytesOwnedVault.deploy(
@@ -105,7 +105,7 @@ def main():
     # deploy_helper(CurveFiAction, CurvePAX, 4)
 
     transaction_helper(
-        "set trusted trader role on ArgobytesAtomicTrade",
+        "set trusted trader role on ArgobytesAtomicActions",
         argobytes_atomic_trade,
         argobytes_atomic_trade.grantRole,
         argobytes_atomic_trade.TRUSTED_TRADER_ROLE(),
