@@ -4,7 +4,7 @@ from brownie import *
 from argobytes_mainnet import *
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="function")
 def isolation(fn_isolation):
     # test isolation, always use!
     # be careful though! you can still leak state in other fixtures use scope="module" or scope="session"
@@ -22,12 +22,12 @@ def address_zero():
     return ZeroAddress
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def argobytes_atomic_trade(argobytes_owned_vault, ArgobytesAtomicActions, gastoken):
     return ArgobytesAtomicActions.deploy({"from": accounts[0]})
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def argobytes_owned_vault(ArgobytesOwnedVault):
     # TODO: rewrite this to use the diamond standard
     arb_bots = [accounts[1]]
@@ -56,7 +56,7 @@ def curve_fi_compound(CurveFiAction):
     return Contract.from_explorer(CurveFiCompoundAddress)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def curve_fi_action(CurveFiAction, curve_fi_compound):
     curve_fi = accounts[0].deploy(CurveFiAction, accounts[0])
 
@@ -71,12 +71,12 @@ def dai_erc20():
     return Contract.from_explorer(DAIAddress)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def example_action(ExampleAction):
     return accounts[0].deploy(ExampleAction)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def example_action_2(ExampleAction):
     return accounts[0].deploy(ExampleAction)
 
@@ -98,9 +98,9 @@ def kollateral_invoker():
 
 
 # TODO: diamond instead of argobytes_owned_vault
-@pytest.fixture()
-def kyber_action(KyberAction, argobytes_owned_vault):
-    return accounts[0].deploy(KyberAction, accounts[0], argobytes_owned_vault)
+@pytest.fixture(scope="function")
+def kyber_action(KyberAction):
+    return accounts[0].deploy(KyberAction)
 
 
 @pytest.fixture(scope="session")
@@ -127,7 +127,7 @@ def onesplit_helper(address_zero, onesplit, interface):
         # TODO: enable multipaths
         flags = 0
 
-        # not sure why, but uniswap v2 is not working well
+        # not sure why, but uniswap v2 is not working well. i think its a ganache-core bug
         flags += 0x1E000000  # FLAG_DISABLE_UNISWAP_V2_ALL
 
         expected_return = onesplit.getExpectedReturn(address_zero, dest_token, eth_amount, parts, flags)
@@ -162,7 +162,7 @@ def onesplit_helper(address_zero, onesplit, interface):
     return inner_onesplit_helper
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def onesplit_offchain_action(OneSplitOffchainAction):
     return accounts[0].deploy(OneSplitOffchainAction)
 
@@ -198,12 +198,12 @@ def synthetix_exchange_rates(interface):
     return interface.IExchangeRates(rates)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def synthetix_depot_action(SynthetixDepotAction):
     return accounts[0].deploy(SynthetixDepotAction)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def uniswap_v1_action(UniswapV1Action):
     return accounts[0].deploy(UniswapV1Action)
 
@@ -253,7 +253,7 @@ def usdc_erc20():
     return Contract.from_explorer(USDCAddress, as_proxy_for=USDCProxiedAddress)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def weth9_action(Weth9Action):
     return accounts[0].deploy(Weth9Action)
 

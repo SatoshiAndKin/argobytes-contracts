@@ -172,7 +172,7 @@ def main():
         argobytes_diamond,
         salt,
         KyberAction,
-        [argobytes_diamond, argobytes_diamond],
+        [],
         expected_mainnet_gas_price
     )
     quick_save_contract(kyber_action)

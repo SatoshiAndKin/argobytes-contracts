@@ -3,4 +3,5 @@ eth-brownie
 bandit
 autopep8
 pylint
+pytest-random-order
 pytest-timeout

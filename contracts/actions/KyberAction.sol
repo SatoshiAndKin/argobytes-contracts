@@ -7,9 +7,8 @@ import {
 } from "contracts/interfaces/kyber/IKyberNetworkProxy.sol";
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {IERC20, UniversalERC20, SafeERC20} from "contracts/UniversalERC20.sol";
-import {Ownable2} from "contracts/Ownable2.sol";
 
-contract KyberAction is AbstractERC20Exchange, Ownable2 {
+contract KyberAction is AbstractERC20Exchange {
     using SafeERC20 for IERC20;
     using UniversalERC20 for IERC20;
 
@@ -21,12 +20,15 @@ contract KyberAction is AbstractERC20Exchange, Ownable2 {
 
     address _wallet_id;
 
-    constructor(address admin, address wallet_id) public Ownable2(admin) {
-        _wallet_id = wallet_id;
+    constructor() public {
+        // TODO: should _wallet_id be set by a function argument?
+        _wallet_id = msg.sender;
     }
 
     // TODO: allow the wallet_id to change this? think about this more. that wont work since it is a contract
-    function setWalletId(address wallet_id) public onlyOwner {
+    function setWalletId(address wallet_id) public {
+        require(msg.sender == _wallet_id, "KyberAction: access denied");
+
         _wallet_id = wallet_id;
     }
 

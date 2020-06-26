@@ -51,18 +51,19 @@ protobuf==3.12.2          # via web3
 psutil==5.7.0             # via eth-brownie
 py-solc-ast==1.2.4        # via eth-brownie
 py-solc-x==0.10.0         # via eth-brownie
-py==1.8.2                 # via eth-brownie, pytest
+py==1.9.0                 # via eth-brownie, pytest
 pycodestyle==2.6.0        # via autopep8
-pycryptodome==3.9.7       # via eth-hash, eth-keyfile, vyper
+pycryptodome==3.9.8       # via eth-hash, eth-keyfile, vyper
 pygments==2.6.1           # via eth-brownie
 pyjwt==1.7.1              # via pythx
 pylint==2.5.3             # via -r requirements.in
 pyparsing==2.4.7          # via packaging
 pyrsistent==0.16.0        # via jsonschema
-pytest-forked==1.1.3      # via pytest-xdist
+pytest-forked==1.2.0      # via pytest-xdist
+pytest-random-order==1.0.4  # via -r requirements.in
 pytest-timeout==1.4.1     # via -r requirements.in
 pytest-xdist==1.32.0      # via eth-brownie
-pytest==5.4.3             # via eth-brownie, pytest-forked, pytest-timeout, pytest-xdist
+pytest==5.4.3             # via eth-brownie, pytest-forked, pytest-random-order, pytest-timeout, pytest-xdist
 python-dateutil==2.8.1    # via mythx-models, pythx
 pythx==1.6.1              # via eth-brownie
 pyyaml==5.3.1             # via bandit, eth-brownie
