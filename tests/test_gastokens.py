@@ -38,11 +38,8 @@ def test_gastoken(gastoken, value):
     tx = gastoken.free(value, {"from": accounts[0]})
 
 
-
-# @given(value=strategy('uint8', min_value=1, max_value=30))
-def test_liquidgastoken(liquidgastoken):
-    value = 10
-
+@given(value=strategy('uint8', min_value=1, max_value=30))
+def test_liquidgastoken(liquidgastoken, value):
     tx = liquidgastoken.mint(value, {"from": accounts[0]})
 
     print("gas spent", tx.gas_used)
