@@ -96,6 +96,7 @@ Run:
     ./scripts/staging-deploy.sh
 
     # export contract abi .jsons and deployed addresses to ../argobytes-backend/contracts/
+    # This is called automatically by `staging-deploy.sh`
     ./scripts/export.sh
 
     # interact with the contracts from a fun interface
