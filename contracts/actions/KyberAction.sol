@@ -21,13 +21,14 @@ contract KyberAction is AbstractERC20Exchange {
     address _wallet_id;
 
     constructor() public {
-        // TODO: should _wallet_id be set by a function argument?
         _wallet_id = msg.sender;
     }
 
-    // TODO: allow the wallet_id to change this? think about this more. that wont work since it is a contract
     function setWalletId(address wallet_id) public {
-        require(msg.sender == _wallet_id, "KyberAction: access denied");
+        require(
+            msg.sender == _wallet_id,
+            "KyberAction.setWalletId: access denied"
+        );
 
         _wallet_id = wallet_id;
     }

@@ -139,6 +139,8 @@ contract ArgobytesOwnedVault is
         // transfer tokens if we have them
         if (first_amount <= starting_vault_balance) {
             // we won't need to invoke kollateral
+            kollateral_invoker = ADDRESS_ZERO;
+
             borrow_token.universalTransfer(atomic_trader, first_amount);
         } else if (starting_vault_balance > 0) {
             // we don't have enough funds to do the trade without kollateral. but we do have some
@@ -243,6 +245,7 @@ contract ArgobytesOwnedVault is
                 primary_profit = ending_vault_balance - starting_vault_balance;
             } else {
                 // keep any calculations done after this to a minimum
+                // TODO: it would be nice to return how many gas tokens we burned (or their value)
                 freeGasTokens(gas_token, initial_gas);
             }
         }

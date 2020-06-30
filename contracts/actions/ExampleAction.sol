@@ -10,6 +10,7 @@ import {UniversalERC20} from "contracts/UniversalERC20.sol";
 contract ExampleAction is AbstractERC20Exchange {
     using UniversalERC20 for IERC20;
 
+    // some simple storage used for burning gas
     uint256 public c = 1;
 
     // https://github.com/matnad/liquid-gas-token/blob/35638bad1fab0064575913f0e7130d9b5f37332a/contracts/LgtHelper.sol#L15
@@ -56,7 +57,7 @@ contract ExampleAction is AbstractERC20Exchange {
         override
         returns (bool)
     {
-        revert("wip");
+        revert("ExampleAction.token_supported: unimplemented");
     }
 
     function getAmounts(
