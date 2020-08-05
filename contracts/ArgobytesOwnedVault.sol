@@ -79,7 +79,7 @@ contract ArgobytesOwnedVault is
         );
 
         if (success) {
-            return;
+            freeGasTokens(gas_token, initial_gas);
         } else {
             // Look for revert reason and bubble it up if present
             if (returndata.length > 0) {
@@ -100,8 +100,6 @@ contract ArgobytesOwnedVault is
                 );
             }
         }
-
-        freeGasTokens(gas_token, initial_gas);
     }
 
     function atomicArbitrage(
@@ -167,7 +165,7 @@ contract ArgobytesOwnedVault is
          {
             // the trade worked!
         } catch Error(string memory reason) {
-            // a revert was called inside atomicActions
+            // a revert was called inside atomicTrades
             // and a reason string was provided.
 
             // burn our gas token before raising the same revert
@@ -180,18 +178,18 @@ contract ArgobytesOwnedVault is
         ) {
             // This is executed in case revert() was used
             // or there was a failing assertion, division
-            // by zero, etc. inside atomicActions.
+            // by zero, etc. inside atomicTrades.
 
             // burn our gas token before raising the same revert
             // TODO: confirm that this actually saves us gas!
             freeGasTokens(gas_token, initial_gas);
 
             revert(
-                "ArgobytesOwnedVault -> IArgobytesAtomicActions.atomicActions reverted without a reason"
+                "ArgobytesOwnedVault -> IArgobytesAtomicActions.atomicTrades reverted without a reason"
             );
         }
 
-        // don't trust IArgobytesAtomicActions.atomicActions's return. It is safer to check the balance ourselves
+        // don't trust IArgobytesAtomicActions.atomicTrades's return. It is safer to check the balance ourselves
         uint256 ending_vault_balance = borrow_token.universalBalanceOf(
             address(this)
         );
