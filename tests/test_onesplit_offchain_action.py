@@ -109,7 +109,6 @@ def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_of
     # TODO: make sure ETH balance is non-zero
 
 
-@pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/571")
 def test_onesplit_helper_cdai(onesplit_helper, cdai_erc20):
     token = cdai_erc20
 

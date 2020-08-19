@@ -1,7 +1,7 @@
 {
   "devDependencies": {
     "eth95": "^0.1.2",
-    "ganache-cli": "6.10.0-beta.2",
+    "ganache-cli": "6.10.2-forking.0",
     "solc": "0.6.10"
   }
 }
