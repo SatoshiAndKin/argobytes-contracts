@@ -42,7 +42,7 @@ def test_get_exchange_failure(address_zero, uniswap_v1_factory, uniswap_v1_actio
     assert exchange == address_zero
 
 
-@pytest.mark.xfail(reason="test passes when its run by itself, but it fails when everything is run together. bug in test isolation? bug in ganache-cli?")
+# @pytest.mark.xfail(reason="test passes when its run by itself, but it fails when everything is run together. bug in test isolation? bug in ganache-cli?")
 def test_action(address_zero, uniswap_v1_factory, uniswap_v1_action, dai_erc20, usdc_erc20):
     value = 1e17
 

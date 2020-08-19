@@ -9,7 +9,7 @@ from hypothesis import settings
 # @given(
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
-@pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/611")
+# @pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/611")
 def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, argobytes_owned_vault, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, weth9_erc20):
     assert argobytes_owned_vault.balance() == 0
     assert uniswap_v1_action.balance() == 0
