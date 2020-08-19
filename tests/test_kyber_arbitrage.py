@@ -6,6 +6,7 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
+@pytest.mark.xfail(reason="ganache-cli is crashing")
 def test_kyber_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, kyber_network_proxy, kyber_action, usdc_erc20):
     assert argobytes_owned_vault.balance() == 0
     assert kyber_action.balance() == 0
@@ -55,11 +56,12 @@ def test_kyber_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argoby
     # there should be a revert above if status == 0, but something is wrong
     assert arbitrage_tx.status == 1
 
-    if arbitrage_tx.return_value is None:
-        warnings.warn("return value is None when it should not be! https://github.com/trufflesuite/ganache-cli/issues/758")
-    else:
-        # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet
-        assert arbitrage_tx.return_value > 0
+    # https://github.com/trufflesuite/ganache-cli/issues/758
+    # fetching this is crashing ganache. very long call traces seem to cause issues
+    assert arbitrage_tx.return_value is not None
+
+    # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet
+    assert arbitrage_tx.return_value > 0
 
     # TODO: should we compare this to running without burning gas token?
     print("gas_used_with_gastoken: ", arbitrage_tx.gas_used)

@@ -10,7 +10,7 @@ from hypothesis import settings
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
 # i think the link is coming from kyber's tests
-@pytest.mark.xfail(reason="test passes when its run by itself, but it fails when everything is run together. bug in test isolation? bug in ganache-cli?")
+# @pytest.mark.xfail(reason="test passes when its run by itself, but it fails when everything is run together. bug in test isolation? bug in ganache-cli?")
 def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, argobytes_owned_vault, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, weth9_erc20):
     assert argobytes_owned_vault.balance() == 0
     assert uniswap_v1_action.balance() == 0
@@ -61,11 +61,11 @@ def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, argobytes_owned
     # there should be a revert above if status == 0, but something is wrong
     assert arbitrage_tx.status == 1
 
-    if arbitrage_tx.return_value is None:
-        warnings.warn("return value is None when it should not be! https://github.com/trufflesuite/ganache-cli/issues/758")
-    else:
-        # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet
-        assert arbitrage_tx.return_value > 0
+    # https://github.com/trufflesuite/ganache-cli/issues/758
+    assert arbitrage_tx.return_value is not None
+
+    # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet
+    assert arbitrage_tx.return_value > 0
 
     # TODO: should we compare this to running with burning gas token?
     print("gas used: ", arbitrage_tx.gas_used)
