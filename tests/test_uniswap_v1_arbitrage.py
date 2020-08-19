@@ -9,8 +9,7 @@ from hypothesis import settings
 # @given(
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
-# i think the link is coming from kyber's tests
-# @pytest.mark.xfail(reason="test passes when its run by itself, but it fails when everything is run together. bug in test isolation? bug in ganache-cli?")
+@pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/611")
 def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, argobytes_owned_vault, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, weth9_erc20):
     assert argobytes_owned_vault.balance() == 0
     assert uniswap_v1_action.balance() == 0
@@ -57,11 +56,10 @@ def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, argobytes_owned
 
     assert argobytes_owned_vault.balance() > value
 
+    # TODO: https://github.com/trufflesuite/ganache-core/issues/611
     # make sure the transaction succeeded
     # there should be a revert above if status == 0, but something is wrong
     assert arbitrage_tx.status == 1
-
-    # https://github.com/trufflesuite/ganache-cli/issues/758
     assert arbitrage_tx.return_value is not None
 
     # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet

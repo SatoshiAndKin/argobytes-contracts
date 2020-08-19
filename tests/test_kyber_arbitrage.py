@@ -6,7 +6,7 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-@pytest.mark.xfail(reason="ganache-cli is crashing")
+@pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/611")
 def test_kyber_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argobytes_owned_vault, kyber_network_proxy, kyber_action, usdc_erc20):
     assert argobytes_owned_vault.balance() == 0
     assert kyber_action.balance() == 0
@@ -52,12 +52,11 @@ def test_kyber_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argoby
 
     assert argobytes_owned_vault.balance() > value
 
+    # TODO: https://github.com/trufflesuite/ganache-core/issues/611
     # make sure the transaction succeeded
     # there should be a revert above if status == 0, but something is wrong
     assert arbitrage_tx.status == 1
-
-    # https://github.com/trufflesuite/ganache-cli/issues/758
-    # fetching this is crashing ganache. very long call traces seem to cause issues
+    # TODO: fetching this is crashing ganache
     assert arbitrage_tx.return_value is not None
 
     # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet
