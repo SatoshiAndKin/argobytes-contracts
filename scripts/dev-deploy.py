@@ -42,8 +42,8 @@ def main():
     # gas price should be 3.0x to 3.5x the mint price
     # TODO: double check and document why its 3.5x
     # unless you are in a rush, it is better to just deploy at low gas prices
-    expected_mainnet_mint_price = "10 gwei"
-    expected_mainnet_gas_price = "10 gwei"
+    expected_mainnet_mint_price = "20 gwei"
+    expected_mainnet_gas_price = "60 gwei"
 
     starting_balance = accounts[0].balance()
 
@@ -155,6 +155,16 @@ def main():
         expected_mainnet_gas_price
     )
     quick_save_contract(argobytes_atomic_trade)
+
+    example_action = deploy2_and_free(
+        gas_token,
+        argobytes_diamond,
+        salt,
+        ExampleAction,
+        [],
+        expected_mainnet_gas_price
+    )
+    quick_save_contract(example_action)
 
     onesplit_offchain_action = deploy2_and_free(
         gas_token,
