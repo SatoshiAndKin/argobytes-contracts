@@ -10,12 +10,13 @@ ARGOBYTES_WEB_DIR=../argobytes-web
 
 ARGOBYTES_BACKEND_ABI_DIR="$ARGOBYTES_BACKEND_DIR/contracts/abi"
 ARGOBYTES_BACKEND_ADDR_DIR="$ARGOBYTES_BACKEND_DIR/contracts/addr"
-
 ARGOBYTES_WEB_ABI_DIR="$ARGOBYTES_WEB_DIR/contracts/abi"
+ARGOBYTES_WEB_ADDR_DIR="$ARGOBYTES_WEB_DIR/contracts/addr"
 
 mkdir -p "$ARGOBYTES_BACKEND_ABI_DIR"
 mkdir -p "$ARGOBYTES_BACKEND_ADDR_DIR"
 mkdir -p "$ARGOBYTES_WEB_ABI_DIR"
+mkdir -p "$ARGOBYTES_WEB_ADDR_DIR"
 
 function export_argobytes_abi() {
     jq ".abi" "build/contracts/$1.json" > "$ARGOBYTES_BACKEND_ABI_DIR/$1.json"
@@ -48,4 +49,6 @@ export_argobytes_abi Weth9Action
 export_brownie_abi "OpenZeppelin/openzeppelin-contracts@3.0.1/build/contracts/IERC20"
 
 # we do want all the addresses tho
+# TODO: it would be nice to uuse build/deployments/map.json, but that doesn't handle our curve action (though we should maybe improve how the curve action works)
 cp "build/deployments/quick_and_dirty/"*".addr" "$ARGOBYTES_BACKEND_ADDR_DIR/"
+cp "build/deployments/quick_and_dirty/"*".addr" "$ARGOBYTES_WEB_ADDR_DIR/"
