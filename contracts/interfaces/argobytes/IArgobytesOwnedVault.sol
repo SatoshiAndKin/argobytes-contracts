@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: You can't license an interface
 // Store profits and provide them for flash lending
 // Burns GasToken (or compatible contracts)
-pragma solidity 0.6.10;
+pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";

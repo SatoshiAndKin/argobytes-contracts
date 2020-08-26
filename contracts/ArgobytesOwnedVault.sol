@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // Store profits and provide them for flash lending
 // Burns GasToken (or compatible contracts)
-pragma solidity 0.6.10;
+pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import {AccessControl} from "@OpenZeppelin/access/AccessControl.sol";

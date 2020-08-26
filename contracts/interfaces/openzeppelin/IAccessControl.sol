@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.6.10;
+pragma solidity 0.6.12;
 
 interface IAccessControl {
     function hasRole(bytes32 role, address account)

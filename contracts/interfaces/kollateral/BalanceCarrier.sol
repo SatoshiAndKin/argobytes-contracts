@@ -17,7 +17,7 @@
 
 */
 
-pragma solidity 0.6.10;
+pragma solidity 0.6.12;
 
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
