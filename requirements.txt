@@ -8,7 +8,7 @@ apipkg==1.5               # via execnet
 appdirs==1.4.4            # via black
 astroid==2.4.2            # via pylint
 asttokens==2.0.3          # via vyper
-attrs==19.3.0             # via black, hypothesis, jsonschema, pytest
+attrs==20.1.0             # via black, hypothesis, jsonschema, pytest
 autopep8==1.5.4           # via -r requirements.in
 bandit==1.6.2             # via -r requirements.in
 base58==2.0.1             # via multiaddr
@@ -35,8 +35,8 @@ hexbytes==0.2.1           # via eth-account, eth-brownie, eth-event, eth-rlp, we
 hypothesis==5.26.0        # via eth-brownie
 idna==2.10                # via requests
 inflection==0.5.0         # via mythx-models, pythx
-ipfshttpclient==0.6.0.post1  # via web3
-isort==4.3.21             # via pylint
+ipfshttpclient==0.6.1     # via web3
+isort==5.4.2              # via pylint
 jsonschema==3.2.0         # via mythx-models, web3
 lazy-object-proxy==1.4.3  # via astroid
 lru-dict==1.1.6           # via web3
@@ -61,7 +61,7 @@ pycryptodome==3.9.8       # via eth-hash, eth-keyfile, vyper
 pygments-lexer-solidity==0.5.1  # via eth-brownie
 pygments==2.6.1           # via eth-brownie, pygments-lexer-solidity
 pyjwt==1.7.1              # via pythx
-pylint==2.5.3             # via -r requirements.in
+pylint==2.6.0             # via -r requirements.in
 pyparsing==2.4.7          # via packaging
 pyrsistent==0.16.0        # via jsonschema
 pytest-forked==1.3.0      # via pytest-xdist
