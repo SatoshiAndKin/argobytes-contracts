@@ -55,9 +55,9 @@ I originally planned to tokenize deposits into this contract. That would allow a
 
 ## Initial setup
 
-1. Install `geth` (or another node that is compatible with `ganache-cli --fork`). [Read this](https://gist.github.com/WyseNynja/89179917d209d10e6ea27c5f2f8f88f1).
+1. Get an account with <https://rivet.cloud> or install `geth` (or another node that is compatible with `ganache-cli --fork`). [Read this](https://gist.github.com/WyseNynja/89179917d209d10e6ea27c5f2f8f88f1).
 2. Install `python3-dev` and `python3-venv`
-3. Install `node` v12 (and `npm` v6) (I like to use [`nvm`](https://github.com/nvm-sh/nvm) to manage node versions)
+3. Install `node` v14 (and `npm` v6) (I like to use [`nvm install 14`](https://github.com/nvm-sh/nvm))
 4. Install `yarn` (`npm install -g yarn`)
 5. Make a `.env` file:
     ```

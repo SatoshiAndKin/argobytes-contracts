@@ -34,7 +34,8 @@ contract ArgobytesOwnedVault is
     using UniversalERC20 for IERC20;
 
     address internal constant ADDRESS_ZERO = address(0);
-    bytes32 internal constant TRUSTED_ARBITRAGER_ROLE = keccak256(
+
+    bytes32 public constant TRUSTED_ARBITRAGER_ROLE = keccak256(
         "TRUSTED_ARBITRAGER_ROLE"
     );
 

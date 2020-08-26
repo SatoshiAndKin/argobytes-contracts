@@ -17,4 +17,11 @@ interface IArgobytesDiamond is
     IDiamondCutter,
     IDiamondLoupe,
     IERC165
-{}
+{
+    // // public variable
+    // TODO: this isn't available on the diamond. its on the owned vault
+    // function TRUSTED_ARBITRAGER_ROLE() external view returns (bytes32);
+
+    // public variable
+    function DEFAULT_ADMIN_ROLE() external view returns (bytes32);
+}
