@@ -7,7 +7,7 @@
 # we default to using a local ethereum node
 FORK_RPC="${FORK_RPC:-ws://localhost:8546@10732284}"
 
-[ -z "${NODE_OPTIONS:-}" ] && FORK_RPC="${FORK_RPC}@${}"
+[ -z "${FORK_AT:-}" ] && FORK_RPC="${FORK_RPC}@${FORK_AT}"
 
 set -x
 
