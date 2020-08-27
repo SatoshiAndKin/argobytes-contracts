@@ -138,8 +138,7 @@ def main():
         argobytes_diamond,
         salt,
         ArgobytesOwnedVault,
-        # we do NOT set our trusted arbitragers during construction because we need the roles set inside the diamond's storage
-        [[]],
+        [],
         ["atomicActions", "atomicArbitrage", "withdrawTo"],
         expected_mainnet_gas_price
     )
@@ -148,7 +147,8 @@ def main():
     # TODO: do this in one transaction (maybe even inside the deploy2 and cut and free)
     TRUSTED_ARBITRAGER_ROLE = argobytes_owned_vault.TRUSTED_ARBITRAGER_ROLE()
     for arb_bot in arb_bots:
-        argobytes_diamond.grantRole(TRUSTED_ARBITRAGER_ROLE, arb_bot, {"from": accounts[0]})
+        argobytes_diamond.grantRole(TRUSTED_ARBITRAGER_ROLE, arb_bot, {
+                                    "from": accounts[0], "gasPrice": expected_mainnet_gas_price})
 
     # deploy all the other contracts
     # these one's don't modify the diamond

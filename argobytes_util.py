@@ -6,14 +6,11 @@ import rlp
 
 
 def deploy2_and_free(gas_token, diamond_contract, deploy_salt, contract_to_deploy, contract_to_deploy_args, gas_price):
-    """Use a diamond's deploy2 and free helper function.
-
-    """
+    """Use a diamond's deploy2 and free helper function."""
     contract_initcode = contract_to_deploy.deploy.encode_input(*contract_to_deploy_args)
 
     # TODO: print the expected address for this target_salt and contract_initcode
 
-    # TODO: switch to using LiquidGasToken's helper instead
     deploy_tx = diamond_contract.deploy2AndFree(
         gas_token,
         deploy_salt,

@@ -10,19 +10,19 @@ from hypothesis import settings
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
 # @pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/611")
-def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, argobytes_owned_vault, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, weth9_erc20):
-    assert argobytes_owned_vault.balance() == 0
+def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, argobytes_diamond, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, weth9_erc20):
+    assert argobytes_diamond.balance() == 0
     assert uniswap_v1_action.balance() == 0
 
     value = 1e18
 
     # send some ETH into the vault
-    accounts[0].transfer(argobytes_owned_vault, value)
+    accounts[0].transfer(argobytes_diamond, value)
     # send some ETH into the action to simulate arbitrage profits
     accounts[0].transfer(uniswap_v1_action, value)
 
     # make sure balances match what we expect
-    assert argobytes_owned_vault.balance() == value
+    assert argobytes_diamond.balance() == value
     assert uniswap_v1_action.balance() == value
 
     usdc_exchange = uniswap_v1_action.getExchange(uniswap_v1_factory, usdc_erc20)
@@ -51,10 +51,10 @@ def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, argobytes_owned
         [True, False, False],
     )
 
-    arbitrage_tx = argobytes_owned_vault.atomicArbitrage(
+    arbitrage_tx = argobytes_diamond.atomicArbitrage(
         address_zero, argobytes_atomic_trade, address_zero, [address_zero], value, encoded_actions, {'from': accounts[1]})
 
-    assert argobytes_owned_vault.balance() > value
+    assert argobytes_diamond.balance() > value
 
     # TODO: https://github.com/trufflesuite/ganache-core/issues/611
     # make sure the transaction succeeded

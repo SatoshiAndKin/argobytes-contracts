@@ -23,6 +23,7 @@ import {
     IArgobytesOwnedVault
 } from "contracts/interfaces/argobytes/IArgobytesOwnedVault.sol";
 
+// we do NOT give this contract a `receive` function since it should only be used through a diamond
 contract ArgobytesOwnedVault is
     DiamondStorageContract,
     LiquidGasTokenUser,
@@ -38,24 +39,6 @@ contract ArgobytesOwnedVault is
     bytes32 public constant TRUSTED_ARBITRAGER_ROLE = keccak256(
         "TRUSTED_ARBITRAGER_ROLE"
     );
-
-    /**
-     * @notice Deploy the contract.
-     */
-    constructor(address[] memory trusted_arbitragers) public payable {
-        // Grant the contract deployer the default admin role: it will be able
-        // to grant and revoke any roles
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-
-        // Grant some addresses the "trusted arbitrager" role
-        // they will be able to call "atomicArbitrage" (WITH OUR FUNDS!)
-        for (uint256 i = 0; i < trusted_arbitragers.length; i++) {
-            _setupRole(TRUSTED_ARBITRAGER_ROLE, trusted_arbitragers[i]);
-        }
-    }
-
-    // this contract must be able to receive ether if it is expected to trade it
-    receive() external payable {}
 
     function atomicActions(
         address gas_token,
