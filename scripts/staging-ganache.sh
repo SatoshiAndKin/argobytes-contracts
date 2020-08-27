@@ -7,7 +7,7 @@
 # we default to using a local ethereum node
 FORK_RPC="${FORK_RPC:-ws://localhost:8546}"
 
-[ -z "${FORK_AT:-}" ] && FORK_RPC="${FORK_RPC}@${FORK_AT}"
+[ -n "${FORK_AT:-}" ] && FORK_RPC="${FORK_RPC}@${FORK_AT}"
 
 set -x
 
@@ -15,6 +15,7 @@ exec ganache-cli \
     --accounts 10 \
     --hardfork istanbul \
     --fork "$FORK_RPC" \
+    --host "0.0.0.0" \
     --gasLimit 12000000 \
     --mnemonic "opinion adapt negative bone suit ill fossil alcohol razor script damp fold" \
     --port 8555 \
