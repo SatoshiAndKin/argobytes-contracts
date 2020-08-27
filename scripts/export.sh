@@ -46,7 +46,7 @@ export_argobytes_abi SynthetixDepotAction
 export_argobytes_abi UniswapV1Action
 export_argobytes_abi Weth9Action
 
-export_brownie_abi "OpenZeppelin/openzeppelin-contracts@3.0.1/build/contracts/IERC20"
+export_brownie_abi "OpenZeppelin/openzeppelin-contracts@3.0.1/build/contracts/ERC20"
 
 # we do want all the addresses tho
 # TODO: it would be nice to uuse build/deployments/map.json, but that doesn't handle our curve action (though we should maybe improve how the curve action works)
