@@ -5,7 +5,7 @@
 [ -z "${NODE_OPTIONS:-}" ] && echo "If ganache-cli crashes, try setting NODE_OPTIONS in your .env and then '. ./scripts/activate'"
 
 # we default to using a local ethereum node
-FORK_RPC="${FORK_RPC:-ws://localhost:8546@10732284}"
+FORK_RPC="${FORK_RPC:-ws://localhost:8546}"
 
 [ -z "${FORK_AT:-}" ] && FORK_RPC="${FORK_RPC}@${FORK_AT}"
 
