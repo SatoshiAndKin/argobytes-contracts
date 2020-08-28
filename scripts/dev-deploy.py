@@ -202,6 +202,16 @@ def main():
     )
     quick_save_contract(uniswap_v1_action)
 
+    uniswap_v2_action = deploy2_and_free(
+        gas_token,
+        argobytes_diamond,
+        salt,
+        UniswapV2Action,
+        [],
+        expected_mainnet_gas_price
+    )
+    quick_save_contract(uniswap_v2_action)
+
     # zrx_v3_action = deploy2_and_free(
     #     gas_token,
     #     argobytes_diamond,

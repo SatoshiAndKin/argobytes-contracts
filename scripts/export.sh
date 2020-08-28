@@ -45,6 +45,7 @@ export_argobytes_abi KyberAction
 export_argobytes_abi OneSplitOffchainAction
 export_argobytes_abi SynthetixDepotAction
 export_argobytes_abi UniswapV1Action
+export_argobytes_abi UniswapV2Action
 export_argobytes_abi Weth9Action
 
 export_brownie_abi "OpenZeppelin/openzeppelin-contracts@3.0.1/build/contracts/ERC20"
