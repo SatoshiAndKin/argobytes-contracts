@@ -69,7 +69,7 @@ def main():
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
     if BURN_GAS_TOKEN:
         deadline = 999999999999999
-        num_mints = 13
+        num_mints = 15
 
         expected_diamond_creator_address = mk_contract_address(accounts[0].address, accounts[0].nonce + num_mints)
 
@@ -80,7 +80,7 @@ def main():
         # TODO: what should we set the price of LGT to?
         mint_batch_amount = 50
         for _ in range(0, num_mints):
-            # TODO: move this back to account 0? im still not positive we want mintToLiqudity instead of mintTo
+            # TODO: im still not positive we want mintToLiqudity instead of mintTo
             # TODO: keep track of gas spent minting liquidity
             # gas_token.mintToLiquidity(mint_batch_amount, 0, deadline, accounts[1], {
             #                           'from': accounts[1], 'value': 1e19, "gasPrice": expected_mainnet_mint_price})
@@ -90,10 +90,10 @@ def main():
         gas_tokens_start = gas_token.balanceOf.call(expected_diamond_creator_address)
 
         # gastoken has 2 decimals, so divide by 100
-        print("Starting gas_token balance:", gas_tokens_start / 100.0)
+        print("Starting gas_token balance:", gas_tokens_start)
 
         # TODO: proper assert. mint_batch_amount is not the right amount to check
-        assert gas_tokens_start > mint_batch_amount
+        assert gas_tokens_start == mint_batch_amount * num_mints
     else:
         # clear the gas token address so that none of our function calls use it
         gas_token = "0x0000000000000000000000000000000000000000"
@@ -107,7 +107,6 @@ def main():
     # deploy the contract that will deploy the diamond (and cutter and loupe)
     # it self destructs, so handling it is non-standard
     diamond_deploy_tx = DiamondCreator.deploy(
-        gas_token,
         salt,
         salt,
         salt,
@@ -278,11 +277,10 @@ def main():
 
         print("gas token:", LiquidGasTokenAddress)
 
-        # gastoken has 2 decimals, so divide by 100
-        print("gas_tokens_remaining:", gas_tokens_remaining / 100.0, "/", gas_tokens_start / 100.0)
+        print("gas_tokens_remaining:", gas_tokens_remaining, "/", gas_tokens_start)
 
         assert gas_tokens_remaining > 0
-        assert gas_tokens_remaining < mint_batch_amount
+        assert gas_tokens_remaining <= mint_batch_amount
     else:
         print("gas_tokens_remaining: N/A")
 

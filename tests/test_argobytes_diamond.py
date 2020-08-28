@@ -166,8 +166,8 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_atomic_trade, argobyte
     # TODO: check the liquidgastoken price
     # TODO: how much should we make?
     # TODO: should we mintToSell to make it cheaper?
-    liquidgastoken.mintToLiquidity(150, 0, 999999999999999, accounts[0], {'from': accounts[0], 'value': 1e19})
-    # liquidgastoken.mintFor(100, argobytes_diamond, {'from': accounts[0]})
+    # liquidgastoken.mintToLiquidity(150, 0, 999999999999999, accounts[0], {'from': accounts[0], 'value': 1e19})
+    liquidgastoken.mintFor(100, argobytes_diamond, {'from': accounts[0]})
 
     # do the faked arbitrage trade again (but this time with gas tokens)
     arbitrage_tx = argobytes_diamond.atomicArbitrage(

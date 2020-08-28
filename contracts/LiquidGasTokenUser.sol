@@ -26,30 +26,38 @@ contract LiquidGasTokenUser {
         view
         returns (uint256 initial_gas)
     {
-        if (address(gas_token) == address(0)) {
+        if (gas_token == address(0)) {
             initial_gas = 0;
         } else {
             // TODO: add some to this? or maybe we should do that inside freeGasTokens
+            // TODO: do a test and look at the actual trace to know how much to add
             initial_gas = gasleft();
         }
     }
 
     // TODO: return success boolean? revert?
     function freeGasTokens(address gas_token, uint256 initial_gas) internal {
-        if (initial_gas > 0) {
-            // if initial_gas is set, we can assume gas_token is set
-
-            // TODO: think about this more. we might want an enum to make the order of these configurable
-            // the problem is that we are at the stack limit on some of our functions. so we can't just add another arg
-            if (_freeGasTokens(gas_token, initial_gas)) {
-                return;
-            } else if (_buyAndFreeGasTokens(gas_token, initial_gas)) {
-                return;
-            } else {
-                // TODO: we probably don't actually want to revert. but this makes debugging simpler. delete
-                revert("LiquidGasTokenUser.freeGasTokens: DEBUGGING");
-            }
+        if (initial_gas == 0) {
+            return;
         }
+        // if initial_gas is set, we can assume gas_token is set
+
+        // TODO: paramater for choosing between _freeGasTokens, _buyAndFreeGasTokens, or _buyAndFreeGasTokens||_freeGasTokens
+        // TODO: i don't think we want to use buyAndFree from the vault
+        // the vault is going to be doing very high gas cost arbitrage trades
+        // and we are going to have our own bot that is minting/buying gas token whenever it is cheap
+        // the bot can also mint/sell into the liquidity pool
+
+        if (_freeGasTokens(gas_token, initial_gas)) {
+            return;
+        }
+
+        // if (_buyAndFreeGasTokens(gas_token, initial_gas)) {
+        //     return;
+        // }
+
+        // TODO: we probably don't actually want to revert. but this makes debugging simpler. delete
+        // revert("LiquidGasTokenUser.freeGasTokens: DEBUGGING");
     }
 
     /**
@@ -72,8 +80,7 @@ contract LiquidGasTokenUser {
         // getEthToTokenOutputPrice reverts if optimal_tokens aren't available
         try
             ILiquidGasToken(gas_token).getEthToTokenOutputPrice(optimal_tokens)
-            returns (uint256 buy_cost)
-        {
+        returns (uint256 buy_cost) {
             // TODO: these numbers are going to change
             if (buy_cost < ((18145 * optimal_tokens) - 24000) * tx.gasprice) {
                 // buying and freeing tokens is profitable
@@ -123,18 +130,26 @@ contract LiquidGasTokenUser {
 
         // TODO: GST2 code checked that we had enough gas to even try burning. do we need that here, too?
 
-        if (optimal_tokens > 0) {
-            uint256 available_tokens = ILiquidGasToken(gas_token).balanceOf(
-                address(this)
-            );
+        if (optimal_tokens == 0) {
+            return true;
+        }
 
-            if (available_tokens < optimal_tokens) {
-                // TODO: buy enough to have optimal_tokens?
+        // we can assume that any tokens we have were acuired at a "cheap" gas cost
+        uint256 available_tokens = ILiquidGasToken(gas_token).balanceOf(
+            address(this)
+        );
 
-                return false;
-            }
+        if (available_tokens == 0) {
+            return false;
+        }
 
-            return ILiquidGasToken(gas_token).free(optimal_tokens));
+        if (available_tokens < optimal_tokens) {
+            // TODO: buy enough to have optimal_tokens?
+            // we will have our own bot minting at low gas prices and sending it here for extremely high gas cost arbitrage trades
+
+            return ILiquidGasToken(gas_token).free(available_tokens);
+        } else {
+            return ILiquidGasToken(gas_token).free(optimal_tokens);
         }
     }
 }

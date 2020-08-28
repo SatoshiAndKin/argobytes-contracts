@@ -15,18 +15,19 @@ import {
 
 // TODO: cute name like DiamondMine?
 contract DiamondCreator is LiquidGasTokenUser {
-    // TODO: better to hard code this or pass as calldata?
-    // address constant LGT = 0x000000000000c1cb11d5c062901f32d06248ce48;
+    // since this is a one-time use, self destructing contract and gas prices have been high for a while now...
+    // we can hard code this instead of using a constructor param
+    address constant LGT = 0x000000000000C1CB11D5c062901F32D06248CE48;
 
     // use CREATE2 to deploy a diamond with an efficient address
     // use LiquidGasToken to save some gas fees
     constructor(
-        address gas_token,
+        // address gas_token,
         bytes32 cutter_salt,
         bytes32 loupe_salt,
         bytes32 diamond_salt
     ) public payable {
-        uint256 initial_gas = initialGas(gas_token);
+        uint256 initial_gas = initialGas(LGT);
 
         // TODO: have an alternative DiamondCreator contract that uses pre-deployed addresses for cutter/loupe
         DiamondCutter cutter = new DiamondCutter{salt: cutter_salt}();
@@ -42,24 +43,20 @@ contract DiamondCreator is LiquidGasTokenUser {
         bytes32 admin_role = diamond.DEFAULT_ADMIN_ROLE();
 
         diamond.grantRole(admin_role, msg.sender);
-        // TODO: since we selfdestruct, do we really need renounceRole? probably safest to do it
+        // TODO: since we selfdestruct, do we really need renounceRole? safest to do it
         diamond.renounceRole(admin_role, address(this));
 
         if (initial_gas > 0) {
             // TODO: since we are going to self destruct and get 200k back, we need to tweak how much we free. think about this more
-            freeGasTokens(gas_token, initial_gas + 420000);
+            freeGasTokens(LGT, initial_gas + 420000);
 
             // transfer any remaining gas tokens
-            uint256 gas_token_balance = ILiquidGasToken(gas_token).balanceOf(
-                address(this)
-            );
+            uint256 lgt_balance = ILiquidGasToken(LGT).balanceOf(address(this));
 
-            if (gas_token_balance > 0) {
-                // i don't think its worth checking this return
-                ILiquidGasToken(gas_token).transfer(
-                    address(diamond),
-                    gas_token_balance
-                );
+            if (lgt_balance > 0) {
+                // we don't need safeTransfer because we know this returns a bool
+                // i don't think it is even worth checking this return
+                ILiquidGasToken(LGT).transfer(address(diamond), lgt_balance);
             }
         }
 

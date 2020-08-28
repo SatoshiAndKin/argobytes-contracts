@@ -14,7 +14,7 @@ import "./DiamondLoupe.sol";
 import "./DiamondStorageContract.sol";
 
 contract Diamond is DiamondStorageContract, IERC165 {
-    constructor(address cutter, address loupe) public payable {
+    constructor(address cutter, address loupe) payable {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         DiamondStorage storage ds = diamondStorage();
