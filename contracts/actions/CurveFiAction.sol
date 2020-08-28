@@ -43,7 +43,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
     }
 
     function saveExchange(address exchange, int128 n) public onlyOwner {
-        // i'd like this to be open, but i feel like people could grief. maybe require a fee that goes to ownedVault? or require ownership of an erc20?
+        // i'd like this to be open, but i feel like people could grief. maybe require a fee that goes to ownedVault? or require membership in a DAO
 
         for (int128 i = 0; i < n; i++) {
             // this reverts on an invalid i
@@ -62,7 +62,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
             }
 
             // Approve the transfer of tokens from this contract to the exchange contract
-            // we only do this if it isn't already set because sometimes exchanges have the same asset multiple times
+            // we only do this if it isn't already set because sometimes multiple exchanges have the same asset
             if (IERC20(coin).allowance(address(this), address(exchange)) == 0) {
                 IERC20(coin).safeApprove(address(exchange), uint256(-1));
             }
@@ -87,7 +87,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
                     );
                 }
 
-                // save the underlying_coin with an index of + 1. this lets us be sure that 0 means the coin is unsupported
+                // save the underlying_coin with an index of + 1. this lets us use 0 to mean the coin is unsupported
                 _underlying_coins[exchange][underlying_coin] = i + 1;
             }
         }
