@@ -17,7 +17,7 @@
 
 */
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.0;
 
 abstract contract IInvocationHook {
     function currentSender() external virtual view returns (address);

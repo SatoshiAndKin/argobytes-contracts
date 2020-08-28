@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity 0.6.12;
+pragma solidity 0.7.0;
 pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
-import {IERC20} from "contracts/UniversalERC20.sol";
+import {IERC20, SafeERC20} from "contracts/UniversalERC20.sol";
 import {IOneSplit} from "contracts/interfaces/onesplit/IOneSplit.sol";
 
 contract OneSplitOffchainAction is AbstractERC20Exchange {
+    using SafeERC20 for IERC20;
+
     // call this function offchain. do not include it in your actual transaction or the gas costs are excessive
     function encodeExtraData(
         address src_token,

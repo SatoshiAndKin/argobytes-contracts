@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: You can't license an interface
 // Store profits and provide them for flash lending
 // Burns GasToken (or compatible contracts)
-pragma solidity 0.6.12;
+pragma solidity 0.7.0;
 pragma experimental ABIEncoderV2;
 
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
 // TODO: we are missing the GasTokenBuyer functions
 interface IArgobytesOwnedVault {
-    event Deploy(address deployed);
-
     function atomicActions(
         address gas_token,
         address atomic_trader,

@@ -17,7 +17,7 @@
 
 */
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.0;
 
 import {BalanceCarrier} from "./BalanceCarrier.sol";
 import {IInvocationHook} from "./IInvocationHook.sol";
@@ -30,7 +30,7 @@ abstract contract KollateralInvokable is IInvokable, BalanceCarrier {
 
     uint256 internal MAX_REWARD_BIPS = 100;
 
-    constructor() internal BalanceCarrier(address(1)) {}
+    constructor() BalanceCarrier(address(1)) {}
 
     receive() external payable {}
 

@@ -38,6 +38,7 @@ function export_brownie_abi() {
 export_argobytes_abi ArgobytesAtomicActions
 export_argobytes_abi ArgobytesOwnedVault
 export_argobytes_abi IArgobytesDiamond
+export_argobytes_abi ILiquidGasToken
 export_argobytes_abi CurveFiAction
 export_argobytes_abi ExampleAction
 export_argobytes_abi KyberAction

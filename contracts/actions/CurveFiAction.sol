@@ -7,7 +7,7 @@ https://github.com/Synthetixio/synthetix/blob/develop/contracts/Depot.sol#L20
 
 The depot is capable of trading SNX, too. However, that is only done on Testnets.
 */
-pragma solidity 0.6.12;
+pragma solidity 0.7.0;
 pragma experimental ABIEncoderV2;
 
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";
@@ -30,7 +30,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
     mapping(address => mapping(address => int128)) _coins;
     mapping(address => mapping(address => int128)) _underlying_coins;
 
-    constructor(address owner) public Ownable2(owner) {}
+    constructor(address owner) Ownable2(owner) {}
 
     function token_supported(address exchange, address token)
         public

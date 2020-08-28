@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity 0.6.12;
+pragma solidity 0.7.0;
 
 import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";
@@ -72,7 +72,8 @@ contract LiquidGasTokenUser {
         // getEthToTokenOutputPrice reverts if optimal_tokens aren't available
         try
             ILiquidGasToken(gas_token).getEthToTokenOutputPrice(optimal_tokens)
-        returns (uint256 buy_cost) {
+            returns (uint256 buy_cost)
+        {
             // TODO: these numbers are going to change
             if (buy_cost < ((18145 * optimal_tokens) - 24000) * tx.gasprice) {
                 // buying and freeing tokens is profitable
@@ -123,23 +124,17 @@ contract LiquidGasTokenUser {
         // TODO: GST2 code checked that we had enough gas to even try burning. do we need that here, too?
 
         if (optimal_tokens > 0) {
-            if (ILiquidGasToken(gas_token).free(optimal_tokens)) {
-                // we freed the tokens
-                return true;
-            } else {
-                // we didn't free the tokens. probably because we don't have enough
-                // this will hopefully be the less common path
+            uint256 available_tokens = ILiquidGasToken(gas_token).balanceOf(
+                address(this)
+            );
 
+            if (available_tokens < optimal_tokens) {
                 // TODO: buy enough to have optimal_tokens?
 
-                uint256 available_tokens = ILiquidGasToken(gas_token).balanceOf(
-                    address(this)
-                );
-
-                // TODO: require to check that free returned a bool?
-                // TODO: check the return on this?
-                return ILiquidGasToken(gas_token).free(available_tokens);
+                return false;
             }
+
+            return ILiquidGasToken(gas_token).free(optimal_tokens));
         }
     }
 }

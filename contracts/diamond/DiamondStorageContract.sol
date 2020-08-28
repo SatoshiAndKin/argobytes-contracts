@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
+pragma solidity 0.7.0;
 
 import {AccessControl} from "@OpenZeppelin/access/AccessControl.sol";
 
@@ -30,7 +30,7 @@ contract DiamondStorageContract is AccessControl {
     {
         // ds_slot = keccak256("diamond.standard.diamond.storage");
         assembly {
-            ds_slot := 0xc8fcad8db84d3cc18b4c41d551ea0ee66dd599cde068d998e57d5e09332c131c
+            ds.slot := 0xc8fcad8db84d3cc18b4c41d551ea0ee66dd599cde068d998e57d5e09332c131c
         }
     }
 }

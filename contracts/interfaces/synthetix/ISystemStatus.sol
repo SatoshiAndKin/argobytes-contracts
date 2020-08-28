@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.6.12;
+pragma solidity 0.7.0;
 
 interface ISystemStatus {
     function requireSystemActive() external view;

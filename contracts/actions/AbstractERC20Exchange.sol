@@ -6,7 +6,7 @@
  *
  * Rewrite this to use UniversalERC20? I'm not sure its worth it. this is pretty easy to follow.
  */
-pragma solidity 0.6.12;
+pragma solidity 0.7.0;
 pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";

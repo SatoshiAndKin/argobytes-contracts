@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.6.12;
+pragma solidity 0.7.0;
 
 contract IOneSplitConsts {
     // flags = FLAG_DISABLE_UNISWAP + FLAG_DISABLE_KYBER + ...

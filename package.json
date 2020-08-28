@@ -2,6 +2,6 @@
   "devDependencies": {
     "eth95": "^0.1.2",
     "ganache-cli": "6.10.1-beta.2",
-    "solc": "0.6.12"
+    "solc": "0.7.0"
   }
 }
