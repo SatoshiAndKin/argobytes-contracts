@@ -71,6 +71,7 @@ contract ArgobytesAtomicActions is
 
     /**
      * @notice Transfer `first_amount` `tokens[0]`, call some functions, and return tokens to msg.sender.
+     * @notice You'll need to call this from another smart contract.
      */
     function atomicTrades(
         address kollateral_invoker,
