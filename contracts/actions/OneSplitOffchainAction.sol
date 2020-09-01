@@ -50,7 +50,6 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
 
     function token_supported(address exchange, address token)
         public
-        override
         returns (bool)
     {
         revert("wip");

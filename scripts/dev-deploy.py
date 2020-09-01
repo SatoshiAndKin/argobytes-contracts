@@ -11,7 +11,8 @@ import os
 # TODO: set these inside main instead of using globals
 # TODO: old versions of these contracts were cheaper to deploy with gas token. with less state, they are cheaper without gastoken though
 # TODO: i think some of them might still be. investigate more
-BURN_GAS_TOKEN = os.environ.get("BURN_GAS_TOKEN", "0") == "1"
+FREE_GAS_TOKEN = os.environ.get("FREE_GAS_TOKEN", "0") == "1"
+MINT_GAS_TOKEN = FREE_GAS_TOKEN or os.environ.get("MINT_GAS_TOKEN", "0") == "1"
 EXPORT_ARTIFACTS = os.environ.get("EXPORT_ARTIFACTS", "0") == "1"
 DEPLOY_DIR = os.path.join(project.main.check_for_project('.'), "build", "deployments", "quick_and_dirty")
 
@@ -48,6 +49,7 @@ def main():
     starting_balance = accounts[0].balance()
 
     arb_bots = [
+        SKI_METAMASK_1,
         accounts[0],
         accounts[1],
         accounts[2],
@@ -67,7 +69,7 @@ def main():
 
     # TODO: do this earlier and transfer the coins to the diamond_creator address before deployment
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
-    if BURN_GAS_TOKEN:
+    if MINT_GAS_TOKEN:
         deadline = 999999999999999
         num_mints = 15
 
@@ -138,16 +140,28 @@ def main():
         salt,
         ArgobytesOwnedVault,
         [],
-        ["atomicActions", "atomicArbitrage", "withdrawTo"],
+        ["atomicArbitrage", "atomicTrades", "delegateAtomicActions", "delegateCall", "withdrawTo"],
         expected_mainnet_gas_price
     )
     quick_save_contract(argobytes_owned_vault)
 
     # TODO: do this in one transaction (maybe even inside the deploy2 and cut and free)
+    # TODO: maybe have a "grantMultipleRoles" function
+    ADMIN_ROLE = argobytes_owned_vault.DEFAULT_ADMIN_ROLE()
     TRUSTED_ARBITRAGER_ROLE = argobytes_owned_vault.TRUSTED_ARBITRAGER_ROLE()
     for arb_bot in arb_bots:
         argobytes_diamond.grantRole(TRUSTED_ARBITRAGER_ROLE, arb_bot, {
                                     "from": accounts[0], "gasPrice": expected_mainnet_gas_price})
+
+    # TODO: only do this while staging. probably best to prompt for these
+    argobytes_diamond.grantRole(TRUSTED_ARBITRAGER_ROLE, SKI_METAMASK_1, {
+                                "from": accounts[0], "gasPrice": expected_mainnet_gas_price})
+    argobytes_diamond.grantRole(TRUSTED_ARBITRAGER_ROLE, SKI_HARDWARE_1, {
+                                "from": accounts[0], "gasPrice": expected_mainnet_gas_price})
+    argobytes_diamond.grantRole(ADMIN_ROLE, SKI_METAMASK_1, {
+                                "from": accounts[0], "gasPrice": expected_mainnet_gas_price})
+    argobytes_diamond.grantRole(ADMIN_ROLE, SKI_HARDWARE_1, {
+                                "from": accounts[0], "gasPrice": expected_mainnet_gas_price})
 
     # deploy all the other contracts
     # these one's don't modify the diamond
@@ -278,10 +292,10 @@ def main():
         [False] * 7,
     )
 
-    argobytes_diamond.atomicActions(
+    argobytes_diamond.delegateAtomicActions(
         gas_token, argobytes_atomic_trade, encoded_actions, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
-    if BURN_GAS_TOKEN:
+    if FREE_GAS_TOKEN:
         # # TODO: make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
         gas_tokens_remaining = gas_token.balanceOf.call(argobytes_diamond)
 

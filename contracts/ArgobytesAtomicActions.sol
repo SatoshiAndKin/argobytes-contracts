@@ -21,7 +21,7 @@ import {
 
 // https://github.com/kollateral/kollateral/blob/master/lib/static/invoker.ts
 // they take a 6bps fee
-
+// TODO: support any.sender
 contract ArgobytesAtomicActions is
     IArgobytesAtomicActions,
     KollateralInvokable
@@ -39,7 +39,7 @@ contract ArgobytesAtomicActions is
         0x0000000000000000000000000000000000000001
     );
 
-    // TODO: get rid of this once our tests don't use it anymore
+    // TODO: get rid of this once our tests don't use it anymore. encoding an array of tuples isn't working how i thought
     function encodeActions(
         address payable[] memory targets,
         bytes[] memory targets_data,
@@ -65,7 +65,13 @@ contract ArgobytesAtomicActions is
         encoded_data = abi.encode(actions);
     }
 
-    function atomicActions(bytes calldata encoded_actions) external override {
+    // this can be helpful to call from another contract with delegatecall
+    // this doesn't sweep any tokens for you! if you need tokens returned, call atomicTrades
+    function atomicActions(bytes calldata encoded_actions)
+        external
+        override
+        payable
+    {
         _executeSolo(ADDRESS_ZERO, 0, encoded_actions);
     }
 
@@ -83,7 +89,7 @@ contract ArgobytesAtomicActions is
 
         require(
             num_tokens > 0,
-            "ArgobytesAtomicArbitrage.atomicActions: tokens.length must be > 0"
+            "ArgobytesAtomicArbitrage.atomicTrades: tokens.length must be > 0"
         );
 
         uint256 balance = IERC20(tokens[0]).universalBalanceOf(address(this));

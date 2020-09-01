@@ -28,3 +28,7 @@ sUSDAddress = "0xae38b81459d74a8c16eaa968c792207603d84480"
 ProxysUSDAddress = "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51"
 USDCAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
 USDCProxiedAddress = "0x0882477e7895bdc5cea7cb1552ed914ab157fe56"
+
+# this is an admin while we stage, but once we move to production, lets use an address on the hardware wallet
+SKI_METAMASK_1 = "0x52517b7b19D3CA0Bd66c604BC1909D2c9951dbD5"
+SKI_HARDWARE_1 = "0x9eb9e3dc2543dc9FF4058e2A2DA43A855403F1fD"

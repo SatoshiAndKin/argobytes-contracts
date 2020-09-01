@@ -43,18 +43,22 @@ contract LiquidGasTokenUser {
         // if initial_gas is set, we can assume gas_token is set
 
         // TODO: paramater for choosing between _freeGasTokens, _buyAndFreeGasTokens, or _buyAndFreeGasTokens||_freeGasTokens
-        // TODO: i don't think we want to use buyAndFree from the vault
+        // TODO: arguments can be made for every configuration. i'm not sure what is best
         // the vault is going to be doing very high gas cost arbitrage trades
         // and we are going to have our own bot that is minting/buying gas token whenever it is cheap
         // the bot can also mint/sell into the liquidity pool
 
+        // if there are tokens in the vault, we can assume they were bought at a low gas price
+        // if we have gas_token set, then we can assume we are at a high gas price
+        // (ergo, the caller should set gas_token to 0x0 when gas prices are low)
         if (_freeGasTokens(gas_token, initial_gas)) {
             return;
         }
 
-        // if (_buyAndFreeGasTokens(gas_token, initial_gas)) {
-        //     return;
-        // }
+        // if there are LGT on the market available at a positive price, use them
+        if (_buyAndFreeGasTokens(gas_token, initial_gas)) {
+            return;
+        }
 
         // TODO: we probably don't actually want to revert. but this makes debugging simpler. delete
         // revert("LiquidGasTokenUser.freeGasTokens: DEBUGGING");

@@ -26,7 +26,7 @@ contract DiamondCreator is LiquidGasTokenUser {
         bytes32 cutter_salt,
         bytes32 loupe_salt,
         bytes32 diamond_salt
-    ) public payable {
+    ) payable {
         uint256 initial_gas = initialGas(LGT);
 
         // TODO: have an alternative DiamondCreator contract that uses pre-deployed addresses for cutter/loupe
@@ -63,6 +63,8 @@ contract DiamondCreator is LiquidGasTokenUser {
         // selfdestruct for the gas refund (~200k gas)
         // this forwards any ETH in this contract to the diamond
         // this must be last!
+        // TODO: maybe we should leave this up. refactor it to let anyone build a delegatecall proxy
+        // TODO: would be interesting to have the diamond cuts be shared (but possible to fork from)
         selfdestruct(address(diamond));
     }
 }

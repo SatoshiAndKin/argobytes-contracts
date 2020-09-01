@@ -159,10 +159,11 @@ abstract contract AbstractERC20Exchange is AbstractERC20Modifiers {
         return a;
     }
 
-    function token_supported(address exchange, address token)
-        public
-        virtual
-        returns (bool);
+    // TODO: this isn't generic enough
+    // function token_supported(address exchange, address token)
+    //     public
+    //     virtual
+    //     returns (bool);
 }
 
 // abstract contract AbstractERC20Exchange is AbstractERC20Amounts {

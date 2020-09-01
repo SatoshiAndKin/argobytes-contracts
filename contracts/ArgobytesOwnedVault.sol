@@ -40,63 +40,18 @@ contract ArgobytesOwnedVault is
         "TRUSTED_ARBITRAGER_ROLE"
     );
 
-    function atomicActions(
-        address gas_token,
-        address atomic_trader,
-        bytes calldata encoded_actions
-    ) external override {
-        // use address(0) for gas_token to skip gas token burning
-        uint256 initial_gas = initialGas(gas_token);
-
-        // this role check is very important! anyone would be able to burn our gas token without it!
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "ArgobytesOwnedVault.atomicActions: Caller is not an admin"
-        );
-
-        // delgatecall is dangerous! be careful!
-        (bool success, bytes memory returndata) = atomic_trader.delegatecall(
-            abi.encodeWithSelector(
-                IArgobytesAtomicActions.atomicActions.selector,
-                encoded_actions
-            )
-        );
-
-        if (success) {
-            freeGasTokens(gas_token, initial_gas);
-        } else {
-            // Look for revert reason and bubble it up if present
-            if (returndata.length > 0) {
-                freeGasTokens(gas_token, initial_gas);
-
-                // The easiest way to bubble the revert reason is using memory via assembly
-
-                // solhint-disable-next-line no-inline-assembly
-                assembly {
-                    let returndata_size := mload(returndata)
-                    revert(add(32, returndata), returndata_size)
-                }
-            } else {
-                freeGasTokens(gas_token, initial_gas);
-
-                revert(
-                    "ArgobytesOwnedVault.atomicActions: delegatecall of IArgobytesAtomicActions"
-                );
-            }
-        }
-    }
-
     function atomicArbitrage(
         address gas_token,
-        address payable atomic_trader,
+        address payable atomic_actor,
         address kollateral_invoker,
-        address[] calldata tokens, // ETH (address(0)) or ERC20
+        address[] calldata tokens, // ETH (address(0)) or ERC20. include any tokens that might need to be swept back
         uint256 first_amount,
         bytes calldata encoded_actions
     ) external override payable returns (uint256 primary_profit) {
         // use address(0) for gas_token to skip gas token burning
         uint256 initial_gas = initialGas(gas_token);
 
+        // this role check is very important! coins could be stolen by this function
         require(
             hasRole(TRUSTED_ARBITRAGER_ROLE, msg.sender),
             "ArgobytesOwnedVault.atomicArbitrage: Caller is not a trusted arbitrager"
@@ -123,31 +78,35 @@ contract ArgobytesOwnedVault is
             // we won't need to invoke kollateral
             kollateral_invoker = ADDRESS_ZERO;
 
-            borrow_token.universalTransfer(atomic_trader, first_amount);
-        } else if (starting_vault_balance > 0) {
-            // we don't have enough funds to do the trade without kollateral. but we do have some
+            borrow_token.universalTransfer(atomic_actor, first_amount);
+        } else {
+            // we don't have enough funds to do the trade without kollateral
             require(
                 kollateral_invoker != ADDRESS_ZERO,
                 "ArgobytesOwnedVault.atomicArbitrage: not enough funds. need kollateral_invoker"
             );
 
-            borrow_token.universalTransfer(
-                atomic_trader,
-                starting_vault_balance
-            );
+            if (starting_vault_balance > 0) {
+                // we do have some funds though. send what we have
+                borrow_token.universalTransfer(
+                    atomic_actor,
+                    starting_vault_balance
+                );
+            }
         }
-        // else we don't have any of these tokens. they will all come from kollateral
 
-        // notice that this is an atomic trade. it doesn't require a profitable arbitrage. we have to check that ourself after it returns
+        // notice that this is "atomicTrades". it doesn't require a profitable arbitrage. we have to check that after it returns
+        // we ignore the atomic_actor's return because we
+        // we do NOT do a delegate call here. this should be safer, but malicious contracts could probably still do sneaky things
         try
-            IArgobytesAtomicActions(atomic_trader).atomicTrades(
+            IArgobytesAtomicActions(atomic_actor).atomicTrades(
                 kollateral_invoker,
                 tokens,
                 first_amount,
                 encoded_actions
             )
          {
-            // the trade worked!
+            // the trades worked!
         } catch Error(string memory reason) {
             // a revert was called inside atomicTrades
             // and a reason string was provided.
@@ -169,20 +128,20 @@ contract ArgobytesOwnedVault is
             freeGasTokens(gas_token, initial_gas);
 
             revert(
-                "ArgobytesOwnedVault -> IArgobytesAtomicActions.atomicTrades reverted without a reason"
+                "ArgobytesOwnedVault.atomicArbitrage -> IArgobytesAtomicActions.atomicTrades reverted without a reason"
             );
         }
 
-        // don't trust IArgobytesAtomicActions.atomicTrades's return. It is safer to check the balance ourselves
+        // don't trust IArgobytesAtomicActions.atomicTrades's return. Check the balance ourselves
         uint256 ending_vault_balance = borrow_token.universalBalanceOf(
             address(this)
         );
 
         // TODO: think about this more
-        // we used to allow this to be equal because it's possible that we got our profits somewhere else (like uniswap or kollateral LP fees)
+        // we allow this to be equal because it's possible that we got our profits somewhere else (like from flash loan or exchange LP fees)
         if (ending_vault_balance < starting_vault_balance) {
-            uint256 decreased_amount = starting_vault_balance -
-                ending_vault_balance;
+            // uint256 decreased_amount = starting_vault_balance -
+            //     ending_vault_balance;
 
             // // TODO: this error message costs too much gas. use it for debugging, but get rid of it in production
             // string memory err = string(
@@ -195,7 +154,7 @@ contract ArgobytesOwnedVault is
             // );
 
             // we burn gas token before the very end. that way if we revert, we get more of our gas back and don't actually burn any tokens
-            // TODO: is this true? if not, just use the modifier. i think this also means we can free slightly more tokens
+            // TODO: is this true? it probably shouldn't be. if not, just use the modifier. i think this also means we can free slightly more tokens
             freeGasTokens(gas_token, initial_gas);
 
             revert(
@@ -205,31 +164,212 @@ contract ArgobytesOwnedVault is
 
         // TODO: return the profit in all tokens so a caller can decide if the trade is worthwhile?
         // TODO: can the caller get that now? Is that data available inside eth_call's return?
-        // we do not need checked subtraction here because we check for < above
+        // we do not need checked subtraction here because we check for `ending_vault_balance < starting_vault_balance` above
         primary_profit = ending_vault_balance - starting_vault_balance;
 
-        if (gas_token != ADDRESS_ZERO) {
-            // we made it to the end. burn some gas tokens
+        // we made it to the end. burn some gas tokens
+        // if (gas_token != ADDRESS_ZERO) {
+        // keep any calculations done after this to a minimum
+        // TODO: it would be nice to return how many gas tokens we burned (or their value)
+        freeGasTokens(gas_token, initial_gas);
 
-            // if our primary_profit was in ETH and we buyAndFree gas tokens, we need to adjust primary_profit!
-            if (address(borrow_token) == ADDRESS_ZERO) {
-                // keep any calculations done after this to a minimum
-                freeGasTokens(gas_token, initial_gas);
+        // if our primary_profit was in ETH and we buyAndFree gas tokens, we need to adjust primary_profit!
+        // TODO: is it worth the gas?
+        // if (address(borrow_token) == ADDRESS_ZERO) {
+        //     ending_vault_balance = address(this).balance;
 
-                ending_vault_balance = address(this).balance;
+        //     if (ending_vault_balance < starting_vault_balance) {
+        //         // its too late too revert to actually save money
+        //         // revert(
+        //         //     "ArgobytesOwnedVault.atomicArbitrage: freeGasTokens made this trade no longer profitable"
+        //         // );
+        //         // TODO: emit a log that we just lost money
+        //         primary_profit = 0;
+        //     } else {
+        //         primary_profit =
+        //             ending_vault_balance -
+        //             starting_vault_balance;
+        //     }
+        // }
+        // }
+    }
 
-                if (ending_vault_balance < starting_vault_balance) {
-                    revert(
-                        "ArgobytesOwnedVault.atomicArbitrage: freeGasTokens made this trade no longer profitable"
-                    );
-                }
+    function atomicTrades(
+        address gas_token,
+        address payable atomic_actor,
+        address kollateral_invoker,
+        address[] calldata tokens, // ETH (address(0)) or ERC20. include any tokens that might need to be swept back
+        uint256 first_amount,
+        bytes calldata encoded_actions
+    ) external override payable {
+        // use address(0) for gas_token to skip gas token burning
+        uint256 initial_gas = initialGas(gas_token);
 
-                primary_profit = ending_vault_balance - starting_vault_balance;
-            } else {
-                // keep any calculations done after this to a minimum
-                // TODO: it would be nice to return how many gas tokens we burned (or their value)
-                freeGasTokens(gas_token, initial_gas);
+        // this role check is very important! anyone would be able to steal our tokens without it!
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.atomicTrades: Caller is not an admin"
+        );
+
+        // TODO: debug_require? we only have these for helpful revert messages
+        require(
+            tokens.length > 0,
+            "ArgobytesOwnedVault.atomicArbitrage: tokens.length must be > 0"
+        );
+        require(
+            first_amount > 0,
+            "ArgobytesOwnedVault.atomicArbitrage: first_amount must be > 0"
+        );
+
+        IERC20 borrow_token = IERC20(tokens[0]);
+
+        uint256 starting_vault_balance = borrow_token.universalBalanceOf(
+            address(this)
+        );
+
+        // transfer tokens if we have them
+        if (first_amount <= starting_vault_balance) {
+            // we won't need to invoke kollateral
+            kollateral_invoker = ADDRESS_ZERO;
+
+            borrow_token.universalTransfer(atomic_actor, first_amount);
+        } else {
+            // we don't have enough funds to do the trade without kollateral. but we do have some
+            require(
+                kollateral_invoker != ADDRESS_ZERO,
+                "ArgobytesOwnedVault.atomicTrades: not enough funds. need kollateral_invoker"
+            );
+
+            if (starting_vault_balance > 0) {
+                // we do have some funds though. send what we have
+                borrow_token.universalTransfer(
+                    atomic_actor,
+                    starting_vault_balance
+                );
             }
+        }
+
+        // notice that this is "atomicTrades". it doesn't require a profitable arbitrage!
+        // we do NOT do a delegate call here. this should be safer, but malicious contracts could probably still do sneaky things
+        try
+            IArgobytesAtomicActions(atomic_actor).atomicTrades(
+                kollateral_invoker,
+                tokens,
+                first_amount,
+                encoded_actions
+            )
+         {
+            // the trades worked!
+        } catch Error(string memory reason) {
+            // a revert was called inside atomicTrades
+            // and a reason string was provided.
+
+            // burn our gas token before raising the same revert
+            // TODO: confirm that this actually saves us gas!
+            freeGasTokens(gas_token, initial_gas);
+
+            revert(reason);
+        } catch (
+            bytes memory /*lowLevelData*/
+        ) {
+            // This is executed in case revert() was used
+            // or there was a failing assertion, division
+            // by zero, etc. inside atomicTrades.
+
+            // burn our gas token before raising the same revert
+            // TODO: confirm that this actually saves us gas!
+            freeGasTokens(gas_token, initial_gas);
+
+            revert(
+                "ArgobytesOwnedVault.atomicArbitrage -> IArgobytesAtomicActions.atomicTrades reverted without a reason"
+            );
+        }
+
+        freeGasTokens(gas_token, initial_gas);
+    }
+
+    function delegateAtomicActions(
+        address gas_token,
+        address atomic_actor,
+        bytes calldata encoded_actions
+    ) external override payable returns (bytes memory) {
+        // use address(0) for gas_token to skip gas token burning
+        uint256 initial_gas = initialGas(gas_token);
+
+        // this role check is very important! this contract can do pretty much anything!
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.delegateAtomicActions: Caller is not an admin"
+        );
+
+        // delgatecall is dangerous! be careful!
+        (bool success, bytes memory returndata) = atomic_actor.delegatecall(
+            abi.encodeWithSelector(
+                IArgobytesAtomicActions.atomicActions.selector,
+                encoded_actions
+            )
+        );
+
+        freeGasTokens(gas_token, initial_gas);
+
+        if (success) {
+            return returndata;
+        }
+
+        // Look for revert reason and bubble it up if present
+        if (returndata.length > 0) {
+            // The easiest way to bubble the revert reason is using memory via assembly
+
+            // solhint-disable-next-line no-inline-assembly
+            assembly {
+                let returndata_size := mload(returndata)
+                revert(add(32, returndata), returndata_size)
+            }
+        } else {
+            revert(
+                "ArgobytesOwnedVault.delegateAtomicActions: delegatecall of IArgobytesAtomicActions"
+            );
+        }
+    }
+
+    function delegateCall(
+        address gas_token,
+        address payable target,
+        bytes calldata target_data
+    ) external override payable returns (bytes memory) {
+        // use address(0) for gas_token to skip gas token burning
+        uint256 initial_gas = initialGas(gas_token);
+
+        // this role check is very important! this contract can do pretty much anything!
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.delegateCall: Caller is not an admin"
+        );
+
+        // delgatecall is dangerous! be careful!
+        (bool success, bytes memory returndata) = target.delegatecall(
+            target_data
+        );
+
+        freeGasTokens(gas_token, initial_gas);
+
+        if (success) {
+            return returndata;
+        }
+
+        // Look for revert reason and bubble it up if present
+        if (returndata.length > 0) {
+            // The easiest way to bubble the revert reason is using memory via assembly
+
+            // solhint-disable-next-line no-inline-assembly
+            assembly {
+                let returndata_size := mload(returndata)
+                revert(add(32, returndata), returndata_size)
+            }
+        } else {
+            revert(
+                "ArgobytesOwnedVault.delegateAtomicActions: delegatecall of IArgobytesAtomicActions"
+            );
         }
     }
 

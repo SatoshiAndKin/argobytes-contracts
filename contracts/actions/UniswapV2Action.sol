@@ -12,13 +12,13 @@ import {IUniswapV2Pair} from "contracts/interfaces/uniswap/IUniswapV2Pair.sol";
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
 contract UniswapV2Action is AbstractERC20Exchange {
-    // struct UniswapV2ExchangeData {
-    //     address token_0;
-    //     address token_1;
-    //     address pair;
-    //     uint256 token_0_supply;
-    //     uint256 token_1_supply;
-    // }
+    struct UniswapV2ExchangeData {
+        address token_0;
+        address token_1;
+        address pair;
+        uint256 token_0_supply;
+        uint256 token_1_supply;
+    }
 
     function getAmounts(
         address token_a,
@@ -30,82 +30,84 @@ contract UniswapV2Action is AbstractERC20Exchange {
         return _getAmounts(token_a, token_a_amount, token_b, extra_data);
     }
 
-    // function newAmount(
-    //     address maker_token,
-    //     uint256 taker_wei,
-    //     address taker_token,
-    //     bytes memory extra_data
-    // ) public override view returns (Amount memory) {
-    //     // TODO: allow multiple factories
-    //     address factory = abi.decode(extra_data, (address));
-    //     Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
-    //     UniswapExchangeData[] memory exchange_data;
-    //     // TODO: this only works with input amounts. do we want it to work with output amounts?
-    //     if (maker_token == ADDRESS_ZERO) {
-    //         // token to eth
-    //         IUniswapExchange exchange = getExchange(factory, taker_token);
-    //         a.maker_wei = exchange.getTokenToEthInputPrice(taker_wei);
-    //         a.selector = this.tradeTokenToEther.selector;
-    //         exchange_data = new UniswapExchangeData[](1);
-    //         exchange_data[0].token = taker_token;
-    //         exchange_data[0].factory = factory;
-    //         exchange_data[0].exchange = address(exchange);
-    //         exchange_data[0].token_supply = IERC20(taker_token).balanceOf(
-    //             address(exchange)
-    //         );
-    //         exchange_data[0].ether_supply = address(exchange).balance;
-    //         exchange_data[0].token_to_token_selector = this
-    //             .tradeTokenToToken
-    //             .selector;
-    //     } else if (taker_token == ADDRESS_ZERO) {
-    //         // eth to token
-    //         IUniswapExchange exchange = getExchange(factory, maker_token);
-    //         a.maker_wei = exchange.getEthToTokenInputPrice(taker_wei);
-    //         a.selector = this.tradeEtherToToken.selector;
-    //         exchange_data = new UniswapExchangeData[](1);
-    //         exchange_data[0].token = maker_token;
-    //         exchange_data[0].factory = factory;
-    //         exchange_data[0].exchange = address(exchange);
-    //         exchange_data[0].token_supply = IERC20(maker_token).balanceOf(
-    //             address(exchange)
-    //         );
-    //         exchange_data[0].ether_supply = address(exchange).balance;
-    //         exchange_data[0].token_to_token_selector = this
-    //             .tradeTokenToToken
-    //             .selector;
-    //     } else {
-    //         // token to token
-    //         IUniswapExchange exchange = getExchange(factory, taker_token);
-    //         exchange_data = new UniswapExchangeData[](2);
-    //         a.maker_wei = exchange.getTokenToEthInputPrice(taker_wei);
-    //         exchange_data[0].token = maker_token;
-    //         exchange_data[0].factory = factory;
-    //         exchange_data[0].exchange = address(exchange);
-    //         exchange_data[0].token_supply = IERC20(taker_token).balanceOf(
-    //             address(exchange)
-    //         );
-    //         exchange_data[0].ether_supply = address(exchange).balance;
-    //         exchange = getExchange(factory, maker_token);
-    //         a.maker_wei = exchange.getEthToTokenInputPrice(a.maker_wei);
-    //         exchange_data[1].token = maker_token;
-    //         exchange_data[1].factory = factory;
-    //         exchange_data[1].exchange = address(exchange);
-    //         exchange_data[1].token_supply = IERC20(maker_token).balanceOf(
-    //             address(exchange)
-    //         );
-    //         exchange_data[1].ether_supply = address(exchange).balance;
-    //         a.selector = this.tradeTokenToToken.selector;
-    //     }
-    //     //a.trade_extra_data = "";
-    //     a.exchange_data = abi.encode(exchange_data);
-    //     return a;
-    // }
+    function newAmount(
+        address maker_token,
+        uint256 taker_wei,
+        address taker_token,
+        bytes memory extra_data
+    ) public override view returns (Amount memory) {
+        //     // TODO: allow multiple factories
+        //     address factory = abi.decode(extra_data, (address));
+        //     Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
+        //     UniswapExchangeData[] memory exchange_data;
+        //     // TODO: this only works with input amounts. do we want it to work with output amounts?
+        //     if (maker_token == ADDRESS_ZERO) {
+        //         // token to eth
+        //         IUniswapExchange exchange = getExchange(factory, taker_token);
+        //         a.maker_wei = exchange.getTokenToEthInputPrice(taker_wei);
+        //         a.selector = this.tradeTokenToEther.selector;
+        //         exchange_data = new UniswapExchangeData[](1);
+        //         exchange_data[0].token = taker_token;
+        //         exchange_data[0].factory = factory;
+        //         exchange_data[0].exchange = address(exchange);
+        //         exchange_data[0].token_supply = IERC20(taker_token).balanceOf(
+        //             address(exchange)
+        //         );
+        //         exchange_data[0].ether_supply = address(exchange).balance;
+        //         exchange_data[0].token_to_token_selector = this
+        //             .tradeTokenToToken
+        //             .selector;
+        //     } else if (taker_token == ADDRESS_ZERO) {
+        //         // eth to token
+        //         IUniswapExchange exchange = getExchange(factory, maker_token);
+        //         a.maker_wei = exchange.getEthToTokenInputPrice(taker_wei);
+        //         a.selector = this.tradeEtherToToken.selector;
+        //         exchange_data = new UniswapExchangeData[](1);
+        //         exchange_data[0].token = maker_token;
+        //         exchange_data[0].factory = factory;
+        //         exchange_data[0].exchange = address(exchange);
+        //         exchange_data[0].token_supply = IERC20(maker_token).balanceOf(
+        //             address(exchange)
+        //         );
+        //         exchange_data[0].ether_supply = address(exchange).balance;
+        //         exchange_data[0].token_to_token_selector = this
+        //             .tradeTokenToToken
+        //             .selector;
+        //     } else {
+        //         // token to token
+        //         IUniswapExchange exchange = getExchange(factory, taker_token);
+        //         exchange_data = new UniswapExchangeData[](2);
+        //         a.maker_wei = exchange.getTokenToEthInputPrice(taker_wei);
+        //         exchange_data[0].token = maker_token;
+        //         exchange_data[0].factory = factory;
+        //         exchange_data[0].exchange = address(exchange);
+        //         exchange_data[0].token_supply = IERC20(taker_token).balanceOf(
+        //             address(exchange)
+        //         );
+        //         exchange_data[0].ether_supply = address(exchange).balance;
+        //         exchange = getExchange(factory, maker_token);
+        //         a.maker_wei = exchange.getEthToTokenInputPrice(a.maker_wei);
+        //         exchange_data[1].token = maker_token;
+        //         exchange_data[1].factory = factory;
+        //         exchange_data[1].exchange = address(exchange);
+        //         exchange_data[1].token_supply = IERC20(maker_token).balanceOf(
+        //             address(exchange)
+        //         );
+        //         exchange_data[1].ether_supply = address(exchange).balance;
+        //         a.selector = this.tradeTokenToToken.selector;
+        //     }
+        //     //a.trade_extra_data = "";
+        //     a.exchange_data = abi.encode(exchange_data);
+        //     return a;
 
-    function token_supported(address token_0, address token_1)
-        public
-        override
-        returns (bool)
-    {
+        revert("wip");
+    }
+
+    function token_supported(
+        address router,
+        address token_0,
+        address token_1
+    ) public returns (bool) {
         revert("wip");
     }
 

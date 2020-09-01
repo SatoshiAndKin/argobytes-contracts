@@ -84,8 +84,8 @@ Run:
     # test development deploy scripts
     # burning gastoken makes the script take a lot longer and cost more total gas, but it ends up costing less ETH
     # make sure nothing is using localhost:8575 before running this command!
-    BURN_GAS_TOKEN=1 ./scripts/test-deploy.sh
-    BURN_GAS_TOKEN=0 ./scripts/test-deploy.sh
+    FREE_GAS_TOKEN=1 ./scripts/test-deploy.sh
+    FREE_GAS_TOKEN=0 ./scripts/test-deploy.sh
 
     # have brownie setup a ganache and run unit tests
     # make sure nothing is using localhost:8565 before running this command!
@@ -96,7 +96,7 @@ Run:
     ./scripts/staging-ganache.sh
 
     # deploy this project's contracts to staging-ganache
-    # this sets BURN_GAS_TOKEN=0 since speed is more important than saving development ETH
+    # this sets FREE_GAS_TOKEN=0 since speed is more important than saving development ETH
     ./scripts/staging-deploy.sh
 
     # export contract abi .jsons and deployed addresses to ../argobytes-backend/contracts/

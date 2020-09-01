@@ -9,7 +9,10 @@ abstract contract IArgobytesAtomicActions {
         bool with_value;
     }
 
-    function atomicActions(bytes calldata encoded_actions) external virtual;
+    function atomicActions(bytes calldata encoded_actions)
+        external
+        virtual
+        payable;
 
     function atomicTrades(
         address kollateral_invoker,
