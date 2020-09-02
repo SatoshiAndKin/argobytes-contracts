@@ -373,6 +373,22 @@ contract ArgobytesOwnedVault is
         }
     }
 
+    // admins can grant any role at any time
+    function grantRoles(bytes32[] calldata roles, address[] calldata accounts)
+        external
+        override
+    {
+        // this role check is very important!
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.grantRoles: Caller is not an admin"
+        );
+
+        for (uint256 i = 0; i < accounts.length; i++) {
+            _setupRole(roles[i], accounts[i]);
+        }
+    }
+
     function withdrawTo(
         address gas_token,
         IERC20 token,

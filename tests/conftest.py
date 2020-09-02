@@ -58,7 +58,7 @@ def argobytes_diamond(address_zero, ArgobytesOwnedVault, DiamondCreator):
         salt,
         ArgobytesOwnedVault,
         [],
-        ["atomicArbitrage", "atomicTrades", "delegateAtomicActions", "delegateCall", "withdrawTo"],
+        ["atomicArbitrage", "atomicTrades", "delegateAtomicActions", "delegateCall", "grantRoles", "withdrawTo"],
         gas_price
     )
 

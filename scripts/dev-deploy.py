@@ -140,28 +140,26 @@ def main():
         salt,
         ArgobytesOwnedVault,
         [],
-        ["atomicArbitrage", "atomicTrades", "delegateAtomicActions", "delegateCall", "withdrawTo"],
+        ["atomicArbitrage", "atomicTrades", "delegateAtomicActions", "delegateCall", "grantRoles", "withdrawTo"],
         expected_mainnet_gas_price
     )
     quick_save_contract(argobytes_owned_vault)
 
     # TODO: do this in one transaction (maybe even inside the deploy2 and cut and free)
     # TODO: maybe have a "grantMultipleRoles" function
-    ADMIN_ROLE = argobytes_owned_vault.DEFAULT_ADMIN_ROLE()
-    TRUSTED_ARBITRAGER_ROLE = argobytes_owned_vault.TRUSTED_ARBITRAGER_ROLE()
-    for arb_bot in arb_bots:
-        argobytes_diamond.grantRole(TRUSTED_ARBITRAGER_ROLE, arb_bot, {
-                                    "from": accounts[0], "gasPrice": expected_mainnet_gas_price})
 
-    # TODO: only do this while staging. probably best to prompt for these
-    argobytes_diamond.grantRole(TRUSTED_ARBITRAGER_ROLE, SKI_METAMASK_1, {
-                                "from": accounts[0], "gasPrice": expected_mainnet_gas_price})
-    argobytes_diamond.grantRole(TRUSTED_ARBITRAGER_ROLE, SKI_HARDWARE_1, {
-                                "from": accounts[0], "gasPrice": expected_mainnet_gas_price})
-    argobytes_diamond.grantRole(ADMIN_ROLE, SKI_METAMASK_1, {
-                                "from": accounts[0], "gasPrice": expected_mainnet_gas_price})
-    argobytes_diamond.grantRole(ADMIN_ROLE, SKI_HARDWARE_1, {
-                                "from": accounts[0], "gasPrice": expected_mainnet_gas_price})
+    # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging
+    argobytes_diamond_admins = [SKI_METAMASK_1, SKI_HARDWARE_1]
+    argobytes_diamond_arbitragers = arb_bots + [SKI_METAMASK_1, SKI_HARDWARE_1]
+
+    argobytes_diamond.grantRoles(
+        [argobytes_owned_vault.DEFAULT_ADMIN_ROLE()] * len(argobytes_diamond_admins) + 
+        [argobytes_owned_vault.TRUSTED_ARBITRAGER_ROLE()] * len(argobytes_diamond_arbitragers),
+        argobytes_diamond_admins + argobytes_diamond_arbitragers,
+        {
+            "from": accounts[0], "gasPrice": expected_mainnet_gas_price
+        }
+    )
 
     # deploy all the other contracts
     # these one's don't modify the diamond
