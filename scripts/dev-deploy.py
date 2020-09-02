@@ -148,14 +148,22 @@ def main():
     # TODO: do this in one transaction (maybe even inside the deploy2 and cut and free)
     # TODO: maybe have a "grantMultipleRoles" function
 
-    # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging
-    argobytes_diamond_admins = [SKI_METAMASK_1, SKI_HARDWARE_1]
-    argobytes_diamond_arbitragers = arb_bots + [SKI_METAMASK_1, SKI_HARDWARE_1]
+    # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
+    argobytes_diamond_admins = [SKI_METAMASK_1]
 
     argobytes_diamond.grantRoles(
-        [argobytes_owned_vault.DEFAULT_ADMIN_ROLE()] * len(argobytes_diamond_admins) + 
-        [argobytes_owned_vault.TRUSTED_ARBITRAGER_ROLE()] * len(argobytes_diamond_arbitragers),
-        argobytes_diamond_admins + argobytes_diamond_arbitragers,
+        argobytes_owned_vault.DEFAULT_ADMIN_ROLE(),
+        argobytes_diamond_admins,
+        {
+            "from": accounts[0], "gasPrice": expected_mainnet_gas_price
+        }
+    )
+
+    argobytes_diamond_arbitragers = arb_bots + [SKI_METAMASK_1]
+
+    argobytes_diamond.grantRoles(
+        argobytes_owned_vault.TRUSTED_ARBITRAGER_ROLE(),
+        argobytes_diamond_arbitragers,
         {
             "from": accounts[0], "gasPrice": expected_mainnet_gas_price
         }

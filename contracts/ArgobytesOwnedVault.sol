@@ -374,7 +374,7 @@ contract ArgobytesOwnedVault is
     }
 
     // admins can grant any role at any time
-    function grantRoles(bytes32[] calldata roles, address[] calldata accounts)
+    function grantRoles(bytes32 role, address[] calldata accounts)
         external
         override
     {
@@ -385,7 +385,7 @@ contract ArgobytesOwnedVault is
         );
 
         for (uint256 i = 0; i < accounts.length; i++) {
-            _setupRole(roles[i], accounts[i]);
+            _setupRole(role, accounts[i]);
         }
     }
 

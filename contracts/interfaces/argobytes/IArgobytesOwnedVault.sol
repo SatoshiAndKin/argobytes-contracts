@@ -38,8 +38,7 @@ interface IArgobytesOwnedVault {
         bytes calldata target_data
     ) external payable returns (bytes memory);
 
-    function grantRoles(bytes32[] calldata role, address[] calldata accounts)
-        external;
+    function grantRoles(bytes32 role, address[] calldata accounts) external;
 
     function withdrawTo(
         address gas_token,
