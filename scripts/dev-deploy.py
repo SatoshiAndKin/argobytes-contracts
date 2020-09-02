@@ -67,6 +67,11 @@ def main():
     # still good to test that it works and we might use it outside this script
     quick_save_contract(gas_token)
 
+    if FREE_GAS_TOKEN:
+        gas_token_for_freeing = gas_token
+    else:
+        gas_token_for_freeing = "0x0000000000000000000000000000000000000000"
+
     # TODO: do this earlier and transfer the coins to the diamond_creator address before deployment
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
     if MINT_GAS_TOKEN:
@@ -97,9 +102,6 @@ def main():
         # TODO: proper assert. mint_batch_amount is not the right amount to check
         assert gas_tokens_start == mint_batch_amount * num_mints
     else:
-        # clear the gas token address so that none of our function calls use it
-        gas_token = "0x0000000000000000000000000000000000000000"
-
         expected_diamond_creator_address = mk_contract_address(accounts[0].address, accounts[0].nonce)
 
     # save the diamond creator's address
@@ -135,7 +137,7 @@ def main():
 
     # deploy ArgobytesOwnedVault and add it to the diamond
     argobytes_owned_vault = deploy2_and_cut_and_free(
-        gas_token,
+        gas_token_for_freeing,
         argobytes_diamond,
         salt,
         ArgobytesOwnedVault,
@@ -172,7 +174,7 @@ def main():
     # deploy all the other contracts
     # these one's don't modify the diamond
     argobytes_atomic_trade = deploy2_and_free(
-        gas_token,
+        gas_token_for_freeing,
         argobytes_diamond,
         salt,
         ArgobytesAtomicActions,
@@ -182,7 +184,7 @@ def main():
     quick_save_contract(argobytes_atomic_trade)
 
     example_action = deploy2_and_free(
-        gas_token,
+        gas_token_for_freeing,
         argobytes_diamond,
         salt,
         ExampleAction,
@@ -192,7 +194,7 @@ def main():
     quick_save_contract(example_action)
 
     onesplit_offchain_action = deploy2_and_free(
-        gas_token,
+        gas_token_for_freeing,
         argobytes_diamond,
         salt,
         OneSplitOffchainAction,
@@ -203,7 +205,7 @@ def main():
 
     # TODO: think more about kyber's constructor. maybe wallet_id should be set/changeable by msg.sender
     kyber_action = deploy2_and_free(
-        gas_token,
+        gas_token_for_freeing,
         argobytes_diamond,
         salt,
         KyberAction,
@@ -213,7 +215,7 @@ def main():
     quick_save_contract(kyber_action)
 
     uniswap_v1_action = deploy2_and_free(
-        gas_token,
+        gas_token_for_freeing,
         argobytes_diamond,
         salt,
         UniswapV1Action,
@@ -223,7 +225,7 @@ def main():
     quick_save_contract(uniswap_v1_action)
 
     uniswap_v2_action = deploy2_and_free(
-        gas_token,
+        gas_token_for_freeing,
         argobytes_diamond,
         salt,
         UniswapV2Action,
@@ -233,7 +235,7 @@ def main():
     quick_save_contract(uniswap_v2_action)
 
     # zrx_v3_action = deploy2_and_free(
-    #     gas_token,
+    #     gas_token_for_freeing,
     #     argobytes_diamond,
     #     salt,
     #     ZrxV3Action,
@@ -243,7 +245,7 @@ def main():
     # quick_save_contract(zrx_v3_action)
 
     weth9_action = deploy2_and_free(
-        gas_token,
+        gas_token_for_freeing,
         argobytes_diamond,
         salt,
         Weth9Action,
@@ -253,7 +255,7 @@ def main():
     quick_save_contract(weth9_action)
 
     synthetix_depot_action = deploy2_and_free(
-        gas_token,
+        gas_token_for_freeing,
         argobytes_diamond,
         salt,
         SynthetixDepotAction,
@@ -263,7 +265,7 @@ def main():
     quick_save_contract(synthetix_depot_action)
 
     curve_fi_action = deploy2_and_free(
-        gas_token,
+        gas_token_for_freeing,
         argobytes_diamond,
         salt,
         CurveFiAction,
@@ -299,7 +301,7 @@ def main():
     )
 
     argobytes_diamond.delegateAtomicActions(
-        gas_token, argobytes_atomic_trade, encoded_actions, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
+        gas_token_for_freeing, argobytes_atomic_trade, encoded_actions, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
     if FREE_GAS_TOKEN:
         # # TODO: make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
@@ -311,6 +313,14 @@ def main():
 
         assert gas_tokens_remaining > 0
         assert gas_tokens_remaining <= mint_batch_amount
+    elif MINT_GAS_TOKEN:
+        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_diamond)
+
+        print("gas token:", LiquidGasTokenAddress)
+
+        print("gas_tokens_remaining:", gas_tokens_remaining)
+
+        assert gas_tokens_remaining > 0
     else:
         print("gas_tokens_remaining: N/A")
 
