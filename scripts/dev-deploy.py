@@ -142,7 +142,7 @@ def main():
         salt,
         ArgobytesOwnedVault,
         [],
-        ["atomicArbitrage", "atomicTrades", "delegateAtomicActions", "delegateCall", "grantRoles", "withdrawTo"],
+        ["atomicArbitrage", "atomicTrades", "delegateAtomicActions", "delegateCall", "grantRoles", "exitTo"],
         expected_mainnet_gas_price
     )
     quick_save_contract(argobytes_owned_vault)
@@ -156,6 +156,14 @@ def main():
     argobytes_diamond.grantRoles(
         argobytes_owned_vault.DEFAULT_ADMIN_ROLE(),
         argobytes_diamond_admins,
+        {
+            "from": accounts[0], "gasPrice": expected_mainnet_gas_price
+        }
+    )
+
+    argobytes_diamond.grantRole(
+        argobytes_owned_vault.EXIT_ROLE(),
+        argobytes_diamond_exits,
         {
             "from": accounts[0], "gasPrice": expected_mainnet_gas_price
         }

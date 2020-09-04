@@ -20,6 +20,7 @@ import {DiamondStorageContract} from "./DiamondStorageContract.sol";
 import {IDiamondCutter} from "./DiamondHeaders.sol";
 
 
+// in the reference implementation, this is the "DiamondFacet" contract.
 contract DiamondCutter is DiamondStorageContract, IDiamondCutter, LiquidGasTokenUser {
     bytes32 constant CLEAR_ADDRESS_MASK = 0x0000000000000000000000000000000000000000ffffffffffffffffffffffff;
     bytes32 constant CLEAR_SELECTOR_MASK = 0xffffffff00000000000000000000000000000000000000000000000000000000;

@@ -28,7 +28,7 @@ interface IArgobytesOwnedVault {
 
     function delegateAtomicActions(
         address gas_token,
-        address atomic_actor,
+        address payable atomic_actor,
         bytes calldata encoded_actions
     ) external payable returns (bytes memory);
 
@@ -40,10 +40,9 @@ interface IArgobytesOwnedVault {
 
     function grantRoles(bytes32 role, address[] calldata accounts) external;
 
-    function withdrawTo(
+    function exitTo(
         address gas_token,
-        IERC20 token,
-        address to,
-        uint256 amount
-    ) external payable returns (bool);
+        IERC20[] calldata tokens,
+        address to
+    ) external payable;
 }
