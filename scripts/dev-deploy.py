@@ -153,6 +153,9 @@ def main():
     # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
     argobytes_diamond_admins = [SKI_METAMASK_1]
 
+    # TODO: have a multi-signature cold storage or something similarly secure for this
+    argobytes_diamond_exit = SKI_HARDWARE_1
+
     argobytes_diamond.grantRoles(
         argobytes_owned_vault.DEFAULT_ADMIN_ROLE(),
         argobytes_diamond_admins,
@@ -163,7 +166,7 @@ def main():
 
     argobytes_diamond.grantRole(
         argobytes_owned_vault.EXIT_ROLE(),
-        argobytes_diamond_exits,
+        argobytes_diamond_exit,
         {
             "from": accounts[0], "gasPrice": expected_mainnet_gas_price
         }
@@ -308,8 +311,16 @@ def main():
         [False] * 7,
     )
 
+    actions = to_bytes([
+        (
+            curve_fi_action.address,
+            curve_fi_action.saveExchange.encode_input(CurveFiBUSDAddress, 4),
+            False
+        )
+    ])
+
     argobytes_diamond.delegateAtomicActions(
-        gas_token_for_freeing, argobytes_atomic_trade, encoded_actions, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
+        gas_token_for_freeing, argobytes_atomic_trade, actions, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
     if FREE_GAS_TOKEN:
         # # TODO: make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)

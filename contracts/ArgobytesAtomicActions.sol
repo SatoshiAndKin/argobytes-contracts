@@ -66,13 +66,13 @@ contract ArgobytesAtomicActions is
     }
 
     // this can be helpful to call from another contract with delegatecall
-    // this doesn't sweep any tokens for you! if you need tokens returned, call atomicTrades
-    function atomicActions(bytes calldata encoded_actions)
+    // this doesn't sweep any tokens for you! if you need to interact with tokens, call atomicTrades
+    function atomicActions(Action[] calldata actions)
         external
         override
         payable
     {
-        _executeSolo(ADDRESS_ZERO, 0, encoded_actions);
+        _executeSolo(ADDRESS_ZERO, 0, actions);
     }
 
     /**
@@ -83,7 +83,7 @@ contract ArgobytesAtomicActions is
         address kollateral_invoker,
         address[] calldata tokens,
         uint256 first_amount,
-        bytes calldata encoded_actions
+        Action[] calldata actions
     ) external override payable {
         uint256 num_tokens = tokens.length;
 
@@ -96,10 +96,13 @@ contract ArgobytesAtomicActions is
 
         if (balance >= first_amount) {
             // we have all the funds that we need
-            _executeSolo(tokens[0], first_amount, encoded_actions);
+            _executeSolo(tokens[0], first_amount, actions);
         } else {
             // we do not have enough token to do this trade ourselves. use kollateral for the remainder
             first_amount -= balance;
+
+            // TODO: how efficient is this?
+            bytes memory encoded_actions = abi.encode(actions);
 
             if (tokens[0] == ADDRESS_ZERO) {
                 // use kollateral's address for ETH instead of the zero address we use
@@ -119,13 +122,13 @@ contract ArgobytesAtomicActions is
             }
 
             // kollateral ensures that we repaid our debts, but it doesn't require profit beyond that
-            // this could still be benificial if we are a liquidity provider on kollateral, so we allow it
+            // this could still be benificial if we are a liquidity provider on kollateral (or one of the exchanges), so we allow it
         }
 
         // unless everything went to paying kollateral fees, this contract should now have some tokens in it
 
-        // sweep any profits to another address
-        // because there might be leftovers from some of the trades, we sweep all tokens involved
+        // sweep any tokens to another address
+        // there might be leftovers from some of the trades, so we sweep all tokens involved
         for (uint256 i = 0; i < num_tokens; i++) {
             // use univeralERC20 library functions because one of these tokens might actually be ETH
             IERC20 token = IERC20(tokens[i]);
@@ -135,6 +138,7 @@ contract ArgobytesAtomicActions is
             // we don't emit events ourselves because token transfers already do that for us
             // ETH profits won't emit logs, but it is easy to check balance changes
             // TODO: we could have a `address to` param instead of sending to msg.sender, but this works for our purposes for now
+            // for most cases, you probably just want to set the "to" on one the last action to your destination
             token.universalTransfer(msg.sender, ending_amount);
         }
     }
@@ -145,10 +149,11 @@ contract ArgobytesAtomicActions is
      */
     function execute(bytes calldata encoded_actions) external override payable {
         // only allow calls to execute from our `atomicActions` function
-        require(
-            currentSender() == address(this),
-            "ArgobytesAtomicActions.execute: Original sender is not this contract"
-        );
+        // TODO: do we want this check? what safety is added? we never leave coins here so it should be fine
+        // require(
+        //     currentSender() == address(this),
+        //     "ArgobytesAtomicActions.execute: Original sender is not this contract"
+        // );
 
         Action[] memory actions = abi.decode(encoded_actions, (Action[]));
 
@@ -212,7 +217,7 @@ contract ArgobytesAtomicActions is
             }
         }
 
-        // TODO: get rid of this when done debugging. they already do these checks and revert for us
+        // TODO: get rid of this when done debugging. `repay` already does these checks it just has no revert reasons
         // {
         //     uint256 repay_amount = currentRepaymentAmount();
         //     if (is_current_token_ether) {
@@ -249,10 +254,8 @@ contract ArgobytesAtomicActions is
     function _executeSolo(
         address first_token,
         uint256 first_amount,
-        bytes memory encoded_actions
+        Action[] calldata actions
     ) internal {
-        Action[] memory actions = abi.decode(encoded_actions, (Action[]));
-
         uint256 num_actions = actions.length;
 
         // we could allow 0 actions, but why would we ever want that?
