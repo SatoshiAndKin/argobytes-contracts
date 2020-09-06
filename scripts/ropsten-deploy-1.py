@@ -86,11 +86,11 @@ def main():
         arb_bot
     ]
 
-    argobytes_atomic_trade = ArgobytesAtomicActions.deploy(
+    argobytes_atomic_actions = ArgobytesAtomicActions.deploy(
         KollateralInvokerAddress, {'from': accounts[0]})
 
     argobytes_owned_vault = ArgobytesOwnedVault.deploy(
-        GasTokenAddress, arb_bots, argobytes_atomic_trade, {'from': accounts[0]})
+        GasTokenAddress, arb_bots, argobytes_atomic_actions, {'from': accounts[0]})
 
     # deploy_helper(OneSplitOffchainAction, OneSplitAddress)
     deploy_helper(KyberAction, KyberNetworkProxy, argobytes_owned_vault)
@@ -106,9 +106,9 @@ def main():
 
     transaction_helper(
         "set trusted trader role on ArgobytesAtomicActions",
-        argobytes_atomic_trade,
-        argobytes_atomic_trade.grantRole,
-        argobytes_atomic_trade.TRUSTED_TRADER_ROLE(),
+        argobytes_atomic_actions,
+        argobytes_atomic_actions.grantRole,
+        argobytes_atomic_actions.TRUSTED_TRADER_ROLE(),
         argobytes_owned_vault,
         wait_for_confirm=False,
     )

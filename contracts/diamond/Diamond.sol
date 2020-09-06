@@ -67,6 +67,7 @@ contract Diamond is DiamondStorageContract, IERC165 {
         // add ERC165 data for diamondCutter
         bytes4 interfaceID = diamondCutter.diamondCut.selector ^
             diamondCutter.deploy2.selector ^
+            diamondCutter.deploy2AndCut.selector ^
             diamondCutter.deploy2AndFree.selector ^
             diamondCutter.deploy2AndCutAndFree.selector;
 

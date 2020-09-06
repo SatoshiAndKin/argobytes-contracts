@@ -4,6 +4,7 @@
 from argobytes_util import *
 from argobytes_mainnet import *
 from brownie import *
+from eth_abi import encode_single, encode_abi
 from eth_utils import to_bytes
 import os
 
@@ -58,7 +59,6 @@ def main():
     ]
 
     # TODO: docs for figuring out the address for DiamondDeployer and then using ERADICATE2
-    # TODO: maybe send gastoken to DiamondDeployer before it is deployed. then burn/transfer that token after selfdestruct?
     salt = ""
 
     gas_token = interface.ILiquidGasToken(LiquidGasTokenAddress)
@@ -142,7 +142,15 @@ def main():
         salt,
         ArgobytesOwnedVault,
         [],
-        ["atomicArbitrage", "atomicTrades", "delegateAtomicActions", "delegateCall", "grantRoles", "exitTo"],
+        [
+            "adminAtomicActions",
+            "adminAtomicTrades",
+            "adminCall",
+            "adminDelegateCall",
+            "atomicArbitrage",
+            "grantRoles",
+            "emergencyExit",
+        ],
         expected_mainnet_gas_price
     )
     quick_save_contract(argobytes_owned_vault)
@@ -184,7 +192,7 @@ def main():
 
     # deploy all the other contracts
     # these one's don't modify the diamond
-    argobytes_atomic_trade = deploy2_and_free(
+    argobytes_atomic_actions = deploy2_and_free(
         gas_token_for_freeing,
         argobytes_diamond,
         salt,
@@ -192,7 +200,7 @@ def main():
         [],
         expected_mainnet_gas_price
     )
-    quick_save_contract(argobytes_atomic_trade)
+    quick_save_contract(argobytes_atomic_actions)
 
     example_action = deploy2_and_free(
         gas_token_for_freeing,
@@ -287,40 +295,43 @@ def main():
 
     kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWalletAddress)
 
-    # add all the curve fi contracts
-    # register for kyber's fee program
-    encoded_actions = argobytes_atomic_trade.encodeActions(
-        [curve_fi_action] * 6 + [KyberRegisterWalletAddress],
-        [
-            curve_fi_action.saveExchange.encode_input(
-                CurveFiBUSDAddress, 4),
-            curve_fi_action.saveExchange.encode_input(CurveFiCompoundAddress, 2),
-            curve_fi_action.saveExchange.encode_input(
-                CurveFiPAXAddress, 4),
-            # curve_fi_action.saveExchange.encode_input(CurveFiRENAddress, 2),
-            curve_fi_action.saveExchange.encode_input(
-                CurveFiSUSDV2Address, 4),
-            # curve_fi_action.saveExchange.encode_input(CurveFiTBTCAddress, 3),
-            curve_fi_action.saveExchange.encode_input(
-                CurveFiUSDTAddress, 3),
-            curve_fi_action.saveExchange.encode_input(
-                CurveFiYAddress, 4),
-            kyber_register_wallet.registerWallet.encode_input(
-                argobytes_diamond)
-        ],
-        [False] * 7,
-    )
-
-    actions = to_bytes([
+    actions = [
+        # # add all the curve fi contracts
         (
             curve_fi_action.address,
             curve_fi_action.saveExchange.encode_input(CurveFiBUSDAddress, 4),
-            False
+            False,
+        ),
+        (
+            curve_fi_action.address,
+            curve_fi_action.saveExchange.encode_input(CurveFiCompoundAddress, 2),
+            False,
+        ),
+        (
+            curve_fi_action.address,
+            curve_fi_action.saveExchange.encode_input(CurveFiSUSDV2Address, 4),
+            False,
+        ),
+        (
+            curve_fi_action.address,
+            curve_fi_action.saveExchange.encode_input(CurveFiYAddress, 4),
+            False,
+        ),
+        (
+            curve_fi_action.address,
+            curve_fi_action.saveExchange.encode_input(CurveFiBUSDAddress, 4),
+            False,
+        ),
+        # register for kyber's fee program
+        (
+            KyberRegisterWalletAddress,
+            kyber_register_wallet.registerWallet.encode_input(argobytes_diamond),
+            False,
         )
-    ])
+    ]
 
-    argobytes_diamond.delegateAtomicActions(
-        gas_token_for_freeing, argobytes_atomic_trade, actions, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    argobytes_diamond.adminAtomicActions(
+        gas_token_for_freeing, argobytes_atomic_actions, actions, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
 
     if FREE_GAS_TOKEN:
         # # TODO: make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)

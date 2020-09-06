@@ -25,19 +25,18 @@ def address_zero():
 
 
 @pytest.fixture(scope="function")
-def argobytes_atomic_trade(ArgobytesAtomicActions):
+def argobytes_atomic_actions(ArgobytesAtomicActions):
     return ArgobytesAtomicActions.deploy({"from": accounts[0]})
 
 
 @pytest.fixture(scope="function")
-def argobytes_diamond(address_zero, ArgobytesOwnedVault, DiamondCreator):
+def argobytes_diamond(address_zero, ArgobytesOwnedVault, DiamondCreator, interface):
     # on mainnet we use the (hex) salt to generate custom addresses, but we dont need that in our tests
     salt = ""
 
     # deploy the contract that will deploy the diamond (and cutter and loupe)
     # it self destructs, so handling it is non-standard
     diamond_deploy_tx = DiamondCreator.deploy(
-        address_zero,
         salt,
         salt,
         salt,
@@ -58,7 +57,15 @@ def argobytes_diamond(address_zero, ArgobytesOwnedVault, DiamondCreator):
         salt,
         ArgobytesOwnedVault,
         [],
-        ["atomicArbitrage", "atomicTrades", "delegateAtomicActions", "delegateCall", "grantRoles", "withdrawTo"],
+        [
+            "adminAtomicActions",
+            "adminAtomicTrades",
+            "adminCall",
+            "adminDelegateCall",
+            "atomicArbitrage",
+            "grantRoles",
+            "emergencyExit",
+        ],
         gas_price
     )
 

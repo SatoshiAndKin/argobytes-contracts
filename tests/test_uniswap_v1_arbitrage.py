@@ -10,7 +10,7 @@ from hypothesis import settings
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
 # @pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/611")
-def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, argobytes_diamond, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, weth9_erc20):
+def test_uniswap_arbitrage(address_zero, argobytes_atomic_actions, argobytes_diamond, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, weth9_erc20):
     assert argobytes_diamond.balance() == 0
     assert uniswap_v1_action.balance() == 0
 
@@ -28,31 +28,33 @@ def test_uniswap_arbitrage(address_zero, argobytes_atomic_trade, argobytes_diamo
     usdc_exchange = uniswap_v1_action.getExchange(uniswap_v1_factory, usdc_erc20)
     weth9_exchange = uniswap_v1_action.getExchange(uniswap_v1_factory, weth9_erc20)
 
-    encoded_actions = argobytes_atomic_trade.encodeActions(
-        [
+    actions = [
+        # trade ETH to USDC
+        (
             uniswap_v1_action,
-            uniswap_v1_action,
-            uniswap_v1_action,
-        ],
-        [
-            # trade ETH to USDC
             # uniswap_v1_action.tradeEtherToToken(address to, address exchange, address dest_token, uint dest_min_tokens, uint trade_gas)
             uniswap_v1_action.tradeEtherToToken.encode_input(uniswap_v1_action, usdc_exchange, usdc_erc20, 1, 0),
-
-            # trade USDC to WETH9
+            True,
+        ),
+        # trade USDC to WETH9
+        (
+            uniswap_v1_action,
             # uniswap_v1_action.tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint dest_min_tokens, uint trade_gas)
             uniswap_v1_action.tradeTokenToToken.encode_input(
                 uniswap_v1_action, usdc_exchange, usdc_erc20, weth9_erc20, 1, 0),
-
-            # trade WETH9 to ETH
+            False,
+        ),
+        # trade WETH9 to ETH
+        (
+            uniswap_v1_action,
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens, uint trade_gas)
             uniswap_v1_action.tradeTokenToEther.encode_input(address_zero, weth9_exchange, weth9_erc20, 1, 0),
-        ],
-        [True, False, False],
-    )
+            False,
+        ),
+    ]
 
     arbitrage_tx = argobytes_diamond.atomicArbitrage(
-        address_zero, argobytes_atomic_trade, address_zero, [address_zero], value, encoded_actions, {'from': accounts[1]})
+        address_zero, argobytes_atomic_actions, address_zero, [address_zero], value, actions, {'from': accounts[1]})
 
     assert argobytes_diamond.balance() > value
 

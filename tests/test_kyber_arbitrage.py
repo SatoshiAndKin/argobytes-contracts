@@ -7,7 +7,7 @@ from hypothesis import settings
 
 
 # @pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/611")
-def test_kyber_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argobytes_diamond, kyber_network_proxy, kyber_action, usdc_erc20):
+def test_kyber_arbitrage(address_zero, argobytes_atomic_actions, dai_erc20, argobytes_diamond, kyber_network_proxy, kyber_action, usdc_erc20):
     assert argobytes_diamond.balance() == 0
     assert kyber_action.balance() == 0
 
@@ -22,33 +22,30 @@ def test_kyber_arbitrage(address_zero, argobytes_atomic_trade, dai_erc20, argoby
     assert argobytes_diamond.balance() == value
     assert kyber_action.balance() == value
 
-    encoded_actions = argobytes_atomic_trade.encodeActions(
-        [
+    actions = [
+        # trade ETH to USDC
+        (
             kyber_action,
+            kyber_action.tradeEtherToToken.encode_input(kyber_network_proxy, kyber_action, usdc_erc20, 1, 0),
+            True
+        ),
+        # trade USDC to DAI
+        (
             kyber_action,
-            kyber_action,
-        ],
-        [
-            # trade ETH to USDC
-            # uniswap_v1_action.tradeEtherToToken(address to, address exchange, address dest_token, uint dest_min_tokens, uint trade_gas)
-            kyber_action.tradeEtherToToken.encode_input(
-                kyber_network_proxy, kyber_action, usdc_erc20, 1, 0),
+            kyber_action.tradeTokenToToken.encode_input(kyber_network_proxy, kyber_action, usdc_erc20, dai_erc20, 1, 0),
+            False
 
-            # trade USDC to DAI
-            # uniswap_v1_action.tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint dest_min_tokens, uint trade_gas)
-            kyber_action.tradeTokenToToken.encode_input(
-                kyber_network_proxy, kyber_action, usdc_erc20, dai_erc20, 1, 0),
-
-            # trade DAI to ETH
-            # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens, uint trade_gas)
-            kyber_action.tradeTokenToEther.encode_input(
-                kyber_network_proxy, address_zero, dai_erc20, 1, 0),
-        ],
-        [True, False, False],
-    )
+        ),
+        # trade DAI to ETH
+        (
+            kyber_action,
+            kyber_action.tradeTokenToEther.encode_input(kyber_network_proxy, address_zero, dai_erc20, 1, 0),
+            False
+        ),
+    ]
 
     arbitrage_tx = argobytes_diamond.atomicArbitrage(
-        address_zero, argobytes_atomic_trade, address_zero, [address_zero], value, encoded_actions, {'from': accounts[1]})
+        address_zero, argobytes_atomic_actions, address_zero, [address_zero], value, actions, {'from': accounts[1]})
 
     assert argobytes_diamond.balance() > value
 

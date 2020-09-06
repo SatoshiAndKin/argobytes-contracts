@@ -5,6 +5,7 @@ pragma solidity 0.7.0;
 pragma experimental ABIEncoderV2;
 
 import {AccessControl} from "@OpenZeppelin/access/AccessControl.sol";
+import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";
@@ -15,11 +16,9 @@ import {
 } from "contracts/diamond/DiamondStorageContract.sol";
 import {LiquidGasTokenUser} from "contracts/LiquidGasTokenUser.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
-import {Strings2} from "contracts/Strings2.sol";
+// import {Strings2} from "contracts/Strings2.sol";
 import {
-    IArgobytesAtomicActions
-} from "contracts/interfaces/argobytes/IArgobytesAtomicActions.sol";
-import {
+    IArgobytesAtomicActions,
     IArgobytesOwnedVault
 } from "contracts/interfaces/argobytes/IArgobytesOwnedVault.sol";
 
@@ -29,9 +28,10 @@ contract ArgobytesOwnedVault is
     LiquidGasTokenUser,
     IArgobytesOwnedVault
 {
+    using Address for address payable;
     using SafeMath for uint256;
     using Strings for uint256;
-    using Strings2 for address;
+    // using Strings2 for address;
     using UniversalERC20 for IERC20;
 
     address internal constant ADDRESS_ZERO = address(0);
@@ -42,11 +42,80 @@ contract ArgobytesOwnedVault is
     bytes32 public constant TRUSTED_ARBITRAGER_ROLE = keccak256(
         "ArgobytesOwnedVault TRUSTED_ARBITRAGER_ROLE"
     );
-    //
-    // TODO: add a timelock for granting this role
+    // This role is needed to receive from `exitTo`
+    // while we could also withdraw with `adminAtomicActions`,
     bytes32 public constant EXIT_ROLE = keccak256(
         "ArgobytesOwnedVault EXIT_ROLE"
     );
+    // This role is allowed to call `exitTo`
+    // If an exploit is draining funds, this role can sweep everything
+    bytes32 public constant ALARM_ROLE = keccak256(
+        "ArgobytesOwnedVault ALARM_ROLE"
+    );
+
+    // admin-only frontdoor
+    // useful for taking arbitrary actions. be careful with this!
+    function adminAtomicActions(
+        address gas_token,
+        address payable atomic_actor,
+        IArgobytesAtomicActions.Action[] calldata actions
+    ) external override payable returns (bytes memory) {
+        // use address(0) for gas_token to skip gas token burning
+        uint256 initial_gas = initialGas(gas_token);
+
+        // this role check is very important! this function can do pretty much anything!
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.delegateAtomicActions: Caller is not an admin"
+        );
+
+        // delegatecall is dangerous! be careful! atomic_actor has full control of this contract's storage!
+        return
+            _delegateCall(
+                gas_token,
+                initial_gas,
+                atomic_actor,
+                abi.encodeWithSelector(
+                    IArgobytesAtomicActions.atomicActions.selector,
+                    actions
+                )
+            );
+    }
+
+    // admin-only frontdoor
+    // useful for sending value and approving tokens
+    function adminCall(
+        address gas_token,
+        address payable target,
+        bytes calldata target_data,
+        uint256 value
+    ) external override payable returns (bytes memory) {
+        // use address(0) for gas_token to skip gas token burning
+        uint256 initial_gas = initialGas(gas_token);
+
+        // this role check is very important! this function can do pretty much anything!
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "ArgobytesOwnedVault.adminCall: Caller is not an admin"
+        );
+
+        bytes memory returndata = "";
+
+        if (target_data.length > 0) {
+            returndata = target.functionCallWithValue(
+                target_data,
+                value,
+                "ArgobytesOwnedVault.adminCall failed"
+            );
+        } else {
+            target.sendValue(value);
+        }
+
+        // TODO: free on revert, too
+        freeGasTokens(gas_token, initial_gas);
+
+        return returndata;
+    }
 
     function atomicArbitrage(
         address gas_token,
@@ -54,7 +123,7 @@ contract ArgobytesOwnedVault is
         address kollateral_invoker,
         address[] calldata tokens, // ETH (address(0)) or ERC20. include any tokens that might need to be swept back
         uint256 first_amount,
-        bytes calldata encoded_actions
+        IArgobytesAtomicActions.Action[] calldata actions
     ) external override payable returns (uint256 primary_profit) {
         // use address(0) for gas_token to skip gas token burning
         uint256 initial_gas = initialGas(gas_token);
@@ -111,7 +180,7 @@ contract ArgobytesOwnedVault is
                 kollateral_invoker,
                 tokens,
                 first_amount,
-                encoded_actions
+                actions
             )
          {
             // the trades worked!
@@ -179,13 +248,13 @@ contract ArgobytesOwnedVault is
         // it would be nice to return how many gas tokens we burned (since it does change our profits), but we can get that offchain
     }
 
-    function atomicTrades(
+    function adminAtomicTrades(
         address gas_token,
         address payable atomic_actor,
         address kollateral_invoker,
         address[] calldata tokens, // ETH (address(0)) or ERC20. include any tokens that might need to be swept back
         uint256 first_amount,
-        bytes calldata encoded_actions
+        IArgobytesAtomicActions.Action[] calldata actions
     ) external override payable {
         // use address(0) for gas_token to skip gas token burning
         uint256 initial_gas = initialGas(gas_token);
@@ -241,7 +310,7 @@ contract ArgobytesOwnedVault is
                 kollateral_invoker,
                 tokens,
                 first_amount,
-                encoded_actions
+                actions
             )
          {
             // the trades worked!
@@ -273,35 +342,8 @@ contract ArgobytesOwnedVault is
         freeGasTokens(gas_token, initial_gas);
     }
 
-    function delegateAtomicActions(
-        address gas_token,
-        address payable atomic_actor,
-        bytes calldata encoded_actions
-    ) external override payable returns (bytes memory) {
-        // use address(0) for gas_token to skip gas token burning
-        uint256 initial_gas = initialGas(gas_token);
-
-        // this role check is very important! this function can do pretty much anything!
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "ArgobytesOwnedVault.delegateAtomicActions: Caller is not an admin"
-        );
-
-        // delegatecall is dangerous! be careful! atomic_actor has full control of this contract's storage!
-        return
-            _delegateCall(
-                gas_token,
-                initial_gas,
-                atomic_actor,
-                abi.encodeWithSelector(
-                    IArgobytesAtomicActions.atomicActions.selector,
-                    encoded_actions
-                )
-            );
-    }
-
-    // backdoor in case we forgot something
-    function delegateCall(
+    // admin-only backdoor
+    function adminDelegateCall(
         address gas_token,
         address payable target,
         bytes calldata target_data
@@ -315,8 +357,9 @@ contract ArgobytesOwnedVault is
             "ArgobytesOwnedVault.delegateCall: Caller is not an admin"
         );
 
-        // delgatecall is dangerous! be careful! target has full control of this contract's storage!
-        return _delegateCall(gas_token, initial_gas, target, target_data);
+        // delegatecall is dangerous! be careful! target has full control of this contract's storage!
+        return
+            _externalDelegateCall(gas_token, initial_gas, target, target_data);
     }
 
     function _delegateCall(
@@ -325,13 +368,7 @@ contract ArgobytesOwnedVault is
         address payable target,
         bytes memory target_data
     ) internal returns (bytes memory) {
-        // this role check is very important! this function can do pretty much anything!
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "ArgobytesOwnedVault.delegateCall: Caller is not an admin"
-        );
-
-        // delgatecall is dangerous! be careful!
+        // delegatecall is dangerous! be careful!
         (bool success, bytes memory returndata) = target.delegatecall(
             target_data
         );
@@ -352,9 +389,64 @@ contract ArgobytesOwnedVault is
                 revert(add(32, returndata), returndata_size)
             }
         } else {
-            revert(
-                "ArgobytesOwnedVault.delegateAtomicActions: delegatecall of IArgobytesAtomicActions"
-            );
+            revert("ArgobytesOwnedVault._externalDelegateCall failed");
+        }
+    }
+
+    // copy-paste of _delegateCall, but with "calldata" instead of "memory" for target_data
+    function _externalDelegateCall(
+        address gas_token,
+        uint256 initial_gas,
+        address payable target,
+        bytes calldata target_data
+    ) internal returns (bytes memory) {
+        // delegatecall is dangerous! be careful!
+        (bool success, bytes memory returndata) = target.delegatecall(
+            target_data
+        );
+
+        freeGasTokens(gas_token, initial_gas);
+
+        if (success) {
+            return returndata;
+        }
+
+        // Look for revert reason and bubble it up if present
+        if (returndata.length > 0) {
+            // The easiest way to bubble the revert reason is using memory via assembly
+
+            // solhint-disable-next-line no-inline-assembly
+            assembly {
+                let returndata_size := mload(returndata)
+                revert(add(32, returndata), returndata_size)
+            }
+        } else {
+            revert("ArgobytesOwnedVault._externalDelegateCall failed");
+        }
+    }
+
+    // If an exploit is draining funds, this role can sweep everything that is left
+    function emergencyExit(
+        address gas_token,
+        IERC20[] calldata tokens,
+        address to
+    ) external override payable freeGasTokensModifier(gas_token) {
+        // TODO: should TRUSTED_ARBITRAGER_ROLE be allowed to call this?
+        require(
+            hasRole(ALARM_ROLE, msg.sender) ||
+                hasRole(DEFAULT_ADMIN_ROLE, msg.sender) ||
+                hasRole(TRUSTED_ARBITRAGER_ROLE, msg.sender),
+            "ArgobytesOwnedVault.exitTo: Caller does not have the alarm or admin roles"
+        );
+        require(
+            hasRole(EXIT_ROLE, to),
+            "ArgobytesOwnedVault.exitTo: Destination is not an exit"
+        );
+
+        for (uint256 i = 0; i < tokens.length; i++) {
+            uint256 amount = tokens[i].universalBalanceOf(address(this));
+
+            tokens[i].universalTransfer(to, amount);
         }
     }
 
@@ -371,30 +463,6 @@ contract ArgobytesOwnedVault is
 
         for (uint256 i = 0; i < accounts.length; i++) {
             _setupRole(role, accounts[i]);
-        }
-    }
-
-    // if you just need to withdraw a single token, use `delegateAtomicActions`
-    function exitTo(
-        address gas_token,
-        IERC20[] calldata tokens,
-        address to
-    ) external override payable freeGasTokensModifier(gas_token) {
-        // TODO: what role? it should be seperate from the deployer
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "ArgobytesOwnedVault.exitTo: Caller is not an admin"
-        );
-        // TODO: have a seperate role for this?
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, to),
-            "ArgobytesOwnedVault.exitTo: Destination is not an admin"
-        );
-
-        for (uint256 i = 0; i < tokens.length; i++) {
-            uint256 amount = tokens[i].universalBalanceOf(address(this));
-
-            tokens[i].universalTransfer(to, amount);
         }
     }
 }

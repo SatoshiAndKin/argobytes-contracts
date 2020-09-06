@@ -151,6 +151,30 @@ contract DiamondCutter is DiamondStorageContract, IDiamondCutter, LiquidGasToken
         emit Deploy(deployed);
     }
 
+    // use CREATE2 to deploy with a salt and cut the diamond
+    function deploy2AndCut(
+        bytes32 salt,
+        bytes memory facet_initcode,
+        bytes memory facet_sigs
+    )
+        public
+        override
+        payable
+        returns (address deployed)
+    {
+        // no need for permissions check here since diamondCut does one
+
+        deployed = Create2.deploy(msg.value, salt, facet_initcode);
+
+        bytes[] memory cuts = new bytes[](1);
+        cuts[0] = abi.encodePacked(deployed, facet_sigs);
+
+        diamondCut(cuts);
+
+        // TODO: get rid of this once we figure out why brownie isn't setting return_value
+        emit Deploy(deployed);
+    }
+
     // use CREATE2 to deploy with a salt and then free gas tokens
     function deploy2AndFree(
         address gas_token,
@@ -187,16 +211,6 @@ contract DiamondCutter is DiamondStorageContract, IDiamondCutter, LiquidGasToken
         freeGasTokensModifier(gas_token)
         returns (address deployed)
     {
-        // no need for permissions check here since diamondCut does one
-
-        deployed = Create2.deploy(msg.value, salt, facet_initcode);
-
-        bytes[] memory cuts = new bytes[](1);
-        cuts[0] = abi.encodePacked(deployed, facet_sigs);
-
-        diamondCut(cuts);
-
-        // TODO: get rid of this once we figure out why brownie isn't setting return_value
-        emit Deploy(deployed);
+        return deploy2AndCut(salt, facet_initcode, facet_sigs);
     }
 }

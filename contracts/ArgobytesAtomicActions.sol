@@ -39,33 +39,7 @@ contract ArgobytesAtomicActions is
         0x0000000000000000000000000000000000000001
     );
 
-    // TODO: get rid of this once our tests don't use it anymore. encoding an array of tuples isn't working how i thought
-    function encodeActions(
-        address payable[] memory targets,
-        bytes[] memory targets_data,
-        bool[] memory with_values
-    ) public pure returns (bytes memory encoded_data) {
-        uint256 length = targets.length;
-
-        require(
-            length == targets_data.length,
-            "ArgobytesAtomicActions.encodeActions: data length does not match targets length"
-        );
-        require(
-            length == with_values.length,
-            "ArgobytesAtomicActions.encodeActions: with_values length does not match targets length"
-        );
-
-        Action[] memory actions = new Action[](length);
-
-        for (uint256 i = 0; i < length; i++) {
-            actions[i] = Action(targets[i], targets_data[i], with_values[i]);
-        }
-
-        encoded_data = abi.encode(actions);
-    }
-
-    // this can be helpful to call from another contract with delegatecall
+    // this can be helpful to call from another contract with delegatecall (though I should check the gas costs to see if it makes sense)
     // this doesn't sweep any tokens for you! if you need to interact with tokens, call atomicTrades
     function atomicActions(Action[] calldata actions)
         external
