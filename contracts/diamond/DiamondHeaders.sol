@@ -6,28 +6,17 @@ interface IDiamondCutter {
     event DiamondCut(bytes[] _diamondCut);
     event Deploy(address deployed);
 
-    function deploy2(bytes32 salt, bytes memory initcode)
-        external
-        payable
-        returns (address);
-
-    function deploy2AndCut(
-        bytes32 salt,
-        bytes memory facet_initcode,
-        bytes memory facet_sigs
-    ) external payable returns (address);
-
     function deploy2AndFree(
         address gas_token,
         bytes32 salt,
-        bytes memory initcode
+        bytes calldata initcode
     ) external payable returns (address);
 
-    function deploy2AndCutAndFree(
+    function deploy2AndDiamondCutAndFree(
         address gas_token,
         bytes32 salt,
-        bytes memory facet_initcode,
-        bytes memory facet_sigs
+        bytes calldata facet_initcode,
+        bytes calldata facet_sigs
     ) external payable returns (address);
 
     /// @notice _diamondCut is an array of bytes arrays.
@@ -42,6 +31,9 @@ interface IDiamondCutter {
     /// facet is the address of a facet
     /// sel1, sel2, sel3 etc. are four-byte function selectors.
     function diamondCut(bytes[] calldata _diamondCut) external;
+
+    function diamondCutAndFree(address gas_token, bytes[] calldata _diamondCut)
+        external;
 }
 
 // A loupe is a small magnifying glass used to look at diamonds.

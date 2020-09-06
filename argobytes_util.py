@@ -60,7 +60,7 @@ def deploy2_and_cut_and_free(gas_token, diamond_contract, deploy_salt, contract_
 
     # TODO: print the expected address for this target_salt and initcode
 
-    deploy_tx = diamond_contract.deploy2AndCutAndFree(
+    deploy_tx = diamond_contract.deploy2AndDiamondCutAndFree(
         gas_token,
         deploy_salt,
         contract_initcode,

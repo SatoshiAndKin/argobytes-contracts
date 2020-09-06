@@ -15,9 +15,11 @@ import "./DiamondStorageContract.sol";
 
 contract Diamond is DiamondStorageContract, IERC165 {
     constructor(address cutter, address loupe) payable {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-
         DiamondStorage storage ds = diamondStorage();
+
+        // msg.sender needs to be an admin in order to complete initial setup
+        // you probably want to revoke this and set your own admin
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         // Use an already deployed DiamondCutter contract
         IDiamondCutter diamondCutter = IDiamondCutter(cutter);
@@ -31,10 +33,10 @@ contract Diamond is DiamondStorageContract, IERC165 {
         diamondCuts[0] = abi.encodePacked(
             diamondCutter,
             diamondCutter.diamondCut.selector,
+            diamondCutter.diamondCutAndFree.selector,
             // TODO: do we actually want deploy2+deploy2AndFree? That's available on the lgt contracts
-            diamondCutter.deploy2.selector,
             diamondCutter.deploy2AndFree.selector,
-            diamondCutter.deploy2AndCutAndFree.selector
+            diamondCutter.deploy2AndDiamondCutAndFree.selector
         );
 
         // Adding diamond loupe functions
@@ -59,17 +61,16 @@ contract Diamond is DiamondStorageContract, IERC165 {
             diamondCuts
         );
         (bool success, ) = address(diamondCutter).delegatecall(cutData);
-        require(success, "Adding functions failed.");
+        require(success, "Adding initial functions failed.");
 
         // add ERC165 data
         ds.supportedInterfaces[this.supportsInterface.selector] = true;
 
-        // add ERC165 data for diamondCutter
-        bytes4 interfaceID = diamondCutter.diamondCut.selector ^
-            diamondCutter.deploy2.selector ^
-            diamondCutter.deploy2AndCut.selector ^
-            diamondCutter.deploy2AndFree.selector ^
-            diamondCutter.deploy2AndCutAndFree.selector;
+        // add ERC165 data for gas-token freeing diamondCutter
+        bytes4 interfaceID = diamondCutter.deploy2AndFree.selector ^
+            diamondCutter.deploy2AndDiamondCutAndFree.selector ^
+            diamondCutter.diamondCut.selector ^
+            diamondCutter.diamondCutAndFree.selector;
 
         ds.supportedInterfaces[interfaceID] = true;
 
@@ -81,6 +82,8 @@ contract Diamond is DiamondStorageContract, IERC165 {
             diamondLoupe.facets.selector;
 
         ds.supportedInterfaces[interfaceID] = true;
+
+        // TODO: what if we need to add more ERC165 data?
     }
 
     // This implements ERC-165.
@@ -95,8 +98,7 @@ contract Diamond is DiamondStorageContract, IERC165 {
         return ds.supportedInterfaces[_interfaceID];
     }
 
-    // Finds facet for function that is called and executes the
-    // function if it is found and returns any value.
+    // Finds the facet for this msg.sig, executes the function, and returns the value.
     fallback() external payable {
         DiamondStorage storage ds = diamondStorage();
         address facet = address(bytes20(ds.facets[msg.sig]));
