@@ -11,9 +11,6 @@ import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
-import {
-    DiamondStorageContract
-} from "contracts/diamond/DiamondStorageContract.sol";
 import {LiquidGasTokenUser} from "contracts/LiquidGasTokenUser.sol";
 import {UniversalERC20} from "contracts/UniversalERC20.sol";
 // import {Strings2} from "contracts/Strings2.sol";
@@ -24,7 +21,7 @@ import {
 
 // we do NOT give this contract a `receive` function since it should only be used through a diamond
 contract ArgobytesOwnedVault is
-    DiamondStorageContract,
+    AccessControl,
     LiquidGasTokenUser,
     IArgobytesOwnedVault
 {

@@ -88,15 +88,15 @@ def deploy2_and_cut_and_free(gas_token, diamond_contract, deploy_salt, contract_
     )
 
     # TODO: do a bunch of these in one transaction
-    cut_tx = diamond_contract.diamondCutAndFree(
-        gas_token,
-        [encoded_sigs],
-        "0x0000000000000000000000000000000000000000",
-        to_bytes(hexstr="0x"),
-        {"from": accounts[0], "gasPrice": gas_price}
-    )
+    # cut_tx = diamond_contract.diamondCutAndFree(
+    #     gas_token,
+    #     [encoded_sigs],
+    #     "0x0000000000000000000000000000000000000000",
+    #     to_bytes(hexstr="0x"),
+    #     {"from": accounts[0], "gasPrice": gas_price}
+    # )
 
-    return contract_to_deploy
+    return (contract_to_deploy, encoded_sigs)
 
 
 def mk_contract_address(sender: str, nonce: int) -> str:

@@ -106,8 +106,6 @@ contract DiamondFacet is IDiamondCut, IDiamondLoupe, IERC165, AccessControl, Liq
             // Check that init has contract code
             uint contractSize;
 
-            revert(string(_calldata));
-
             assembly { contractSize := extcodesize(init) }
             require(contractSize > 0, "DiamondFacet: _init address has no code");
             (bool success, bytes memory error) = init.delegatecall(_calldata);

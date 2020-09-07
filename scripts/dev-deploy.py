@@ -47,8 +47,6 @@ def main():
     expected_mainnet_mint_price = "20 gwei"
     expected_mainnet_gas_price = "60 gwei"
 
-    starting_balance = accounts[0].balance()
-
     arb_bots = [
         SKI_METAMASK_1,
         accounts[0],
@@ -57,6 +55,20 @@ def main():
         accounts[3],
         accounts[4],
     ]
+
+    kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWalletAddress)
+
+    # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
+    argobytes_diamond_admin = SKI_METAMASK_1
+
+    # TODO: have a multi-signature cold storage or something similarly secure for this
+    argobytes_diamond_exit = SKI_HARDWARE_1
+
+    argobytes_diamond_alarm = SKI_METAMASK_1
+
+    argobytes_diamond_arbitragers = arb_bots + [SKI_METAMASK_1]
+
+    starting_balance = accounts[0].balance()
 
     # TODO: docs for figuring out the address for DiamondDeployer and then using ERADICATE2
     salt = ""
@@ -76,7 +88,7 @@ def main():
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
     if MINT_GAS_TOKEN:
         deadline = 999999999999999
-        num_mints = 15
+        num_mints = 16
 
         expected_diamond_creator_address = mk_contract_address(accounts[0].address, accounts[0].nonce + num_mints)
 
@@ -137,7 +149,7 @@ def main():
     argobytes_diamond = interface.IArgobytesDiamond(diamond.address)
 
     # deploy ArgobytesOwnedVault and add it to the diamond
-    argobytes_owned_vault = deploy2_and_cut_and_free(
+    (argobytes_owned_vault, argobytes_owned_vault_cuts) = deploy2_and_cut_and_free(
         gas_token_for_freeing,
         argobytes_diamond,
         salt,
@@ -155,41 +167,6 @@ def main():
         expected_mainnet_gas_price
     )
     quick_save_contract(argobytes_owned_vault)
-
-    # TODO: do this in one transaction (maybe even inside the deploy2 and cut and free)
-    # TODO: maybe have a "grantMultipleRoles" function
-
-    # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
-    argobytes_diamond_admins = [SKI_METAMASK_1]
-
-    # TODO: have a multi-signature cold storage or something similarly secure for this
-    argobytes_diamond_exit = SKI_HARDWARE_1
-
-    argobytes_diamond.grantRoles(
-        argobytes_owned_vault.DEFAULT_ADMIN_ROLE(),
-        argobytes_diamond_admins,
-        {
-            "from": accounts[0], "gasPrice": expected_mainnet_gas_price
-        }
-    )
-
-    argobytes_diamond.grantRole(
-        argobytes_owned_vault.EXIT_ROLE(),
-        argobytes_diamond_exit,
-        {
-            "from": accounts[0], "gasPrice": expected_mainnet_gas_price
-        }
-    )
-
-    argobytes_diamond_arbitragers = arb_bots + [SKI_METAMASK_1]
-
-    argobytes_diamond.grantRoles(
-        argobytes_owned_vault.TRUSTED_ARBITRAGER_ROLE(),
-        argobytes_diamond_arbitragers,
-        {
-            "from": accounts[0], "gasPrice": expected_mainnet_gas_price
-        }
-    )
 
     # deploy all the other contracts
     # these one's don't modify the diamond
@@ -289,15 +266,13 @@ def main():
         argobytes_diamond,
         salt,
         CurveFiAction,
-        [argobytes_diamond],
+        [],
         expected_mainnet_gas_price
     )
     quick_save_contract(curve_fi_action)
 
-    kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWalletAddress)
-
-    actions = [
-        # # add all the curve fi contracts
+    bulk_actions = [
+        # add the curve fi contracts
         (
             curve_fi_action.address,
             curve_fi_action.saveExchange.encode_input(CurveFiBUSDAddress, 4),
@@ -323,16 +298,57 @@ def main():
             curve_fi_action.saveExchange.encode_input(CurveFiBUSDAddress, 4),
             False,
         ),
+        # TODO: bitcoin curve pools
+        # TODO: add swerve pool
         # register for kyber's fee program
         (
             KyberRegisterWalletAddress,
             kyber_register_wallet.registerWallet.encode_input(argobytes_diamond),
             False,
-        )
+        ),
     ]
 
-    argobytes_diamond.adminAtomicActions(
-        gas_token_for_freeing, argobytes_atomic_actions, actions, {'from': accounts[0], 'gasPrice': expected_mainnet_gas_price})
+    bulk_actions = argobytes_diamond.adminAtomicActions.encode_input(
+        gas_token_for_freeing, argobytes_atomic_actions, bulk_actions)
+
+    argobytes_diamond.diamondCutAndFree(
+        gas_token,
+        [argobytes_owned_vault_cuts],
+        "0x0000000000000000000000000000000000000000",
+        bulk_actions,
+        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
+    )
+
+    # TODO: setup roles in one transaction (we can't do it inside bulk_actions because msg.sender is no longer the admin)
+
+    # grant admin roles
+    argobytes_diamond.grantRole(
+        argobytes_owned_vault.DEFAULT_ADMIN_ROLE(),
+        argobytes_diamond_admin,
+        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price},
+    )
+
+    # grant trusted arbitrager roles
+    # TODO: does this actually save us gas?
+    argobytes_diamond.grantRoles(
+        argobytes_owned_vault.TRUSTED_ARBITRAGER_ROLE(),
+        argobytes_diamond_arbitragers,
+        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price},
+    )
+
+    # grant exit roles
+    argobytes_diamond.grantRole(
+        argobytes_owned_vault.EXIT_ROLE(),
+        argobytes_diamond_exit,
+        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price},
+    )
+
+    # grant alarm roles
+    argobytes_diamond.grantRole(
+        argobytes_owned_vault.ALARM_ROLE(),
+        argobytes_diamond_alarm,
+        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price},
+    )
 
     if FREE_GAS_TOKEN:
         # # TODO: make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)

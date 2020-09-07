@@ -160,11 +160,7 @@ contract ArgobytesAtomicActions is
             // IMPORTANT! it is up to the caller to make sure that they trust this target!
             address action_address = actions[i].target;
 
-            // calls to this aren't expected, so lets just block them to be safe
-            require(
-                action_address != address(this),
-                "ArgobytesAtomicArbitrage.execute: calls to self are not allowed"
-            );
+            // TODO: can't decide if we should allow calls to self. maybe have address(0) become address(this)
 
             // TODO: this error message probably costs more gas than we want to spend
             // string memory err = string(
@@ -260,11 +256,7 @@ contract ArgobytesAtomicActions is
             // IMPORTANT! it is up to the caller to make sure that they trust this target!
             address action_address = actions[i].target;
 
-            // calls to this aren't expected, so lets just block them to be safe
-            require(
-                action_address != address(this),
-                "ArgobytesAtomicArbitrage._executeSolo: calls to self are not allowed"
-            );
+            // TODO: can't decide if we should allow calls to self. maybe have address(0) become address(this)
 
             // TODO: this error message probably costs more gas than we want to spend
             // string memory err = string(

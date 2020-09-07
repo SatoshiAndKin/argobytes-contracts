@@ -11,15 +11,15 @@ pragma solidity 0.7.0;
 pragma experimental ABIEncoderV2;
 
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";
+import {Ownable} from "@OpenZeppelin/access/Ownable.sol";
 
 import {ICurveFi} from "contracts/interfaces/curvefi/ICurveFi.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
-import {Ownable2} from "contracts/Ownable2.sol";
 import {Strings2} from "contracts/Strings2.sol";
 import {IERC20, SafeERC20, UniversalERC20} from "contracts/UniversalERC20.sol";
 
-contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
+contract CurveFiAction is AbstractERC20Exchange, Ownable {
     using UniversalERC20 for IERC20;
     using SafeERC20 for IERC20;
     using Strings for uint256;
@@ -29,8 +29,6 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable2 {
     // we add one to our indexes because fetching an unknown address will return 0!
     mapping(address => mapping(address => int128)) _coins;
     mapping(address => mapping(address => int128)) _underlying_coins;
-
-    constructor(address owner) Ownable2(owner) {}
 
     function token_supported(address exchange, address token)
         public
