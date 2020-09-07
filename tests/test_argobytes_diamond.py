@@ -2,6 +2,7 @@ import brownie
 import pytest
 from brownie import accounts
 from brownie.test import given, strategy
+from eth_utils import to_bytes
 from hypothesis import settings
 
 
@@ -20,7 +21,22 @@ def test_atomic_arbtirage_access_control(address_zero, example_action, argobytes
             address_zero, address_zero, address_zero, [address_zero], value, [], {'from': accounts[0]})
 
 
-def test_admin_call():
+def test_admin_call(address_zero, argobytes_diamond, example_action):
+    value = 1
+
+    accounts[0].transfer(argobytes_diamond, value)
+
+    assert argobytes_diamond.balance() == value
+    assert example_action.balance() == 0
+
+    # move the ETH arb return back to the sweep contract
+    argobytes_diamond.adminCall(address_zero, example_action, to_bytes(hexstr="0x"), value, {'from': accounts[0]})
+
+    assert argobytes_diamond.balance() == 0
+    assert example_action.balance() == value
+
+
+def test_admin_atomic_actions():
     assert False
 
 
@@ -156,23 +172,8 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_atomic_actions, argoby
     print("gas_used_without_gastoken: ", gas_used_without_gastoken)
 
     # move the ETH arb return back to the sweep contract
-    argobytes_diamond.adminCall(address_zero, example_action, "", value, {'from': accounts[0]})
+    argobytes_diamond.adminCall(address_zero, example_action, to_bytes(hexstr="0x"), value, {'from': accounts[0]})
 
-    actions = [
-        (
-            example_action,
-            example_action.sweep.encode_input(address_zero, address_zero, 100000),
-            True,
-        ),
-    ]
-
-    arbitrage_tx = argobytes_diamond.atomicArbitrage(
-        address_zero, argobytes_atomic_actions, kollateral_invoker, [address_zero], value, actions, {
-            'from': accounts[1],
-            'gas_price': gas_price,
-        })
-
-    # make sure balances match what we expect
     assert argobytes_diamond.balance() == value
     assert example_action.balance() == value
 
