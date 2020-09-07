@@ -1,19 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.7.0;
 
-import {AccessControl} from "@OpenZeppelin/access/AccessControl.sol";
-
-contract DiamondStorageContract is AccessControl {
-
-    bytes32 constant DIAMOND_STORAGE_POSITION = keccak256("diamond.standard.diamond.storage");
+library LibDiamondStorage {
 
     struct DiamondStorage {
-
-        // the reference implementation uses a single address for the contract owner. this could do more complex things if it were a smart contract,
-        // but I think for now we'll keep using OpenZepplin's AccessControl
-        // owner of the contract
-        // address contractOwner;
-
         // maps function selectors to the facets that execute the functions.
         // and maps the selectors to the slot in the selectorSlots array.
         // and maps the selectors to the position in the slot.
@@ -24,17 +14,17 @@ contract DiamondStorageContract is AccessControl {
         // each slot holds 8 function selectors.
         mapping(uint => bytes32) selectorSlots;
 
-        // uint32 selectorSlotLength, uint32 selectorSlotsLength
-        // selectorSlotsLength is the number of 32-byte slots in selectorSlots.
-        // selectorSlotLength is the number of selectors in the last slot of
-        // selectorSlots.
-        uint selectorSlotsLength;
+        // The number of function selectors in selectorSlots
+        uint selectorCount;
 
         // Used to query if a contract implements an interface.
         // Used to implement ERC-165.
         mapping(bytes4 => bool) supportedInterfaces;
     }
 
+    // internal constants
+    bytes32 constant DIAMOND_STORAGE_POSITION = keccak256("diamond.standard.diamond.storage");
+    
     function diamondStorage() internal pure returns(DiamondStorage storage ds) {
         bytes32 position = DIAMOND_STORAGE_POSITION;
         assembly { ds.slot := position }

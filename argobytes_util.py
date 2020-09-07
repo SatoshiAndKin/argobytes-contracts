@@ -42,29 +42,13 @@ def deploy2_and_free(gas_token, diamond_contract, deploy_salt, contract_to_deplo
 def deploy2_and_cut_and_free(gas_token, diamond_contract, deploy_salt, contract_to_deploy, contract_to_deploy_args, deployed_sigs, gas_price):
     contract_initcode = contract_to_deploy.deploy.encode_input(*contract_to_deploy_args)
 
-    encoded_sigs = []
-    for deployed_sig in deployed_sigs:
-        # TODO: whats the maximum number of selectors?
-        cut = to_bytes(hexstr=contract_to_deploy.signatures[deployed_sig])
-
-        encoded_sigs.append(cut)
-
-    encoded_sigs = tuple(encoded_sigs)
-
-    # TODO: whats the maximum number of selectors?
-    # abi.encodePacked(address, selector1, ..., selectorN)
-    encoded_sigs = encode_abi_packed(
-        ['bytes4'] * len(encoded_sigs),
-        tuple(encoded_sigs)
-    )
-
     # TODO: print the expected address for this target_salt and initcode
 
-    deploy_tx = diamond_contract.deploy2AndDiamondCutAndFree(
+    # TODO: deploy2AndDiamondCutAndFree
+    deploy_tx = diamond_contract.deploy2AndFree(
         gas_token,
         deploy_salt,
         contract_initcode,
-        encoded_sigs,
         {"from": accounts[0], "gasPrice": gas_price}
     )
 
@@ -87,6 +71,30 @@ def deploy2_and_cut_and_free(gas_token, diamond_contract, deploy_salt, contract_
 
     print("CREATE2 deployed:", contract_to_deploy._name, "to", contract_to_deploy.address)
     print()
+
+    # add the functions to the diamond
+    encoded_sigs = []
+    for deployed_sig in deployed_sigs:
+        # TODO: whats the maximum number of selectors?
+        cut = to_bytes(hexstr=contract_to_deploy.signatures[deployed_sig])
+
+        encoded_sigs.append(cut)
+
+    # TODO: whats the maximum number of selectors?
+    # abi.encodePacked(address, selector1, ..., selectorN)
+    encoded_sigs = encode_abi_packed(
+        ['address'] + ['bytes4'] * len(encoded_sigs),
+        [deployed_address] + encoded_sigs
+    )
+
+    # TODO: do a bunch of these in one transaction
+    cut_tx = diamond_contract.diamondCutAndFree(
+        gas_token,
+        [encoded_sigs],
+        "0x0000000000000000000000000000000000000000",
+        to_bytes(hexstr="0x"),
+        {"from": accounts[0], "gasPrice": gas_price}
+    )
 
     return contract_to_deploy
 

@@ -112,8 +112,6 @@ def main():
     # it self destructs, so handling it is non-standard
     # TODO: use the LGT deploy2 helper for the initial deployment
     diamond_creator_tx = DiamondCreator.deploy(
-        accounts[0],
-        salt,
         salt,
         salt,
         {"from": accounts[0], "gasPrice": expected_mainnet_gas_price, "value": 1e18}
@@ -125,7 +123,7 @@ def main():
 
     diamond = Diamond.at(diamond_address)
 
-    print("DiamondCreator deployed Diamond to", diamond_address)
+    print("Self-destructing DiamondCreator deployed Diamond to", diamond_address)
     print()
 
     # save the diamond's address

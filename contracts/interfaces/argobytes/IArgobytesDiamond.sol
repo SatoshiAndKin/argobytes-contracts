@@ -5,16 +5,14 @@ pragma experimental ABIEncoderV2;
 import {IERC165} from "@OpenZeppelin/introspection/IERC165.sol";
 
 import {IArgobytesOwnedVault} from "./IArgobytesOwnedVault.sol";
-import {
-    IDiamondCutter,
-    IDiamondLoupe
-} from "contracts/diamond/DiamondHeaders.sol";
 import {IAccessControl} from "../openzeppelin/IAccessControl.sol";
+import {IDiamondCut} from "../../diamond/interfaces/IDiamondCut.sol";
+import {IDiamondLoupe} from "../../diamond/interfaces/IDiamondLoupe.sol";
 
 interface IArgobytesDiamond is
     IAccessControl,
     IArgobytesOwnedVault,
-    IDiamondCutter,
+    IDiamondCut,
     IDiamondLoupe,
     IERC165
 {

@@ -3,121 +3,84 @@ pragma solidity 0.7.0;
 pragma experimental ABIEncoderV2;
 
 /******************************************************************************\
-* Based on https://github.com/mudgen/Diamond By Author: Nick Mudge
+* Author: Nick Mudge
+*
+* Implementation of an example of a diamond.
 /******************************************************************************/
 
+import {AccessControl} from "@OpenZeppelin/access/AccessControl.sol";
 import {IERC165} from "@OpenZeppelin/introspection/IERC165.sol";
 
-import "./DiamondCutter.sol";
-import "./DiamondHeaders.sol";
-import "./DiamondLoupe.sol";
-import "./DiamondStorageContract.sol";
+import "./libraries/LibDiamondStorage.sol";
+import "./libraries/LibDiamond.sol";
+import "./facets/DiamondFacet.sol";
 
-contract Diamond is DiamondStorageContract, IERC165 {
-    constructor(address cutter, address loupe) payable {
-        DiamondStorage storage ds = diamondStorage();
+// TODO: fork AccessControl to use DiamondStorage
 
-        // msg.sender needs to be an admin in order to complete initial setup
-        // you probably want to revoke this and set your own admin
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+contract Diamond is AccessControl {
 
-        // Use an already deployed DiamondCutter contract
-        IDiamondCutter diamondCutter = IDiamondCutter(cutter);
+    constructor(address admin, address facet) payable {
+        LibDiamondStorage.DiamondStorage storage ds = LibDiamondStorage.diamondStorage();
 
-        // Use an already deployed DiamondLoupe contract
-        IDiamondLoupe diamondLoupe = IDiamondLoupe(loupe);
+        // grant admin role
+        _setupRole(DEFAULT_ADMIN_ROLE, admin);
 
-        bytes[] memory diamondCuts = new bytes[](3);
-
-        // Adding diamond cutter functions
-        diamondCuts[0] = abi.encodePacked(
-            diamondCutter,
-            diamondCutter.diamondCut.selector,
-            diamondCutter.diamondCutAndFree.selector,
-            // TODO: do we actually want deploy2+deploy2AndFree? That's available on the lgt contracts
-            diamondCutter.deploy2AndFree.selector,
-            diamondCutter.deploy2AndDiamondCutAndFree.selector
+        // Create a DiamondFacet contract which implements the Diamond interface
+        // TODO: will using an interface for this save any gas?
+        DiamondFacet diamondFacet = DiamondFacet(facet);
+        
+        bytes[] memory cut = new bytes[](1);
+        
+        // Adding diamond functions
+        cut[0] = abi.encodePacked(
+            diamondFacet,
+            DiamondFacet.deploy2AndFree.selector,
+            // DiamondFacet.deploy2AndDiamondCutAndFree.selector,
+            DiamondFacet.diamondCut.selector,
+            DiamondFacet.diamondCutAndFree.selector,
+            DiamondFacet.facetFunctionSelectors.selector,
+            DiamondFacet.facets.selector,
+            DiamondFacet.facetAddress.selector,
+            DiamondFacet.facetAddresses.selector,
+            DiamondFacet.supportsInterface.selector
         );
 
-        // Adding diamond loupe functions
-        diamondCuts[1] = abi.encodePacked(
-            diamondLoupe,
-            diamondLoupe.facetAddress.selector,
-            diamondLoupe.facetAddresses.selector,
-            diamondLoupe.facetFunctionSelectors.selector,
-            diamondLoupe.facets.selector
-        );
+        // execute non-standard internal diamondCut function to add functions
+        LibDiamond.diamondCut(cut);
+        
+        // adding ERC165 data
+        // ERC165
+        ds.supportedInterfaces[IERC165.supportsInterface.selector] = true;
 
-        // Adding supportsInterface function
-        diamondCuts[2] = abi.encodePacked(
-            address(this),
-            this.supportsInterface.selector
-        );
+        // DiamondCut
+        // TODO: more diamond cut functions
+        ds.supportedInterfaces[DiamondFacet.diamondCut.selector] = true;
 
-        // cut the diamond
-        // since this uses delegate call, msg.sender (which is used for auth) is unchanged
-        bytes memory cutData = abi.encodeWithSelector(
-            diamondCutter.diamondCut.selector,
-            diamondCuts
-        );
-        (bool success, ) = address(diamondCutter).delegatecall(cutData);
-        require(success, "Adding initial functions failed.");
-
-        // add ERC165 data
-        ds.supportedInterfaces[this.supportsInterface.selector] = true;
-
-        // add ERC165 data for gas-token freeing diamondCutter
-        bytes4 interfaceID = diamondCutter.deploy2AndFree.selector ^
-            diamondCutter.deploy2AndDiamondCutAndFree.selector ^
-            diamondCutter.diamondCut.selector ^
-            diamondCutter.diamondCutAndFree.selector;
-
+        // DiamondLoupe
+        bytes4 interfaceID = IDiamondLoupe.facets.selector ^
+            IDiamondLoupe.facetFunctionSelectors.selector ^
+            IDiamondLoupe.facetAddresses.selector ^
+            IDiamondLoupe.facetAddress.selector;
         ds.supportedInterfaces[interfaceID] = true;
-
-        // add ERC165 data for diamondLoupe
-        interfaceID =
-            diamondLoupe.facetFunctionSelectors.selector ^
-            diamondLoupe.facetAddresses.selector ^
-            diamondLoupe.facetAddress.selector ^
-            diamondLoupe.facets.selector;
-
-        ds.supportedInterfaces[interfaceID] = true;
-
-        // TODO: what if we need to add more ERC165 data?
     }
 
-    // This implements ERC-165.
-    // This is an immutable functions because it is defined directly in the diamond.
-    function supportsInterface(bytes4 _interfaceID)
-        external
-        override
-        view
-        returns (bool)
-    {
-        DiamondStorage storage ds = diamondStorage();
-        return ds.supportedInterfaces[_interfaceID];
-    }
-
-    // Finds the facet for this msg.sig, executes the function, and returns the value.
+    // Find facet for function that is called and execute the
+    // function if a facet is found and return any value.
     fallback() external payable {
-        DiamondStorage storage ds = diamondStorage();
-        address facet = address(bytes20(ds.facets[msg.sig]));
-        require(facet != address(0), "Function does not exist.");
-        assembly {
-            let ptr := mload(0x40)
-            calldatacopy(ptr, 0, calldatasize())
-            let result := delegatecall(gas(), facet, ptr, calldatasize(), 0, 0)
-            let size := returndatasize()
-            returndatacopy(ptr, 0, size)
+        LibDiamondStorage.DiamondStorage storage ds;
+        bytes32 position = LibDiamondStorage.DIAMOND_STORAGE_POSITION;
+        assembly { ds.slot := position }
+        address facet = address(bytes20(ds.facets[msg.sig]));  
+        require(facet != address(0));      
+        assembly {            
+            calldatacopy(0, 0, calldatasize())
+            let result := delegatecall(gas(), facet, 0, calldatasize(), 0, 0)            
+            returndatacopy(0, 0, returndatasize())
             switch result
-                case 0 {
-                    revert(ptr, size)
-                }
-                default {
-                    return(ptr, size)
-                }
+            case 0 {revert(0, returndatasize())}
+            default {return (0, returndatasize())}
         }
     }
 
-    receive() external payable {}
+    receive() external payable {}   
 }
