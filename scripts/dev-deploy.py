@@ -111,7 +111,7 @@ def main():
     # deploy the contract that will deploy the diamond (and cutter and loupe)
     # it self destructs, so handling it is non-standard
     # TODO: use the LGT deploy2 helper for the initial deployment
-    diamond_mine = DiamondMine.deploy(
+    diamond_creator_tx = DiamondCreator.deploy(
         accounts[0],
         salt,
         salt,
@@ -121,11 +121,11 @@ def main():
 
     # deploys have no return_value, so we check logs instead
     # TODO: double check that this is the right log
-    diamond_address = diamond_mine.tx.logs[0]['address']
+    diamond_address = diamond_creator_tx.logs[0]['address']
 
     diamond = Diamond.at(diamond_address)
 
-    print("Self-destructing DiamondCreator deployed Diamond to", diamond_address)
+    print("DiamondCreator deployed Diamond to", diamond_address)
     print()
 
     # save the diamond's address

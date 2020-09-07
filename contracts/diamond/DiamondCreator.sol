@@ -13,42 +13,43 @@ import {
     ILiquidGasToken
 } from "contracts/interfaces/liquidgastoken/ILiquidGasToken.sol";
 
-contract DiamondMine is LiquidGasTokenUser {
-
-    address public default_cutter;
-    address public default_loupe;
+contract DiamondCreator is LiquidGasTokenUser {
+    // since this is a one-time use, self-destructing contract and gas prices have been high for a while now...
+    // we can hard code this instead of using a constructor param
+    address constant gas_token = 0x000000000000C1CB11D5c062901F32D06248CE48;
 
     bytes32 constant DEFAULT_ADMIN_ROLE = 0x0;
 
     // use CREATE2 to deploy a diamond with an efficient address
     // use LiquidGasToken to save some gas fees
+    // self destruct to save some more gas fees
     constructor(
         address admin,
         bytes32 cutter_salt,
         bytes32 loupe_salt,
         bytes32 diamond_salt
     ) payable {
-        // since this is a one-time use, self destructing contract and gas prices have been high for a while now...
-        // we can hard code this instead of using a constructor param
-        address gas_token = 0x000000000000C1CB11D5c062901F32D06248CE48;
-
         uint256 initial_gas = initialGas(gas_token);
 
-        default_cutter = address(new DiamondCutter{salt: cutter_salt}());
-        default_loupe = address(new DiamondLoupe{salt: loupe_salt}());
+        DiamondCutter cutter = new DiamondCutter{salt: cutter_salt}();
+        DiamondLoupe loupe = new DiamondLoupe{salt: loupe_salt}();
 
         Diamond diamond = new Diamond{salt: diamond_salt}(
-            default_cutter,
-            default_loupe
+            address(cutter),
+            address(loupe)
         );
 
+        // pass the role on
         diamond.grantRole(DEFAULT_ADMIN_ROLE, admin);
-
         diamond.revokeRole(DEFAULT_ADMIN_ROLE, address(this));
+
+        // forward any received ETH to the diamond
+        (bool success, ) = address(diamond).call{value: msg.value}("");
 
         // forward any remaining liquid gas token to the diamond
         if (initial_gas > 0) {
-            freeGasTokens(gas_token, initial_gas);
+            // we add to initial gas because selfdestruct has a refund (at least for now)
+            freeGasTokens(gas_token, initial_gas + 400000);
 
             // transfer any remaining gas tokens
             uint256 lgt_balance = ILiquidGasToken(gas_token).balanceOf(address(this));
@@ -60,38 +61,33 @@ contract DiamondMine is LiquidGasTokenUser {
             }
         }
 
-        // forward any remaining balance to the first diamond
-        if (address(this).balance > 0) {
-            (bool success, ) = address(diamond).call{value: address(this).balance}("");
-        }
+        // forward any remaining balance to the diamond
+        // (bool success, ) = address(diamond).call{value: address(this).balance}("");
+        selfdestruct(address(diamond));
     }
 
-    // anyone can create their own diamond from our deployments
-    // TODO: this could be on the Diamond contract, but we'd have to be careful about forwarding balances
-    function mine(
-        address gas_token,
+    /*
+    // TODO: make it easy to look up the cutter and loupe addresses of an existing diamond
+    // TODO: adding this function makes this contract a lot more expensive!
+    // TODO: as long as we deploy more than a couple of vaults like this, it will be worth it
+    // TODO: maybe once the diamond reference implementation stabalizes more, this could be useful
+    function createDiamond(
         address admin,
         address cutter,
         address loupe,
-        bytes32 diamond_salt,
-        bytes[] calldata diamond_cuts
-    ) external payable freeGasTokensModifier(gas_token) returns (Diamond diamond) {
+        bytes32 diamond_salt
+    ) public payable returns (Diamond diamond) {
         diamond = new Diamond{salt: diamond_salt}(
             cutter,
             loupe
         );
 
-        if (diamond_cuts.length > 0) {
-            DiamondCutter(address(diamond)).diamondCut(diamond_cuts);
-        }
-
-        // pass the admin role on
         diamond.grantRole(DEFAULT_ADMIN_ROLE, admin);
+
         diamond.revokeRole(DEFAULT_ADMIN_ROLE, address(this));
 
-        // forward any remaining balance to the diamond
-        if (address(this).balance > 0) {
-            (bool success, ) = address(diamond).call{value: address(this).balance}("");
-        }
+        // forward any received ETH to the diamond
+        (bool success, ) = address(diamond).call{value: msg.value}("");
     }
+    */
 }
