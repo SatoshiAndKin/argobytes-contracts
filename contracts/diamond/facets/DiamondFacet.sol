@@ -105,11 +105,12 @@ contract DiamondFacet is IDiamondCut, IDiamondLoupe, IERC165, AccessControl, Liq
         emit DiamondCut(_diamondCut, _init, _calldata);
         if(_calldata.length > 0) {
             address init = _init == address(0)? address(this) : _init;
+
             // Check that init has contract code
             uint contractSize;
-
             assembly { contractSize := extcodesize(init) }
             require(contractSize > 0, "DiamondFacet: _init address has no code");
+
             (bool success, bytes memory error) = init.delegatecall(_calldata);
             if(!success) {
                 if(error.length > 0) {
