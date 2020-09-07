@@ -56,6 +56,8 @@ contract LiquidGasTokenUser {
         }
 
         // if there are LGT on the market available at a positive price, use them
+        // our LGT bot will try to make sure we always have LGT to spend, so we probably won't use this often
+        // but if LGT liquidity grows a lot and stays cheap, this could be useful
         if (_buyAndFreeGasTokens(gas_token, initial_gas)) {
             return;
         }
