@@ -149,7 +149,7 @@ def main():
     argobytes_diamond = interface.IArgobytesDiamond(diamond.address)
 
     # deploy ArgobytesOwnedVault and add it to the diamond
-    (argobytes_owned_vault, argobytes_owned_vault_cuts) = deploy2_and_cut_and_free(
+    (argobytes_owned_vault, argobytes_owned_vault_cuts) = deploy2_and_prepare_cut_and_free(
         gas_token_for_freeing,
         argobytes_diamond,
         salt,

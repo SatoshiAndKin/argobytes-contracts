@@ -77,7 +77,7 @@ def test_profitless_kollateral_fails(address_zero, argobytes_atomic_actions, arg
     assert example_action.balance() == 0
 
     # no actual arb. just call the sweep contract
-    encoded_actions = [
+    actions = [
         (
             example_action,
             example_action.sweep.encode_input(address_zero, address_zero, 0),
@@ -88,7 +88,7 @@ def test_profitless_kollateral_fails(address_zero, argobytes_atomic_actions, arg
     # accounts[1] is setup as the default trusted bot
     with brownie.reverts("ExternalCaller: insufficient ether balance"):
         argobytes_diamond.atomicArbitrage(
-            address_zero, argobytes_atomic_actions, kollateral_invoker, [address_zero], value, encoded_actions, {'from': accounts[1]})
+            address_zero, argobytes_atomic_actions, kollateral_invoker, [address_zero], value, actions, {'from': accounts[1]})
 
 
 def test_simple_kollateral(address_zero, argobytes_atomic_actions, argobytes_diamond, example_action, example_action_2, kollateral_invoker):

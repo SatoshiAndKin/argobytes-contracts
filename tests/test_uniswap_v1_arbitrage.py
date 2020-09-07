@@ -49,7 +49,7 @@ def test_uniswap_arbitrage(address_zero, argobytes_atomic_actions, argobytes_dia
             uniswap_v1_action,
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens, uint trade_gas)
             uniswap_v1_action.tradeTokenToEther.encode_input(address_zero, weth9_exchange, weth9_erc20, 1, 0),
-            False,
+            False
         ),
     ]
 

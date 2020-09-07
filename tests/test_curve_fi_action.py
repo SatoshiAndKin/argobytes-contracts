@@ -85,3 +85,5 @@ def test_compound_action(curve_fi_action, curve_fi_compound, cdai_erc20, cusdc_e
 
     # TODO: check balance of usdc and dai
     # TODO: actually assert things
+
+# TODO: test trading on the y pool

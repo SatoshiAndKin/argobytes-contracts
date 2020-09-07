@@ -39,7 +39,31 @@ def deploy2_and_free(gas_token, diamond_contract, deploy_salt, contract_to_deplo
     return contract_to_deploy
 
 
+# TODO: do this in one transaction
 def deploy2_and_cut_and_free(gas_token, diamond_contract, deploy_salt, contract_to_deploy, contract_to_deploy_args, deployed_sigs, gas_price):
+    (deployed_contract, encoded_sigs) = deploy2_and_prepare_cut_and_free(
+        gas_token,
+        diamond_contract,
+        deploy_salt,
+        contract_to_deploy,
+        contract_to_deploy_args,
+        deployed_sigs,
+        gas_price,
+    )
+
+    # TODO: do a bunch of these in one transaction
+    cut_tx = diamond_contract.diamondCutAndFree(
+        gas_token,
+        [encoded_sigs],
+        "0x0000000000000000000000000000000000000000",
+        to_bytes(hexstr="0x"),
+        {"from": accounts[0], "gasPrice": gas_price}
+    )
+
+    return deployed_contract
+
+
+def deploy2_and_prepare_cut_and_free(gas_token, diamond_contract, deploy_salt, contract_to_deploy, contract_to_deploy_args, deployed_sigs, gas_price):
     contract_initcode = contract_to_deploy.deploy.encode_input(*contract_to_deploy_args)
 
     # TODO: print the expected address for this target_salt and initcode
@@ -86,15 +110,6 @@ def deploy2_and_cut_and_free(gas_token, diamond_contract, deploy_salt, contract_
         ['address'] + ['bytes4'] * len(encoded_sigs),
         [deployed_address] + encoded_sigs
     )
-
-    # TODO: do a bunch of these in one transaction
-    # cut_tx = diamond_contract.diamondCutAndFree(
-    #     gas_token,
-    #     [encoded_sigs],
-    #     "0x0000000000000000000000000000000000000000",
-    #     to_bytes(hexstr="0x"),
-    #     {"from": accounts[0], "gasPrice": gas_price}
-    # )
 
     return (contract_to_deploy, encoded_sigs)
 

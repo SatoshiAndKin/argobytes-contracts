@@ -39,7 +39,6 @@ def argobytes_diamond(address_zero, ArgobytesOwnedVault, DiamondCreator, interfa
     diamond_deploy_tx = DiamondCreator.deploy(
         salt,
         salt,
-        salt,
         {"from": accounts[0]}
     )
 
@@ -50,7 +49,7 @@ def argobytes_diamond(address_zero, ArgobytesOwnedVault, DiamondCreator, interfa
 
     gas_price = 0
 
-    # deploy ArgobytesOwnedVault and add it to the diamond
+    # deploy ArgobytesOwnedVault and add functions to the diamond
     argobytes_owned_vault = deploy2_and_cut_and_free(
         address_zero,
         argobytes_diamond,
@@ -114,7 +113,7 @@ def curve_fi_compound(CurveFiAction):
 
 @pytest.fixture(scope="function")
 def curve_fi_action(CurveFiAction, curve_fi_compound):
-    curve_fi = accounts[0].deploy(CurveFiAction, accounts[0])
+    curve_fi = accounts[0].deploy(CurveFiAction)
 
     # TODO: add the other exchanges
     curve_fi.saveExchange(curve_fi_compound, 2)
