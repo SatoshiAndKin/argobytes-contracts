@@ -1,6 +1,7 @@
 #!/bin/sh -eu
 # start ganache on port 8555
 # you need a local node running with websockets available on port 8546
+# TODO: use brownie to launch this so that it matches network-config.yml?
 
 [ -z "${NODE_OPTIONS:-}" ] && echo "If ganache-cli crashes, try setting NODE_OPTIONS in your .env and then '. ./scripts/activate'"
 

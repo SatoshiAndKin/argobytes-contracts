@@ -9,4 +9,4 @@ fi
 
 # run the tests against the proper network with concurrency
 # TODO: run with -n2 when ganache-cli doesn't have so many issues with OOMing
-brownie test --network mainnet-fork "$@"
+brownie test --network mainnet-fork-localhost "$@"
