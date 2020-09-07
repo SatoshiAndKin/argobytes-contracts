@@ -14,6 +14,7 @@ import {IERC165} from "@OpenZeppelin/introspection/IERC165.sol";
 
 import {LiquidGasTokenUser} from "contracts/LiquidGasTokenUser.sol";
 
+// import "../libraries/LibDiamond.sol";
 import "../libraries/LibDiamondStorage.sol";
 import "../interfaces/IDiamondCut.sol";
 import "../interfaces/IDiamondLoupe.sol";
@@ -73,8 +74,9 @@ contract DiamondFacet is IDiamondCut, IDiamondLoupe, IERC165, AccessControl, Liq
         bytes[] memory cuts = new bytes[](1);
         cuts[0] = abi.encodePacked(deployed, facet_sigs);
 
-        // diamondCut(cuts, _init, _calldata);
-        revert("wip. calldata vs memory issues");
+        LibDiamond.diamondCut(cuts);
+
+        revert("wip: use _init and _calldata");
 
         // TODO: get rid of this once we figure out why brownie isn't setting return_value
         emit Deploy(deployed);
