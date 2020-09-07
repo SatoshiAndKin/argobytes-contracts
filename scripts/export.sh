@@ -32,6 +32,12 @@ function export_brownie_abi() {
     cp "$ARGOBYTES_BACKEND_ABI_DIR/$contract_name.json" "$ARGOBYTES_WEB_ABI_DIR/$contract_name.json"
 }
 
+function export_interface() {
+    jq ".abi" "build/interfaces/$1.json" > "$ARGOBYTES_BACKEND_ABI_DIR/$1.json"
+
+    cp "$ARGOBYTES_BACKEND_ABI_DIR/$1.json" "$ARGOBYTES_WEB_ABI_DIR/$1.json"
+}
+
 ./venv/bin/brownie compile
 
 # we don't need to export all abis. we just need the abi's for our contracts
@@ -49,6 +55,8 @@ export_argobytes_abi UniswapV2Action
 export_argobytes_abi Weth9Action
 
 export_brownie_abi "OpenZeppelin/openzeppelin-contracts@3.0.1/build/contracts/ERC20"
+
+export_interface "YearnEthVault"
 
 # we do want all the addresses tho
 # TODO: it would be nice to uuse build/deployments/map.json, but that doesn't handle our curve action (though we should maybe improve how the curve action works)

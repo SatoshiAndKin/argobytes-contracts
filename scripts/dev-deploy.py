@@ -399,10 +399,13 @@ def main():
     quick_save("SynthetixAddressResolver", SynthetixAddressResolverAddress)
     quick_save("UniswapFactory", UniswapV1FactoryAddress)
     quick_save("Weth9", Weth9Address)
+    quick_save("YearnEthVault", YearnEthVaultAddress)
 
     # give the argobytes_diamond a bunch of coins. it will forward them when deploying the diamond
     accounts[1].transfer(argobytes_diamond, 50 * 1e18)
     accounts[2].transfer(argobytes_diamond, 50 * 1e18)
     accounts[3].transfer(argobytes_diamond, 50 * 1e18)
+    accounts[4].transfer(argobytes_diamond_admin, 30 * 1e18)
+    accounts[4].transfer(argobytes_diamond_arbitragers[0], 30 * 1e18)
 
     reset_block_time(synthetix_depot_action)
