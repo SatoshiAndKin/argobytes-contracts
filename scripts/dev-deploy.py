@@ -44,8 +44,8 @@ def main():
     # gas price should be 3.0x to 3.5x the mint price
     # TODO: double check and document why its 3.5x
     # unless you are in a rush, it is better to just deploy at low gas prices
-    expected_mainnet_mint_price = "20 gwei"
-    expected_mainnet_gas_price = "60 gwei"
+    expected_mainnet_mint_price = "30 gwei"
+    expected_mainnet_gas_price = "100 gwei"
 
     arb_bots = [
         SKI_METAMASK_1,
