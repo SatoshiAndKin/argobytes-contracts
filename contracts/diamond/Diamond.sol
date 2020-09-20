@@ -35,7 +35,7 @@ contract Diamond is AccessControl {
         cut[0] = abi.encodePacked(
             diamondFacet,
             DiamondFacet.deploy2AndFree.selector,
-            // DiamondFacet.deploy2AndDiamondCutAndFree.selector,
+            DiamondFacet.deploy2AndDiamondCutAndFree.selector,
             DiamondFacet.diamondCut.selector,
             DiamondFacet.diamondCutAndFree.selector,
             DiamondFacet.facetFunctionSelectors.selector,
@@ -49,19 +49,9 @@ contract Diamond is AccessControl {
         LibDiamond.diamondCut(cut);
         
         // adding ERC165 data
-        // ERC165
-        ds.supportedInterfaces[IERC165.supportsInterface.selector] = true;
-
-        // DiamondCut
-        // TODO: more diamond cut functions
-        ds.supportedInterfaces[DiamondFacet.diamondCut.selector] = true;
-
-        // DiamondLoupe
-        bytes4 interfaceID = IDiamondLoupe.facets.selector ^
-            IDiamondLoupe.facetFunctionSelectors.selector ^
-            IDiamondLoupe.facetAddresses.selector ^
-            IDiamondLoupe.facetAddress.selector;
-        ds.supportedInterfaces[interfaceID] = true;
+        ds.supportedInterfaces[type(IERC165).interfaceId] = true;
+        ds.supportedInterfaces[type(IDiamondCut).interfaceId] = true;
+        ds.supportedInterfaces[type(IDiamondLoupe).interfaceId] = true;
     }
 
     // Find facet for function that is called and execute the

@@ -14,12 +14,14 @@ import {IERC165} from "@OpenZeppelin/introspection/IERC165.sol";
 
 import {LiquidGasTokenUser} from "contracts/LiquidGasTokenUser.sol";
 
-// import "../libraries/LibDiamond.sol";
+import "../libraries/LibDiamond.sol";
 import "../libraries/LibDiamondStorage.sol";
 import "../interfaces/IDiamondCut.sol";
 import "../interfaces/IDiamondLoupe.sol";
 
 // TODO: fork AccessControl to use DiamondStorage
+
+// TODO: import ERC165 instead of IERC165?
 
 contract DiamondFacet is IDiamondCut, IDiamondLoupe, IERC165, AccessControl, LiquidGasTokenUser {
 
@@ -51,7 +53,6 @@ contract DiamondFacet is IDiamondCut, IDiamondLoupe, IERC165, AccessControl, Liq
         emit Deploy(deployed);
     }
 
-    /*
     // use CREATE2 to deploy with a salt and cut the diamond
     function deploy2AndDiamondCutAndFree(
         address gas_token,
@@ -81,7 +82,6 @@ contract DiamondFacet is IDiamondCut, IDiamondLoupe, IERC165, AccessControl, Liq
         // TODO: get rid of this once we figure out why brownie isn't setting return_value
         emit Deploy(deployed);
     }
-    */
 
     // Standard diamondCut external function
     /// @notice Add/replace/remove any number of functions and optionally execute

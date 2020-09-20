@@ -9,7 +9,6 @@ interface IDiamondCut {
         bytes calldata initcode
     ) external payable returns (address deployed);
 
-    /*
     function deploy2AndDiamondCutAndFree(
         address gas_token,
         bytes32 salt,
@@ -18,7 +17,6 @@ interface IDiamondCut {
         address _init,
         bytes calldata _calldata
     ) external payable returns (address deployed);
-    */
 
     /// @notice Add/replace/remove any number of functions and optionally execute
     ///         a function with delegatecall
