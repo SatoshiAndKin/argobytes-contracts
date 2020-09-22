@@ -36,7 +36,7 @@ idna==2.10                # via requests
 inflection==0.5.0         # via mythx-models, pythx
 iniconfig==1.0.1          # via pytest
 ipfshttpclient==0.6.1     # via web3
-isort==5.5.2              # via pylint
+isort==5.5.3              # via pylint
 jsonschema==3.2.0         # via mythx-models, web3
 lazy-object-proxy==1.4.3  # via astroid
 lru-dict==1.1.6           # via web3
