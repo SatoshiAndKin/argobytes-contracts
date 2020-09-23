@@ -1,5 +1,5 @@
-from argobytes_util import *
 import pytest
+from argobytes_util import *
 
 
 @pytest.mark.parametrize("address,salt,initcode,result", [

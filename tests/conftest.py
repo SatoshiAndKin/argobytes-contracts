@@ -1,9 +1,9 @@
+from eth_utils import keccak, to_checksum_address, to_bytes
+from eth_abi.packed import encode_abi_packed
+from brownie import *
 import pytest
 from argobytes_util import *
 from argobytes_mainnet import *
-from brownie import *
-from eth_abi.packed import encode_abi_packed
-from eth_utils import keccak, to_checksum_address, to_bytes
 
 
 @pytest.fixture(autouse=True, scope="function")
@@ -76,7 +76,7 @@ def argobytes_diamond(address_zero, ArgobytesOwnedVault, DiamondCreator, interfa
 
     # TODO: eventually we will have something like this
     # TODO: we will need to make sure that replacing withdrawTo works properly
-    # argobytes_tokenized_deposits = deploy2_and_cut_and_free(
+    #  argobytes_tokenized_deposits = deploy2_and_cut_and_free(
     #     gas_token,
     #     argobytes_diamond,
     #     salt,

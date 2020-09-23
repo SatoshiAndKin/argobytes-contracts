@@ -1,12 +1,12 @@
 # deploy all our contracts to a development network
 # rather than call this directly, you probably want to use `./scripts/test-deploy.sh` or `./scripts/staging-deploy.sh`
 
+import os
+from eth_utils import to_bytes
+from eth_abi import encode_single, encode_abi
+from brownie import *
 from argobytes_util import *
 from argobytes_mainnet import *
-from brownie import *
-from eth_abi import encode_single, encode_abi
-from eth_utils import to_bytes
-import os
 
 
 # TODO: set these inside main instead of using globals
@@ -149,7 +149,7 @@ def main():
     argobytes_diamond = interface.IArgobytesDiamond(diamond.address)
 
     # deploy ArgobytesOwnedVault and add it to the diamond
-    (argobytes_owned_vault, argobytes_owned_vault_cuts) = deploy2_and_prepare_cut_and_free(
+    (argo_owned_vault, argobytes_owned_vault_cuts) = deploy2_and_prepare_cut_and_free(
         gas_token_for_freeing,
         argobytes_diamond,
         salt,
@@ -166,7 +166,7 @@ def main():
         ],
         expected_mainnet_gas_price
     )
-    quick_save_contract(argobytes_owned_vault)
+    quick_save_contract(argo_owned_vault)
 
     # deploy all the other contracts
     # these one's don't modify the diamond
@@ -178,7 +178,7 @@ def main():
         [],
         expected_mainnet_gas_price
     )
-    quick_save_contract(argobytes_atomic_actions)
+    quick_save_contract(argo_atomic_actions)
 
     example_action = deploy2_and_free(
         gas_token_for_freeing,
@@ -303,7 +303,7 @@ def main():
         # register for kyber's fee program
         (
             KyberRegisterWalletAddress,
-            kyber_register_wallet.registerWallet.encode_input(argobytes_diamond),
+            kyber_register_wallet.registerWallet.encode_input(argo_diamond),
             False,
         ),
     ]
@@ -313,7 +313,7 @@ def main():
 
     argobytes_diamond.diamondCutAndFree(
         gas_token,
-        [argobytes_owned_vault_cuts],
+        [argo_owned_vault_cuts],
         "0x0000000000000000000000000000000000000000",
         bulk_actions,
         {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
@@ -352,7 +352,7 @@ def main():
 
     if FREE_GAS_TOKEN:
         # # TODO: make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
-        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_diamond)
+        gas_tokens_remaining = gas_token.balanceOf.call(argo_diamond)
 
         print("gas token:", LiquidGasTokenAddress)
 
@@ -361,7 +361,7 @@ def main():
         assert gas_tokens_remaining > 0
         assert gas_tokens_remaining <= mint_batch_amount
     elif MINT_GAS_TOKEN:
-        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_diamond)
+        gas_tokens_remaining = gas_token.balanceOf.call(argo_diamond)
 
         print("gas token:", LiquidGasTokenAddress)
 
@@ -402,10 +402,10 @@ def main():
     quick_save("YearnEthVault", YearnEthVaultAddress)
 
     # give the argobytes_diamond a bunch of coins. it will forward them when deploying the diamond
-    accounts[1].transfer(argobytes_diamond, 50 * 1e18)
-    accounts[2].transfer(argobytes_diamond, 50 * 1e18)
-    accounts[3].transfer(argobytes_diamond, 50 * 1e18)
-    accounts[4].transfer(argobytes_diamond_admin, 30 * 1e18)
-    accounts[4].transfer(argobytes_diamond_arbitragers[0], 30 * 1e18)
+    accounts[1].transfer(argo_diamond, 50 * 1e18)
+    accounts[2].transfer(argo_diamond, 50 * 1e18)
+    accounts[3].transfer(argo_diamond, 50 * 1e18)
+    accounts[4].transfer(argo_diamond_admin, 30 * 1e18)
+    accounts[4].transfer(argo_diamond_arbitragers[0], 30 * 1e18)
 
     reset_block_time(synthetix_depot_action)

@@ -7,14 +7,14 @@ from hypothesis import settings
 
 
 # @pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/611")
-def test_kyber_arbitrage(address_zero, argobytes_atomic_actions, dai_erc20, argobytes_diamond, kyber_network_proxy, kyber_action, usdc_erc20):
+def test_kyber_arbitrage(address_zero,  argobytes_atomic_actions, dai_erc20,  argobytes_diamond, kyber_network_proxy, kyber_action, usdc_erc20):
     assert argobytes_diamond.balance() == 0
     assert kyber_action.balance() == 0
 
     value = 1e18
 
     # send some ETH into the vault
-    accounts[0].transfer(argobytes_diamond, value)
+    accounts[0].transfer(argo_diamond, value)
     # send some ETH to the action to simulate arbitrage profits
     accounts[0].transfer(kyber_action, value)
 
@@ -45,7 +45,7 @@ def test_kyber_arbitrage(address_zero, argobytes_atomic_actions, dai_erc20, argo
     ]
 
     arbitrage_tx = argobytes_diamond.atomicArbitrage(
-        address_zero, argobytes_atomic_actions, address_zero, [address_zero], value, actions, {'from': accounts[1]})
+        address_zero,  argobytes_atomic_actions, address_zero, [address_zero], value, actions, {'from': accounts[1]})
 
     assert argobytes_diamond.balance() > value
 

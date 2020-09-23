@@ -12,15 +12,6 @@ contract LiquidGasTokenUser {
     using Strings for uint256;
     using SafeMath for uint256;
 
-    modifier freeGasTokensModifier(address gas_token) {
-        // save our starting gas so we can burn the proper amount of gas token at the end
-        uint256 initial_gas = initialGas(gas_token);
-
-        _;
-
-        freeGasTokens(gas_token, initial_gas);
-    }
-
     function initialGas(address gas_token)
         internal
         view
@@ -36,6 +27,7 @@ contract LiquidGasTokenUser {
     }
 
     // TODO: return success boolean? revert?
+    // this shouldn't ever revert. we care more about the rest of the transaction succeeding than this succeeding
     function freeGasTokens(address gas_token, uint256 initial_gas) internal {
         if (initial_gas == 0) {
             return;
@@ -48,7 +40,7 @@ contract LiquidGasTokenUser {
         // and we are going to have our own bot that is minting/buying gas token whenever it is cheap
         // the bot can also mint/sell into the liquidity pool
 
-        // if there are tokens in the vault, we can assume they were bought at a low gas price
+        // if there are tokens available, we can assume they were bought at a low gas price
         // if we have gas_token set, then we can assume we are at a high gas price
         // (ergo, the caller should set gas_token to 0x0 when gas prices are low)
         if (_freeGasTokens(gas_token, initial_gas)) {
@@ -61,9 +53,6 @@ contract LiquidGasTokenUser {
         if (_buyAndFreeGasTokens(gas_token, initial_gas)) {
             return;
         }
-
-        // TODO: we probably don't actually want to revert. but this makes debugging simpler. delete
-        // revert("LiquidGasTokenUser.freeGasTokens: DEBUGGING");
     }
 
     /**
@@ -96,7 +85,7 @@ contract LiquidGasTokenUser {
                     }(optimal_tokens)
                  {
                     // gas token was bought and freed
-                    // TODO: I think if we sent the wrong value, this would actually not have freed anything. but we did the check in this transaction so should be safe
+                    // TODO: I think if we sent the wrong msg.value, this would actually not have freed anything. but we did the check in this transaction so should be safe
                     return true;
                 } catch Error(string memory reason) {
                     // a revert was called inside buyAndFree22457070633
@@ -112,12 +101,16 @@ contract LiquidGasTokenUser {
         } catch Error(string memory reason) {
             // a revert was called inside getEthToTokenOutputPrice
             // and a reason string was provided.
+
+            // we don't want to actually revert. we just want to return false
         } catch (
             bytes memory /*lowLevelData*/
         ) {
             // This is executed in case revert() was used
             // or there was a failing assertion, division
             // by zero, etc. inside getEthToTokenOutputPrice.
+
+            // we don't want to actually revert. we just want to return false
         }
 
         return false;
@@ -141,21 +134,18 @@ contract LiquidGasTokenUser {
         }
 
         // we can assume that any tokens we have were acuired at a "cheap" gas cost
-        uint256 available_tokens = ILiquidGasToken(gas_token).balanceOf(
+        uint256 available_tokens = ILiquidGasToken(gas_token).allowance(
+            msg.sender,
             address(this)
         );
 
-        if (available_tokens == 0) {
+        if (available_tokens < optimal_tokens) {
+            // TODO: buy enough to have optimal_tokens? free what we do have?
+            // we will have our own bot minting at low gas prices and sending it here for extremely high gas cost arbitrage trades
+            // return ILiquidGasToken(gas_token).freeFrom(available_tokens, msg.sender);
             return false;
         }
 
-        if (available_tokens < optimal_tokens) {
-            // TODO: buy enough to have optimal_tokens?
-            // we will have our own bot minting at low gas prices and sending it here for extremely high gas cost arbitrage trades
-
-            return ILiquidGasToken(gas_token).free(available_tokens);
-        } else {
-            return ILiquidGasToken(gas_token).free(optimal_tokens);
-        }
+        return ILiquidGasToken(gas_token).freeFrom(optimal_tokens, msg.sender);
     }
 }

@@ -128,4 +128,4 @@ def main():
         wait_for_confirm=False,
     )
 
-    send_eth_helper(argobytes_owned_vault, 0.5 * 1e18, wait_for_confirm=False)
+    send_eth_helper(argo_owned_vault, 0.5 * 1e18, wait_for_confirm=False)

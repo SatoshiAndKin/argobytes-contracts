@@ -4,11 +4,11 @@
 # Calculate salts for use with CREATE2.
 # This can be used to create addresses with lots of zeros which are slightly cheaper to call.
 # This can also be used for creating vanity addresses with fun patterns.
-from argobytes_util import *
-from brownie import *
-from eth_utils import keccak, to_checksum_address, to_bytes
-import os
 import rlp
+import os
+from eth_utils import keccak, to_checksum_address, to_bytes
+from brownie import *
+from argobytes_util import *
 
 
 def main():

@@ -5,7 +5,6 @@ pragma experimental ABIEncoderV2;
 
 import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
 import {Address} from "@OpenZeppelin/utils/Address.sol";
-// import {Strings} from "@OpenZeppelin/utils/Strings.sol";
 
 import {IInvokable} from "contracts/interfaces/kollateral/IInvokable.sol";
 import {IInvoker} from "contracts/interfaces/kollateral/IInvoker.sol";
@@ -17,22 +16,16 @@ import {
     IArgobytesAtomicActions
 } from "contracts/interfaces/argobytes/IArgobytesAtomicActions.sol";
 
-// import {Strings2} from "contracts/Strings2.sol";
-
 // https://github.com/kollateral/kollateral/blob/master/lib/static/invoker.ts
 // they take a 6bps fee
 // TODO: support any.sender
-contract ArgobytesAtomicActions is
-    IArgobytesAtomicActions,
+contract ArgobytesActions is
+    IArgobytesActions,
     KollateralInvokable
 {
     using Address for address;
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-    // using Strings for uint256;
-    // using Strings2 for address;
-    // using Strings2 for bytes;    // we don't need this now that OpenZepplin has call helpers
-    using UniversalERC20 for IERC20;
 
     address internal constant ADDRESS_ZERO = address(0x0);
     address internal constant KOLLATERAL_ETH = address(
@@ -40,7 +33,7 @@ contract ArgobytesAtomicActions is
     );
 
     // this can be helpful to call from another contract with delegatecall (though I should check the gas costs to see if it makes sense)
-    // this doesn't sweep any tokens for you! if you need to interact with tokens, call atomicTrades
+    // this doesn't sweep any tokens for you! if you need to interact with tokens, call atomicTrades instead
     function atomicActions(Action[] calldata actions)
         external
         override
