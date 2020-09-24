@@ -3,8 +3,10 @@
 /* ArgobytesProxy
  *
  * User deploys a proxy with the ProxyFactory
- * User executes 
- *
+ * User deploys a smart contract for auth
+ * User approves bot to call `ArgobytesTrader.argobytesArbitrage`
+ * Bot makes money. Bot can steal arbitrage trade profits, but nothing more.
+ * Bot can waste our liquidgastoken
  */
 pragma solidity 0.7.0;
 
