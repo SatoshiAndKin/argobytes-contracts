@@ -25,6 +25,7 @@ def quick_save_contract(contract):
 def quick_save(contract_name, address):
     """quick and dirty way to save contract addresses in an easy to read format."""
     if EXPORT_ARTIFACTS == False:
+        print(f"{contract_name} is deployed at {address}\n")
         return
 
     quick_name = contract_name + ".addr"
@@ -97,8 +98,8 @@ def main():
         for _ in range(0, num_mints):
             # TODO: im still not positive we want mintToLiqudity instead of mintTo
             # TODO: keep track of gas spent minting liquidity
-            # gas_token.mintToLiquidity(mint_batch_amount, 0, deadline, accounts[1], {
-            #                           'from': accounts[1], 'value': 1e19, "gasPrice": expected_mainnet_mint_price})
+            # gas_token.mintToLiquidity(mint_batch_amount, 0, deadline, accounts[0], {
+            #                           'value': 1e19, "gasPrice": expected_mainnet_mint_price})
             gas_token.mintFor(mint_batch_amount, accounts[0], {"gasPrice": expected_mainnet_mint_price})
 
         gas_tokens_start = gas_token.balanceOf.call(accounts[0])
@@ -116,11 +117,11 @@ def main():
     else:
         free_num_gas_gas_tokens = 0
 
-    deploy_tx = gas_token.deploy2(
+    deploy_tx = gas_token.create2(
         free_num_gas_gas_tokens,
         deadline,
         salt_uint,
-        ArgobytesDeployer.deploy.encode_input(),
+        ArgobytesProxyFactory.deploy.encode_input(),
         {
             # this ether will get sent back if gas_token_amount is 0
             # TODO: calculate an actual amount for this
@@ -129,32 +130,35 @@ def main():
     )
     # TODO: check how much we spent on gas token
 
-    argobytes_deployer = ArgobytesDeployer.at(deploy_tx.return_value, accounts[0])
+    argobytes_proxy_factory = ArgobytesProxyFactory.at(deploy_tx.return_value, accounts[0])
+    quick_save_contract(argobytes_proxy_factory)
 
-    # TODO: setup gastoken approvals
+    if FREE_GAS_TOKEN:
+        gas_token.approve(argobytes_proxy_factory, -1)
 
-    # TODO: calculate gas_token_amount for DSProxy
-    deploy_tx = argobytes_deployer.deploy(
-        gas_token_for_freeing,
-        24,
-        DSProxyFactoryAddress,
+    # TODO: calculate gas_token_amount for an ArgobytesProxy
+    deploy_tx = argobytes_proxy_factory.buildProxy(
+        0,
+        salt,
     )
 
     ds_proxy_address = deploy_tx.return_value
 
+    # deploy a dsproxy just to compare gas costs
+    ds_proxy_factory = interface.DSProxyFactory(DSProxyFactoryAddress, accounts[0])
+
+    ds_proxy_tx = ds_proxy_factory.build()
+
     # TODO: setup auth for the proxy
 
-    # TODO: use argobytes_deployer to deploy things
+    # deploy ArgobytesTrader
     # TODO: calculate gas_token_amount (make a helper function for this?)
-    deploy_tx = argobytes_deployer.deploy(
-        gas_token_for_freeing,
-        14,
+    deploy_tx = argobytes_proxy_factory.deploy2(
+        0,  # 14,
         salt,
         ArgobytesTrader.deploy.encode_input(),
         to_bytes(hexstr="0x"),
     )
-
-    # deploy ArgobytesTrader
     argobytes_trader = ArgobytesTrader.at(deploy_tx.return_value, accounts[0])
     quick_save_contract(argobytes_trader)
 

@@ -20,6 +20,7 @@ contract ArgobytesAuth is Ownable2 {
 
     modifier auth() {
         // do auth first. that is safest
+        // theres some cases where it may be possible to do the auth check last, but it is too risky for me
         requireAuth(address(this), msg.sig);
         _;
     }

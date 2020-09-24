@@ -54,17 +54,17 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy, IERC165, LiquidGasTok
         uint256 initial_gas = initialGas(free_gas_tokens);
 
         // TODO: i think we want an empty salt. maybe take it as an argument though
-        // adding a salt adds to the calldata which negates the address savings
+        // adding a salt adds to the calldata would negate some of savings from 0 bytes in target
         target = Create2.computeAddress("", keccak256(target_code), address(factory));
 
         // instead of authenticating the execute call, check auth for the sig (first 4 bytes) of target_calldata
         requireAuth(target, target_calldata.toBytes4());
 
-        if (!Address2.isContract(target)) {
+        if (!target.isContractInternal()) {
             // target doesn't exist. create it
             // if you want to burn gas token, do it during target_calldata
             // TODO: think more about gas token
-            require(factory.deploy2(0, "", target_code, "") == target, "address mismatch");
+            require(factory.deploy2(0, "", target_code, "") == target, "ArgobytesProxy: address mismatch");
         }
 
         // TODO: openzepplin's extra checks are unnecessary since we just deployed, but gas golf this later
