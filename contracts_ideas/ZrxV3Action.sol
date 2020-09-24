@@ -7,7 +7,7 @@ pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
-import {UniversalERC20, IERC20} from "contracts/UniversalERC20.sol";
+import {UniversalERC20, IERC20} from "contracts/library/UniversalERC20.sol";
 import {AbstractERC20Modifiers} from "./AbstractERC20Exchange.sol";
 
 contract ZrxV3Action is AbstractERC20Modifiers {

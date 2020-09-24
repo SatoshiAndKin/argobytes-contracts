@@ -6,7 +6,7 @@ import {
     IKyberNetworkProxy
 } from "contracts/interfaces/kyber/IKyberNetworkProxy.sol";
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
-import {IERC20, UniversalERC20, SafeERC20} from "contracts/UniversalERC20.sol";
+import {IERC20, UniversalERC20, SafeERC20} from "contracts/library/UniversalERC20.sol";
 
 contract KyberAction is AbstractERC20Exchange {
     using SafeERC20 for IERC20;

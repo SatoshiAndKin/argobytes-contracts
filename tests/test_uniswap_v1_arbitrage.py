@@ -17,7 +17,7 @@ def test_uniswap_arbitrage(address_zero,  argobytes_atomic_actions,  argobytes_d
     value = 1e18
 
     # send some ETH into the vault
-    accounts[0].transfer(argo_diamond, value)
+    accounts[0].transfer(argobytes_diamond, value)
     # send some ETH into the action to simulate arbitrage profits
     accounts[0].transfer(uniswap_v1_action, value)
 

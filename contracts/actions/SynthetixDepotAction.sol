@@ -24,8 +24,8 @@ import {ISystemStatus} from "contracts/interfaces/synthetix/ISystemStatus.sol";
 import {IProxy} from "contracts/interfaces/synthetix/IProxy.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
-import {UniversalERC20} from "contracts/UniversalERC20.sol";
-import {Strings2} from "contracts/Strings2.sol";
+import {UniversalERC20} from "contracts/library/UniversalERC20.sol";
+import {Strings2} from "contracts/library/Strings2.sol";
 
 contract SynthetixDepotAction is AbstractERC20Exchange {
     using UniversalERC20 for IERC20;

@@ -11,7 +11,7 @@ import {IInvoker} from "contracts/interfaces/kollateral/IInvoker.sol";
 import {
     KollateralInvokable
 } from "contracts/interfaces/kollateral/KollateralInvokable.sol";
-import {UniversalERC20, SafeERC20, IERC20} from "contracts/UniversalERC20.sol";
+import {UniversalERC20, SafeERC20, IERC20} from "contracts/library/UniversalERC20.sol";
 import {
     IArgobytesAtomicActions
 } from "contracts/interfaces/argobytes/IArgobytesAtomicActions.sol";

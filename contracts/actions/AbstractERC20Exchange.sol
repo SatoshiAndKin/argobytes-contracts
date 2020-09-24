@@ -12,7 +12,7 @@ pragma experimental ABIEncoderV2;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
 
-import {IERC20, UniversalERC20, SafeERC20} from "contracts/UniversalERC20.sol";
+import {IERC20, UniversalERC20, SafeERC20} from "contracts/library/UniversalERC20.sol";
 
 contract AbstractERC20Modifiers {
     using Address for address;

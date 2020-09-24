@@ -16,8 +16,8 @@ import {Ownable} from "@OpenZeppelin/access/Ownable.sol";
 import {ICurveFi} from "contracts/interfaces/curvefi/ICurveFi.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
-import {Strings2} from "contracts/Strings2.sol";
-import {IERC20, SafeERC20, UniversalERC20} from "contracts/UniversalERC20.sol";
+import {Strings2} from "contracts/library/Strings2.sol";
+import {IERC20, SafeERC20, UniversalERC20} from "contracts/library/UniversalERC20.sol";
 
 contract CurveFiAction is AbstractERC20Exchange, Ownable {
     using UniversalERC20 for IERC20;

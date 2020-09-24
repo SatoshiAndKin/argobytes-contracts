@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
-import {UniversalERC20} from "contracts/UniversalERC20.sol";
+import {UniversalERC20} from "contracts/library/UniversalERC20.sol";
 
 contract ExampleAction is AbstractERC20Exchange {
     using UniversalERC20 for IERC20;

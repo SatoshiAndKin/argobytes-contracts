@@ -12,8 +12,8 @@ import {Strings} from "@OpenZeppelin/utils/Strings.sol";
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
 import {LiquidGasTokenUser} from "contracts/LiquidGasTokenUser.sol";
-import {UniversalERC20} from "contracts/UniversalERC20.sol";
-// import {Strings2} from "contracts/Strings2.sol";
+import {UniversalERC20} from "contracts/library/UniversalERC20.sol";
+// import {Strings2} from "contracts/library/Strings2.sol";
 import {
     IArgobytesAtomicActions,
     IArgobytesOwnedVault
@@ -109,7 +109,7 @@ contract ArgobytesVault is
         }
 
         // TODO: free on revert, too
-        freeGasTokens(gas_token, initial_gas);
+        freeOptimalGasTokens(gas_token, initial_gas);
 
         return returndata;
     }
@@ -187,7 +187,7 @@ contract ArgobytesVault is
 
             // burn our gas token before raising the same revert
             // TODO: confirm that this actually saves us gas!
-            freeGasTokens(gas_token, initial_gas);
+            freeOptimalGasTokens(gas_token, initial_gas);
 
             revert(reason);
         } catch (
@@ -199,7 +199,7 @@ contract ArgobytesVault is
 
             // burn our gas token before raising the same revert
             // TODO: confirm that this actually saves us gas!
-            freeGasTokens(gas_token, initial_gas);
+            freeOptimalGasTokens(gas_token, initial_gas);
 
             revert(
                 "ArgobytesOwnedVault.atomicArbitrage -> IArgobytesAtomicActions.atomicTrades reverted without a reason"
@@ -227,7 +227,7 @@ contract ArgobytesVault is
 
             // we burn gas token before the very end. that way if we revert, we get more of our gas back and don't actually burn any tokens
             // TODO: is this true? it probably shouldn't be. if not, just use the modifier
-            freeGasTokens(gas_token, initial_gas);
+            freeOptimalGasTokens(gas_token, initial_gas);
 
             revert(
                 "ArgobytesOwnedVault.atomicArbitrage: Vault balance did not increase"
@@ -240,7 +240,7 @@ contract ArgobytesVault is
 
         // we made it to the end! free some gas tokens
         // keep any calculations done after this to a minimum
-        freeGasTokens(gas_token, initial_gas);
+        freeOptimalGasTokens(gas_token, initial_gas);
 
         // it would be nice to return how many gas tokens we burned (since it does change our profits), but we can get that offchain
     }
@@ -317,7 +317,7 @@ contract ArgobytesVault is
 
             // burn our gas token before raising the same revert
             // TODO: confirm that this actually saves us gas!
-            freeGasTokens(gas_token, initial_gas);
+            freeOptimalGasTokens(gas_token, initial_gas);
 
             revert(reason);
         } catch (
@@ -329,14 +329,14 @@ contract ArgobytesVault is
 
             // burn our gas token before raising the same revert
             // TODO: confirm that this actually saves us gas!
-            freeGasTokens(gas_token, initial_gas);
+            freeOptimalGasTokens(gas_token, initial_gas);
 
             revert(
                 "ArgobytesOwnedVault.atomicTrades -> IArgobytesAtomicActions.atomicTrades reverted without a reason"
             );
         }
 
-        freeGasTokens(gas_token, initial_gas);
+        freeOptimalGasTokens(gas_token, initial_gas);
     }
 
     // admin-only backdoor
@@ -370,7 +370,7 @@ contract ArgobytesVault is
             target_data
         );
 
-        freeGasTokens(gas_token, initial_gas);
+        freeOptimalGasTokens(gas_token, initial_gas);
 
         if (success) {
             return returndata;
@@ -402,7 +402,7 @@ contract ArgobytesVault is
             target_data
         );
 
-        freeGasTokens(gas_token, initial_gas);
+        freeOptimalGasTokens(gas_token, initial_gas);
 
         if (success) {
             return returndata;

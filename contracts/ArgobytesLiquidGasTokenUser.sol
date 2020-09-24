@@ -5,23 +5,25 @@ import {
     LiquidGasTokenUser
 } from "contracts/LiquidGasTokenUser.sol";
 
+// TODO: i'm not sure this is right. think more about how auth can work for this
+
 contract ArgobytesLiquidGasTokenUser is LiquidGasTokenUser {
 
     // call is dangerous! be careful!
     function lgtCall(
-        address gas_token,
+        bool free_gas_token,
         address payable target,
         bytes calldata target_data,
         uint256 value
     ) external payable returns (bytes memory) {
-        uint256 initial_gas = initialGas(gas_token);
+        uint256 initial_gas = initialGas(free_gas_token);
 
         (bool success, bytes memory returndata) = target.call{value: value}(
             target_data
         );
 
         // TODO: gas golf where to put this
-        freeGasTokens(gas_token, initial_gas);
+        freeOptimalGasTokens(initial_gas);
 
         if (success) {
             return returndata;
@@ -42,18 +44,18 @@ contract ArgobytesLiquidGasTokenUser is LiquidGasTokenUser {
 
     // delegatecall is extremely dangerous! be careful!
     function lgtDelegateCall(
-        address gas_token,
+        bool free_gas_token,
         address payable target,
         bytes calldata target_data
     ) external payable returns (bytes memory) {
-        uint256 initial_gas = initialGas(gas_token);
+        uint256 initial_gas = initialGas(free_gas_token);
 
         (bool success, bytes memory returndata) = target.delegatecall(
             target_data
         );
 
         // TODO: gas golf where to put this
-        freeGasTokens(gas_token, initial_gas);
+        freeOptimalGasTokens(initial_gas);
 
         if (success) {
             return returndata;

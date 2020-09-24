@@ -15,6 +15,7 @@ contract ArgobytesActor is IArgobytesActor {
     function callActions(
         Action[] calldata actions
     ) external override {
+        // TODO: re-entrancy?
         // tokens should already have been transfered to the actions
 
         // an action can do whatever it wants (liquidate, swap, refinance, etc.)

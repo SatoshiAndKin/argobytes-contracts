@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: You can't license an interface
 pragma solidity >=0.5.0;
 
 interface IUniswapV2Pair {

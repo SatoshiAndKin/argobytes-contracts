@@ -25,6 +25,7 @@ contract ArgobytesTrader is IArgobytesTrader {
         for (uint256 i = 0; i < borrows.length; i++) {
             start_balances[i] = borrows[i].token.balanceOf(msg.sender);
 
+            // approvals need to be setup!
             borrows[i].token.safeTransferFrom(msg.sender, borrows[i].dest, borrows[i].amount);
         }
 
@@ -49,7 +50,7 @@ contract ArgobytesTrader is IArgobytesTrader {
 
     /**
      * @notice Transfer `first_amount` `tokens[0]`, call some functions, and return tokens to msg.sender.
-     * @notice You'll need to call this from another smart contract.
+     * @notice You'll need to delegateCall this from another smart contract that has authentication.
      */
     function argobytesTrade(
         Borrow[] calldata borrows,
@@ -58,11 +59,13 @@ contract ArgobytesTrader is IArgobytesTrader {
     ) external override {
         // transfer tokens from msg.sender to arbitrary destinations
         for (uint256 i = 0; i < borrows.length; i++) {
+            // approvals need to be setup!
             borrows[i].token.safeTransferFrom(msg.sender, borrows[i].dest, borrows[i].amount);
         }
 
         // we call a seperate contract because we don't want any sneaky transferFroms
-        // this contract MUST return all borrowed tokens to msg.sender
         argobytes_actor.callActions(actions);
     }
+
+    // TODO? function that uses kollateral to do callActions
 }

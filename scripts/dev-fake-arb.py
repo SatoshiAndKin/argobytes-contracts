@@ -32,4 +32,4 @@ def main():
 
     # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity
     # TODO: make a script to help with this
-    accounts[1].transfer(argo_atomic_actions, 1e18)
+    accounts[1].transfer(argobytes_atomic_actions, 1e18)

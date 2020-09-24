@@ -14,7 +14,7 @@ def test_kyber_arbitrage(address_zero,  argobytes_atomic_actions, dai_erc20,  ar
     value = 1e18
 
     # send some ETH into the vault
-    accounts[0].transfer(argo_diamond, value)
+    accounts[0].transfer(argobytes_diamond, value)
     # send some ETH to the action to simulate arbitrage profits
     accounts[0].transfer(kyber_action, value)
 

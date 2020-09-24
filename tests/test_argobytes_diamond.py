@@ -14,7 +14,7 @@ def test_atomic_arbtirage_access_control(address_zero, example_action,  argobyte
     assert example_action.balance() == 0
 
     # send some ETH into the vault
-    accounts[0].transfer(argo_diamond, value)
+    accounts[0].transfer(argobytes_diamond, value)
 
     with brownie.reverts("ArgobytesOwnedVault.atomicArbitrage: Caller is not a trusted arbitrager"):
         argobytes_diamond.atomicArbitrage(
@@ -24,7 +24,7 @@ def test_atomic_arbtirage_access_control(address_zero, example_action,  argobyte
 def test_admin_call(address_zero,  argobytes_diamond, example_action):
     value = 1
 
-    accounts[0].transfer(argo_diamond, value)
+    accounts[0].transfer(argobytes_diamond, value)
 
     assert argobytes_diamond.balance() == value
     assert example_action.balance() == 0
@@ -56,7 +56,7 @@ def test_simple_borrow_and_sweep(address_zero, argobytes_atomic_actions, argobyt
     assert example_action.balance() == 0
 
     # send some ETH into the vault
-    accounts[0].transfer(argo_diamond, value)
+    accounts[0].transfer(argobytes_diamond, value)
 
     actions = [
         (
@@ -140,7 +140,7 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_atomic_actions, argoby
     assert example_action.balance() == 0
 
     # send some ETH into the vault
-    accounts[0].transfer(argo_diamond, value)
+    accounts[0].transfer(argobytes_diamond, value)
     # send some ETH into the sweep contract to simulate arbitrage profits
     accounts[0].transfer(example_action, value)
 

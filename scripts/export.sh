@@ -18,7 +18,7 @@ mkdir -p "$ARGOBYTES_BACKEND_ADDR_DIR"
 mkdir -p "$ARGOBYTES_WEB_ABI_DIR"
 mkdir -p "$ARGOBYTES_WEB_ADDR_DIR"
 
-function export_argo_abi() {
+function export_argobytes_abi() {
     jq ".abi" "build/contracts/$1.json" > "$ARGOBYTES_BACKEND_ABI_DIR/$1.json"
 
     cp "$ARGOBYTES_BACKEND_ABI_DIR/$1.json" "$ARGOBYTES_WEB_ABI_DIR/$1.json"
@@ -41,18 +41,18 @@ function export_interface() {
 ./venv/bin/brownie compile
 
 # we don't need to export all abis. we just need the abi's for our contracts
-export_argo_abi ArgobytesAtomicActions
-export_argo_abi ArgobytesOwnedVault
-export_argo_abi IArgobytesDiamond
-export_argo_abi ILiquidGasToken
-export_argo_abi CurveFiAction
-export_argo_abi ExampleAction
-export_argo_abi KyberAction
-export_argo_abi OneSplitOffchainAction
-export_argo_abi SynthetixDepotAction
-export_argo_abi UniswapV1Action
-export_argo_abi UniswapV2Action
-export_argo_abi Weth9Action
+export_argobytes_abi ArgobytesAtomicActions
+export_argobytes_abi ArgobytesOwnedVault
+export_argobytes_abi IArgobytesDiamond
+export_argobytes_abi ILiquidGasToken
+export_argobytes_abi CurveFiAction
+export_argobytes_abi ExampleAction
+export_argobytes_abi KyberAction
+export_argobytes_abi OneSplitOffchainAction
+export_argobytes_abi SynthetixDepotAction
+export_argobytes_abi UniswapV1Action
+export_argobytes_abi UniswapV2Action
+export_argobytes_abi Weth9Action
 
 export_brownie_abi "OpenZeppelin/openzeppelin-contracts@3.0.1/build/contracts/ERC20"
 

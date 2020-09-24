@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
-import {IERC20, SafeERC20} from "contracts/UniversalERC20.sol";
+import {IERC20, SafeERC20} from "contracts/library/UniversalERC20.sol";
 import {IOneSplit} from "contracts/interfaces/onesplit/IOneSplit.sol";
 
 contract OneSplitOffchainAction is AbstractERC20Exchange {

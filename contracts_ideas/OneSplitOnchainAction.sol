@@ -2,7 +2,7 @@ pragma solidity 0.7.0;
 pragma experimental ABIEncoderV2;
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
-import {IERC20} from "contracts/UniversalERC20.sol";
+import {IERC20} from "contracts/library/UniversalERC20.sol";
 import {IOneSplit} from "interfaces/onesplit/IOneSplit.sol";
 
 contract OneSplitOnchainAction is AbstractERC20Exchange {

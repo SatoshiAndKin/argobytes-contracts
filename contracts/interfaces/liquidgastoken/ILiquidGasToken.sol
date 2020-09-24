@@ -172,6 +172,38 @@ interface ILiquidGasToken is IERC20 {
         payable
         returns (uint256 tokensBought);
 
+
+    /// @notice Deploy a contract via create() while buying and freeing `tokenAmount` tokens
+    ///         to reduce the gas cost. You need to provide ether to buy the tokens.
+    ///         Any excess ether is refunded.
+    /// @param tokenAmount The number of tokens bought and freed.
+    /// @param deadline The time after which the transaction can no longer be executed.
+    ///        Will revert if the current timestamp is after the deadline.
+    /// @param bytecode The bytecode of the contract you want to deploy.
+    /// @dev Will revert if deadline passed or not enough ether is sent.
+    ///      Can't send ether with deployment. Pre-fund the address instead.
+    /// @return contractAddress The address where the contract was deployed.
+    function deploy(uint256 tokenAmount, uint256 deadline, bytes memory bytecode)
+        external
+        payable
+        returns (address contractAddress);
+
+    /// @notice Deploy a contract via create2() while buying and freeing `tokenAmount` tokens
+    ///         to reduce the gas cost. You need to provide ether to buy the tokens.
+    ///         Any excess ether is refunded.
+    /// @param tokenAmount The number of tokens bought and freed.
+    /// @param deadline The time after which the transaction can no longer be executed.
+    ///        Will revert if the current timestamp is after the deadline.
+    /// @param salt The salt is used for create2() to determine the deployment address.
+    /// @param bytecode The bytecode of the contract you want to deploy.
+    /// @dev Will revert if deadline passed or not enough ether is sent.
+    ///      Can't send ether with deployment. Pre-fund the address instead.
+    /// @return contractAddress The address where the contract was deployed.
+    function create2(uint256 tokenAmount, uint256 deadline, uint256 salt, bytes memory bytecode)
+        external
+        payable
+        returns (address contractAddress);
+
     // Optimized Functions
     // !!! USE AT YOUR OWN RISK !!!
     // These functions are gas optimized and intended for experienced users.
