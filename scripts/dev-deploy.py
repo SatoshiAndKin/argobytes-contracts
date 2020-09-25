@@ -201,12 +201,6 @@ def main():
     synthetix_depot_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, SynthetixDepotAction)
     curve_fi_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, CurveFiAction)
 
-    argobytes_authority.allow.encode_input(
-        argobytes_proxy_arbitragers,
-        argobytes_trader.address,
-        argobytes_trader.atomicArbitrage.signature,
-    )
-
     bulk_actions = [
         # allow bots to call argobytes_trader.atomicArbitrage
         # TODO: think about this more. the msg.sendere might not be what we need

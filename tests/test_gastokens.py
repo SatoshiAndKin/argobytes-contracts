@@ -4,7 +4,7 @@ from brownie.test import given, strategy
 import pytest
 
 
-@given(value=strategy('uint8', min_value=1, max_value=30))
+@given(value=strategy('uint8', min_value=1, max_value=2))
 def test_chi(chi, value):
     # TODO: why does minting anything more than 1 crash? is that some optimization they chose to make?
     # i see onchain transactions that mint far more
@@ -23,7 +23,7 @@ def test_chi(chi, value):
     tx = chi.free(value, {"from": accounts[0]})
 
 
-@given(value=strategy('uint8', min_value=1, max_value=30))
+@given(value=strategy('uint8', min_value=1, max_value=2))
 def test_gastoken(gastoken, value):
     tx = gastoken.mint(value, {"from": accounts[0]})
 
@@ -38,7 +38,7 @@ def test_gastoken(gastoken, value):
     tx = gastoken.free(value, {"from": accounts[0]})
 
 
-@given(value=strategy('uint8', min_value=1, max_value=30))
+@given(value=strategy('uint8', min_value=1, max_value=2))
 def test_liquidgastoken(liquidgastoken, value):
     tx = liquidgastoken.mint(value, {"from": accounts[0]})
 

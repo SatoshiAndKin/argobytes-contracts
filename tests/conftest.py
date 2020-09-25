@@ -279,4 +279,4 @@ def weth9_action(Weth9Action):
 
 @pytest.fixture(scope="session")
 def weth9_erc20():
-    return Contract.from_explorer(Weth9Address)
+    return Contract.from_explorer(Weth9Address, owner=accounts[5])

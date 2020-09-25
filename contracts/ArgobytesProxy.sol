@@ -73,7 +73,7 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy, LiquidGasTokenUser {
         // adding a salt adds to the calldata would negate some of savings from 0 bytes in target
         target = Create2.computeAddress("", keccak256(target_code), address(factory));
 
-        // instead of authenticating the execute call, check auth for the sig (first 4 bytes) of target_calldata
+        // instead of authenticating the execute call, check target and the sig on target_calldata
         requireAuth(target, target_calldata.toBytes4());
 
         if (!target.isContractInternal()) {
@@ -86,7 +86,14 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy, LiquidGasTokenUser {
         // TODO: openzepplin's extra checks are unnecessary since we just deployed, but gas golf this later
         response = target.functionDelegateCall(target_calldata, "ArgobytesProxy: execute_failed");
 
+        // free gas tokens (this might spend some of our ETH)
         freeOptimalGasTokens(initial_gas, require_gas_token);
+
+        // refund excess ETH
+        if (msg.value > 0) {
+            (bool success, ) = msg.sender.call{value: msg.value}("");
+            require(success, "ArgobytesProxy: REFUND_FAILED");
+        }
     }
 
     function execute(
@@ -102,11 +109,21 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy, LiquidGasTokenUser {
     {
         uint256 initial_gas = initialGas(free_gas_token);
 
-        // instead of authenticating the execute call, check auth target_calldata (first 4 bytes is the function's sig)
+        // instead of authenticating the execute call, check target and the sig on target_calldata
         requireAuth(target, target_calldata.toBytes4());
 
         response = target.functionDelegateCall(target_calldata, "ArgobytesProxy: execute_failed");
 
+        // keep calculations after this to a minimum
+        // free gas tokens (this might spend some of our ETH)
         freeOptimalGasTokens(initial_gas, require_gas_token);
+
+        // refund excess ETH
+        // TODO: this is actually a bit of a problem. targets are going to need to know to leave some ETH behind for this
+        // TODO: msg.value or balance?
+        if (msg.value > 0) {
+            (bool success, ) = msg.sender.call{value: msg.value}("");
+            require(success, "ArgobytesProxy: REFUND_FAILED");
+        }
     }
 }
