@@ -23,6 +23,8 @@ Lots more actions are in development. Anyone can write an action.
 
 ## ArgobytesAtomicActions
 
+*OUTDATED*
+
 This smart contract lets you borrow tokens in a [flash loan](https://kollateral.co/) and then chain together multiple actions. If one of them fails, all of them are cancelled.
 
 Anyone can use this contract. This contract cannot be upgraded or turned off.
@@ -30,6 +32,8 @@ Anyone can use this contract. This contract cannot be upgraded or turned off.
 This contract is designed to be called from other contracts. While it is possible to call this contract directly from an account, ERC20 approvals are unsafe as anyone can call functions on it, so be very careful!
 
 ## ArgobytesOwnedVault
+
+*OUTDATED*
 
 This contract holds all the cryptocurrency that I am going to use for decentralized trading. It has two roles that are allowed to interact with it.
 

@@ -4,7 +4,7 @@
  *
  * User deploys a proxy with the ProxyFactory
  * User deploys a smart contract for auth
- * User approves bot to call `ArgobytesTrader.argobytesArbitrage`
+ * User approves bot to call `ArgobytesTrader.atomicArbitrage`
  * Bot makes money. Bot can steal arbitrage trade profits, but nothing more.
  * Bot can waste our liquidgastoken
  */

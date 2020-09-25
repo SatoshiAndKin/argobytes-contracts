@@ -7,19 +7,19 @@ from hypothesis import settings
 
 
 # @pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/611")
-def test_kyber_arbitrage(address_zero,  argobytes_atomic_actions, dai_erc20,  argobytes_diamond, kyber_network_proxy, kyber_action, usdc_erc20):
-    assert argobytes_diamond.balance() == 0
+def test_kyber_arbitrage(address_zero,  argobytes_actor, dai_erc20, argobytes_proxy, kyber_network_proxy, kyber_action, usdc_erc20):
+    assert argobytes_proxy.balance() == 0
     assert kyber_action.balance() == 0
 
     value = 1e18
 
     # send some ETH into the vault
-    accounts[0].transfer(argobytes_diamond, value)
+    accounts[0].transfer(argobytes_proxy, value)
     # send some ETH to the action to simulate arbitrage profits
     accounts[0].transfer(kyber_action, value)
 
     # make sure balances match what we expect
-    assert argobytes_diamond.balance() == value
+    assert argobytes_proxy.balance() == value
     assert kyber_action.balance() == value
 
     actions = [
@@ -34,7 +34,6 @@ def test_kyber_arbitrage(address_zero,  argobytes_atomic_actions, dai_erc20,  ar
             kyber_action,
             kyber_action.tradeTokenToToken.encode_input(kyber_network_proxy, kyber_action, usdc_erc20, dai_erc20, 1, 0),
             False
-
         ),
         # trade DAI to ETH
         (
@@ -44,10 +43,16 @@ def test_kyber_arbitrage(address_zero,  argobytes_atomic_actions, dai_erc20,  ar
         ),
     ]
 
-    arbitrage_tx = argobytes_diamond.atomicArbitrage(
-        address_zero,  argobytes_atomic_actions, address_zero, [address_zero], value, actions, {'from': accounts[1]})
+    arbitrage_tx = argobytes_proxy.execute(
+        False,
+        False,
+        argobytes_trader.address,
+        argobytes_trader.atomicArbitrage.encode_input(
+            argobytes_actor, address_zero, [address_zero], value, actions
+        ),
+    )
 
-    assert argobytes_diamond.balance() > value
+    assert argobytes_proxy.balance() > value
 
     # TODO: https://github.com/trufflesuite/ganache-core/issues/611
     # make sure the transaction succeeded

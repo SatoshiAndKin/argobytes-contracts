@@ -184,7 +184,7 @@ def main():
         gas_token.approve(argobytes_proxy, -1)
 
     # TODO: setup auth for the proxy
-    # for now, owner-only access works, but we need to allow a bot in to call argobytesArbitrage
+    # for now, owner-only access works, but we need to allow a bot in to call atomicArbitrage
 
     # deploy the main contracts
     argobytes_trader = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesTrader)
@@ -204,18 +204,18 @@ def main():
     argobytes_authority.allow.encode_input(
         argobytes_proxy_arbitragers,
         argobytes_trader.address,
-        argobytes_trader.argobytesArbitrage.signature,
+        argobytes_trader.atomicArbitrage.signature,
     )
 
     bulk_actions = [
-        # allow bots to call argobytes_trader.argobytesArbitrage
+        # allow bots to call argobytes_trader.atomicArbitrage
         # TODO: think about this more. the msg.sendere might not be what we need
         (
             argobytes_authority.address,
             argobytes_authority.allow.encode_input(
                 argobytes_proxy_arbitragers,
                 argobytes_trader.address,
-                argobytes_trader.argobytesArbitrage.signature,
+                argobytes_trader.atomicArbitrage.signature,
             ),
             False,
         ),
@@ -313,7 +313,7 @@ def main():
     quick_save("Weth9", Weth9Address)
     quick_save("YearnEthVault", YearnEthVaultAddress)
 
-    # give the argobytes_diamond a bunch of coins. it will forward them when deploying the diamond
+    # give the argobytes_proxy a bunch of coins. it will forward them when deploying the diamond
     accounts[1].transfer(accounts[0], 50 * 1e18)
     accounts[2].transfer(accounts[0], 50 * 1e18)
     accounts[3].transfer(accounts[0], 50 * 1e18)
