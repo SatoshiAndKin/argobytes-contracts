@@ -19,6 +19,7 @@ import {Address2} from "contracts/library/Address2.sol";
 import {Bytes2} from "contracts/library/Bytes2.sol";
 import {Ownable2} from "contracts/Ownable2.sol";
 import {LiquidGasTokenUser} from "./LiquidGasTokenUser.sol";
+import {IArgobytesAuthority} from "./ArgobytesAuthority.sol";
 
 
 interface IArgobytesProxy {
@@ -49,7 +50,7 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy, LiquidGasTokenUser {
     using Address2 for address;
     using Bytes2 for bytes;
 
-    constructor(address owner) ArgobytesAuth(owner) {}
+    constructor(address owner, IArgobytesAuthority authority) ArgobytesAuth(owner, authority) {}
 
     // do we really need this? im trying to fill a similar hole as dsproxy filled.
     // i think its useful for one-off transactions.

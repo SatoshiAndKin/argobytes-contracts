@@ -51,21 +51,18 @@ def main():
 
     deadline = 90000000000000000000
 
-    arb_bots = [
-        SKI_METAMASK_1,
+    kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWalletAddress)
+
+    # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
+    argobytes_proxy_owner = accounts[0]
+
+    argobytes_proxy_arbitragers = [
         accounts[0],
         accounts[1],
         accounts[2],
         accounts[3],
         accounts[4],
     ]
-
-    kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWalletAddress)
-
-    # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
-    argobytes_proxy_owner = SKI_METAMASK_1
-
-    argobytes_proxy_arbitragers = arb_bots + [SKI_METAMASK_1]
 
     starting_balance = accounts[0].balance()
 
@@ -165,17 +162,21 @@ def main():
     if FREE_GAS_TOKEN:
         gas_token.approve(argobytes_proxy_factory, -1)
 
+    # build an ArgobytesAuthority
+    argobytes_authority = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesAuthority)
+
     # build an ArgobytesProxy
     # TODO: calculate gas_token_amount for an ArgobytesProxy
     deploy_tx = argobytes_proxy_factory.buildProxyAndFree(
         0,
         False,
         salt,
+        argobytes_authority.address,
         {
+            "from": argobytes_proxy_owner,
             "gas_price": expected_mainnet_gas_price,
         },
     )
-
     argobytes_proxy = ArgobytesProxy.at(deploy_tx.return_value, accounts[0])
     quick_save_contract(argobytes_proxy)
 
@@ -237,24 +238,28 @@ def main():
         ),
     ]
 
-    bulk_actions = argobytes_actor.callActions.encode_input(
-        bulk_actions)
-
     argobytes_proxy.execute(
         FREE_GAS_TOKEN,
         REQUIRE_GAS_TOKEN,
         argobytes_actor,
-        bulk_actions,
+        argobytes_actor.callActions.encode_input(bulk_actions),
         {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
     )
 
     # TODO: setup roles in one transaction (we can't do it inside bulk_actions because msg.sender is no longer the admin)
+    argobytes_proxy.setAuthority(argobytes_authority)
+
+    # allow bots to call argobytes_trader.argobytesArbitrage
+    # TODO: think about this more
+    argobytes_authority.allow(
+        argobytes_proxy_arbitragers, argobytes_trader.address, argobytes_trader.argobytesArbitrage.signature,
+    )
 
     if FREE_GAS_TOKEN:
-        # # TODO: make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
+        # make sure we still have some gastoken left
         gas_tokens_remaining = gas_token.balanceOf.call(argobytes_proxy_owner)
 
-        print("gas token:", LiquidGasTokenAddress)
+        print("gas token:", gas_token.address)
 
         print("gas_tokens_remaining:", gas_tokens_remaining, "/", gas_tokens_start)
 

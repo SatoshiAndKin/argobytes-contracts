@@ -2,21 +2,17 @@
 pragma solidity 0.7.0;
 pragma experimental ABIEncoderV2;
 
-import {Ownable2} from "contracts/Ownable2.sol";
-
-
-interface IArgobytesAuthority {
-    function canCall(
-        address caller, address target, bytes4 sig
-    ) external view returns (bool);
-}
+import {Ownable2} from "./Ownable2.sol";
+import {IArgobytesAuthority} from "./ArgobytesAuthority.sol";
 
 contract ArgobytesAuth is Ownable2 {
     IArgobytesAuthority public authority;
 
     event AuthorityTransferred(address indexed previous_authority, address indexed new_authority);
 
-    constructor(address owner) Ownable2(owner) {}
+    constructor(address owner, IArgobytesAuthority authority_) Ownable2(owner) {
+        authority = authority_;
+    }
 
     modifier auth() {
         // do auth first. that is safest
