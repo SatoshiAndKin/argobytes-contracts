@@ -86,7 +86,7 @@ contract LiquidGasTokenUser {
         return lgt.freeFrom(available_tokens, msg.sender);
     }
 
-    function freeGasTokens(uint256 amount) internal {
+    function freeGasTokens(uint256 amount, bool revert_on_fail) internal {
         if (amount == 0) {
             return;
         }
@@ -102,13 +102,15 @@ contract LiquidGasTokenUser {
             return;
         }
 
-        // TODO? revert if we can't free gas token?
-        revert("LiquidGasTokenUser.freeGasTokens couldn't source lgt");
+        if (revert_on_fail) {
+            // TODO? revert if we can't free gas token?
+            revert("LiquidGasTokenUser.freeGasTokens couldn't source lgt");
+        }
     }
 
     // TODO: return success boolean? revert?
     // this shouldn't ever revert. we care more about the rest of the transaction succeeding than this succeeding
-    function freeOptimalGasTokens(uint256 initial_gas) internal {
+    function freeOptimalGasTokens(uint256 initial_gas, bool revert_on_fail) internal {
         if (initial_gas == 0) {
             return;
         }
@@ -151,6 +153,10 @@ contract LiquidGasTokenUser {
         // but if LGT liquidity grows a lot and stays cheap, this could be useful
         if (_buyAndFreeGasTokens(optimal_tokens)) {
             return;
+        }
+
+        if (revert_on_fail) {
+            revert("LiquidGasTokenUser.freeOptimalGasTokens couldn't source lgt");
         }
     }
 

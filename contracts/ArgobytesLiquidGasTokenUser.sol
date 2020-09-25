@@ -12,6 +12,7 @@ contract ArgobytesLiquidGasTokenUser is LiquidGasTokenUser {
     // call is dangerous! be careful!
     function lgtCall(
         bool free_gas_token,
+        bool require_gas_token,
         address payable target,
         bytes calldata target_data,
         uint256 value
@@ -23,7 +24,7 @@ contract ArgobytesLiquidGasTokenUser is LiquidGasTokenUser {
         );
 
         // TODO: gas golf where to put this
-        freeOptimalGasTokens(initial_gas);
+        freeOptimalGasTokens(initial_gas, require_gas_token);
 
         if (success) {
             return returndata;
@@ -45,6 +46,7 @@ contract ArgobytesLiquidGasTokenUser is LiquidGasTokenUser {
     // delegatecall is extremely dangerous! be careful!
     function lgtDelegateCall(
         bool free_gas_token,
+        bool require_gas_token,
         address payable target,
         bytes calldata target_data
     ) external payable returns (bytes memory) {
@@ -55,7 +57,7 @@ contract ArgobytesLiquidGasTokenUser is LiquidGasTokenUser {
         );
 
         // TODO: gas golf where to put this
-        freeOptimalGasTokens(initial_gas);
+        freeOptimalGasTokens(initial_gas, require_gas_token);
 
         if (success) {
             return returndata;

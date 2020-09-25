@@ -83,6 +83,10 @@ def main():
     else:
         gas_token_for_freeing = "0x0000000000000000000000000000000000000000"
 
+    # deploy a dsproxy just to compare gas costs
+    ds_proxy_factory = interface.DSProxyFactory(DSProxyFactoryAddress, accounts[5])
+    ds_proxy_tx = ds_proxy_factory.build()
+
     # TODO: do this earlier and transfer the coins to the diamond_creator address before deployment
     # mint some gas token so we can have cheaper deploys for the rest of the contracts
     if MINT_GAS_TOKEN:
@@ -109,10 +113,8 @@ def main():
         assert gas_tokens_start == mint_batch_amount * num_mints
 
     # deploy ArgobytesProxyFactory using LGT helper
-    # TODO: calculate the optimal number of gas to buy
-    # this contract is so small, that burning gas tokens is never economical
-    # TODO: hmm. i'm getting revert: insufficient ether even when setting gas_token_amount to 0
     if FREE_GAS_TOKEN:
+        # TODO: calculate the optimal number of gas to buy
         free_num_gas_gas_tokens = 19
     else:
         free_num_gas_gas_tokens = 0
@@ -123,6 +125,7 @@ def main():
         salt_uint,
         ArgobytesProxyFactory.deploy.encode_input(),
         {
+            # TODO: i'm getting revert: insufficient ether even when setting gas_token_amount to 0 and value to 0
             # this ether will get sent back if gas_token_amount is 0
             # TODO: calculate an actual amount for this
             "value": "1 ether",
@@ -132,29 +135,30 @@ def main():
 
     argobytes_proxy_factory = ArgobytesProxyFactory.at(deploy_tx.return_value, accounts[0])
     quick_save_contract(argobytes_proxy_factory)
+    # the ArgobytesProxyFactory is deployed and ready for use!
 
+    # let the proxy use our gas token
     if FREE_GAS_TOKEN:
         gas_token.approve(argobytes_proxy_factory, -1)
 
+    # build an ArgobytesProxy
     # TODO: calculate gas_token_amount for an ArgobytesProxy
     deploy_tx = argobytes_proxy_factory.buildProxy(
         0,
+        False,
         salt,
     )
 
-    ds_proxy_address = deploy_tx.return_value
-
-    # deploy a dsproxy just to compare gas costs
-    ds_proxy_factory = interface.DSProxyFactory(DSProxyFactoryAddress, accounts[0])
-
-    ds_proxy_tx = ds_proxy_factory.build()
+    argobytes_proxy = ArgobytesProxy.at(deploy_tx.return_value, accounts[0])
 
     # TODO: setup auth for the proxy
+    # for now, owner-only access works, but it would be cool to h
 
     # deploy ArgobytesTrader
     # TODO: calculate gas_token_amount (make a helper function for this?)
     deploy_tx = argobytes_proxy_factory.deploy2(
         0,  # 14,
+        False,
         salt,
         ArgobytesTrader.deploy.encode_input(),
         to_bytes(hexstr="0x"),
@@ -168,6 +172,7 @@ def main():
     # these one's don't modify the diamond
     argobytes_atomic_actions = deploy2_and_free(
         gas_token_for_freeing,
+        False,
         argobytes_diamond,
         salt,
         ArgobytesAtomicActions,
@@ -178,6 +183,7 @@ def main():
 
     example_action = deploy2_and_free(
         gas_token_for_freeing,
+        False,
         argobytes_diamond,
         salt,
         ExampleAction,
@@ -188,6 +194,7 @@ def main():
 
     onesplit_offchain_action = deploy2_and_free(
         gas_token_for_freeing,
+        False,
         argobytes_diamond,
         salt,
         OneSplitOffchainAction,
