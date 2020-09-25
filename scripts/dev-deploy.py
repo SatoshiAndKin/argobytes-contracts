@@ -165,7 +165,7 @@ def main():
     # build an ArgobytesAuthority
     argobytes_authority = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesAuthority)
 
-    # build an ArgobytesProxy
+    # build an ArgobytesProxy with programmable access
     # TODO: calculate gas_token_amount for an ArgobytesProxy
     deploy_tx = argobytes_proxy_factory.buildProxyAndFree(
         0,
@@ -201,7 +201,24 @@ def main():
     synthetix_depot_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, SynthetixDepotAction)
     curve_fi_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, CurveFiAction)
 
+    argobytes_authority.allow.encode_input(
+        argobytes_proxy_arbitragers,
+        argobytes_trader.address,
+        argobytes_trader.argobytesArbitrage.signature,
+    )
+
     bulk_actions = [
+        # allow bots to call argobytes_trader.argobytesArbitrage
+        # TODO: think about this more. the msg.sendere might not be what we need
+        (
+            argobytes_authority.address,
+            argobytes_authority.allow.encode_input(
+                argobytes_proxy_arbitragers,
+                argobytes_trader.address,
+                argobytes_trader.argobytesArbitrage.signature,
+            ),
+            False,
+        ),
         # add the curve fi contracts
         (
             curve_fi_action.address,
@@ -233,7 +250,7 @@ def main():
         # register for kyber's fee program
         (
             KyberRegisterWalletAddress,
-            kyber_register_wallet.registerWallet.encode_input(argobytes_proxy),
+            kyber_register_wallet.registerWallet.encode_input(argobytes_proxy_owner),
             False,
         ),
     ]
@@ -244,15 +261,6 @@ def main():
         argobytes_actor,
         argobytes_actor.callActions.encode_input(bulk_actions),
         {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
-    )
-
-    # TODO: setup roles in one transaction (we can't do it inside bulk_actions because msg.sender is no longer the admin)
-    argobytes_proxy.setAuthority(argobytes_authority)
-
-    # allow bots to call argobytes_trader.argobytesArbitrage
-    # TODO: think about this more
-    argobytes_authority.allow(
-        argobytes_proxy_arbitragers, argobytes_trader.address, argobytes_trader.argobytesArbitrage.signature,
     )
 
     if FREE_GAS_TOKEN:

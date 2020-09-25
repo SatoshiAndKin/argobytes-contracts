@@ -80,11 +80,13 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy, LiquidGasTokenUser {
             // target doesn't exist. create it
             // if you want to burn gas token, do it during target_calldata
             // TODO: think more about gas token
-            require(factory.deploy2("", target_code, "") == target, "ArgobytesProxy: address mismatch");
+            require(factory.deploy2("", target_code, "") == target, "ArgobytesProxy: bad_address");
         }
 
         // TODO: openzepplin's extra checks are unnecessary since we just deployed, but gas golf this later
-        response = target.functionDelegateCall(target_calldata, "ArgobytesProxy: execute code reverted");
+        response = target.functionDelegateCall(target_calldata, "ArgobytesProxy: execute_failed");
+
+        freeOptimalGasTokens(initial_gas, require_gas_token);
     }
 
     function execute(
@@ -103,6 +105,8 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy, LiquidGasTokenUser {
         // instead of authenticating the execute call, check auth target_calldata (first 4 bytes is the function's sig)
         requireAuth(target, target_calldata.toBytes4());
 
-        response = target.functionDelegateCall(target_calldata, "ArgobytesProxy: execute target reverted");
+        response = target.functionDelegateCall(target_calldata, "ArgobytesProxy: execute_failed");
+
+        freeOptimalGasTokens(initial_gas, require_gas_token);
     }
 }

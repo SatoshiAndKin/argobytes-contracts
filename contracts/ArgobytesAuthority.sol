@@ -10,29 +10,45 @@ interface IArgobytesAuthority {
 
 contract ArgobytesAuthority {
 
-    // TODO: think more about this
-    // msg.sender => caller => target => sig => true
-    mapping (address => mapping (address => mapping (address => mapping (bytes4 => bool)))) authorizations;
+    // key is from `createKey`
+    mapping (bytes => bool) authorizations;
+
+    function createKey(
+        address proxy, address sender, address target, bytes4 sig
+    ) internal pure returns (bytes memory key) {
+        // TODO: encode or encodePacked
+        key = abi.encodePacked(proxy, sender, target, sig);
+    }
 
     function canCall(
-        address caller, address target, bytes4 sig
+        address sender, address target, bytes4 sig
     ) external view returns (bool) {
-        return authorizations[msg.sender][caller][target][sig];
+        bytes memory key = createKey(msg.sender, sender, target, sig);
+
+        return authorizations[key];
     }
 
     function allow(
-        address[] calldata callers, address target, bytes4 sig
+        address[] calldata senders, address target, bytes4 sig
     ) external {
-        for (uint i = 0; i < callers.length; i++) {
-            authorizations[msg.sender][callers[i]][target][sig] = true;
+        bytes memory key;
+
+        for (uint i = 0; i < senders.length; i++) {
+            key = createKey(msg.sender, senders[i], target, sig);
+            
+            authorizations[key] = true;
         }
     }
 
     function deny(
-        address[] calldata callers, address target, bytes4 sig
+        address[] calldata senders, address target, bytes4 sig
     ) external {
-        for (uint i = 0; i < callers.length; i++) {
-            delete authorizations[msg.sender][callers[i]][target][sig];
+        bytes memory key;
+
+        for (uint i = 0; i < senders.length; i++) {
+            key = createKey(msg.sender, senders[i], target, sig);
+
+            delete authorizations[key];
         }
     }
 }

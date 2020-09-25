@@ -34,7 +34,7 @@ contract ArgobytesAuth is Ownable2 {
             return false;
         } else {
             // use a smart contract to check auth
-            // TODO? do we want to split canCall and canDelegateCall?
+            // TODO? do we want to split canCall and canDelegateCall? this is actually used for delegates
             return authority.canCall(sender, target, sig);
         }
     }
