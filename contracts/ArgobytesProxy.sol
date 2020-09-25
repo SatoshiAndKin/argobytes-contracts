@@ -13,12 +13,12 @@ pragma solidity 0.7.0;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
-import {IArgobytesProxyFactory} from "contracts/ArgobytesProxyFactory.sol";
-import {ArgobytesAuth} from "contracts/ArgobytesAuth.sol";
-import {Address2} from "contracts/library/Address2.sol";
-import {Bytes2} from "contracts/library/Bytes2.sol";
-import {Ownable2} from "contracts/Ownable2.sol";
-import {LiquidGasTokenUser} from "./LiquidGasTokenUser.sol";
+import {IArgobytesProxyFactory} from "./ArgobytesProxyFactory.sol";
+import {ArgobytesAuth} from "./abstract/ArgobytesAuth.sol";
+import {Address2} from "./library/Address2.sol";
+import {Bytes2} from "./library/Bytes2.sol";
+import {Ownable2} from "./abstract/Ownable2.sol";
+import {LiquidGasTokenUser} from "./abstract/LiquidGasTokenUser.sol";
 import {IArgobytesAuthority} from "./ArgobytesAuthority.sol";
 
 

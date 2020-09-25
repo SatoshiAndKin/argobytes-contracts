@@ -2,10 +2,11 @@
 pragma solidity 0.7.0;
 pragma experimental ABIEncoderV2;
 
-import {Ownable2} from "./Ownable2.sol";
-import {IArgobytesAuthority} from "./ArgobytesAuthority.sol";
+import {IArgobytesAuthority} from "contracts/ArgobytesAuthority.sol";
 
-contract ArgobytesAuth is Ownable2 {
+import {Ownable2} from "./Ownable2.sol";
+
+abstract contract ArgobytesAuth is Ownable2 {
     IArgobytesAuthority public authority;
 
     event AuthorityTransferred(address indexed previous_authority, address indexed new_authority);

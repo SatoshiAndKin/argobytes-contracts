@@ -165,7 +165,7 @@ def main():
     # build an ArgobytesAuthority
     argobytes_authority = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesAuthority)
 
-    # build an ArgobytesProxy with programmable access
+    # build an ArgobytesProxy using ArgobytesAuthority for programmable access
     # TODO: calculate gas_token_amount for an ArgobytesProxy
     deploy_tx = argobytes_proxy_factory.buildProxyAndFree(
         0,

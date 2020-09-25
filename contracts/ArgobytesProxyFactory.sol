@@ -4,12 +4,18 @@ pragma solidity 0.7.0;
 
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
-import {LiquidGasTokenUser} from "./LiquidGasTokenUser.sol";
+import {LiquidGasTokenUser} from "./abstract/LiquidGasTokenUser.sol";
 import {ArgobytesProxy} from "./ArgobytesProxy.sol";
 import {IArgobytesAuthority} from "./ArgobytesAuthority.sol";
 
 interface IArgobytesProxyFactory {
     event NewProxy(address indexed sender, address indexed first_admin, address proxy);
+
+    function buildProxyAndFree(
+        uint256 gas_token_amount,
+        bool require_gas_token,
+        bytes32 salt
+    ) external payable returns (address deployed);
 
     function buildProxyAndFree(
         uint256 gas_token_amount,
@@ -22,8 +28,8 @@ interface IArgobytesProxyFactory {
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
-        address first_owner,
-        IArgobytesAuthority first_authority
+        IArgobytesAuthority first_authority,
+        address first_owner
     ) external payable returns (address deployed);
 
     function deploy2(
@@ -47,21 +53,32 @@ interface IArgobytesProxyFactory {
 // LGT's deploy helper only buys (we might have our own tokens)
 contract ArgobytesProxyFactory is IArgobytesProxyFactory, LiquidGasTokenUser {
 
+    // build a proxy for msg.sender with owner-only auth
+    // auth can be changed later by the owner
+    function buildProxyAndFree(
+        uint256 gas_token_amount,
+        bool require_gas_token,
+        bytes32 salt
+    ) public override payable returns (address deployed) {
+        deployed = buildProxyAndFree(gas_token_amount, require_gas_token, salt, IArgobytesAuthority(0), msg.sender);
+    }
+
+    // build a proxy for msg.sender with progra
     function buildProxyAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
         IArgobytesAuthority first_authority
     ) public override payable returns (address deployed) {
-        deployed = buildProxyAndFree(gas_token_amount, require_gas_token, salt, msg.sender, first_authority);
+        deployed = buildProxyAndFree(gas_token_amount, require_gas_token, salt, first_authority, msg.sender);
     }
 
     function buildProxyAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
-        address first_owner,
-        IArgobytesAuthority first_authority
+        IArgobytesAuthority first_authority,
+        address first_owner
     ) public override payable returns (address deployed) {
         // since this deployment cost can be known, we free a specific amount tokens
         freeGasTokens(gas_token_amount, require_gas_token);

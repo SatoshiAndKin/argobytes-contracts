@@ -8,7 +8,7 @@ import {
     ILiquidGasToken
 } from "contracts/interfaces/liquidgastoken/ILiquidGasToken.sol";
 
-contract LiquidGasTokenUser {
+abstract contract LiquidGasTokenUser {
     using Strings for uint256;
     using SafeMath for uint256;
 

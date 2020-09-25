@@ -7,7 +7,7 @@ from hypothesis import settings
 
 
 # TODO: test access for all the functions!
-def test_atomic_arbtirage_access_control(address_zero, example_action,  argobytes_diamond):
+def test_argobytes_arbitrage_access_control(address_zero, example_action, argobytes_proxy, argobytes_trader):
     value = 1
 
     assert argobytes_diamond.balance() == 0
@@ -16,9 +16,14 @@ def test_atomic_arbtirage_access_control(address_zero, example_action,  argobyte
     # send some ETH into the vault
     accounts[0].transfer(argobytes_diamond, value)
 
-    with brownie.reverts("ArgobytesOwnedVault.atomicArbitrage: Caller is not a trusted arbitrager"):
-        argobytes_diamond.atomicArbitrage(
-            address_zero, address_zero, address_zero, [address_zero], value, [], {'from': accounts[0]})
+    with brownie.reverts("ArgobytesProxy: 403"):
+        argobytes_proxy.execute(
+            argobytes_trader.address,
+            argobytes_trader.argobytesArbitrage.encode_input(
+                address_zero, address_zero, address_zero, [address_zero], value, []
+            ),
+            {'from': accounts[0]},
+        )
 
 
 def test_admin_call(address_zero,  argobytes_diamond, example_action):

@@ -4,6 +4,7 @@
 # Calculate salts for use with CREATE2.
 # This can be used to create addresses with lots of zeros which are slightly cheaper to call.
 # This can also be used for creating vanity addresses with fun patterns.
+# TODO: rewrite this now that we aren't using diamonds
 import rlp
 import os
 from eth_utils import keccak, to_checksum_address, to_bytes

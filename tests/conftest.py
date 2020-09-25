@@ -25,69 +25,33 @@ def address_zero():
 
 
 @pytest.fixture(scope="function")
-def argobytes_atomic_actions(ArgobytesAtomicActions):
-    return ArgobytesAtomicActions.deploy({"from": accounts[0]})
+def argobytes_actor(ArgobyteActor):
+    return ArgobytesActor.deploy({"from": accounts[0]})
 
 
 @pytest.fixture(scope="function")
-def argobytes_diamond(address_zero, ArgobytesOwnedVault, DiamondCreator, interface):
-    # on mainnet we use the (hex) salt to generate custom addresses, but we dont need that in our tests
+def argobytes_authority(ArgobyteAuthory):
+    return ArgobytesAuthory.deploy({"from": accounts[0]})
+
+
+@pytest.fixture(scope="function")
+def argobytes_proxy_factory(ArgobytesProxyFactory):
+    return ArgobytesProxyFactory.deploy({"from": accounts[0]})
+
+
+@pytest.fixture(scope="function")
+def argobytes_proxy(ArgobytesProxy, argobytes_proxy_factory):
+    # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
     salt = ""
 
-    # deploy the contract that will deploy the diamond (and cutter and loupe)
-    # it self destructs, so handling it is non-standard
-    diamond_deploy_tx = DiamondCreator.deploy(
-        salt,
-        salt,
-        {"from": accounts[0]}
-    )
+    deployed = argobytes_proxy_factory.buildProxyAndFree(0, False, salt, argobytes_authority, accounts[0])
 
-    # deploys have no return_value, so we check logs instead
-    diamond_address = diamond_deploy_tx.logs[0]['address']
+    return ArgobytesProxy.at(deployed, accounts[0])
 
-    argobytes_diamond = interface.IArgobytesDiamond(diamond_address)
 
-    gas_price = 0
-
-    # deploy ArgobytesOwnedVault and add functions to the diamond
-    argobytes_owned_vault = deploy2_and_cut_and_free(
-        address_zero,
-        argobytes_diamond,
-        salt,
-        ArgobytesOwnedVault,
-        [],
-        [
-            "adminAtomicActions",
-            "adminAtomicTrades",
-            "adminCall",
-            "adminDelegateCall",
-            "atomicArbitrage",
-            "grantRoles",
-            "emergencyExit",
-        ],
-        gas_price
-    )
-
-    # allow accounts[1] to do arbitrage trades
-    TRUSTED_ARBITRAGER_ROLE = argobytes_owned_vault.TRUSTED_ARBITRAGER_ROLE()
-
-    # TODO: do this with gas token freeing
-    argobytes_diamond.grantRole(TRUSTED_ARBITRAGER_ROLE, accounts[1], {"from": accounts[0]})
-
-    # TODO: eventually we will have something like this
-    # TODO: we will need to make sure that replacing withdrawTo works properly
-    #  argobytes_tokenized_deposits = deploy2_and_cut_and_free(
-    #     gas_token,
-    #     argobytes_diamond,
-    #     salt,
-    #     ArgobytesTokenizedDeposits,
-    #     [],
-    #     ["deposit", "depositFor", "approve", "permit", "withdraw", "withdrawTo"],
-    #     expected_mainnet_gas_price,
-    #     gas_price
-    # )
-
-    return argobytes_diamond
+@pytest.fixture(scope="function")
+def argobytes_trader(ArgobytesTrader):
+    return ArgobytesTrader.deploy({"from": accounts[0]})
 
 
 @pytest.fixture(scope="session")
