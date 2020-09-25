@@ -3,6 +3,7 @@ pragma solidity 0.7.0;
 pragma experimental ABIEncoderV2;
 
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {
@@ -13,6 +14,8 @@ import {
 } from "contracts/interfaces/uniswap/IUniswapExchange.sol";
 
 contract UniswapV1Action is AbstractERC20Exchange {
+    using SafeERC20 for IERC20;
+
     struct UniswapExchangeData {
         address token;
         address factory;
@@ -140,22 +143,22 @@ contract UniswapV1Action is AbstractERC20Exchange {
         uint256 dest_min_tokens,
         uint256 trade_gas
     ) external payable returnLeftoverEther() {
-        require(
-            dest_token != ADDRESS_ZERO,
-            "UniswapV1Action.tradeEtherToToken: dest_token cannot be ETH"
-        );
-        // dest_min_tokens may be 1, but is probably set to something to protect against large slippage in price
-        require(
-            dest_min_tokens > 0,
-            "UniswapV1Action.tradeEtherToToken: dest_min_tokens should not == 0"
-        );
+        // require(
+        //     dest_token != ADDRESS_ZERO,
+        //     "UniswapV1Action.tradeEtherToToken: dest_token cannot be ETH"
+        // );
+        // // dest_min_tokens may be 1, but is probably set to something to protect against large slippage in price
+        // require(
+        //     dest_min_tokens > 0,
+        //     "UniswapV1Action.tradeEtherToToken: dest_min_tokens should not == 0"
+        // );
 
         uint256 src_balance = address(this).balance;
 
-        require(
-            src_balance > 0,
-            "UniswapV1Action.tradeEtherToToken: NO_BALANCE"
-        );
+        // require(
+        //     src_balance > 0,
+        //     "UniswapV1Action.tradeEtherToToken: NO_BALANCE"
+        // );
 
         if (to == ADDRESS_ZERO) {
             to = msg.sender;
@@ -165,6 +168,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
         trade_gas += 46000;
 
         // def ethToTokenTransferInput(min_tokens: uint256, deadline: timestamp, recipient: address) -> uint256
+        // TODO: get rid of this try. its only here because of "stack too deep"
         // solium-disable-next-line security/no-block-members
         try
             IUniswapExchange(exchange).ethToTokenTransferInput{
@@ -182,14 +186,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
             // a revert was called inside ethToTokenTransferInput
             // and a reason string was provided.
 
-            revert(
-                string(
-                    abi.encodePacked(
-                        "UniswapV1Action.tradeEtherToToken -> IUniswapExchange.ethToTokenTransferInput: ",
-                        reason
-                    )
-                )
-            );
+            revert(reason);
         } catch (
             bytes memory /*lowLevelData*/
         ) {
@@ -198,7 +195,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
             // by zero, etc. inside atomicTrade.
 
             revert(
-                "UniswapV1Action.tradeEtherToToken -> IUniswapExchange.ethToTokenTransferInput: reverted without a reason"
+                "UniswapV1Action.tradeEtherToToken: reverted"
             );
         }
     }
@@ -212,27 +209,27 @@ contract UniswapV1Action is AbstractERC20Exchange {
         uint256 dest_min_tokens,
         uint256 trade_gas
     ) external returnLeftoverToken(src_token, exchange) {
-        require(
-            src_token != ADDRESS_ZERO,
-            "UniswapV1Action.tradeTokenToToken: src_token cannot be ETH"
-        );
-        require(
-            dest_token != ADDRESS_ZERO,
-            "UniswapV1Action.tradeTokenToToken: dest_token cannot be ETH"
-        );
+        // require(
+        //     src_token != ADDRESS_ZERO,
+        //     "UniswapV1Action.tradeTokenToToken: BAD_SRC_TOKEN"
+        // );
+        // require(
+        //     dest_token != ADDRESS_ZERO,
+        //     "UniswapV1Action.tradeTokenToToken: BAD_DEST_TOKEN"
+        // );
         // dest_min_tokens may be 1, but is probably set to something to protect against large slippage in price
-        require(
-            dest_min_tokens > 0,
-            "UniswapV1Action.tradeTokenToToken: dest_min_tokens should not == 0"
-        );
+        // require(
+        //     dest_min_tokens > 0,
+        //     "UniswapV1Action.tradeTokenToToken: BAD_DEST_MIN_TOKENS"
+        // );
 
         uint256 src_balance = IERC20(src_token).balanceOf(address(this));
-        require(
-            src_balance > 0,
-            "UniswapV1Action.tradeTokenToToken: NO_BALANCE"
-        );
+        // require(
+        //     src_balance > 0,
+        //     "UniswapV1Action.tradeTokenToToken: NO_SRC_BALANCE"
+        // );
 
-        IERC20(src_token).approve(exchange, src_balance);
+        IERC20(src_token).safeApprove(exchange, src_balance);
 
         // TODO: what gas limits? https://hackmd.io/@Uniswap/HJ9jLsfTz#Gas-Benchmarks
         trade_gas += 140000;
@@ -249,6 +246,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
         //     recipient: address
         //     token_addr: address
         // ): uint256
+        // TODO: get rid of this try. its only here because of "stack too deep"
         // solium-disable-next-line security/no-block-members
         try
             IUniswapExchange(exchange).tokenToTokenTransferInput{
@@ -300,23 +298,23 @@ contract UniswapV1Action is AbstractERC20Exchange {
         uint256 dest_min_tokens,
         uint256 trade_gas
     ) external returnLeftoverToken(src_token, exchange) {
-        require(
-            src_token != ADDRESS_ZERO,
-            "UniswapV1Action.tradeTokenToEther: src_token cannot be ETH"
-        );
-        // dest_min_tokens may be 1, but is probably set to something to protect against large slippage in price
-        require(
-            dest_min_tokens > 0,
-            "UniswapV1Action.tradeTokenToEther: dest_min_tokens should not == 0"
-        );
+        // require(
+        //     src_token != ADDRESS_ZERO,
+        //     "UniswapV1Action.tradeTokenToEther: BAD_SRC_TOKEN"
+        // );
+        // // dest_min_tokens may be 1, but is probably set to something to protect against large slippage in price
+        // require(
+        //     dest_min_tokens > 0,
+        //     "UniswapV1Action.tradeTokenToEther: NO_DEST_MIN_TOKENS"
+        // );
 
         uint256 src_balance = IERC20(src_token).balanceOf(address(this));
-        require(
-            src_balance > 0,
-            "UniswapV1Action.tradeTokenToEther: NO_BALANCE"
-        );
+        // require(
+        //     src_balance > 0,
+        //     "UniswapV1Action.tradeTokenToEther: NO_BALANCE"
+        // );
 
-        IERC20(src_token).approve(exchange, src_balance);
+        IERC20(src_token).safeApprove(exchange, src_balance);
 
         if (to == ADDRESS_ZERO) {
             to = msg.sender;
@@ -327,42 +325,18 @@ contract UniswapV1Action is AbstractERC20Exchange {
 
         // def tokenToEthTransferInput(tokens_sold: uint256, min_eth: uint256(wei), deadline: timestamp, recipient: address) -> uint256(wei):
         // solium-disable-next-line security/no-block-members
-        try
-            IUniswapExchange(exchange).tokenToEthTransferInput{gas: trade_gas}(
-                src_balance,
-                dest_min_tokens,
-                block.timestamp,
-                to
-            )
-        returns (uint256 received) {
-            // the trade worked!
-            // it's fine to trust their returned "received". the msg.sender should check balances at the very end
-            require(
-                received >= dest_min_tokens,
-                "UniswapV1Action.tradeTokenToEther: BAD_EXCHANGE"
-            );
-        } catch Error(string memory reason) {
-            // a revert was called inside ethToTokenTransferInput
-            // and a reason string was provided.
+        uint256 received = IUniswapExchange(exchange).tokenToEthTransferInput{gas: trade_gas}(
+            src_balance,
+            dest_min_tokens,
+            block.timestamp,
+            to
+        );
 
-            revert(
-                string(
-                    abi.encodePacked(
-                        "UniswapV1Action.tradeTokenToEther -> IUniswapExchange.tokenToEthTransferInput: ",
-                        reason
-                    )
-                )
-            );
-        } catch (
-            bytes memory /*lowLevelData*/
-        ) {
-            // This is executed in case revert() was used
-            // or there was a failing assertion, division
-            // by zero, etc. inside atomicTrade.
-
-            revert(
-                "UniswapV1Action.tradeTokenToEther -> IUniswapExchange.tokenToEthTransferInput: reverted without a reason"
-            );
-        }
+        // the trade worked!
+        // it's fine to trust their returned "received". the msg.sender should check balances at the very end
+        require(
+            received >= dest_min_tokens,
+            "UniswapV1Action.tradeTokenToEther: BAD_EXCHANGE"
+        );
     }
 }

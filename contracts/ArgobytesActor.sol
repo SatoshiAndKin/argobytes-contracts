@@ -4,8 +4,6 @@ pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
-import {LiquidGasTokenUser} from "contracts/LiquidGasTokenUser.sol";
-
 interface IArgobytesActor {
     struct Action {
         address payable target;
@@ -16,27 +14,19 @@ interface IArgobytesActor {
     function callActions(
         Action[] calldata actions
     ) external payable;
-
-    function callActionsAndFreeOptimal(
-        bool free_gas_token,
-        bool require_gas_token,
-        Action[] calldata actions
-    ) external payable;
-
-    function callActionsAndFree(
-        uint256 gas_token_amount,
-        bool require_gas_token,
-        Action[] calldata actions
-    ) external payable;
 }
 
-contract ArgobytesActor is IArgobytesActor, LiquidGasTokenUser {
+contract ArgobytesActor is IArgobytesActor {
     using Address for address payable;
-   
-    // transfer tokens to the actions before calling this
-    function _callActions(
+
+    /**
+     * @notice Call arbitrary actions.
+     *
+     *  transfer tokens to the actions before calling this
+     */
+    function callActions(
         Action[] calldata actions
-    ) internal {
+    ) external payable override {
         // TODO: re-entrancy?
         // an action can do whatever it wants (liquidate, swap, refinance, etc.)
         for (uint256 i = 0; i < actions.length; i++) {
@@ -56,45 +46,5 @@ contract ArgobytesActor is IArgobytesActor, LiquidGasTokenUser {
                 );
             }
         }
-    }
-
-    /**
-     * @notice Call arbitrary actions.
-     */
-    function callActions(
-        Action[] calldata actions
-    ) external payable override {
-        // TODO: re-entrancy?
-        _callActions(actions);
-    }
-
-    /**
-     * @notice Call arbitrary actions and free LGT.
-     */
-    function callActionsAndFreeOptimal(
-        bool free_gas_token,
-        bool require_gas_token,
-        Action[] calldata actions
-    ) external payable override {
-        // TODO: re-entrancy?
-        uint256 initial_gas = initialGas(free_gas_token);
-
-        _callActions(actions);
-
-        freeOptimalGasTokens(initial_gas, require_gas_token);
-    }
-
-    /**
-     * @notice Call arbitrary actions and free a specific amount of LGT.
-     */
-    function callActionsAndFree(
-        uint256 gas_token_amount,
-        bool require_gas_token,
-        Action[] calldata actions
-    ) external payable override {
-        // TODO: re-entrancy?
-        freeGasTokens(gas_token_amount, require_gas_token);
-
-        _callActions(actions);
     }
 }

@@ -74,7 +74,7 @@ def main():
         require_gas_token = False
         salt = ""
 
-        deploy_tx = factory.deploy2(
+        deploy_tx = factory.deploy2AndFree(
             gas_token_amount,
             require_gas_token,
             salt,
@@ -167,7 +167,7 @@ def main():
 
     # build an ArgobytesProxy
     # TODO: calculate gas_token_amount for an ArgobytesProxy
-    deploy_tx = argobytes_proxy_factory.buildProxy(
+    deploy_tx = argobytes_proxy_factory.buildProxyAndFree(
         0,
         False,
         salt,
@@ -237,10 +237,12 @@ def main():
         ),
     ]
 
-    bulk_actions = argobytes_actor.callActionsAndFreeOptimal.encode_input(
-        FREE_GAS_TOKEN, REQUIRE_GAS_TOKEN, bulk_actions)
+    bulk_actions = argobytes_actor.callActions.encode_input(
+        bulk_actions)
 
     argobytes_proxy.execute(
+        FREE_GAS_TOKEN,
+        REQUIRE_GAS_TOKEN,
         argobytes_actor,
         bulk_actions,
         {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}

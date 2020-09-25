@@ -32,8 +32,6 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
     using Strings for uint256;
     using Strings2 for address;
 
-    // TODO: we shouldn't need this, but brownie doesn't have a helper for strings -> bytes32
-    // TODO: write that helper instead of bloating our very expensive contract deploy
     bytes32 public constant BYTESTR_DEPOT = "Depot";
     bytes32 public constant BYTESTR_EXRATES = "ExchangeRates";
     bytes32 public constant BYTESTR_SUSD = "SynthsUSD";
