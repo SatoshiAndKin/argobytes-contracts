@@ -11,7 +11,7 @@
     limitations under the License.
 */
 
-pragma solidity 0.7.0;
+pragma solidity 0.7.1;
 pragma experimental ABIEncoderV2;
 
 import {DyDx_Types} from "./DyDx_Types.sol";

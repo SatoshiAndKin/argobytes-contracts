@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.7.0;
+pragma solidity 0.7.1;
 
 /**
  * @dev Collection of openzepplin's unreleased functions related to the address type

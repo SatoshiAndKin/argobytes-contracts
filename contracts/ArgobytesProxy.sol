@@ -8,7 +8,7 @@
  * Bot makes money. Bot can steal arbitrage trade profits, but nothing more.
  * Bot can waste our liquidgastoken
  */
-pragma solidity 0.7.0;
+pragma solidity 0.7.1;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";

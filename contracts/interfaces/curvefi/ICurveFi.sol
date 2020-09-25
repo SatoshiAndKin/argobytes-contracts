@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.7.0;
+pragma solidity 0.7.1;
 
 interface ICurveFi {
     function get_virtual_price() external returns (uint256 out);

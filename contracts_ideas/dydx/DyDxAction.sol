@@ -1,6 +1,6 @@
 // get this working in multiple phases.
 // phase 0: operate for flash loans. phase 1: operate for trading. phase 2: operate for liquidating
-pragma solidity 0.7.0;
+pragma solidity 0.7.1;
 
 import {AbstractERC20Exchange} from "../AbstractERC20Exchange.sol";
 

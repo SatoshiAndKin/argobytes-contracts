@@ -7,7 +7,7 @@ https://github.com/Synthetixio/synthetix/blob/develop/contracts/Depot.sol#L20
 
 The depot is capable of trading SNX, too. However, that is only done on Testnets.
 */
-pragma solidity 0.7.0;
+pragma solidity 0.7.1;
 pragma experimental ABIEncoderV2;
 
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";

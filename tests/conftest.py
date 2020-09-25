@@ -40,11 +40,11 @@ def argobytes_proxy_factory(ArgobytesProxyFactory):
 
 
 @pytest.fixture(scope="function")
-def argobytes_proxy(ArgobytesProxy, argobytes_proxy_factory):
+def argobytes_proxy(argobytes_authority, ArgobytesProxy, argobytes_proxy_factory):
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
     salt = ""
 
-    deployed = argobytes_proxy_factory.buildProxyAndFree(0, False, salt, argobytes_authority, accounts[0])
+    deployed = argobytes_proxy_factory.buildProxyAndFree(0, False, salt, argobytes_authority.address, accounts[0])
 
     return ArgobytesProxy.at(deployed, accounts[0])
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // deploy delegatecall proxies and free liquid gas tokens.
-pragma solidity 0.7.0;
+pragma solidity 0.7.1;
 
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
