@@ -7,17 +7,46 @@ pragma experimental ABIEncoderV2;
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
 
-import {IArgobytesTrader} from "contracts/interfaces/argobytes/IArgobytesTrader.sol";
-import {IArgobytesActor} from "contracts/interfaces/argobytes/IArgobytesActor.sol";
+import {IArgobytesActor} from "./ArgobytesActor.sol";
+import {LiquidGasTokenUser} from "./LiquidGasTokenUser.sol";
 
-contract ArgobytesTrader is IArgobytesTrader {
+interface IArgobytesTrader {
+    struct Borrow {
+        IERC20 token;
+        uint256 amount;
+        address dest;
+    }
+
+    function argobytesArbitrage(
+        bool free_gas_token,
+        bool require_gas_token,
+        Borrow[] calldata borrows,
+        IArgobytesActor argobytes_actor,
+        IArgobytesActor.Action[] calldata actions
+    ) external returns (uint256 primary_profit);
+
+    function argobytesTrade(
+        bool free_gas_token,
+        bool require_gas_token,
+        Borrow[] calldata borrows,
+        IArgobytesActor argobytes_actor,
+        IArgobytesActor.Action[] calldata actions
+    ) external;
+
+}
+
+contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
     using SafeERC20 for IERC20;
 
     function argobytesArbitrage(
+        bool free_gas_token,
+        bool require_gas_token,
         Borrow[] calldata borrows,
         IArgobytesActor argobytes_actor,
         IArgobytesActor.Action[] calldata actions
     ) external override returns (uint256 primary_profit) {
+        uint256 initial_gas = initialGas(free_gas_token);
+
         uint256[] memory start_balances = new uint256[](borrows.length);
 
         // record starting token balances to check for increases
@@ -46,6 +75,8 @@ contract ArgobytesTrader is IArgobytesTrader {
                 primary_profit = end_balance - start_balances[i];
             }
         }
+
+        freeOptimalGasTokens(initial_gas, require_gas_token);
     }
 
     /**
@@ -53,18 +84,27 @@ contract ArgobytesTrader is IArgobytesTrader {
      * @notice You'll need to delegateCall this from another smart contract that has authentication.
      */
     function argobytesTrade(
+        bool free_gas_token,
+        bool require_gas_token,
         Borrow[] calldata borrows,
         IArgobytesActor argobytes_actor,
         IArgobytesActor.Action[] calldata actions
     ) external override {
+        // TODO: add something to this
+        uint256 initial_gas = initialGas(free_gas_token);
+
         // transfer tokens from msg.sender to arbitrary destinations
+        // this is dangerous! be careful with this!
         for (uint256 i = 0; i < borrows.length; i++) {
             // approvals need to be setup!
-            borrows[i].token.safeTransferFrom(msg.sender, borrows[i].dest, borrows[i].amount);
+            // TODO: think about this more. i think delegateCall means msg.sender 
+            borrows[i].token.safeTransfer(borrows[i].dest, borrows[i].amount);
         }
 
         // we call a seperate contract because we don't want any sneaky transferFroms
         argobytes_actor.callActions(actions);
+
+        freeOptimalGasTokens(initial_gas, require_gas_token);
     }
 
     // TODO? function that uses kollateral to do callActions

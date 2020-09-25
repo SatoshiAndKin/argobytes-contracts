@@ -17,6 +17,8 @@ MINT_GAS_TOKEN = FREE_GAS_TOKEN or os.environ.get("MINT_GAS_TOKEN", "0") == "1"
 EXPORT_ARTIFACTS = os.environ.get("EXPORT_ARTIFACTS", "0") == "1"
 DEPLOY_DIR = os.path.join(project.main.check_for_project('.'), "build", "deployments", "quick_and_dirty")
 
+REQUIRE_GAS_TOKEN = FREE_GAS_TOKEN or os.environ.get("REQUIRE_GAS_TOKEN", "0") == "1"
+
 
 def quick_save_contract(contract):
     quick_save(contract._name, contract.address)
@@ -43,9 +45,9 @@ def main():
 
     # gas price should be 3.0x to 3.5x the mint price
     # TODO: double check and document why its 3.5x
-    expected_mainnet_mint_price = "30 gwei"
+    expected_mainnet_mint_price = "20 gwei"
     # unless you are in a rush, it is better to not use gas token and just deploy at expected_mainnet_mint_price
-    expected_mainnet_gas_price = "100 gwei"
+    expected_mainnet_gas_price = "60 gwei"
 
     deadline = 90000000000000000000
 
@@ -61,11 +63,31 @@ def main():
     kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWalletAddress)
 
     # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
-    argobytes_diamond_admin = SKI_METAMASK_1
+    argobytes_proxy_owner = SKI_METAMASK_1
 
-    argobytes_diamond_arbitragers = arb_bots + [SKI_METAMASK_1]
+    argobytes_proxy_arbitragers = arb_bots + [SKI_METAMASK_1]
 
     starting_balance = accounts[0].balance()
+
+    def argobytes_proxy_factory_deploy2_helper(factory, contract):
+        gas_token_amount = 0
+        require_gas_token = False
+        salt = ""
+
+        deploy_tx = factory.deploy2(
+            gas_token_amount,
+            require_gas_token,
+            salt,
+            contract.deploy.encode_input(),
+            to_bytes(hexstr="0x"),
+            {
+                "gas_price": expected_mainnet_gas_price,
+            },
+        )
+        deployed = contract.at(deploy_tx.return_value, accounts[0])
+        quick_save_contract(deployed)
+
+        return deployed
 
     # TODO: docs for using ERADICATE2
     # TODO: openzepplin helper uses bytes32, but gastoken uses uint256.
@@ -84,6 +106,7 @@ def main():
         gas_token_for_freeing = "0x0000000000000000000000000000000000000000"
 
     # deploy a dsproxy just to compare gas costs
+    # TODO: whats the deploy cost of DSProxyFactory?
     ds_proxy_factory = interface.DSProxyFactory(DSProxyFactoryAddress, accounts[5])
     ds_proxy_tx = ds_proxy_factory.build()
 
@@ -112,7 +135,8 @@ def main():
 
         assert gas_tokens_start == mint_batch_amount * num_mints
 
-    # deploy ArgobytesProxyFactory using LGT helper
+    # deploy ArgobytesProxyFactory using LGT's create2 helper
+    # when combined with a salt found by ERADICATE2, we can have an address with lots of 0 bytes
     if FREE_GAS_TOKEN:
         # TODO: calculate the optimal number of gas to buy
         free_num_gas_gas_tokens = 19
@@ -147,132 +171,34 @@ def main():
         0,
         False,
         salt,
+        {
+            "gas_price": expected_mainnet_gas_price,
+        },
     )
 
     argobytes_proxy = ArgobytesProxy.at(deploy_tx.return_value, accounts[0])
+    quick_save_contract(argobytes_proxy)
+
+    if FREE_GAS_TOKEN:
+        gas_token.approve(argobytes_proxy, -1)
 
     # TODO: setup auth for the proxy
-    # for now, owner-only access works, but it would be cool to h
+    # for now, owner-only access works, but we need to allow a bot in to call argobytesArbitrage
 
-    # deploy ArgobytesTrader
-    # TODO: calculate gas_token_amount (make a helper function for this?)
-    deploy_tx = argobytes_proxy_factory.deploy2(
-        0,  # 14,
-        False,
-        salt,
-        ArgobytesTrader.deploy.encode_input(),
-        to_bytes(hexstr="0x"),
-    )
-    argobytes_trader = ArgobytesTrader.at(deploy_tx.return_value, accounts[0])
-    quick_save_contract(argobytes_trader)
+    # deploy the main contracts
+    argobytes_trader = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesTrader)
+    argobytes_actor = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesActor)
 
-    assert False
-
-    # deploy all the other contracts
-    # these one's don't modify the diamond
-    argobytes_atomic_actions = deploy2_and_free(
-        gas_token_for_freeing,
-        False,
-        argobytes_diamond,
-        salt,
-        ArgobytesAtomicActions,
-        [],
-        expected_mainnet_gas_price
-    )
-    quick_save_contract(argobytes_atomic_actions)
-
-    example_action = deploy2_and_free(
-        gas_token_for_freeing,
-        False,
-        argobytes_diamond,
-        salt,
-        ExampleAction,
-        [],
-        expected_mainnet_gas_price
-    )
-    quick_save_contract(example_action)
-
-    onesplit_offchain_action = deploy2_and_free(
-        gas_token_for_freeing,
-        False,
-        argobytes_diamond,
-        salt,
-        OneSplitOffchainAction,
-        [],
-        expected_mainnet_gas_price
-    )
-    quick_save_contract(onesplit_offchain_action)
-
-    # TODO: think more about kyber's constructor. maybe wallet_id should be set/changeable by msg.sender
-    kyber_action = deploy2_and_free(
-        gas_token_for_freeing,
-        argobytes_diamond,
-        salt,
-        KyberAction,
-        [],
-        expected_mainnet_gas_price
-    )
-    quick_save_contract(kyber_action)
-
-    uniswap_v1_action = deploy2_and_free(
-        gas_token_for_freeing,
-        argobytes_diamond,
-        salt,
-        UniswapV1Action,
-        [],
-        expected_mainnet_gas_price
-    )
-    quick_save_contract(uniswap_v1_action)
-
-    uniswap_v2_action = deploy2_and_free(
-        gas_token_for_freeing,
-        argobytes_diamond,
-        salt,
-        UniswapV2Action,
-        [],
-        expected_mainnet_gas_price
-    )
-    quick_save_contract(uniswap_v2_action)
-
-    # zrx_v3_action = deploy2_and_free(
-    #     gas_token_for_freeing,
-    #     argobytes_diamond,
-    #     salt,
-    #     ZrxV3Action,
-    #     [],
-    #     expected_mainnet_gas_price
-    # )
-    # quick_save_contract(zrx_v3_action)
-
-    weth9_action = deploy2_and_free(
-        gas_token_for_freeing,
-        argobytes_diamond,
-        salt,
-        Weth9Action,
-        [],
-        expected_mainnet_gas_price
-    )
-    quick_save_contract(weth9_action)
-
-    synthetix_depot_action = deploy2_and_free(
-        gas_token_for_freeing,
-        argobytes_diamond,
-        salt,
-        SynthetixDepotAction,
-        [],
-        expected_mainnet_gas_price
-    )
-    quick_save_contract(synthetix_depot_action)
-
-    curve_fi_action = deploy2_and_free(
-        gas_token_for_freeing,
-        argobytes_diamond,
-        salt,
-        CurveFiAction,
-        [],
-        expected_mainnet_gas_price
-    )
-    quick_save_contract(curve_fi_action)
+    # deploy all the actions
+    example_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ExampleAction)
+    onesplit_offchain_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, OneSplitOffchainAction)
+    kyber_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, KyberAction)
+    uniswap_v1_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, UniswapV1Action)
+    uniswap_v2_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, UniswapV2Action)
+    # zrx_v3_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ZrxV3Action)
+    weth9_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, Weth9Action)
+    synthetix_depot_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, SynthetixDepotAction)
+    curve_fi_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, CurveFiAction)
 
     bulk_actions = [
         # add the curve fi contracts
@@ -306,56 +232,25 @@ def main():
         # register for kyber's fee program
         (
             KyberRegisterWalletAddress,
-            kyber_register_wallet.registerWallet.encode_input(argobytes_diamond),
+            kyber_register_wallet.registerWallet.encode_input(argobytes_proxy),
             False,
         ),
     ]
 
-    bulk_actions = argobytes_proxy.argobytesActions.encode_input(
-        gas_token_for_freeing, argobytes_atomic_actions, bulk_actions)
+    bulk_actions = argobytes_actor.callActionsAndFreeOptimal.encode_input(
+        FREE_GAS_TOKEN, REQUIRE_GAS_TOKEN, bulk_actions)
 
-    argobytes_diamond.diamondCutAndFree(
-        gas_token,
-        [argobytes_owned_vault_cuts],
-        "0x0000000000000000000000000000000000000000",
+    argobytes_proxy.execute(
+        argobytes_actor,
         bulk_actions,
         {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
     )
 
     # TODO: setup roles in one transaction (we can't do it inside bulk_actions because msg.sender is no longer the admin)
 
-    # grant admin roles
-    argobytes_diamond.grantRole(
-        argobytes_owned_vault.DEFAULT_ADMIN_ROLE(),
-        argobytes_diamond_admin,
-        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price},
-    )
-
-    # grant trusted arbitrager roles
-    # TODO: does this actually save us gas?
-    argobytes_diamond.grantRoles(
-        argobytes_owned_vault.TRUSTED_ARBITRAGER_ROLE(),
-        argobytes_diamond_arbitragers,
-        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price},
-    )
-
-    # grant exit roles
-    argobytes_diamond.grantRole(
-        argobytes_owned_vault.EXIT_ROLE(),
-        argobytes_diamond_exit,
-        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price},
-    )
-
-    # grant alarm roles
-    argobytes_diamond.grantRole(
-        argobytes_owned_vault.ALARM_ROLE(),
-        argobytes_diamond_alarm,
-        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price},
-    )
-
     if FREE_GAS_TOKEN:
         # # TODO: make sure we still have some gastoken left (this way we know how much we need before deploying on mainnet)
-        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_diamond)
+        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_proxy_owner)
 
         print("gas token:", LiquidGasTokenAddress)
 
@@ -364,9 +259,9 @@ def main():
         assert gas_tokens_remaining > 0
         assert gas_tokens_remaining <= mint_batch_amount
     elif MINT_GAS_TOKEN:
-        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_diamond)
+        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_proxy_owner)
 
-        print("gas token:", LiquidGasTokenAddress)
+        print("gas token:", gas_token.address)
 
         print("gas_tokens_remaining:", gas_tokens_remaining)
 
@@ -376,11 +271,10 @@ def main():
 
     print("gas used by accounts[0]:", accounts[0].gas_used)
 
-    ending_balance = accounts[0].balance() + diamond.balance()
+    ending_balance = accounts[0].balance()
 
     assert ending_balance < starting_balance
 
-    # this isn't all used by gas. some is sent to the owned vault
     print("ETH used by accounts[0]:", (starting_balance - ending_balance) / 1e18)
 
     # save all the addresses we might use, not just ones for own contracts
@@ -405,10 +299,10 @@ def main():
     quick_save("YearnEthVault", YearnEthVaultAddress)
 
     # give the argobytes_diamond a bunch of coins. it will forward them when deploying the diamond
-    accounts[1].transfer(argobytes_diamond, 50 * 1e18)
-    accounts[2].transfer(argobytes_diamond, 50 * 1e18)
-    accounts[3].transfer(argobytes_diamond, 50 * 1e18)
-    accounts[4].transfer(argobytes_diamond_admin, 30 * 1e18)
-    accounts[4].transfer(argobytes_diamond_arbitragers[0], 30 * 1e18)
+    accounts[1].transfer(accounts[0], 50 * 1e18)
+    accounts[2].transfer(accounts[0], 50 * 1e18)
+    accounts[3].transfer(accounts[0], 50 * 1e18)
+    accounts[4].transfer(argobytes_proxy_owner, 30 * 1e18)
+    accounts[4].transfer(argobytes_proxy_arbitragers[0], 30 * 1e18)
 
     reset_block_time(synthetix_depot_action)

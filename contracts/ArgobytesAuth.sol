@@ -26,7 +26,7 @@ contract ArgobytesAuth is Ownable2 {
     }
 
     function requireAuth(address target, bytes4 sig) internal view {
-        require(isAuthorized(_msgSender(), target, sig), "ArgobytesAuth: 403");
+        require(isAuthorized(msg.sender, target, sig), "ArgobytesAuth: 403");
     }
 
     function isAuthorized(address sender, address target, bytes4 sig) internal view returns (bool) {

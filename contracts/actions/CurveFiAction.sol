@@ -11,7 +11,6 @@ pragma solidity 0.7.0;
 pragma experimental ABIEncoderV2;
 
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";
-import {Ownable} from "@OpenZeppelin/access/Ownable.sol";
 
 import {ICurveFi} from "contracts/interfaces/curvefi/ICurveFi.sol";
 
@@ -19,7 +18,7 @@ import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {Strings2} from "contracts/library/Strings2.sol";
 import {IERC20, SafeERC20, UniversalERC20} from "contracts/library/UniversalERC20.sol";
 
-contract CurveFiAction is AbstractERC20Exchange, Ownable {
+contract CurveFiAction is AbstractERC20Exchange {
     using UniversalERC20 for IERC20;
     using SafeERC20 for IERC20;
     using Strings for uint256;
@@ -39,7 +38,7 @@ contract CurveFiAction is AbstractERC20Exchange, Ownable {
             (_underlying_coins[exchange][token] > 0);
     }
 
-    function saveExchange(address exchange, int128 n) public onlyOwner {
+    function saveExchange(address exchange, int128 n) public {
         // i'd like this to be open, but i feel like people could grief. maybe require a fee that goes to ownedVault? or require membership in a DAO
 
         for (int128 i = 0; i < n; i++) {
