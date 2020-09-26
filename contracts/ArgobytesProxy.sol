@@ -52,6 +52,9 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy, LiquidGasTokenUser {
 
     constructor(address owner, IArgobytesAuthority authority) ArgobytesAuth(owner, authority) {}
 
+    // we want to receive so that we can be sent ETH for buying gas tokens
+    receive() external payable {}
+
     // do we really need this? im trying to fill a similar hole as dsproxy filled.
     // i think its useful for one-off transactions.
     // TODO: re-entrancy protection?

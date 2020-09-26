@@ -7,7 +7,7 @@ from hypothesis import settings
 
 
 # TODO: test access for all the functions!
-def test_argobytes_arbitrage_access_control(argobytes_actor, argobytes_proxy, argobytes_trader, example_action):
+def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argobytes_proxy, argobytes_trader, example_action):
     value = 1
 
     borrows = []
@@ -23,14 +23,14 @@ def test_argobytes_arbitrage_access_control(argobytes_actor, argobytes_proxy, ar
         borrows, argobytes_actor, actions,
     )
 
-    # check that accounts[0] is allowed
-    argobytes_proxy.execute(
-        False,
-        False,
-        argobytes_trader.address,
-        argobytes_trader_calldata,
-        {"from": accounts[0], "value": value}
-    )
+    # # check that accounts[0] is allowed
+    # argobytes_proxy.execute(
+    #     False,
+    #     False,
+    #     argobytes_trader.address,
+    #     argobytes_trader_calldata,
+    #     {"from": accounts[0], "value": value}
+    # )
 
     # check that accounts[1] is NOT allowed
     with brownie.reverts("ArgobytesAuth: 403"):

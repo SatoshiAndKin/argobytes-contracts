@@ -19,6 +19,10 @@ interface IArgobytesActor {
 contract ArgobytesActor is IArgobytesActor {
     using Address for address payable;
 
+    // we want to receive because we might sweep tokens between actions
+    // TODO: be careful not to leave coins here!
+    receive() external payable {}
+
     /**
      * @notice Call arbitrary actions.
      *

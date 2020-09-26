@@ -64,7 +64,7 @@ def test_kyber_arbitrage(address_zero, argobytes_actor, argobytes_trader, dai_er
         (
             kyber_action,
             kyber_action.tradeTokenToToken.encode_input(
-                kyber_network_proxy, kyber_action, dai_erc20, weth9_erc20, 1, 0),
+                kyber_network_proxy, address_zero, dai_erc20, weth9_erc20, 1, 0),
             False
         ),
     ]

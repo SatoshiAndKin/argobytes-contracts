@@ -33,6 +33,10 @@ interface IArgobytesTrader {
 contract ArgobytesTrader is IArgobytesTrader {
     using SafeERC20 for IERC20;
 
+    // we want to receive because we might sweep tokens between actions
+    // TODO: be careful not to leave coins here!
+    receive() external payable {}
+
     function atomicArbitrage(
         Borrow[] calldata borrows,
         IArgobytesActor argobytes_actor,
@@ -46,7 +50,7 @@ contract ArgobytesTrader is IArgobytesTrader {
             start_balances[i] = borrows[i].token.balanceOf(msg.sender);
 
             // TODO: think about this and approvals more
-            borrows[i].token.safeTransfer(borrows[i].dest, borrows[i].amount);
+            borrows[i].token.safeTransferFrom(msg.sender, borrows[i].dest, borrows[i].amount);
         }
 
         // we call a seperate contract because we don't want any sneaky transferFroms
@@ -82,7 +86,7 @@ contract ArgobytesTrader is IArgobytesTrader {
         // this is dangerous! be careful with this!
         for (uint256 i = 0; i < borrows.length; i++) {
             // TODO: think about this and approvals more
-            borrows[i].token.safeTransfer(borrows[i].dest, borrows[i].amount);
+            borrows[i].token.safeTransferFrom(msg.sender, borrows[i].dest, borrows[i].amount);
         }
 
         // TODO: pass ETH along
