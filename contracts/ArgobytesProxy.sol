@@ -93,8 +93,9 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy, LiquidGasTokenUser {
         freeOptimalGasTokens(initial_gas, require_gas_token);
 
         // refund excess ETH
-        if (msg.value > 0) {
-            (bool success, ) = msg.sender.call{value: msg.value}("");
+        // TODO: this is actually a bit of a problem. targets are going to need to know to leave some ETH behind for this
+        if (address(this).balance > 0) {
+            (bool success, ) = msg.sender.call{value: address(this).balance}("");
             require(success, "ArgobytesProxy: REFUND_FAILED");
         }
     }
@@ -123,9 +124,8 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy, LiquidGasTokenUser {
 
         // refund excess ETH
         // TODO: this is actually a bit of a problem. targets are going to need to know to leave some ETH behind for this
-        // TODO: msg.value or balance?
-        if (msg.value > 0) {
-            (bool success, ) = msg.sender.call{value: msg.value}("");
+        if (address(this).balance > 0) {
+            (bool success, ) = msg.sender.call{value: address(this).balance}("");
             require(success, "ArgobytesProxy: REFUND_FAILED");
         }
     }

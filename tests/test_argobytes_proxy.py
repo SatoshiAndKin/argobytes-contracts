@@ -2,6 +2,7 @@ import brownie
 import pytest
 from brownie import accounts
 from brownie.test import given, strategy
+from eth_abi import decode_single
 from eth_utils import to_bytes
 from hypothesis import settings
 
@@ -46,18 +47,6 @@ def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argob
     # TODO: check that accounts[1] is allowed
 
 
-def test_admin_atomic_actions():
-    assert False
-
-
-def test_admin_delegate_call():
-    assert False
-
-
-def test_admin_grant_roles():
-    assert False
-
-
 def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes_proxy, example_action, kollateral_invoker):
     value = 1e18
 
@@ -86,14 +75,15 @@ def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes
             actions,
         ),
         {
-            "value": value
+            "value": value,
+            "gasPrice": 0,
         }
     )
 
-    profit = atomic_arbitrage_tx.return_value
+    profit = decode_single('uint256', atomic_arbitrage_tx.return_value)
 
     assert argobytes_proxy.balance() == 0
-    assert ending_balance - starting_balance == 0
+    assert accounts[0].balance() == starting_balance
     assert profit == 0
 
 
@@ -126,8 +116,10 @@ def test_simple_kollateral(address_zero, argobytes_trader, argobytes_proxy, exam
         ),
     )
 
+    profit = decode_single('uint256', arbitrage_tx.return_value)
+
     # TODO: what is the actual amount? it needs to include fees from kollateral
-    assert arbitrage_tx.return_value > 0
+    assert profit > 0
 
 
 def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trader, argobytes_proxy, example_action, liquidgastoken):
@@ -171,8 +163,10 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
         }
     )
 
+    profit = decode_single('uint256', arbitrage_tx.return_value)
+
     # make sure balances match what we expect
-    assert arbitrage_tx.return_value == value
+    assert profit == value
     assert argobytes_proxy.balance() == 0
     assert accounts[0].balance() == starting_balance + value
 
@@ -211,9 +205,11 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
 
     print("gas_used_with_gastoken: ", gas_used_with_gastoken)
 
+    profit = decode_single('uint256', arbitrage_tx.return_value)
+
     # TODO: figure out the cost of gas tokens
     # TODO: value should actually be value - cost of gastokens that we bought and freed
-    assert arbitrage_tx.return_value > value * 0.9995
+    assert profit > value * 0.9995
     # assert argobytes_proxy.balance() == 2 * value
     assert argobytes_proxy.balance() > 1.9995 * value
     assert gas_used_with_gastoken < gas_used_without_gastoken
