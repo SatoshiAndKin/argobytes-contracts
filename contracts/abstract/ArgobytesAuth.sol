@@ -15,18 +15,14 @@ abstract contract ArgobytesAuth is Ownable2 {
         authority = authority_;
     }
 
-    modifier auth() {
+    modifier auth(bool delegate) {
         // do auth first. that is safest
         // theres some cases where it may be possible to do the auth check last, but it is too risky for me
-        requireAuth(address(this), msg.sig);
+        requireAuth(delegate, address(this), msg.sig);
         _;
     }
 
-    function requireAuth(address target, bytes4 sig) internal view {
-        require(isAuthorized(msg.sender, target, sig), "ArgobytesAuth: 403");
-    }
-
-    function isAuthorized(address sender, address target, bytes4 sig) internal view returns (bool) {
+    function isAuthorized(address sender, bool delegate, address target, bytes4 sig) internal view returns (bool) {
         if (sender == owner()) {
             // the owner always has access to all functions
             return true;
@@ -36,13 +32,17 @@ abstract contract ArgobytesAuth is Ownable2 {
         } else {
             // use a smart contract to check auth
             // TODO? do we want to split canCall and canDelegateCall? this is actually used for delegates
-            return authority.canCall(sender, target, sig);
+            return authority.canCall(delegate, sender, target, sig);
         }
+    }
+
+    function requireAuth(bool delegate, address target, bytes4 sig) internal view {
+        require(isAuthorized(msg.sender, delegate, target, sig), "ArgobytesAuth: 403");
     }
 
     function setAuthority(IArgobytesAuthority authority_)
         public
-        auth
+        auth(false)
     {
         emit AuthorityTransferred(address(authority), address(authority_));
         authority = authority_;

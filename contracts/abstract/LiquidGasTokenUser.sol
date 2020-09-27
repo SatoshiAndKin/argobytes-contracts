@@ -24,7 +24,10 @@ abstract contract LiquidGasTokenUser {
         // getEthToTokenOutputPrice reverts if optimal_tokens aren't available
         try
             lgt.getEthToTokenOutputPrice(gas_token_amount)
-        returns (uint256 buy_cost) {
+            returns (uint256 buy_cost)
+        {
+            // TODO: if buy_cost is too much, return false
+
             // TODO: these numbers are going to change
             if (buy_cost < ((18145 * gas_token_amount) - 24000) * tx.gasprice) {
                 // buying and freeing tokens is profitable
@@ -60,30 +63,27 @@ abstract contract LiquidGasTokenUser {
         internal
         returns (bool)
     {
-        // we can assume that any tokens we have were acuired at a "cheap" gas cost
-        uint256 allowed_tokens = lgt.allowance(
-            msg.sender,
-            address(this)
-        );
-        uint256 available_tokens = lgt.balanceOf(
-            msg.sender
-        );
+        // TODO: option to freeFrom instead of free?
+        try
+            lgt.free(gas_token_amount)
+        {
+            return true;
+        } catch Error(string memory reason) {
+            // a revert was called inside getEthToTokenOutputPrice
+            // and a reason string was provided.
 
-        // TODO: free some tokens if we have them
-        if (allowed_tokens < available_tokens) {
-            available_tokens = allowed_tokens;
+            // we don't want to actually revert. we just want to return false
+        } catch (
+            bytes memory /*lowLevelData*/
+        ) {
+            // This is executed in case revert() was used
+            // or there was a failing assertion, division
+            // by zero, etc. inside lgt.freeFrom
+
+            // we don't want to actually revert. we just want to return false
         }
 
-        if (available_tokens < gas_token_amount) {
-            // we don't have enough tokens. free what we can
-            lgt.freeFrom(available_tokens, msg.sender);
-
-            // return false so that we can try another way
-            return false;
-        }
-
-        // free msg.sender's tokens
-        return lgt.freeFrom(available_tokens, msg.sender);
+        return false;
     }
 
     function freeGasTokens(uint256 amount, bool revert_on_fail) internal {

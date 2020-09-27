@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 interface IArgobytesAuthority {
     function canCall(
-        address caller, address target, bytes4 sig
+        bool delegte, address caller, address target, bytes4 sig
     ) external view returns (bool);
 }
 
@@ -14,39 +14,39 @@ contract ArgobytesAuthority {
     mapping (bytes => bool) authorizations;
 
     function createKey(
-        address proxy, address sender, address target, bytes4 sig
+        address proxy, bool delegate, address sender, address target, bytes4 sig
     ) internal pure returns (bytes memory key) {
-        // TODO: encode or encodePacked
-        key = abi.encodePacked(proxy, sender, target, sig);
+        // encodePacked should be safe because address and bytes4 are fixed size types
+        key = abi.encodePacked(proxy, delegate, sender, target, sig);
     }
 
     function canCall(
-        address sender, address target, bytes4 sig
+        bool delegate, address sender, address target, bytes4 sig
     ) external view returns (bool) {
-        bytes memory key = createKey(msg.sender, sender, target, sig);
+        bytes memory key = createKey(msg.sender, delegate, sender, target, sig);
 
         return authorizations[key];
     }
 
     function allow(
-        address[] calldata senders, address target, bytes4 sig
+        bool delegate, address[] calldata senders, address target, bytes4 sig
     ) external {
         bytes memory key;
 
         for (uint i = 0; i < senders.length; i++) {
-            key = createKey(msg.sender, senders[i], target, sig);
+            key = createKey(msg.sender, delegate, senders[i], target, sig);
             
             authorizations[key] = true;
         }
     }
 
     function deny(
-        address[] calldata senders, address target, bytes4 sig
+        bool delegate, address[] calldata senders, address target, bytes4 sig
     ) external {
         bytes memory key;
 
         for (uint i = 0; i < senders.length; i++) {
-            key = createKey(msg.sender, senders[i], target, sig);
+            key = createKey(msg.sender, delegate, senders[i], target, sig);
 
             delete authorizations[key];
         }

@@ -30,6 +30,8 @@ interface IArgobytesTrader {
 
 }
 
+// TODO: this isn't right. this works for the owner account, but needs more thought for authenticating a bot
+// TODO: maybe have a function approvedAtomicAbitrage that calls transferFrom. and another that that assumes its used from the owner of the funnds with delegatecall
 contract ArgobytesTrader is IArgobytesTrader {
     using SafeERC20 for IERC20;
 
@@ -46,6 +48,7 @@ contract ArgobytesTrader is IArgobytesTrader {
 
         // record starting token balances to check for increases
         // transfer tokens from msg.sender to arbitrary destinations
+        // TODO: what about ETH balances? 
         for (uint256 i = 0; i < borrows.length; i++) {
             start_balances[i] = borrows[i].token.balanceOf(msg.sender);
 
@@ -58,9 +61,15 @@ contract ArgobytesTrader is IArgobytesTrader {
         // TODO: pass ETH along? this might be helpful for exchanges like 0x. maybe better to borrow WETH for the action
         argobytes_actor.callActions{value: msg.value}(actions);
 
-        // make sure our balances did not decrease
+        // make sure the source's balances did not decrease
         // we allow it to be equal because it's possible that we got our profits on another token or from LP fees
         for (uint256 i = 0; i < borrows.length; i++) {
+            // return any tokens that the actions didn't already return
+            uint256 this_balance = borrows[i].token.balanceOf(address(this));
+
+            borrows[i].token.safeTransfer(msg.sender, this_balance);
+
+            // make sure the balance increased
             uint256 end_balance = borrows[i].token.balanceOf(msg.sender);
 
             require(end_balance >= start_balances[i]);
@@ -75,7 +84,7 @@ contract ArgobytesTrader is IArgobytesTrader {
 
     /**
      * @notice Transfer `first_amount` `tokens[0]`, call some functions, and return tokens to msg.sender.
-     * @notice You'll need to delegateCall this from another smart contract that has authentication.
+     * @notice You'll need to call this from another smart contract that has authentication.
      */
     function atomicTrade(
         Borrow[] calldata borrows,

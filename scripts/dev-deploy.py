@@ -132,7 +132,7 @@ def main():
 
         assert gas_tokens_start == mint_batch_amount * num_mints
 
-    # deploy ArgobytesProxyFactory using LGT's create2 helper
+    # deploy ArgobytesVaultFactory using LGT's create2 helper
     # when combined with a salt found by ERADICATE2, we can have an address with lots of 0 bytes
     if FREE_GAS_TOKEN:
         # TODO: calculate the optimal number of gas to buy
@@ -144,7 +144,7 @@ def main():
         free_num_gas_gas_tokens,
         deadline,
         salt_uint,
-        ArgobytesProxyFactory.deploy.encode_input(),
+        ArgobytesVaultFactory.deploy.encode_input(),
         {
             # TODO: i'm getting revert: insufficient ether even when setting gas_token_amount to 0 and value to 0
             # this ether will get sent back if gas_token_amount is 0
@@ -154,9 +154,9 @@ def main():
     )
     # TODO: check how much we spent on gas token
 
-    argobytes_proxy_factory = ArgobytesProxyFactory.at(deploy_tx.return_value, accounts[0])
+    argobytes_proxy_factory = ArgobytesVaultFactory.at(deploy_tx.return_value, accounts[0])
     quick_save_contract(argobytes_proxy_factory)
-    # the ArgobytesProxyFactory is deployed and ready for use!
+    # the ArgobytesVaultFactory is deployed and ready for use!
 
     # let the proxy use our gas token
     if FREE_GAS_TOKEN:
@@ -165,9 +165,9 @@ def main():
     # build an ArgobytesAuthority
     argobytes_authority = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesAuthority)
 
-    # build an ArgobytesProxy using ArgobytesAuthority for programmable access
-    # TODO: calculate gas_token_amount for an ArgobytesProxy
-    deploy_tx = argobytes_proxy_factory.buildProxyAndFree(
+    # build an ArgobytesVault using ArgobytesAuthority for programmable access
+    # TODO: calculate gas_token_amount for an ArgobytesVault
+    deploy_tx = argobytes_proxy_factory.buildVaultAndFree(
         0,
         False,
         salt,
@@ -177,7 +177,7 @@ def main():
             "gas_price": expected_mainnet_gas_price,
         },
     )
-    argobytes_proxy = ArgobytesProxy.at(deploy_tx.return_value, accounts[0])
+    argobytes_proxy = ArgobytesVault.at(deploy_tx.return_value, accounts[0])
     quick_save_contract(argobytes_proxy)
 
     if FREE_GAS_TOKEN:
@@ -207,6 +207,7 @@ def main():
         (
             argobytes_authority.address,
             argobytes_authority.allow.encode_input(
+                False,
                 argobytes_proxy_arbitragers,
                 argobytes_trader.address,
                 argobytes_trader.atomicArbitrage.signature,
@@ -249,7 +250,7 @@ def main():
         ),
     ]
 
-    argobytes_proxy.execute(
+    argobytes_proxy.delegateCallAndFree(
         FREE_GAS_TOKEN,
         REQUIRE_GAS_TOKEN,
         argobytes_actor,

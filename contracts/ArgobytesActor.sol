@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
 interface IArgobytesActor {
+    // TODO: option to delegatecall?
     struct Action {
         address payable target;
         bytes data;
