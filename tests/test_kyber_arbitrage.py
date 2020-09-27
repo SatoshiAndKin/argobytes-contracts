@@ -7,8 +7,8 @@ from hypothesis import settings
 
 
 # @pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/611")
-def test_kyber_arbitrage(address_zero, argobytes_actor, argobytes_trader, dai_erc20, argobytes_proxy, kyber_network_proxy, kyber_action, usdc_erc20, weth9_erc20):
-    assert argobytes_proxy.balance() == 0
+def test_kyber_arbitrage(address_zero, argobytes_actor, argobytes_trader, dai_erc20, argobytes_vault, kyber_network_proxy, kyber_action, usdc_erc20, weth9_erc20):
+    assert argobytes_vault.balance() == 0
     assert kyber_action.balance() == 0
 
     value = 1e18
@@ -20,7 +20,7 @@ def test_kyber_arbitrage(address_zero, argobytes_actor, argobytes_trader, dai_er
     weth9_erc20.transfer(accounts[0], value)
 
     # allow the proxy to use account[0]'s WETH
-    weth9_erc20.approve(argobytes_proxy, value, {"from": accounts[0]})
+    weth9_erc20.approve(argobytes_vault, value, {"from": accounts[0]})
 
     # send some ETH to the action to simulate arbitrage profits
     weth9_erc20.transfer(kyber_action, value)
@@ -34,10 +34,12 @@ def test_kyber_arbitrage(address_zero, argobytes_actor, argobytes_trader, dai_er
         (
             weth9_erc20,
             value,
+            accounts[0],
             kyber_action,
         ),
     ]
 
+    # TODO: WETH -> ETH via unwrap helper?
     actions = [
         # trade WETH to USDC
         (
@@ -69,7 +71,7 @@ def test_kyber_arbitrage(address_zero, argobytes_actor, argobytes_trader, dai_er
         ),
     ]
 
-    arbitrage_tx = argobytes_proxy.execute(
+    arbitrage_tx = argobytes_vault.executeAndFree(
         False,
         False,
         argobytes_trader,
@@ -78,7 +80,7 @@ def test_kyber_arbitrage(address_zero, argobytes_actor, argobytes_trader, dai_er
         ),
     )
 
-    assert argobytes_proxy.balance() > value
+    assert argobytes_vault.balance() > value
 
     # TODO: https://github.com/trufflesuite/ganache-core/issues/611
     # make sure the transaction succeeded

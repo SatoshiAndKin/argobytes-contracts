@@ -26,45 +26,8 @@ import {IArgobytesAuthority} from "./ArgobytesAuthority.sol";
 // it is super important that all these functions have strong authentication!
 interface IArgobytesVault {
 
-    // call any function
-    function call(
-        address target,
-        bytes memory target_calldata,
-        uint256 target_value
-    )
-        external
-        payable
-        returns (bytes memory response);
-
-    // call any function, free gas token
-    function callAndFree(
-        bool free_gas_token,
-        bool require_gas_token,
-        address target,
-        bytes memory target_calldata,
-        uint256 target_value
-    )
-        external
-        payable
-        returns (bytes memory response);
-
-    // deploy a contract, call a function, free gas token
-    function deployAndCallAndFree(
-        bool free_gas_token,
-        bool require_gas_token,
-        IArgobytesVaultFactory factory,
-        bytes32 target_salt,
-        bytes memory target_code,
-        bytes memory target_calldata,
-        uint256 target_value
-    )
-        external
-        payable
-        returns (address target, bytes memory response);
-
-
     // delegatecall any function
-    function delegateCall(
+    function execute(
         address target,
         bytes memory target_calldata
     )
@@ -72,21 +35,8 @@ interface IArgobytesVault {
         payable
         returns (bytes memory response);
 
-    // delegatecall any function, free gas token
-    function delegateCallAndFree(
-        bool free_gas_token,
-        bool require_gas_token,
-        address target,
-        bytes memory target_calldata
-    )
-        external
-        payable
-        returns (bytes memory response);
-
-    // deploy a contract, delegatecall a function, free gas token
-    function deployAndDelegateCallAndFree(
-        bool free_gas_token,
-        bool require_gas_token,
+    // deploy a contract, delegatecall a function
+    function deployAndExecuteAndFree(
         IArgobytesVaultFactory factory,
         bytes32 target_salt,
         bytes memory target_code,
@@ -104,72 +54,13 @@ contract ArgobytesVault is ArgobytesAuth, IArgobytesVault, LiquidGasTokenUser {
 
     constructor(address owner, IArgobytesAuthority authority) ArgobytesAuth(owner, authority) {}
 
+    /*
+    * we shouldn't store ETH here outside a transaction,
+    * but we do want to be able to receive it in one call and return in another
+    */
     receive() external payable {}
 
-    function call(
-        address target,
-        bytes memory target_calldata,
-        uint256 target_value
-    )
-        public
-        override
-        payable
-        returns (bytes memory response)
-    {
-        requireAuth(false, target, target_calldata.toBytes4());
-
-        response = target.functionCallWithValue(target_calldata, target_value, "ArgobytesVault.proxyCall failed");
-    }
-
-    function callAndFree(
-        bool free_gas_token,
-        bool require_gas_token,
-        address target,
-        bytes memory target_calldata,
-        uint256 target_value
-    )
-        public
-        override
-        payable
-        returns (bytes memory response)
-    {
-        uint256 initial_gas = initialGas(free_gas_token);
-
-        // this does the auth
-        response = call(target, target_calldata, target_value);
-
-        // keep calculations after this to a minimum
-        // free gas tokens (this might spend some of our ETH)
-        freeOptimalGasTokens(initial_gas, require_gas_token);
-    }
-
-    function deployAndCallAndFree(
-        bool free_gas_token,
-        bool require_gas_token,
-        IArgobytesVaultFactory factory,
-        bytes32 target_salt,
-        bytes memory target_code,
-        bytes memory target_calldata,
-        uint256 target_value
-    )
-        public
-        override
-        payable
-        returns (address target, bytes memory response)
-    {
-        uint256 initial_gas = initialGas(free_gas_token);
-
-        target = _deploy(factory, target_salt, target_code, target_calldata);
-
-        // this does the auth
-        response = call(target, target_calldata, target_value);
-
-        // keep calculations after this to a minimum
-        // free gas tokens (this might spend some of our ETH)
-        freeOptimalGasTokens(initial_gas, require_gas_token);
-    }
-
-    function delegateCall(
+    function execute(
         address target,
         bytes memory target_calldata
     )
@@ -178,14 +69,12 @@ contract ArgobytesVault is ArgobytesAuth, IArgobytesVault, LiquidGasTokenUser {
         payable
         returns (bytes memory response)
     {
-        requireAuth(true, target, target_calldata.toBytes4());
+        requireAuth(target, target_calldata.toBytes4());
 
-        response = target.functionDelegateCall(target_calldata, "ArgobytesVault.delegatecall failed");
+        response = target.functionDelegateCall(target_calldata, "ArgobytesVault.execute failed");
     }
 
-    function delegateCallAndFree(
-        bool free_gas_token,
-        bool require_gas_token,
+    function executeAndFree(
         address target,
         bytes memory target_calldata
     )
@@ -197,16 +86,15 @@ contract ArgobytesVault is ArgobytesAuth, IArgobytesVault, LiquidGasTokenUser {
         uint256 initial_gas = initialGas(free_gas_token);
 
         // this does the auth
-        response = delegateCall(target, target_calldata);
+        response = execute(target, target_calldata);
 
         // keep calculations after this to a minimum
         // free gas tokens (this might spend some of our ETH)
-        freeOptimalGasTokens(initial_gas, require_gas_token);
+        // TODO: gas golf this. we don't need to call owner() until later
+        freeOptimalGasTokensFrom(initial_gas, require_gas_token, owner());
     }
 
-    function deployAndDelegateCallAndFree(
-        bool free_gas_token,
-        bool require_gas_token,
+    function deployAndExecuteAndFree(
         IArgobytesVaultFactory factory,
         bytes32 target_salt,
         bytes memory target_code,
@@ -219,20 +107,23 @@ contract ArgobytesVault is ArgobytesAuth, IArgobytesVault, LiquidGasTokenUser {
     {
         uint256 initial_gas = initialGas(free_gas_token);
 
-        target = _deploy(factory, target_salt, target_code, target_calldata);
+        // TODO: pass calldata to the _deploy function?
+        // its helpful in some cases, but i thik contracts we use here will be designed with ArgobytesVaults in mind
+        target = _deploy(factory, target_salt, target_code);
 
-        response = delegateCall(target, target_calldata);
+        // this uses delegatecall! be careful!
+        response = execute(target, target_calldata);
 
         // keep calculations after this to a minimum
         // free gas tokens (this might spend some of our ETH)
-        freeOptimalGasTokens(initial_gas, require_gas_token);
+        // TODO: gas golf this. we don't need to call owner() until later
+        freeOptimalGasTokensFrom(initial_gas, require_gas_token, owner());
     }
 
     function _deploy(
         IArgobytesVaultFactory factory,
         bytes32 target_salt,
-        bytes memory target_code,
-        bytes memory target_calldata
+        bytes memory target_code
     ) internal returns (address target) {
         // TODO: i think we want an empty salt. maybe take it as an argument though
         // adding a salt adds to the calldata would negate some of savings from 0 bytes in target
@@ -242,7 +133,7 @@ contract ArgobytesVault is ArgobytesAuth, IArgobytesVault, LiquidGasTokenUser {
             // target doesn't exist. create it
             // if you want to burn gas token, do it during target_calldata
             // TODO: think more about gas token
-            require(factory.deploy2(target_salt, target_code, "") == target, "ArgobytesVault: bad_address");
+            require(factory.deploy2(target_salt, target_code, "") == target, "ArgobytesVault: BAD_DEPLOY_ADDRESS");
         }
     }
 

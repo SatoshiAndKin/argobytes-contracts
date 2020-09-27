@@ -54,9 +54,9 @@ def main():
     kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWalletAddress)
 
     # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
-    argobytes_proxy_owner = accounts[0]
+    argobytes_vault_owner = accounts[0]
 
-    argobytes_proxy_arbitragers = [
+    argobytes_vault_arbitragers = [
         accounts[0],
         accounts[1],
         accounts[2],
@@ -66,7 +66,7 @@ def main():
 
     starting_balance = accounts[0].balance()
 
-    def argobytes_proxy_factory_deploy2_helper(factory, contract):
+    def argobytes_vault_factory_deploy2_helper(factory, contract):
         gas_token_amount = 0
         require_gas_token = False
         salt = ""
@@ -154,52 +154,52 @@ def main():
     )
     # TODO: check how much we spent on gas token
 
-    argobytes_proxy_factory = ArgobytesVaultFactory.at(deploy_tx.return_value, accounts[0])
-    quick_save_contract(argobytes_proxy_factory)
+    argobytes_vault_factory = ArgobytesVaultFactory.at(deploy_tx.return_value, accounts[0])
+    quick_save_contract(argobytes_vault_factory)
     # the ArgobytesVaultFactory is deployed and ready for use!
 
     # let the proxy use our gas token
     if FREE_GAS_TOKEN:
-        gas_token.approve(argobytes_proxy_factory, -1)
+        gas_token.approve(argobytes_vault_factory, -1)
 
     # build an ArgobytesAuthority
-    argobytes_authority = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesAuthority)
+    argobytes_authority = argobytes_vault_factory_deploy2_helper(argobytes_vault_factory, ArgobytesAuthority)
 
     # build an ArgobytesVault using ArgobytesAuthority for programmable access
     # TODO: calculate gas_token_amount for an ArgobytesVault
-    deploy_tx = argobytes_proxy_factory.buildVaultAndFree(
+    deploy_tx = argobytes_vault_factory.buildVaultAndFree(
         0,
         False,
         salt,
         argobytes_authority.address,
         {
-            "from": argobytes_proxy_owner,
+            "from": argobytes_vault_owner,
             "gas_price": expected_mainnet_gas_price,
         },
     )
-    argobytes_proxy = ArgobytesVault.at(deploy_tx.return_value, accounts[0])
-    quick_save_contract(argobytes_proxy)
+    argobytes_vault = ArgobytesVault.at(deploy_tx.return_value, accounts[0])
+    quick_save_contract(argobytes_vault)
 
     if FREE_GAS_TOKEN:
-        gas_token.approve(argobytes_proxy, -1)
+        gas_token.approve(argobytes_vault, -1)
 
     # TODO: setup auth for the proxy
     # for now, owner-only access works, but we need to allow a bot in to call atomicArbitrage
 
     # deploy the main contracts
-    argobytes_trader = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesTrader)
-    argobytes_actor = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesActor)
+    argobytes_trader = argobytes_vault_factory_deploy2_helper(argobytes_vault_factory, ArgobytesTrader)
+    argobytes_actor = argobytes_vault_factory_deploy2_helper(argobytes_vault_factory, ArgobytesActor)
 
     # deploy all the actions
-    example_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ExampleAction)
-    onesplit_offchain_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, OneSplitOffchainAction)
-    kyber_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, KyberAction)
-    uniswap_v1_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, UniswapV1Action)
-    uniswap_v2_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, UniswapV2Action)
-    # zrx_v3_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ZrxV3Action)
-    weth9_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, Weth9Action)
-    synthetix_depot_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, SynthetixDepotAction)
-    curve_fi_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, CurveFiAction)
+    example_action = argobytes_vault_factory_deploy2_helper(argobytes_vault_factory, ExampleAction)
+    onesplit_offchain_action = argobytes_vault_factory_deploy2_helper(argobytes_vault_factory, OneSplitOffchainAction)
+    kyber_action = argobytes_vault_factory_deploy2_helper(argobytes_vault_factory, KyberAction)
+    uniswap_v1_action = argobytes_vault_factory_deploy2_helper(argobytes_vault_factory, UniswapV1Action)
+    uniswap_v2_action = argobytes_vault_factory_deploy2_helper(argobytes_vault_factory, UniswapV2Action)
+    # zrx_v3_action = argobytes_vault_factory_deploy2_helper(argobytes_vault_factory, ZrxV3Action)
+    weth9_action = argobytes_vault_factory_deploy2_helper(argobytes_vault_factory, Weth9Action)
+    synthetix_depot_action = argobytes_vault_factory_deploy2_helper(argobytes_vault_factory, SynthetixDepotAction)
+    curve_fi_action = argobytes_vault_factory_deploy2_helper(argobytes_vault_factory, CurveFiAction)
 
     bulk_actions = [
         # allow bots to call argobytes_trader.atomicArbitrage
@@ -207,8 +207,7 @@ def main():
         (
             argobytes_authority.address,
             argobytes_authority.allow.encode_input(
-                False,
-                argobytes_proxy_arbitragers,
+                argobytes_vault_arbitragers,
                 argobytes_trader.address,
                 argobytes_trader.atomicArbitrage.signature,
             ),
@@ -245,12 +244,12 @@ def main():
         # register for kyber's fee program
         (
             KyberRegisterWalletAddress,
-            kyber_register_wallet.registerWallet.encode_input(argobytes_proxy_owner),
+            kyber_register_wallet.registerWallet.encode_input(argobytes_vault_owner),
             False,
         ),
     ]
 
-    argobytes_proxy.delegateCallAndFree(
+    argobytes_vault.executeAndFree(
         FREE_GAS_TOKEN,
         REQUIRE_GAS_TOKEN,
         argobytes_actor,
@@ -260,7 +259,7 @@ def main():
 
     if FREE_GAS_TOKEN:
         # make sure we still have some gastoken left
-        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_proxy_owner)
+        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_vault_owner)
 
         print("gas token:", gas_token.address)
 
@@ -269,7 +268,7 @@ def main():
         assert gas_tokens_remaining > 0
         assert gas_tokens_remaining <= mint_batch_amount
     elif MINT_GAS_TOKEN:
-        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_proxy_owner)
+        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_vault_owner)
 
         print("gas token:", gas_token.address)
 
@@ -308,11 +307,49 @@ def main():
     quick_save("Weth9", Weth9Address)
     quick_save("YearnEthVault", YearnEthVaultAddress)
 
-    # give the argobytes_proxy a bunch of coins. it will forward them when deploying the diamond
+    # give the argobytes_vault a bunch of coins. it will forward them when deploying the diamond
     accounts[1].transfer(accounts[0], 50 * 1e18)
     accounts[2].transfer(accounts[0], 50 * 1e18)
     accounts[3].transfer(accounts[0], 50 * 1e18)
-    accounts[4].transfer(argobytes_proxy_owner, 30 * 1e18)
-    accounts[4].transfer(argobytes_proxy_arbitragers[0], 30 * 1e18)
+    accounts[4].transfer(argobytes_vault_owner, 30 * 1e18)
+    accounts[4].transfer(argobytes_vault_arbitragers[0], 30 * 1e18)
+
+    """
+    # make a vault for accounts[5] and setup auth in one transaction. then print total gas
+    deploy_tx = argobytes_vault_factory.buildVaultAndFree(
+        0,
+        False,
+        salt,
+        argobytes_authority.address,
+        {
+            "from": accounts[5],
+            "gas_price": expected_mainnet_gas_price,
+        },
+    )
+
+    bulk_actions = [
+        # allow bots to call argobytes_trader.atomicArbitrage
+        # TODO: think about this more. the msg.sendere might not be what we need
+        (
+            argobytes_authority.address,
+            argobytes_authority.allow.encode_input(
+                argobytes_vault_arbitragers,
+                argobytes_trader.address,
+                argobytes_trader.atomicArbitrage.signature,
+            ),
+            False,
+        ),
+    ]
+
+    argobytes_vault.executeAndFree(
+        FREE_GAS_TOKEN,
+        REQUIRE_GAS_TOKEN,
+        argobytes_actor,
+        argobytes_actor.callActions.encode_input(bulk_actions),
+        {"from": accounts[5], "gasPrice": expected_mainnet_gas_price, "value": "1 ether"}
+    )
+    """
+
+    # make a vault for accounts[6] and then setup auth in a seperate transaction. then print total gas
 
     reset_block_time(synthetix_depot_action)

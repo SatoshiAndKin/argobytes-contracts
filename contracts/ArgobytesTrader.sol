@@ -18,12 +18,16 @@ interface IArgobytesTrader {
     }
 
     function atomicArbitrage(
+        bool free_gas_token,
+        bool require_gas_token,
         Borrow[] calldata borrows,
         IArgobytesActor argobytes_actor,
         IArgobytesActor.Action[] calldata actions
     ) external payable returns (uint256 primary_profit);
 
     function atomicTrade(
+        bool free_gas_token,
+        bool require_gas_token,
         Borrow[] calldata borrows,
         IArgobytesActor argobytes_actor,
         IArgobytesActor.Action[] calldata actions
@@ -54,11 +58,7 @@ contract ArgobytesTrader is IArgobytesTrader {
             start_balances[i] = borrows[i].token.balanceOf(msg.sender);
 
             // TODO: think about this and approvals more
-            if (borrows[i].src == address(0)) {
-                borrows[i].token.safeTransfer(borrows[i].dest, borrows[i].amount);
-            } else {
-                borrows[i].token.safeTransferFrom(borrows[i].src, borrows[i].dest, borrows[i].amount);
-            }
+            borrows[i].token.safeTransferFrom(borrows[i].src, borrows[i].dest, borrows[i].amount);
         }
 
         // we call a seperate contract because we don't want any sneaky transferFroms
