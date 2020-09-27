@@ -13,6 +13,7 @@ interface IArgobytesTrader {
     struct Borrow {
         IERC20 token;
         uint256 amount;
+        address src;
         address dest;
     }
 
@@ -53,7 +54,11 @@ contract ArgobytesTrader is IArgobytesTrader {
             start_balances[i] = borrows[i].token.balanceOf(msg.sender);
 
             // TODO: think about this and approvals more
-            borrows[i].token.safeTransferFrom(msg.sender, borrows[i].dest, borrows[i].amount);
+            if (borrows[i].src == address(0)) {
+                borrows[i].token.safeTransfer(borrows[i].dest, borrows[i].amount);
+            } else {
+                borrows[i].token.safeTransferFrom(borrows[i].src, borrows[i].dest, borrows[i].amount);
+            }
         }
 
         // we call a seperate contract because we don't want any sneaky transferFroms
@@ -95,7 +100,11 @@ contract ArgobytesTrader is IArgobytesTrader {
         // this is dangerous! be careful with this!
         for (uint256 i = 0; i < borrows.length; i++) {
             // TODO: think about this and approvals more
-            borrows[i].token.safeTransferFrom(msg.sender, borrows[i].dest, borrows[i].amount);
+            if (borrows[i].src == address(0)) {
+                borrows[i].token.safeTransfer(borrows[i].dest, borrows[i].amount);
+            } else {
+                borrows[i].token.safeTransferFrom(borrows[i].src, borrows[i].dest, borrows[i].amount);
+            }
         }
 
         // TODO: pass ETH along
