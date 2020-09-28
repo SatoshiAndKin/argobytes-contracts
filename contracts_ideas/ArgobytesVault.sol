@@ -20,7 +20,7 @@ import {
 } from "contracts/interfaces/argobytes/IArgobytesOwnedVault.sol";
 
 // we do NOT give this contract a `receive` function since it should only be used through a diamond
-contract ArgobytesVault is
+contract ArgobytesProxy is
     AccessControl,
     LiquidGasTokenUser,
     IArgobytesOwnedVault

@@ -8,7 +8,7 @@ from hypothesis import settings
 
 
 # TODO: test access for all the functions!
-def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argobytes_vault, argobytes_trader, example_action):
+def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argobytes_proxy, argobytes_trader, example_action):
     value = 1
 
     borrows = []
@@ -25,7 +25,7 @@ def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argob
     )
 
     # check that accounts[0] is allowed
-    argobytes_vault.executeAndFree(
+    argobytes_proxy.executeAndFree(
         False,
         False,
         argobytes_trader.address,
@@ -35,7 +35,7 @@ def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argob
 
     # check that accounts[1] is NOT allowed
     with brownie.reverts("ArgobytesAuth: 403"):
-        argobytes_vault.executeAndFree(
+        argobytes_proxy.executeAndFree(
             False,
             False,
             argobytes_trader.address,
@@ -50,11 +50,11 @@ def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argob
     assert False
 
 
-def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes_vault, example_action, kollateral_invoker):
+def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes_proxy, example_action, kollateral_invoker):
     value = 1e18
 
     # make sure the arbitrage contract has no funds
-    assert argobytes_vault.balance() == 0
+    assert argobytes_proxy.balance() == 0
     assert example_action.balance() == 0
 
     starting_balance = accounts[0].balance()
@@ -68,7 +68,7 @@ def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes
         )
     ]
 
-    atomic_arbitrage_tx = argobytes_vault.executeAndFree(
+    atomic_arbitrage_tx = argobytes_proxy.executeAndFree(
         False,
         False,
         argobytes_trader.address,
@@ -85,17 +85,17 @@ def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes
 
     profit = decode_single('uint256', atomic_arbitrage_tx.return_value)
 
-    assert argobytes_vault.balance() == 0
+    assert argobytes_proxy.balance() == 0
     assert accounts[0].balance() == starting_balance
     assert profit == 0
 
 
 @pytest.mark.skip(reason="Refactor removed kollateral. need to rethink adding it again")
-def test_simple_kollateral(address_zero, argobytes_trader, argobytes_vault, example_action, example_action_2, kollateral_invoker):
+def test_simple_kollateral(address_zero, argobytes_trader, argobytes_proxy, example_action, example_action_2, kollateral_invoker):
     value = 1e18
 
     # make sure the arbitrage contract has no funds
-    assert argobytes_vault.balance() == 0
+    assert argobytes_proxy.balance() == 0
     assert example_action.balance() == 0
 
     # add a fake "arb return" to the sweep contract
@@ -110,7 +110,7 @@ def test_simple_kollateral(address_zero, argobytes_trader, argobytes_vault, exam
         ),
     ]
 
-    arbitrage_tx = argobytes_vault.executeAndFree(
+    arbitrage_tx = argobytes_proxy.executeAndFree(
         False,
         False,
         argobytes_trader.address,
@@ -125,7 +125,7 @@ def test_simple_kollateral(address_zero, argobytes_trader, argobytes_vault, exam
     assert profit > 0
 
 
-def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trader, argobytes_vault, example_action, liquidgastoken):
+def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trader, argobytes_proxy, example_action, liquidgastoken):
     value = 1e18
     gas_price = 150 * 1e9  # 150 gwei
 
@@ -137,7 +137,7 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
     # make sure balances match what we expect
     assert starting_balance > value
     assert argobytes_actor.balance() == 0
-    assert argobytes_vault.balance() == 0
+    assert argobytes_proxy.balance() == 0
     assert argobytes_trader.balance() == 0
     assert example_action.balance() == value
 
@@ -152,7 +152,7 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
     ]
 
     # execute without freeing gas token
-    arbitrage_tx = argobytes_vault.executeAndFree(
+    arbitrage_tx = argobytes_proxy.executeAndFree(
         False,
         False,
         argobytes_trader.address,
@@ -165,7 +165,7 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
 
     # make sure balances match what we expect
     assert argobytes_actor.balance() == 0
-    assert argobytes_vault.balance() == 0
+    assert argobytes_proxy.balance() == 0
     assert argobytes_trader.balance() == 0
     assert example_action.balance() == 0
 
@@ -187,13 +187,13 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
     # mint and approve some gas token
     # TODO: how much should we make?
     liquidgastoken.mint(100, {"from": accounts[0]})
-    liquidgastoken.approve(argobytes_vault, 100, {"from": accounts[0]})
+    liquidgastoken.approve(argobytes_proxy, 100, {"from": accounts[0]})
 
     # minting gas token takes eth. so save our balance again
     starting_balance = accounts[0].balance()
 
     # do the faked arbitrage trade again (but this time with gas tokens)
-    arbitrage_tx = argobytes_vault.executeAndFree(
+    arbitrage_tx = argobytes_proxy.executeAndFree(
         True,
         True,
         argobytes_trader.address,
@@ -216,7 +216,7 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
     # TODO: figure out the cost of gas tokens
     # TODO: value should actually be value - cost of gastokens that we bought and freed
     assert argobytes_actor.balance() == 0
-    assert argobytes_vault.balance() == 0
+    assert argobytes_proxy.balance() == 0
     assert argobytes_trader.balance() == 0
     assert example_action.balance() == 0
 

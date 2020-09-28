@@ -5,11 +5,15 @@ pragma solidity 0.7.1;
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
 import {LiquidGasTokenUser} from "./abstract/LiquidGasTokenUser.sol";
-import {ArgobytesVault} from "./ArgobytesVault.sol";
+import {ArgobytesProxy} from "./ArgobytesProxy.sol";
 import {IArgobytesAuthority} from "./ArgobytesAuthority.sol";
 
-interface IArgobytesVaultFactory {
-    event NewVault(address indexed sender, address indexed first_admin, address proxy);
+interface IArgobytesProxyFactory {
+    event NewVault(
+        address indexed sender,
+        address indexed first_admin,
+        address proxy
+    );
 
     function buildVaultAndFree(
         uint256 gas_token_amount,
@@ -51,8 +55,7 @@ interface IArgobytesVaultFactory {
 // deploy contracts and burn gas tokens
 // only set gas_token if the contract is large and gas prices are high
 // LGT's deploy helper only buys (we might have our own tokens)
-contract ArgobytesVaultFactory is IArgobytesVaultFactory, LiquidGasTokenUser {
-
+contract ArgobytesProxyFactory is IArgobytesProxyFactory, LiquidGasTokenUser {
     // build a proxy for msg.sender with owner-only auth
     // auth can be changed later by the owner
     function buildVaultAndFree(
@@ -60,7 +63,13 @@ contract ArgobytesVaultFactory is IArgobytesVaultFactory, LiquidGasTokenUser {
         bool require_gas_token,
         bytes32 salt
     ) public override payable returns (address deployed) {
-        deployed = buildVaultAndFree(gas_token_amount, require_gas_token, salt, IArgobytesAuthority(0), msg.sender);
+        deployed = buildVaultAndFree(
+            gas_token_amount,
+            require_gas_token,
+            salt,
+            IArgobytesAuthority(0),
+            msg.sender
+        );
     }
 
     // build a proxy for msg.sender with progra
@@ -70,7 +79,13 @@ contract ArgobytesVaultFactory is IArgobytesVaultFactory, LiquidGasTokenUser {
         bytes32 salt,
         IArgobytesAuthority first_authority
     ) public override payable returns (address deployed) {
-        deployed = buildVaultAndFree(gas_token_amount, require_gas_token, salt, first_authority, msg.sender);
+        deployed = buildVaultAndFree(
+            gas_token_amount,
+            require_gas_token,
+            salt,
+            first_authority,
+            msg.sender
+        );
     }
 
     function buildVaultAndFree(
@@ -83,7 +98,9 @@ contract ArgobytesVaultFactory is IArgobytesVaultFactory, LiquidGasTokenUser {
         // since this deployment cost can be known, we free a specific amount tokens
         freeGasTokens(gas_token_amount, require_gas_token);
 
-        deployed = address(new ArgobytesVault{salt: salt}(first_owner, first_authority));
+        deployed = address(
+            new ArgobytesProxy{salt: salt}(first_owner, first_authority)
+        );
 
         // refund any excess ETH
         uint256 balance = address(this).balance;

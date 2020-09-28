@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-/* ArgobytesVault
+/* ArgobytesProxy
  *
  * User deploys a proxy with the ProxyFactory
  * User sets up a smart contract for auth
@@ -16,7 +16,7 @@ pragma solidity 0.7.1;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
-import {IArgobytesVaultFactory} from "./ArgobytesVaultFactory.sol";
+import {IArgobytesProxyFactory} from "./ArgobytesProxyFactory.sol";
 import {ArgobytesAuth} from "./abstract/ArgobytesAuth.sol";
 import {Address2} from "./library/Address2.sol";
 import {Bytes2} from "./library/Bytes2.sol";
@@ -25,7 +25,7 @@ import {IArgobytesAuthority} from "./ArgobytesAuthority.sol";
 
 
 // it is super important that all these functions have strong authentication!
-interface IArgobytesVault {
+interface IArgobytesProxy {
 
     // delegatecall any function
     function execute(
@@ -38,7 +38,7 @@ interface IArgobytesVault {
 
     // deploy a contract, delegatecall a function
     function deployAndExecute(
-        IArgobytesVaultFactory factory,
+        IArgobytesProxyFactory factory,
         bytes32 target_salt,
         bytes memory target_code,
         bytes memory target_calldata
@@ -48,7 +48,7 @@ interface IArgobytesVault {
         returns (address target, bytes memory response);   
 }
 
-contract ArgobytesVault is ArgobytesAuth, IArgobytesVault {
+contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy {
     using Address for address;
     using Address2 for address;
     using Bytes2 for bytes;
@@ -72,11 +72,11 @@ contract ArgobytesVault is ArgobytesAuth, IArgobytesVault {
     {
         requireAuth(target, target_calldata.toBytes4());
 
-        response = target.functionDelegateCall(target_calldata, "ArgobytesVault.execute failed");
+        response = target.functionDelegateCall(target_calldata, "ArgobytesProxy.execute failed");
     }
 
     function deployAndExecute(
-        IArgobytesVaultFactory factory,
+        IArgobytesProxyFactory factory,
         bytes32 target_salt,
         bytes memory target_code,
         bytes memory target_calldata
@@ -96,10 +96,10 @@ contract ArgobytesVault is ArgobytesAuth, IArgobytesVault {
             // target doesn't exist. create it
             // if you want to burn gas token, do it during target_calldata
             // TODO: think more about gas token
-            // TODO: pass calldata for the contract to call? its helpful in some cases, but i think contracts we use here will be designed with ArgobytesVaults in mind
-            require(factory.deploy2(target_salt, target_code, "") == target, "ArgobytesVault: BAD_DEPLOY_ADDRESS");
+            // TODO: pass calldata for the contract to call? its helpful in some cases, but i think contracts we use here will be designed with ArgobytesProxys in mind
+            require(factory.deploy2(target_salt, target_code, "") == target, "ArgobytesProxy: BAD_DEPLOY_ADDRESS");
         }
 
-        response = target.functionDelegateCall(target_calldata, "ArgobytesVault.deployAndExecute failed");
+        response = target.functionDelegateCall(target_calldata, "ArgobytesProxy.deployAndExecute failed");
     }
 }

@@ -35,18 +35,18 @@ def argobytes_authority(ArgobytesAuthority):
 
 
 @pytest.fixture(scope="function")
-def argobytes_vault_factory(ArgobytesVaultFactory):
-    return ArgobytesVaultFactory.deploy({"from": accounts[0]})
+def argobytes_proxy_factory(ArgobytesProxyFactory):
+    return ArgobytesProxyFactory.deploy({"from": accounts[0]})
 
 
 @pytest.fixture(scope="function")
-def argobytes_vault(argobytes_authority, ArgobytesVault, argobytes_vault_factory):
+def argobytes_proxy(argobytes_authority, ArgobytesProxy, argobytes_proxy_factory):
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
     salt = ""
 
-    deploy_tx = argobytes_vault_factory.buildVaultAndFree(0, False, salt, argobytes_authority.address, accounts[0])
+    deploy_tx = argobytes_proxy_factory.buildVaultAndFree(0, False, salt, argobytes_authority.address, accounts[0])
 
-    return ArgobytesVault.at(deploy_tx.return_value, accounts[0])
+    return ArgobytesProxy.at(deploy_tx.return_value, accounts[0])
 
 
 @pytest.fixture(scope="function")
