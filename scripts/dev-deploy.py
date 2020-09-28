@@ -313,8 +313,9 @@ def main():
     accounts[4].transfer(argobytes_vault_owner, 30 * 1e18)
     accounts[4].transfer(argobytes_vault_arbitragers[0], 30 * 1e18)
 
-    """
     # make a vault for accounts[5] and setup auth in one transaction. then print total gas
+    starting_balance = accounts[5].balance()
+
     deploy_tx = argobytes_vault_factory.buildVaultAndFree(
         0,
         False,
@@ -325,6 +326,8 @@ def main():
             "gas_price": expected_mainnet_gas_price,
         },
     )
+
+    argobytes_vault = ArgobytesVault.at(deploy_tx.return_value, accounts[5])
 
     bulk_actions = [
         # allow bots to call argobytes_trader.atomicArbitrage
@@ -338,17 +341,19 @@ def main():
             ),
             False,
         ),
+        # TODO: gas_token.buyAndFree or gas_token.free depending on off-chain balance/price checks
     ]
 
-    argobytes_vault.executeAndFree(
-        FREE_GAS_TOKEN,
-        REQUIRE_GAS_TOKEN,
+    argobytes_vault.execute(
         argobytes_actor,
         argobytes_actor.callActions.encode_input(bulk_actions),
         {"from": accounts[5], "gasPrice": expected_mainnet_gas_price, "value": "1 ether"}
     )
-    """
 
-    # make a vault for accounts[6] and then setup auth in a seperate transaction. then print total gas
+    ending_balance = accounts[5].balance()
+
+    print("ETH used by accounts[5] to deploy :", (starting_balance - ending_balance) / 1e18)
+
+    # TODO: make a vault for accounts[6] and then setup auth in a seperate transaction. then print total gas
 
     reset_block_time(synthetix_depot_action)
