@@ -8,6 +8,7 @@ import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
 
 import {IArgobytesActor} from "./ArgobytesActor.sol";
+import {LiquidGasTokenUser} from "./abstract/LiquidGasTokenUser.sol";
 
 interface IArgobytesTrader {
     struct Borrow {
@@ -18,7 +19,7 @@ interface IArgobytesTrader {
     }
 
     function atomicArbitrage(
-        bool free_gas_token,
+        address free_gas_token_from,
         bool require_gas_token,
         Borrow[] calldata borrows,
         IArgobytesActor argobytes_actor,
@@ -26,18 +27,17 @@ interface IArgobytesTrader {
     ) external payable returns (uint256 primary_profit);
 
     function atomicTrade(
-        bool free_gas_token,
+        address free_gas_token_from,
         bool require_gas_token,
         Borrow[] calldata borrows,
         IArgobytesActor argobytes_actor,
         IArgobytesActor.Action[] calldata actions
     ) external payable;
-
 }
 
 // TODO: this isn't right. this works for the owner account, but needs more thought for authenticating a bot
 // TODO: maybe have a function approvedAtomicAbitrage that calls transferFrom. and another that that assumes its used from the owner of the funnds with delegatecall
-contract ArgobytesTrader is IArgobytesTrader {
+contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
     using SafeERC20 for IERC20;
 
     // we want to receive because we might sweep tokens between actions
@@ -45,20 +45,28 @@ contract ArgobytesTrader is IArgobytesTrader {
     receive() external payable {}
 
     function atomicArbitrage(
+        address free_gas_token_from,
+        bool require_gas_token,
         Borrow[] calldata borrows,
         IArgobytesActor argobytes_actor,
         IArgobytesActor.Action[] calldata actions
-    ) external payable override returns (uint256 primary_profit) {
+    ) external override payable returns (uint256 primary_profit) {
+        uint256 initial_gas = initialGas(free_gas_token_from != address(0));
+
         uint256[] memory start_balances = new uint256[](borrows.length);
 
         // record starting token balances to check for increases
         // transfer tokens from msg.sender to arbitrary destinations
-        // TODO: what about ETH balances? 
+        // TODO: what about ETH balances?
         for (uint256 i = 0; i < borrows.length; i++) {
             start_balances[i] = borrows[i].token.balanceOf(msg.sender);
 
             // TODO: think about this and approvals more
-            borrows[i].token.safeTransferFrom(borrows[i].src, borrows[i].dest, borrows[i].amount);
+            borrows[i].token.safeTransferFrom(
+                borrows[i].src,
+                borrows[i].dest,
+                borrows[i].amount
+            );
         }
 
         // we call a seperate contract because we don't want any sneaky transferFroms
@@ -85,6 +93,17 @@ contract ArgobytesTrader is IArgobytesTrader {
                 primary_profit = end_balance - start_balances[i];
             }
         }
+
+        // TODO: gas golf placement
+        // TODO: what if this takes more ETH and makes the trade not profitable?
+        // TODO: pass max ETH spent to this?
+        freeOptimalGasTokensFrom(
+            initial_gas,
+            require_gas_token,
+            free_gas_token_from
+        );
+
+        // TODO: refund excess ETH
     }
 
     /**
@@ -92,18 +111,29 @@ contract ArgobytesTrader is IArgobytesTrader {
      * @notice You'll need to call this from another smart contract that has authentication.
      */
     function atomicTrade(
+        address free_gas_token_from,
+        bool require_gas_token,
         Borrow[] calldata borrows,
         IArgobytesActor argobytes_actor,
         IArgobytesActor.Action[] calldata actions
-    ) external payable override {
+    ) external override payable {
+        uint256 initial_gas = initialGas(free_gas_token_from != address(0));
+
         // transfer tokens from msg.sender to arbitrary destinations
         // this is dangerous! be careful with this!
         for (uint256 i = 0; i < borrows.length; i++) {
             // TODO: think about this and approvals more
             if (borrows[i].src == address(0)) {
-                borrows[i].token.safeTransfer(borrows[i].dest, borrows[i].amount);
+                borrows[i].token.safeTransfer(
+                    borrows[i].dest,
+                    borrows[i].amount
+                );
             } else {
-                borrows[i].token.safeTransferFrom(borrows[i].src, borrows[i].dest, borrows[i].amount);
+                borrows[i].token.safeTransferFrom(
+                    borrows[i].src,
+                    borrows[i].dest,
+                    borrows[i].amount
+                );
             }
         }
 

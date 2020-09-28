@@ -247,11 +247,10 @@ def main():
             kyber_register_wallet.registerWallet.encode_input(argobytes_vault_owner),
             False,
         ),
+        # TODO: gas_token.buyAndFree or gas_token.free depending on off-chain balance/price checks
     ]
 
-    argobytes_vault.executeAndFree(
-        FREE_GAS_TOKEN,
-        REQUIRE_GAS_TOKEN,
+    argobytes_vault.execute(
         argobytes_actor,
         argobytes_actor.callActions.encode_input(bulk_actions),
         {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
