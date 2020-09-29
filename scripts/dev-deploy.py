@@ -313,7 +313,7 @@ def main():
     accounts[4].transfer(argobytes_proxy_owner, 30 * 1e18)
     accounts[4].transfer(argobytes_proxy_arbitragers[0], 30 * 1e18)
 
-    # make a vault for accounts[5] and setup auth in one transaction. then print total gas
+    # make a vault w/ auth for accounts[5] and approve a bot to call atomicArbitrage. then print total gas
     starting_balance = accounts[5].balance()
 
     deploy_tx = argobytes_proxy_factory.buildVaultAndFree(
@@ -354,6 +354,22 @@ def main():
 
     print("ETH used by accounts[5] to deploy a proxy with auth:", (starting_balance - ending_balance) / 1e18)
 
-    # TODO: make a vault for accounts[6] and then setup auth in a seperate transaction. then print total gas
+    # make a vault for accounts[6]. then print total gas
+    starting_balance = accounts[6].balance()
+
+    deploy_tx = argobytes_proxy_factory.buildVaultAndFree(
+        0,
+        False,
+        salt,
+        ZeroAddress,
+        {
+            "from": accounts[6],
+            "gas_price": expected_mainnet_gas_price,
+        },
+    )
+
+    ending_balance = accounts[6].balance()
+
+    print("ETH used by accounts[6] to deploy a proxy:", (starting_balance - ending_balance) / 1e18)
 
     reset_block_time(synthetix_depot_action)
