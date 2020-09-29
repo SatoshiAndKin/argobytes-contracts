@@ -136,9 +136,6 @@ contract KyberAction is AbstractERC20Exchange {
 
         require(src_amount > 0, "KyberAction.tradeEtherToToken: NO_SRC_AMOUNT");
 
-        if (to == ADDRESS_ZERO) {
-            to = msg.sender;
-        }
         if (dest_max_tokens == 0) {
             dest_max_tokens = MAX_QTY;
         }
@@ -179,9 +176,6 @@ contract KyberAction is AbstractERC20Exchange {
         // Approve the exchange to transfer tokens from this contract to the reserve
         IERC20(src_token).safeApprove(network_proxy, src_amount);
 
-        if (to == ADDRESS_ZERO) {
-            to = msg.sender;
-        }
         if (dest_max_tokens == 0) {
             dest_max_tokens = MAX_QTY;
         }
@@ -219,9 +213,6 @@ contract KyberAction is AbstractERC20Exchange {
         // Approve the exchange to transfer tokens from this contract to the reserve
         IERC20(src_token).safeApprove(network_proxy, src_amount);
 
-        if (to == ADDRESS_ZERO) {
-            to = msg.sender;
-        }
         if (dest_max_tokens == 0) {
             dest_max_tokens = MAX_QTY;
         }

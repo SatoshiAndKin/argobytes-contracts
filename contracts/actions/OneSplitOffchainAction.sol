@@ -92,10 +92,6 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             "OneSplitOffchainAction.tradeEtherToToken: LOW_DEST_BALANCE"
         );
 
-        if (to == ADDRESS_ZERO) {
-            to = msg.sender;
-        }
-
         IERC20(dest_token).safeTransfer(to, dest_balance);
     }
 
@@ -137,10 +133,6 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             "OneSplitOffchainAction.tradeTokenToToken: LOW_DEST_BALANCE"
         );
 
-        if (to == ADDRESS_ZERO) {
-            to = msg.sender;
-        }
-
         IERC20(dest_token).safeTransfer(to, dest_balance);
     }
 
@@ -180,10 +172,6 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             dest_balance >= dest_min_tokens,
             "OneSplitOffchainAction._tradeTokenToEther: LOW_DEST_BALANCE"
         );
-
-        if (to == ADDRESS_ZERO) {
-            to = msg.sender;
-        }
 
         Address.sendValue(to, dest_balance);
     }

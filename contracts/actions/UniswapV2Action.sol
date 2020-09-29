@@ -132,9 +132,6 @@ contract UniswapV2Action is AbstractERC20Exchange {
     //         src_balance > 0,
     //         "UniswapV1Action.tradeEtherToToken: NO_BALANCE"
     //     );
-    //     if (to == ADDRESS_ZERO) {
-    //         to = msg.sender;
-    //     }
     //     // TODO: what gas limits? https://hackmd.io/@Uniswap/HJ9jLsfTz#Gas-Benchmarks
     //     trade_gas += 46000;
     //     // def ethToTokenTransferInput(min_tokens: uint256, deadline: timestamp, recipient: address) -> uint256
@@ -203,9 +200,6 @@ contract UniswapV2Action is AbstractERC20Exchange {
     //     IERC20(src_token).approve(exchange, src_balance);
     //     // TODO: what gas limits? https://hackmd.io/@Uniswap/HJ9jLsfTz#Gas-Benchmarks
     //     trade_gas += 140000;
-    //     if (to == ADDRESS_ZERO) {
-    //         to = msg.sender;
-    //     }
     //     // tokenToTokenTransferInput(
     //     //     tokens_sold: uint256,
     //     //     min_tokens_bought: uint256,
@@ -277,9 +271,6 @@ contract UniswapV2Action is AbstractERC20Exchange {
     //         "UniswapV1Action.tradeTokenToEther: NO_BALANCE"
     //     );
     //     IERC20(src_token).approve(exchange, src_balance);
-    //     if (to == ADDRESS_ZERO) {
-    //         to = msg.sender;
-    //     }
     //     // TODO: what gas limits? https://hackmd.io/@Uniswap/HJ9jLsfTz#Gas-Benchmarks
     //     trade_gas += 60000;
     //     // def tokenToEthTransferInput(tokens_sold: uint256, min_eth: uint256(wei), deadline: timestamp, recipient: address) -> uint256(wei):

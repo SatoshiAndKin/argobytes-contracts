@@ -215,10 +215,6 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
             "SynthetixDepotAction.tradeEtherToSynthUSD: not enough sUSD received"
         );
 
-        if (to == ADDRESS_ZERO) {
-            to = msg.sender;
-        }
-
         // we know sUSD returns a bool, so no need for safeTransfer
         require(
             IERC20(synthetix_data.sUSD).transfer(to, dest_balance),

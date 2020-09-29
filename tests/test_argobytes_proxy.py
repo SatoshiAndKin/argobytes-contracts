@@ -16,18 +16,16 @@ def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argob
         (
             example_action,
             example_action.sweep.encode_input(address_zero, address_zero, 0),
-            True,
+            False,
         )
     ]
 
     argobytes_trader_calldata = argobytes_trader.atomicArbitrage.encode_input(
-        borrows, argobytes_actor, actions,
+        address_zero, False, accounts[0], borrows, argobytes_actor, actions,
     )
 
     # check that accounts[0] is allowed
-    argobytes_proxy.executeAndFree(
-        False,
-        False,
+    argobytes_proxy.execute(
         argobytes_trader.address,
         argobytes_trader_calldata,
         {"from": accounts[0]}
@@ -35,9 +33,7 @@ def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argob
 
     # check that accounts[1] is NOT allowed
     with brownie.reverts("ArgobytesAuth: 403"):
-        argobytes_proxy.executeAndFree(
-            False,
-            False,
+        argobytes_proxy.execute(
             argobytes_trader.address,
             argobytes_trader_calldata,
             {"from": accounts[1]}
@@ -63,16 +59,17 @@ def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes
     actions = [
         (
             example_action,
-            example_action.sweep.encode_input(address_zero, address_zero, 0),
+            example_action.sweep.encode_input(accounts[0], address_zero, 0),
             True,
         )
     ]
 
-    atomic_arbitrage_tx = argobytes_proxy.executeAndFree(
-        False,
-        False,
+    atomic_arbitrage_tx = argobytes_proxy.execute(
         argobytes_trader.address,
         argobytes_trader.atomicArbitrage.encode_input(
+            address_zero,
+            False,
+            accounts[0],
             borrows,
             argobytes_actor,
             actions,
@@ -110,12 +107,10 @@ def test_simple_kollateral(address_zero, argobytes_trader, argobytes_proxy, exam
         ),
     ]
 
-    arbitrage_tx = argobytes_proxy.executeAndFree(
-        False,
-        False,
+    arbitrage_tx = argobytes_proxy.execute(
         argobytes_trader.address,
         argobytes_trader.atomicArbitrage.encode_input(
-            borrows, argobytes_actor, actions
+            address_zero, False, accounts[0], borrows, argobytes_actor, actions
         ),
     )
 
@@ -152,12 +147,10 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
     ]
 
     # execute without freeing gas token
-    arbitrage_tx = argobytes_proxy.executeAndFree(
-        False,
-        False,
+    arbitrage_tx = argobytes_proxy.execute(
         argobytes_trader.address,
         argobytes_trader.atomicArbitrage.encode_input(
-            borrows, argobytes_actor, actions
+            False, False, accounts[0], borrows, argobytes_actor, actions
         )
     )
 
@@ -193,11 +186,12 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
     starting_balance = accounts[0].balance()
 
     # do the faked arbitrage trade again (but this time with gas tokens)
-    arbitrage_tx = argobytes_proxy.executeAndFree(
-        True,
-        True,
+    arbitrage_tx = argobytes_proxy.execute(
         argobytes_trader.address,
         argobytes_trader.atomicArbitrage.encode_input(
+            True,
+            True,
+            accounts[0],
             borrows,
             argobytes_actor,
             actions,

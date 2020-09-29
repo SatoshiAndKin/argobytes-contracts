@@ -10,8 +10,8 @@ from hypothesis import settings
 #     value=strategy('uint256', max_value=1e18, min_value=1e8),
 # )
 # @pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/611")
-def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_trader, argobytes_proxy, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, weth9_erc20):
-    assert argobytes_proxy.balance() == 0
+def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_trader, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, weth9_erc20):
+    assert argobytes_trader.balance() == 0
     assert uniswap_v1_action.balance() == 0
 
     value = 1e18
@@ -54,13 +54,8 @@ def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_trader, argo
         ),
     ]
 
-    arbitrage_tx = argobytes_proxy.executeAndFree(
-        False,
-        False,
-        argobytes_trader.address,
-        argobytes_trader.atomicArbitrage.encode_input(
-            borrows, argobytes_actor, actions
-        ),
+    arbitrage_tx = argobytes_trader.atomicArbitrage(
+        address_zero, False, accounts[0], borrows, argobytes_actor, actions,
         {
             "value": value,
         }

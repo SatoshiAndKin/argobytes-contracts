@@ -43,11 +43,7 @@ contract ExampleAction is AbstractERC20Exchange {
     ) public payable {
         uint256 balance = token.universalBalanceOf(address(this));
 
-        if (to == address(0)) {
-            token.universalTransfer(msg.sender, balance);
-        } else {
-            token.universalTransfer(to, balance);
-        }
+        token.universalTransfer(to, balance);
 
         burnGas(extra_gas);
     }

@@ -216,10 +216,6 @@ contract CurveFiAction is AbstractERC20Exchange {
         uint256 dest_min_tokens,
         bytes calldata extra_data
     ) external returnLeftoverToken(src_token, ADDRESS_ZERO) {
-        if (to == ADDRESS_ZERO) {
-            to = msg.sender;
-        }
-
         (address exchange, int128 i, int128 j) = abi.decode(
             extra_data,
             (address, int128, int128)
@@ -253,10 +249,6 @@ contract CurveFiAction is AbstractERC20Exchange {
         uint256 dest_min_tokens,
         bytes calldata extra_data
     ) external returnLeftoverToken(src_token, ADDRESS_ZERO) {
-        if (to == ADDRESS_ZERO) {
-            to = msg.sender;
-        }
-
         (address exchange, int128 i, int128 j) = abi.decode(
             extra_data,
             (address, int128, int128)

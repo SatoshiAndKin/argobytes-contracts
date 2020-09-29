@@ -18,10 +18,6 @@ contract Weth9Action {
         // convert all ETH into WETH
         IWETH9(weth).deposit{value: balance}();
 
-        if (to == address(0)) {
-            to = msg.sender;
-        }
-
         // send WETH to the next contract
         // we know _WETH9 returns a bool, so no need to use safeTransfer
         require(
@@ -32,10 +28,6 @@ contract Weth9Action {
 
     // there is no need for returnLeftoverToken. this will always convert everything
     function unwrap_all_to(address weth, address payable to) external {
-        if (to == address(0)) {
-            to = msg.sender;
-        }
-
         uint256 balance = IWETH9(weth).balanceOf(address(this));
 
         require(balance > 0, "Weth9Action:unwrap_all_to: no balance");

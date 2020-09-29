@@ -105,6 +105,8 @@ def test_action(no_call_coverage, skip_coverage, synthetix_address_resolver, syn
     # make the trade for ETH -> sUSD
     amounts = synthetix_depot_action.getAmounts(address_zero, eth_amount, susd_erc20, synthetix_address_resolver)
 
+    print("amounts:", amounts)
+
     synthetix_depot_action.tradeEtherToSynthUSD(address_zero, 1, amounts[0][5], {"from": accounts[0]})
 
     # check the balance

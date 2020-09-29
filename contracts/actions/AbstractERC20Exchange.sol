@@ -12,7 +12,11 @@ pragma experimental ABIEncoderV2;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
 
-import {IERC20, UniversalERC20, SafeERC20} from "contracts/library/UniversalERC20.sol";
+import {
+    IERC20,
+    UniversalERC20,
+    SafeERC20
+} from "contracts/library/UniversalERC20.sol";
 
 contract AbstractERC20Modifiers {
     using Address for address;
@@ -182,9 +186,6 @@ abstract contract AbstractERC20Exchange is AbstractERC20Modifiers {
 //         payable
 //         returnLeftoverEther(msg.sender)
 //     {
-//         if (to == ADDRESS_ZERO) {
-//             to = msg.sender;
-//         }
 
 //         _tradeEtherToToken(to, dest_token, dest_min_tokens, dest_max_tokens, extra_data);
 //     }
@@ -193,9 +194,6 @@ abstract contract AbstractERC20Exchange is AbstractERC20Modifiers {
 //         external
 //         returnLeftoverToken(msg.sender, src_token)
 //     {
-//         if (to == ADDRESS_ZERO) {
-//             to = msg.sender;
-//         }
 
 //         _tradeTokenToToken(to, src_token, dest_token, dest_min_tokens, dest_max_tokens, extra_data);
 //     }
@@ -204,9 +202,6 @@ abstract contract AbstractERC20Exchange is AbstractERC20Modifiers {
 //         external
 //         returnLeftoverToken(msg.sender, src_token)
 //     {
-//         if (to == ADDRESS_ZERO) {
-//             to = msg.sender;
-//         }
 
 //         _tradeTokenToEther(to, src_token, dest_min_tokens, dest_max_tokens, extra_data);
 //     }

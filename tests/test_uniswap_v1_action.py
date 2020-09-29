@@ -82,7 +82,7 @@ def test_action(address_zero, uniswap_v1_factory, uniswap_v1_action, dai_erc20, 
 
     # trade DAI to ETH
     # tradeTokenToEther(address payable to, address exchange, address src_token, uint256 dest_min_tokens, uint256 trade_gas)
-    uniswap_v1_action.tradeTokenToEther(address_zero, dai_exchange, dai_erc20, 1, 0)
+    uniswap_v1_action.tradeTokenToEther(accounts[0], dai_exchange, dai_erc20, 1, 0)
 
     # make sure DAI balance on the action is zero (i think it will be swept back to accounts[0])
     assert dai_erc20.balanceOf(uniswap_v1_action) == 0

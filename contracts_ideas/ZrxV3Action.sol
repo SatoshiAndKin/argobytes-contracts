@@ -47,10 +47,6 @@ contract ZrxV3Action is AbstractERC20Modifiers {
             "ZrxV3Action.trade: not enough destination token received"
         );
 
-        if (to == ADDRESS_ZERO) {
-            to = msg.sender;
-        }
-
         IERC20(dest_token).universalTransfer(to, dest_balance);
     }
 }

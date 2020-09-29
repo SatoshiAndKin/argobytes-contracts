@@ -160,10 +160,6 @@ contract UniswapV1Action is AbstractERC20Exchange {
         //     "UniswapV1Action.tradeEtherToToken: NO_BALANCE"
         // );
 
-        if (to == ADDRESS_ZERO) {
-            to = msg.sender;
-        }
-
         // TODO: what gas limits? https://hackmd.io/@Uniswap/HJ9jLsfTz#Gas-Benchmarks
         trade_gas += 46000;
 
@@ -233,10 +229,6 @@ contract UniswapV1Action is AbstractERC20Exchange {
 
         // TODO: what gas limits? https://hackmd.io/@Uniswap/HJ9jLsfTz#Gas-Benchmarks
         trade_gas += 140000;
-
-        if (to == ADDRESS_ZERO) {
-            to = msg.sender;
-        }
 
         // tokenToTokenTransferInput(
         //     tokens_sold: uint256,
@@ -315,10 +307,6 @@ contract UniswapV1Action is AbstractERC20Exchange {
         // );
 
         IERC20(src_token).safeApprove(exchange, src_balance);
-
-        if (to == ADDRESS_ZERO) {
-            to = msg.sender;
-        }
 
         // TODO: what gas limits? https://hackmd.io/@Uniswap/HJ9jLsfTz#Gas-Benchmarks
         trade_gas += 60000;
