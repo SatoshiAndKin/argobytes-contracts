@@ -41,14 +41,13 @@ def test_simple_arbitrage(address_zero, argobytes_actor, argobytes_trader, examp
         # sweep WETH
         (
             example_action,
-            example_action.sweep.encode_input(address_zero, weth9_erc20, 0),
+            example_action.sweep.encode_input(accounts[0], weth9_erc20, 0),
             False
         ),
     ]
 
-    # TODO: test calling this through the proxy
     arbitrage_tx = argobytes_trader.atomicArbitrage(
-        address_zero, False, accounts[0], borrows, argobytes_actor, actions
+        False, False, accounts[0], borrows, argobytes_actor, actions
     )
 
     assert weth9_erc20.balanceOf(example_action) == 0
@@ -65,3 +64,47 @@ def test_simple_arbitrage(address_zero, argobytes_actor, argobytes_trader, examp
 
     # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet
     # assert arbitrage_tx.return_value > 0
+
+
+def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trader, example_action, liquidgastoken):
+    value = 1e18
+
+    borrows = []
+    actions = [
+        (
+            example_action,
+            example_action.sweep.encode_input(accounts[0], address_zero, 1000000),
+            True,
+        )
+    ]
+
+    # do it once without lgt
+    atomic_arbitrage_tx = argobytes_trader.atomicArbitrage(
+        False,
+        False,
+        accounts[0],
+        borrows,
+        argobytes_actor,
+        actions,
+        {
+            "gasPrice": 300,
+        }
+    )
+
+    # Now do it again with liquid gas token
+    liquidgastoken.mint(100, {"from": accounts[0]})
+    liquidgastoken.approve(argobytes_trader, 100, {"from": accounts[0]})
+
+    atomic_arbitrage_lgt_tx = argobytes_trader.atomicArbitrage(
+        True,
+        True,
+        accounts[0],
+        borrows,
+        argobytes_actor,
+        actions,
+        {
+            "gasPrice": 300,
+        }
+    )
+
+    assert atomic_arbitrage_lgt_tx.gas_used < atomic_arbitrage_tx.gas_used

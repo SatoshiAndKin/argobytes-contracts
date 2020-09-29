@@ -95,9 +95,9 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
 
             borrows[j].token.safeTransfer(borrow_from, this_balance);
 
-            // make sure the balance increased
             uint256 end_balance = borrows[j].token.balanceOf(borrow_from);
 
+            // make sure the balance increased
             require(
                 end_balance >= start_balances[j],
                 "ArgobytesTrader: BAD_ARBITRAGE"
