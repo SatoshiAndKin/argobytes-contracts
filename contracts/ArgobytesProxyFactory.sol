@@ -2,6 +2,7 @@
 // deploy delegatecall proxies and free liquid gas tokens.
 pragma solidity 0.7.1;
 
+import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
 import {LiquidGasTokenUser} from "./abstract/LiquidGasTokenUser.sol";
@@ -49,6 +50,11 @@ interface IArgobytesProxyFactory {
         bytes memory bytecode,
         bytes memory extradata
     ) external payable returns (address deployed);
+
+    function existing_or_deploy2(bytes32 salt, bytes memory bytecode)
+        external
+        payable
+        returns (address deployed);
 }
 
 // ArgobytesDeployer
@@ -139,6 +145,23 @@ contract ArgobytesProxyFactory is IArgobytesProxyFactory, LiquidGasTokenUser {
         uint256 balance = address(this).balance;
         if (balance > 0) {
             (bool success, ) = msg.sender.call{value: balance}("");
+        }
+    }
+
+    function existing_or_deploy2(bytes32 salt, bytes memory bytecode)
+        external
+        override
+        payable
+        returns (address deployed)
+    {
+        deployed = Create2.computeAddress(salt, keccak256(bytecode));
+
+        if (!Address.isContract(deployed)) {
+            // deployed doesn't exist. create it
+            require(
+                Create2.deploy(0, salt, bytecode) == deployed,
+                "ArgobytesProxyFactory: BAD_DEPLOY_ADDRESS"
+            );
         }
     }
 }

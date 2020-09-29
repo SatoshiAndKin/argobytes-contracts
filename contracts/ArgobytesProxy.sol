@@ -72,7 +72,10 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy {
     {
         requireAuth(target, target_calldata.toBytes4());
 
-        response = target.functionDelegateCall(target_calldata, "ArgobytesProxy.execute failed");
+        require(Address.isContract(target), "ArgobytesProxy.execute BAD_TARGET");
+
+        // this is safe because we just checked that `target` is a contract
+        response = target.uncheckedDelegateCall(target_calldata, "ArgobytesProxy.execute failed");
     }
 
     function deployAndExecute(
@@ -88,18 +91,11 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy {
     {
         // TODO: i think we want an empty salt. maybe take it as an argument though
         // adding a salt adds to the calldata would negate some of savings from 0 bytes in target
-        target = Create2.computeAddress(target_salt, keccak256(target_code), address(factory));
+        target = factory.existing_or_deploy2(target_salt, target_code);
 
         requireAuth(target, target_calldata.toBytes4());
 
-        if (!target.isContractInternal()) {
-            // target doesn't exist. create it
-            // if you want to burn gas token, do it during target_calldata
-            // TODO: think more about gas token
-            // TODO: pass calldata for the contract to call? its helpful in some cases, but i think contracts we use here will be designed with ArgobytesProxys in mind
-            require(factory.deploy2(target_salt, target_code, "") == target, "ArgobytesProxy: BAD_DEPLOY_ADDRESS");
-        }
-
-        response = target.functionDelegateCall(target_calldata, "ArgobytesProxy.deployAndExecute failed");
+        // this is safe because, thanks to `existing_or_deploy2`, we know `target` is a contract
+        response = target.uncheckedDelegateCall(target_calldata, "ArgobytesProxy.deployAndExecute failed");
     }
 }
