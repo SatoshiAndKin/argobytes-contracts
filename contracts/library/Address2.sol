@@ -15,6 +15,7 @@ library Address2 {
         bytes memory data,
         string memory errorMessage
     ) internal returns (bytes memory) {
+        // doing this all in assembly is a lot more efficient
         // solhint-disable-next-line avoid-low-level-calls
         (bool success, bytes memory returndata) = target.delegatecall(data);
         return _verifyCallResult(success, returndata, errorMessage);

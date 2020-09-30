@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
+// There are multiple good ways to free LGT:
+// 1. owner calls Proxy.execte(ArgobytesLiquidGasTokenUser.lgtCall(...))
+// 2. owner calls Proxy.execute(ArgobytesActor.callActions([action1, action2, ..., LGT.freeFrom(...)]))
+// 3. owner or bot calls Proxy.execute(ContractThatIsLiquidGasTokenUser.something(...)))
+
 pragma solidity 0.7.1;
 
 import {LiquidGasTokenUser} from "contracts/abstract/LiquidGasTokenUser.sol";
-
-// TODO: i'm not sure this is right. think more about how auth and approvals can work for this
-// for example, approving a bot to call this would let them do anything. we need more limits
 
 contract ArgobytesLiquidGasTokenUser is LiquidGasTokenUser {
     // call is dangerous! be careful!
@@ -60,7 +62,7 @@ contract ArgobytesLiquidGasTokenUser is LiquidGasTokenUser {
         );
 
         // TODO: gas golf where to put this
-        // TODO: freeFrom?
+        // TODO: freeFrom or free
         freeOptimalGasTokensFrom(
             initial_gas,
             require_gas_token,

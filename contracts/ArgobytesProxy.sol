@@ -36,7 +36,7 @@ interface IArgobytesProxy {
         payable
         returns (bytes memory response);
 
-    // deploy a contract, delegatecall a function
+    // deploy a contract (if not already deployed), delegatecall a function on that contract
     function deployAndExecute(
         IArgobytesProxyFactory factory,
         bytes32 target_salt,

@@ -6,10 +6,12 @@ import {IArgobytesAuthority} from "contracts/ArgobytesAuthority.sol";
 
 import {Ownable2} from "./Ownable2.sol";
 
-abstract contract ArgobytesAuth is Ownable2 {
-    IArgobytesAuthority public authority;
-
+contract ArgobytesAuthEvents {
     event AuthorityTransferred(address indexed previous_authority, address indexed new_authority);
+}
+
+abstract contract ArgobytesAuth is ArgobytesAuthEvents, Ownable2 {
+    IArgobytesAuthority public authority;
 
     constructor(address owner, IArgobytesAuthority authority_) Ownable2(owner) {
         authority = authority_;
