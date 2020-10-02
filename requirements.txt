@@ -19,7 +19,7 @@ click==7.1.2              # via black
 cytoolz==0.11.0           # via eth-keyfile, eth-utils
 eth-abi==2.1.1            # via -r requirements.in, eth-account, eth-brownie, eth-event, web3
 eth-account==0.5.2        # via eth-brownie, web3
-eth-brownie==1.11.5       # via -r requirements.in
+eth-brownie==1.11.7       # via -r requirements.in
 eth-event==1.2.0          # via eth-brownie
 eth-hash[pycryptodome]==0.2.0  # via eth-brownie, eth-event, eth-utils, web3
 eth-keyfile==0.5.1        # via eth-account
@@ -29,14 +29,14 @@ eth-typing==2.2.2         # via eth-abi, eth-keys, eth-utils, web3
 eth-utils==1.9.5          # via eth-abi, eth-account, eth-brownie, eth-event, eth-keyfile, eth-keys, eth-rlp, rlp, web3
 execnet==1.7.1            # via pytest-xdist
 gitdb==4.0.5              # via gitpython
-gitpython==3.1.8          # via bandit
+gitpython==3.1.9          # via bandit
 hexbytes==0.2.1           # via eth-account, eth-brownie, eth-event, eth-rlp, web3
 hypothesis==5.35.0        # via eth-brownie
 idna==2.10                # via requests
 inflection==0.5.0         # via mythx-models, pythx
 iniconfig==1.0.1          # via pytest
 ipfshttpclient==0.6.1     # via web3
-isort==5.5.3              # via pylint
+isort==5.5.4              # via pylint
 jsonschema==3.2.0         # via mythx-models, web3
 lazy-object-proxy==1.4.3  # via astroid
 lru-dict==1.1.6           # via web3
@@ -72,9 +72,9 @@ pytest==6.0.1             # via eth-brownie, pytest-forked, pytest-random-order,
 python-dateutil==2.8.1    # via mythx-models, pythx
 pythx==1.6.1              # via eth-brownie
 pyyaml==5.3.1             # via bandit, eth-brownie
-regex==2020.7.14          # via black
+regex==2020.9.27          # via black
 requests==2.24.0          # via eth-brownie, ipfshttpclient, py-solc-x, pythx, vvm, web3
-rlp==1.2.0                # via eth-account, eth-rlp
+rlp==1.2.0                # via eth-account, eth-brownie, eth-rlp
 semantic-version==2.8.5   # via eth-brownie, py-solc-x, vvm
 six==1.15.0               # via astroid, bandit, jsonschema, multiaddr, packaging, parsimonious, protobuf, pytest-xdist, python-dateutil
 smmap==3.0.4              # via gitdb

@@ -137,4 +137,3 @@ This project wouldn't be possible without so many other projects.
 # Reading
 
 - <https://blog.ricmoo.com/wisps-the-magical-world-of-create2-5c2177027604>
-- [EIP 2535 - The Diamond Standard](https://github.com/ethereum/EIPs/issues/2535)
