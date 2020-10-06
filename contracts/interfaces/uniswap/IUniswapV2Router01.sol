@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity >=0.6.2;
+pragma solidity 0.7.1;
 
 interface IUniswapV2Router01 {
     function factory() external pure returns (address);

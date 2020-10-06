@@ -8,57 +8,65 @@ ARGOBYTES_WEB_DIR=../argobytes-web
 [ -e "$ARGOBYTES_BACKEND_DIR" ]
 [ -e "$ARGOBYTES_WEB_DIR" ]
 
-ARGOBYTES_BACKEND_ABI_DIR="$ARGOBYTES_BACKEND_DIR/contracts/abi"
-ARGOBYTES_BACKEND_ADDR_DIR="$ARGOBYTES_BACKEND_DIR/contracts/addr"
-ARGOBYTES_WEB_ABI_DIR="$ARGOBYTES_WEB_DIR/public/contracts/abi"
-ARGOBYTES_WEB_ADDR_DIR="$ARGOBYTES_WEB_DIR/public/contracts/addr"
+ARGOBYTES_BACKEND_CONTRACT_DIR="$ARGOBYTES_BACKEND_DIR/contracts"
+ARGOBYTES_BACKEND_ADDR_DIR="$ARGOBYTES_BACKEND_CONTRACT_DIR/addr"
+ARGOBYTES_WEB_CONTRACT_DIR="$ARGOBYTES_WEB_DIR/src/contracts/data"
+ARGOBYTES_WEB_ADDR_DIR="$ARGOBYTES_WEB_DIR/src/contracts/addr"
 
-mkdir -p "$ARGOBYTES_BACKEND_ABI_DIR"
+mkdir -p "$ARGOBYTES_BACKEND_CONTRACT_DIR"
 mkdir -p "$ARGOBYTES_BACKEND_ADDR_DIR"
-mkdir -p "$ARGOBYTES_WEB_ABI_DIR"
+mkdir -p "$ARGOBYTES_WEB_CONTRACT_DIR"
 mkdir -p "$ARGOBYTES_WEB_ADDR_DIR"
 
-function export_argobytes_abi() {
-    jq ".abi" "build/contracts/$1.json" > "$ARGOBYTES_BACKEND_ABI_DIR/$1.json"
+function export_argobytes_contract() {
+    cp "build/contracts/$1.json" "$ARGOBYTES_BACKEND_CONTRACT_DIR/$1.json"
 
-    cp "$ARGOBYTES_BACKEND_ABI_DIR/$1.json" "$ARGOBYTES_WEB_ABI_DIR/$1.json"
+    cp "$ARGOBYTES_BACKEND_CONTRACT_DIR/$1.json" "$ARGOBYTES_WEB_CONTRACT_DIR/$1.json"
 }
 
-function export_brownie_abi() {
-    contract_name=$(basename "$1")
+function export_brownie_contract() {
+    contract_filename="$(basename "$1").json"
 
-    jq ".abi" "$HOME/.brownie/packages/$1.json" > "$ARGOBYTES_BACKEND_ABI_DIR/$contract_name.json"
+    cp "$HOME/.brownie/packages/$1.json" "$ARGOBYTES_BACKEND_CONTRACT_DIR/$contract_filename"
 
-    cp "$ARGOBYTES_BACKEND_ABI_DIR/$contract_name.json" "$ARGOBYTES_WEB_ABI_DIR/$contract_name.json"
+    cp "$ARGOBYTES_BACKEND_CONTRACT_DIR/$contract_filename" "$ARGOBYTES_WEB_CONTRACT_DIR/$contract_filename"
 }
 
 function export_interface() {
-    jq ".abi" "build/interfaces/$1.json" > "$ARGOBYTES_BACKEND_ABI_DIR/$1.json"
+    cp "build/interfaces/$1.json" "$ARGOBYTES_BACKEND_CONTRACT_DIR/$1.json"
 
-    cp "$ARGOBYTES_BACKEND_ABI_DIR/$1.json" "$ARGOBYTES_WEB_ABI_DIR/$1.json"
+    cp "$ARGOBYTES_BACKEND_CONTRACT_DIR/$1.json" "$ARGOBYTES_WEB_CONTRACT_DIR/$1.json"
 }
 
 ./venv/bin/brownie compile
 
-# we don't need to export all abis. we just need the abi's for our contracts
-export_argobytes_abi ArgobytesAtomicActions
-export_argobytes_abi ArgobytesOwnedVault
-export_argobytes_abi IArgobytesDiamond
-export_argobytes_abi ILiquidGasToken
-export_argobytes_abi CurveFiAction
-export_argobytes_abi ExampleAction
-export_argobytes_abi KyberAction
-export_argobytes_abi OneSplitOffchainAction
-export_argobytes_abi SynthetixDepotAction
-export_argobytes_abi UniswapV1Action
-export_argobytes_abi UniswapV2Action
-export_argobytes_abi Weth9Action
+# we don't need to export all contract jsons. we just need the one's for contracts that we expect to call
+export_argobytes_contract ArgobytesActor
+export_argobytes_contract ArgobytesAuthority
+export_argobytes_contract ArgobytesLiquidGasTokenUser
+export_argobytes_contract ArgobytesProxy
+export_argobytes_contract ArgobytesProxyFactory
+export_argobytes_contract ArgobytesTrader
 
-export_brownie_abi "OpenZeppelin/openzeppelin-contracts@3.0.1/build/contracts/ERC20"
+export_argobytes_contract ILiquidGasToken
+
+export_argobytes_contract CurveFiAction
+export_argobytes_contract ExampleAction
+export_argobytes_contract KyberAction
+export_argobytes_contract OneSplitOffchainAction
+export_argobytes_contract SynthetixDepotAction
+export_argobytes_contract UniswapV1Action
+export_argobytes_contract UniswapV2Action
+export_argobytes_contract Weth9Action
+
+# TODO: make sure this matches the version in brownie-config.yaml!
+export_brownie_contract "OpenZeppelin/openzeppelin-contracts@3.2.1-solc-0.7/build/contracts/ERC20"
 
 export_interface "YearnEthVault"
 
-# we do want all the addresses tho
-# TODO: it would be nice to uuse build/deployments/map.json, but that doesn't handle our curve action (though we should maybe improve how the curve action works)
-cp "build/deployments/quick_and_dirty/"*".addr" "$ARGOBYTES_BACKEND_ADDR_DIR/"
-cp "build/deployments/quick_and_dirty/"*".addr" "$ARGOBYTES_WEB_ADDR_DIR/"
+# export all the addresses we know
+# this lets us keep one address list here instead of 
+# TODO: it would be nice to use build/deployments/map.json
+cp "build/deployments/quick_and_dirty/"*".json" "$ARGOBYTES_BACKEND_ADDR_DIR/"
+cp "build/deployments/quick_and_dirty/"*".json" "$ARGOBYTES_WEB_ADDR_DIR/"
+./

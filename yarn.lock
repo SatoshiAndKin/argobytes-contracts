@@ -10,9 +10,9 @@
     "@types/node" "*"
 
 "@types/node@*":
-  version "14.11.2"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.11.2.tgz#2de1ed6670439387da1c9f549a2ade2b0a799256"
-  integrity sha512-jiE3QIxJ8JLNcb1Ps6rDbysDhN4xa8DJJvuC9prr6w+1tIh+QAbYyNF3tyiZNLDBIuBCf4KEcV2UvQm/V60xfA==
+  version "14.11.3"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.11.3.tgz#e66274f2e16ea6334f4e29d364165ad079069e41"
+  integrity sha512-tPQAF6b1wak7rBO49tL2N5nNVknyHBAzJVylF5rIYkfXbFkrNpbBLFMFUjxHzuuBiR7Si7T/X4eh6IRhZxO1tQ==
 
 "@types/pbkdf2@^3.0.0":
   version "3.1.0"
@@ -317,10 +317,10 @@ fs.realpath@^1.0.0:
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
   integrity sha1-FQStJSMVjKpA20onh8sBQRmU6k8=
 
-ganache-cli@6.11.1-alpha.1:
-  version "6.11.1-alpha.1"
-  resolved "https://registry.yarnpkg.com/ganache-cli/-/ganache-cli-6.11.1-alpha.1.tgz#e3e7a1539bafd787c4b3375ade72aeaa1ee74b42"
-  integrity sha512-zdQOMXjkLcBpSBdK4ULIQHbrGtIl4V0ARqiZzHT2oJlpXjvAIdQARwSKo4dTJz5M+LJ7h/5Mm+geNvbekvmxcA==
+ganache-cli@6.12.0-internal.0:
+  version "6.11.1-alpha.2"
+  resolved "https://registry.yarnpkg.com/ganache-cli/-/ganache-cli-6.11.1-alpha.2.tgz#79cc7f5f2b3b39e54ed4e0192c145cc4e0b177f6"
+  integrity sha512-cEFC6cTXpTVtPY16IVD5Ls8yBR9dhpe6AGWVNNeUZ4KjB8SWvF5D4CF79voInBhNNMaR1TZgusB4IiUOTPAVWA==
   dependencies:
     ethereumjs-util "6.2.1"
     source-map-support "0.5.12"

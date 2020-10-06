@@ -1,6 +1,7 @@
 # deploy all our contracts to a development network
 # rather than call this directly, you probably want to use `./scripts/test-deploy.sh` or `./scripts/staging-deploy.sh`
 
+import json
 import os
 from eth_utils import to_bytes
 from eth_abi import encode_single, encode_abi
@@ -30,14 +31,14 @@ def quick_save(contract_name, address):
         print(f"{contract_name} is deployed at {address}\n")
         return
 
-    quick_name = contract_name + ".addr"
+    quick_name = contract_name + ".json"
 
     quick_path = os.path.join(DEPLOY_DIR, quick_name)
 
     print(f"Saving deployed address to {quick_path}")
 
     with open(quick_path, 'w') as opened_file:
-        opened_file.write(address)
+        opened_file.write(json.dumps(address))
 
 
 def main():
@@ -189,6 +190,8 @@ def main():
     # deploy the main contracts
     argobytes_trader = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesTrader)
     argobytes_actor = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesActor)
+    argobytes_liquid_gas_token_user = argobytes_proxy_factory_deploy2_helper(
+        argobytes_proxy_factory, ArgobytesLiquidGasTokenUser)
 
     # deploy all the actions
     example_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ExampleAction)
@@ -304,7 +307,12 @@ def main():
     quick_save("SynthetixAddressResolver", SynthetixAddressResolverAddress)
     quick_save("UniswapFactory", UniswapV1FactoryAddress)
     quick_save("Weth9", Weth9Address)
-    quick_save("YearnEthVault", YearnEthVaultAddress)
+    quick_save("YearnWethVault", YearnWethVaultAddress)
+    quick_save("DAI", DAIAddress)
+    quick_save("cDAI", cDAIAddress)
+    quick_save("cUSDC", cUSDCAddress)
+    quick_save("sUSD", ProxysUSDAddress)
+    quick_save("USDC", USDCAddress)
 
     # give the argobytes_proxy a bunch of coins. it will forward them when deploying the diamond
     accounts[1].transfer(accounts[0], 50 * 1e18)

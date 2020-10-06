@@ -12,9 +12,7 @@ interface IArgobytesActor {
         bool with_value;
     }
 
-    function callActions(
-        Action[] calldata actions
-    ) external payable;
+    function callActions(Action[] calldata actions) external payable;
 }
 
 contract ArgobytesActor is IArgobytesActor {
@@ -29,9 +27,7 @@ contract ArgobytesActor is IArgobytesActor {
      *
      *  transfer tokens to the actions before calling this
      */
-    function callActions(
-        Action[] calldata actions
-    ) external payable override {
+    function callActions(Action[] calldata actions) external override payable {
         // TODO: re-entrancy?
         // an action can do whatever it wants (liquidate, swap, refinance, etc.)
         for (uint256 i = 0; i < actions.length; i++) {
@@ -39,6 +35,7 @@ contract ArgobytesActor is IArgobytesActor {
             address payable action_address = actions[i].target;
 
             if (actions[i].with_value) {
+                // TODO: do we want this.balance, or msg.value?
                 action_address.functionCallWithValue(
                     actions[i].data,
                     address(this).balance,
@@ -55,7 +52,9 @@ contract ArgobytesActor is IArgobytesActor {
         // refund excess ETH
         // TODO: this is actually a bit of a problem. targets are going to need to know to leave some ETH behind for this
         if (address(this).balance > 0) {
-            (bool success, ) = msg.sender.call{value: address(this).balance}("");
+            (bool success, ) = msg.sender.call{value: address(this).balance}(
+                ""
+            );
             require(success, "ArgobytesActor: REFUND_FAILED");
         }
     }
