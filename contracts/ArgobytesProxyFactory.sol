@@ -9,27 +9,30 @@ import {LiquidGasTokenUser} from "./abstract/LiquidGasTokenUser.sol";
 import {ArgobytesProxy} from "./ArgobytesProxy.sol";
 import {IArgobytesAuthority} from "./ArgobytesAuthority.sol";
 
-interface IArgobytesProxyFactory {
-    event NewVault(
-        address indexed sender,
-        address indexed first_admin,
+contract ArgobytesProxyFactoryEvents {
+    event NewProxy(
+        address indexed first_owner,
+        address indexed first_authority,
+        bytes32 salt,
         address proxy
     );
+}
 
-    function buildVaultAndFree(
+interface IArgobytesProxyFactory is ArgobytesProxyFactoryEvents {
+    function buildAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt
     ) external payable returns (address deployed);
 
-    function buildVaultAndFree(
+    function buildAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
         IArgobytesAuthority first_authority
     ) external payable returns (address deployed);
 
-    function buildVaultAndFree(
+    function buildAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
@@ -51,7 +54,7 @@ interface IArgobytesProxyFactory {
         bytes memory extradata
     ) external payable returns (address deployed);
 
-    function existing_or_deploy2(bytes32 salt, bytes memory bytecode)
+    function existingOrDeploy2(bytes32 salt, bytes memory bytecode)
         external
         payable
         returns (address deployed);
@@ -64,12 +67,12 @@ interface IArgobytesProxyFactory {
 contract ArgobytesProxyFactory is IArgobytesProxyFactory, LiquidGasTokenUser {
     // build a proxy for msg.sender with owner-only auth
     // auth can be changed later by the owner
-    function buildVaultAndFree(
+    function buildAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt
     ) public override payable returns (address deployed) {
-        deployed = buildVaultAndFree(
+        deployed = buildAndFree(
             gas_token_amount,
             require_gas_token,
             salt,
@@ -78,14 +81,14 @@ contract ArgobytesProxyFactory is IArgobytesProxyFactory, LiquidGasTokenUser {
         );
     }
 
-    // build a proxy for msg.sender with progra
-    function buildVaultAndFree(
+    // build a proxy for msg.sender with an authority set for more advanced auth
+    function buildAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
         IArgobytesAuthority first_authority
     ) public override payable returns (address deployed) {
-        deployed = buildVaultAndFree(
+        deployed = buildAndFree(
             gas_token_amount,
             require_gas_token,
             salt,
@@ -94,7 +97,8 @@ contract ArgobytesProxyFactory is IArgobytesProxyFactory, LiquidGasTokenUser {
         );
     }
 
-    function buildVaultAndFree(
+    // build a proxy for `first_owner` with an authority set for more advanced auth
+    function buildAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
@@ -104,17 +108,21 @@ contract ArgobytesProxyFactory is IArgobytesProxyFactory, LiquidGasTokenUser {
         // since this deployment cost can be known, we free a specific amount tokens
         freeGasTokens(gas_token_amount, require_gas_token);
 
-        deployed = address(
-            new ArgobytesProxy{salt: salt}(first_owner, first_authority)
-        );
-
         // refund any excess ETH
         uint256 balance = address(this).balance;
         if (balance > 0) {
             (bool success, ) = msg.sender.call{value: balance}("");
         }
+
+        // actually build the proxy
+        deployed = address(
+            new ArgobytesProxy{salt: salt}(first_owner, first_authority)
+        );
+
+        emit NewProxy(first_owner, first_authority, salt, deployed);
     }
 
+    // deploy a contract and then call a function on it
     function deploy2(
         bytes32 salt,
         bytes memory bytecode,
@@ -129,6 +137,7 @@ contract ArgobytesProxyFactory is IArgobytesProxyFactory, LiquidGasTokenUser {
         }
     }
 
+    // free gas tokens, deploy a contract, and then call a function on it
     function deploy2AndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
@@ -137,7 +146,7 @@ contract ArgobytesProxyFactory is IArgobytesProxyFactory, LiquidGasTokenUser {
         bytes memory extradata
     ) public override payable returns (address deployed) {
         // since this deployment cost can be known, we free a specific amount tokens
-        freeGasTokens(gas_token_amount, require_gas_token);
+        freeGasTokensFrom(gas_token_amount, require_gas_token, msg.sender);
 
         deployed = deploy2(salt, bytecode, extradata);
 
@@ -148,7 +157,8 @@ contract ArgobytesProxyFactory is IArgobytesProxyFactory, LiquidGasTokenUser {
         }
     }
 
-    function existing_or_deploy2(bytes32 salt, bytes memory bytecode)
+    // deploy a contract if it doesn't already exist
+    function existingOrCreate2(bytes32 salt, bytes memory bytecode)
         external
         override
         payable

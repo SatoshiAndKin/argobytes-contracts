@@ -9,6 +9,9 @@ interface IArgobytesActor {
     struct Action {
         address payable target;
         bytes data;
+        // TODO: sometimes we want to pass all the value,
+        //       but there's also cases where we want to do a specific amount
+        //       maybe use an enum and have a bytes field that we decode for any extra data?
         bool with_value;
     }
 

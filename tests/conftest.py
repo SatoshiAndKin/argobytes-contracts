@@ -44,7 +44,7 @@ def argobytes_proxy(argobytes_authority, ArgobytesProxy, argobytes_proxy_factory
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
     salt = ""
 
-    deploy_tx = argobytes_proxy_factory.buildVaultAndFree(0, False, salt, argobytes_authority.address, accounts[0])
+    deploy_tx = argobytes_proxy_factory.buildAndFree(0, False, salt, argobytes_authority.address, accounts[0])
 
     return ArgobytesProxy.at(deploy_tx.return_value, accounts[0])
 
@@ -279,4 +279,4 @@ def weth9_action(Weth9Action):
 
 @pytest.fixture(scope="session")
 def weth9_erc20():
-    return Contract.from_explorer(Weth9Address, owner=accounts[5])
+    return Contract.from_explorer(WETH9Address, owner=accounts[5])

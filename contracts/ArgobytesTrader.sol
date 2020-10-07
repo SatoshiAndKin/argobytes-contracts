@@ -82,6 +82,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         // we call a seperate contract because we don't want any sneaky transferFroms
         // this contract (or the actions) MUST return all borrowed tokens to msg.sender
         // TODO: pass ETH along? this might be helpful for exchanges like 0x. maybe better to borrow WETH for the action
+        // TODO: msg.sender or address(this).balance?!
         argobytes_actor.callActions{value: msg.value}(actions);
 
         // make sure the source's balances did not decrease
@@ -150,7 +151,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
             }
         }
 
-        // TODO: pass ETH along
+        // TODO: msg.sender or address(this).balance?!
         // we call a seperate contract because we don't want any sneaky transferFroms
         argobytes_actor.callActions{value: msg.value}(actions);
 

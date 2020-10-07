@@ -62,11 +62,10 @@ export_argobytes_contract Weth9Action
 # TODO: make sure this matches the version in brownie-config.yaml!
 export_brownie_contract "OpenZeppelin/openzeppelin-contracts@3.2.1-solc-0.7/build/contracts/ERC20"
 
-export_interface "YearnEthVault"
+export_interface "YearnWethVault"
 
 # export all the addresses we know
 # this lets us keep one address list here instead of 
 # TODO: it would be nice to use build/deployments/map.json
 cp "build/deployments/quick_and_dirty/"*".json" "$ARGOBYTES_BACKEND_ADDR_DIR/"
 cp "build/deployments/quick_and_dirty/"*".json" "$ARGOBYTES_WEB_ADDR_DIR/"
-./

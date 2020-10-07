@@ -91,11 +91,11 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy {
     {
         // TODO: i think we want an empty salt. maybe take it as an argument though
         // adding a salt adds to the calldata would negate some of savings from 0 bytes in target
-        target = factory.existing_or_deploy2(target_salt, target_code);
+        target = factory.existingOrDeploy2(target_salt, target_code);
 
         requireAuth(target, target_calldata.toBytes4());
 
-        // this is safe because, thanks to `existing_or_deploy2`, we know `target` is a contract
+        // this is safe because, thanks to `existingOrDeploy2`, we know `target` is a contract
         response = target.uncheckedDelegateCall(target_calldata, "ArgobytesProxy.deployAndExecute failed");
     }
 }

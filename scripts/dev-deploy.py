@@ -137,12 +137,12 @@ def main():
     # when combined with a salt found by ERADICATE2, we can have an address with lots of 0 bytes
     if FREE_GAS_TOKEN:
         # TODO: calculate the optimal number of gas to buy
-        free_num_gas_gas_tokens = 19
+        free_num_gas_tokens = 19
     else:
-        free_num_gas_gas_tokens = 0
+        free_num_gas_tokens = 0
 
     deploy_tx = gas_token.create2(
-        free_num_gas_gas_tokens,
+        free_num_gas_tokens,
         deadline,
         salt_uint,
         ArgobytesProxyFactory.deploy.encode_input(),
@@ -161,14 +161,14 @@ def main():
 
     # let the proxy use our gas token
     if FREE_GAS_TOKEN:
-        gas_token.approve(argobytes_proxy_factory, -1)
+        gas_token.approve(argobytes_proxy_factory, 2**256-1)
 
     # build an ArgobytesAuthority
     argobytes_authority = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesAuthority)
 
     # build an ArgobytesProxy using ArgobytesAuthority for programmable access
     # TODO: calculate gas_token_amount for an ArgobytesProxy
-    deploy_tx = argobytes_proxy_factory.buildVaultAndFree(
+    deploy_tx = argobytes_proxy_factory.buildAndFree(
         0,
         False,
         salt,
@@ -306,13 +306,23 @@ def main():
     quick_save("OneSplit", OneSplitAddress)
     quick_save("SynthetixAddressResolver", SynthetixAddressResolverAddress)
     quick_save("UniswapFactory", UniswapV1FactoryAddress)
-    quick_save("Weth9", Weth9Address)
     quick_save("YearnWethVault", YearnWethVaultAddress)
+
+    # TODO: this list is going to get long. use tokenlists.org instead
     quick_save("DAI", DAIAddress)
     quick_save("cDAI", cDAIAddress)
     quick_save("cUSDC", cUSDCAddress)
     quick_save("sUSD", ProxysUSDAddress)
     quick_save("USDC", USDCAddress)
+    quick_save("COMP", COMPAddress)
+    quick_save("AAVE", AAVEAddress)
+    quick_save("LINK", LINKAddress)
+    quick_save("MKR", MKRAddress)
+    quick_save("SNX", SNXAddress)
+    quick_save("WBTC", WBTCAddress)
+    quick_save("YFI", YFIAddress)
+    quick_save("WETH9", WETH9Address)
+    quick_save("yvyCRV", YVYCRVAddress)
 
     # give the argobytes_proxy a bunch of coins. it will forward them when deploying the diamond
     accounts[1].transfer(accounts[0], 50 * 1e18)
@@ -324,7 +334,7 @@ def main():
     # make a vault w/ auth for accounts[5] and approve a bot to call atomicArbitrage. then print total gas
     starting_balance = accounts[5].balance()
 
-    deploy_tx = argobytes_proxy_factory.buildVaultAndFree(
+    deploy_tx = argobytes_proxy_factory.buildAndFree(
         0,
         False,
         salt,
@@ -365,7 +375,7 @@ def main():
     # make a vault for accounts[6]. then print total gas
     starting_balance = accounts[6].balance()
 
-    deploy_tx = argobytes_proxy_factory.buildVaultAndFree(
+    deploy_tx = argobytes_proxy_factory.buildAndFree(
         0,
         False,
         salt,
