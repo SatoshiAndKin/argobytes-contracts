@@ -20,12 +20,17 @@ abstract contract Ownable2 {
     // TODO: diamond storage?
     address private _owner;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
     /**
      * @dev Initializes the contract setting a passed address as the initial owner.
      */
-    constructor (address owner) {
+    function initOwnable2(address owner) internal {
+        require(_owner == address(0), "already initialized");
+
         _owner = owner;
         emit OwnershipTransferred(address(0), owner);
     }
@@ -62,7 +67,10 @@ abstract contract Ownable2 {
      * Can only be called by the current owner.
      */
     function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        require(
+            newOwner != address(0),
+            "Ownable: new owner is the zero address"
+        );
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }

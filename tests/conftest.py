@@ -35,8 +35,8 @@ def argobytes_authority(ArgobytesAuthority):
 
 
 @pytest.fixture(scope="function")
-def argobytes_proxy_factory(ArgobytesProxyFactory):
-    return ArgobytesProxyFactory.deploy({"from": accounts[0]})
+def argobytes_proxy_factory(ArgobytesFactory):
+    return ArgobytesFactory.deploy({"from": accounts[0]})
 
 
 @pytest.fixture(scope="function")

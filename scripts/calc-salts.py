@@ -22,26 +22,26 @@ def main():
         deployer = Account.at(deployer)
 
     #
-    # ArgobytesProxyFactory
+    # ArgobytesFactory
     #
-    print("Deploying ArgobytesProxyFactory via", LiquidGasTokenAddress, "as", deployer)
+    print("Deploying ArgobytesFactory via", LiquidGasTokenAddress, "as", deployer)
 
     # initcode is deployment bytecode + constructor params
     # lots of people using different terms here, but i think calling this "initcode" makes the most sense
-    proxy_factory_initcode = ArgobytesProxyFactory.deploy.encode_input()
+    proxy_factory_initcode = ArgobytesFactory.deploy.encode_input()
 
     print("Cutter: ERADICATE2 -A", LiquidGasTokenAddress, "-I", proxy_factory_initcode, "--zero-bytes")
 
     input("\nPress [enter] to continue")
 
-    proxy_factory_salt = input("ArgobytesProxyFactory salt: ")
-    proxy_factory_expected_address = input("ArgobytesProxyFactory address: ")
+    proxy_factory_salt = input("ArgobytesFactory salt: ")
+    proxy_factory_expected_address = input("ArgobytesFactory address: ")
 
     # TODO: count the zero bytes?
 
     proxy_factory_address = mk_contract_address2(LiquidGasTokenAddress, proxy_factory_salt, proxy_factory_initcode)
 
-    print("Calculated ArgobytesProxyFactory address:", proxy_factory_address, "\n")
+    print("Calculated ArgobytesFactory address:", proxy_factory_address, "\n")
 
     assert(proxy_factory_expected_address == proxy_factory_address.lower())
 

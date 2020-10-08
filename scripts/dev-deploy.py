@@ -133,7 +133,7 @@ def main():
 
         assert gas_tokens_start == mint_batch_amount * num_mints
 
-    # deploy ArgobytesProxyFactory using LGT's create2 helper
+    # deploy ArgobytesFactory using LGT's create2 helper
     # when combined with a salt found by ERADICATE2, we can have an address with lots of 0 bytes
     if FREE_GAS_TOKEN:
         # TODO: calculate the optimal number of gas to buy
@@ -145,7 +145,7 @@ def main():
         free_num_gas_tokens,
         deadline,
         salt_uint,
-        ArgobytesProxyFactory.deploy.encode_input(),
+        ArgobytesFactory.deploy.encode_input(),
         {
             # TODO: i'm getting revert: insufficient ether even when setting gas_token_amount to 0 and value to 0
             # this ether will get sent back if gas_token_amount is 0
@@ -155,9 +155,9 @@ def main():
     )
     # TODO: check how much we spent on gas token
 
-    argobytes_proxy_factory = ArgobytesProxyFactory.at(deploy_tx.return_value, accounts[0])
+    argobytes_proxy_factory = ArgobytesFactory.at(deploy_tx.return_value, accounts[0])
     quick_save_contract(argobytes_proxy_factory)
-    # the ArgobytesProxyFactory is deployed and ready for use!
+    # the ArgobytesFactory is deployed and ready for use!
 
     # let the proxy use our gas token
     if FREE_GAS_TOKEN:
@@ -166,23 +166,26 @@ def main():
     # build an ArgobytesAuthority
     argobytes_authority = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ArgobytesAuthority)
 
-    # build an ArgobytesProxy using ArgobytesAuthority for programmable access
-    # TODO: calculate gas_token_amount for an ArgobytesProxy
-    deploy_tx = argobytes_proxy_factory.deployProxyAndFree(
-        0,
-        False,
+    # build an ArgobytesProxy to use for cloning
+    argobytes_proxy = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ArgobytesProxy)
+    quick_save_contract(argobytes_proxy)
+
+    # clone ArgobytesProxy
+    deploy_tx = argobytes_proxy_factory.deployClone(
+        argobytes_proxy.address,
         salt,
+        accounts[0],
         argobytes_authority.address,
         {
-            "from": argobytes_proxy_owner,
+            "from": accounts[0],
             "gas_price": expected_mainnet_gas_price,
         },
     )
-    argobytes_proxy = ArgobytesProxy.at(deploy_tx.return_value, accounts[0])
-    quick_save_contract(argobytes_proxy)
+
+    argobytes_proxy_clone = ArgobytesProxy.at(deploy_tx.events['NewClone']['clone'], accounts[0])
 
     if FREE_GAS_TOKEN:
-        gas_token.approve(argobytes_proxy, -1)
+        gas_token.approve(argobytes_proxy_clone, -1)
 
     # TODO: setup auth for the proxy
     # for now, owner-only access works, but we need to allow a bot in to call atomicArbitrage
@@ -253,7 +256,7 @@ def main():
         # TODO: gas_token.buyAndFree or gas_token.free depending on off-chain balance/price checks
     ]
 
-    argobytes_proxy.execute(
+    argobytes_proxy_clone.execute(
         argobytes_actor,
         argobytes_actor.callActions.encode_input(bulk_actions),
         {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
@@ -333,10 +336,11 @@ def main():
     # make a vault w/ auth for accounts[5] and approve a bot to call atomicArbitrage. then print total gas
     starting_balance = accounts[5].balance()
 
-    deploy_tx = argobytes_proxy_factory.deployProxyAndFree(
-        0,
-        False,
+    # TODO: gas golf deployClone function that uses msg.sender instead of owner in the calldata?
+    deploy_tx = argobytes_proxy_factory.deployClone(
+        argobytes_proxy.address,
         salt,
+        accounts[5],
         argobytes_authority.address,
         {
             "from": accounts[5],
@@ -344,7 +348,7 @@ def main():
         },
     )
 
-    argobytes_proxy = ArgobytesProxy.at(deploy_tx.return_value, accounts[5])
+    argobytes_proxy_clone_5 = ArgobytesProxy.at(deploy_tx.events['NewClone']['clone'], accounts[5])
 
     bulk_actions = [
         # allow bots to call argobytes_trader.atomicArbitrage
@@ -361,10 +365,10 @@ def main():
         # TODO: gas_token.buyAndFree or gas_token.free depending on off-chain balance/price checks
     ]
 
-    argobytes_proxy.execute(
+    argobytes_proxy_clone_5.execute(
         argobytes_actor,
         argobytes_actor.callActions.encode_input(bulk_actions),
-        {"from": accounts[5], "gasPrice": expected_mainnet_gas_price, "value": "1 ether"}
+        {"gasPrice": expected_mainnet_gas_price, "value": "1 ether"}
     )
 
     ending_balance = accounts[5].balance()
@@ -374,10 +378,10 @@ def main():
     # make a vault for accounts[6]. then print total gas
     starting_balance = accounts[6].balance()
 
-    deploy_tx = argobytes_proxy_factory.deployProxyAndFree(
-        0,
-        False,
+    deploy_tx = argobytes_proxy_factory.deployClone(
+        argobytes_proxy.address,
         salt,
+        accounts[6],
         ZeroAddress,
         {
             "from": accounts[6],
