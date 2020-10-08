@@ -45,3 +45,6 @@ YearnWethVaultAddress = "0xe1237aA7f535b0CC33Fd973D66cBf830354D16c7"
 # Maker: Proxy Registry
 # we don't actually use this contract at all. we just have the address so that we can compare their gas costs to ours
 DSProxyFactoryAddress = "0x4678f0a6958e4d2bc4f1baf7bc52e8f3564f3fe4"
+
+DevMetamaskAddress = "0x52517b7b19D3CA0Bd66c604BC1909D2c9951dbD5"
+DevHardwareAddress = "0x9eb9e3dc2543dc9FF4058e2A2DA43A855403F1fD"

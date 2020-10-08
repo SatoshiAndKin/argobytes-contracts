@@ -18,7 +18,8 @@ contract ArgobytesProxyFactoryEvents {
     );
 }
 
-interface IArgobytesProxyFactory is ArgobytesProxyFactoryEvents {
+// TODO: do we actually want `bytes memory extradata`? it could be useful, but i don't need it yet
+interface IArgobytesProxyFactory {
     function buildAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
@@ -54,7 +55,7 @@ interface IArgobytesProxyFactory is ArgobytesProxyFactoryEvents {
         bytes memory extradata
     ) external payable returns (address deployed);
 
-    function existingOrDeploy2(bytes32 salt, bytes memory bytecode)
+    function existingOrCreate2(bytes32 salt, bytes memory bytecode)
         external
         payable
         returns (address deployed);
@@ -64,7 +65,11 @@ interface IArgobytesProxyFactory is ArgobytesProxyFactoryEvents {
 // deploy contracts and burn gas tokens
 // only set gas_token if the contract is large and gas prices are high
 // LGT's deploy helper only buys (we might have our own tokens)
-contract ArgobytesProxyFactory is IArgobytesProxyFactory, LiquidGasTokenUser {
+contract ArgobytesProxyFactory is
+    ArgobytesProxyFactoryEvents,
+    IArgobytesProxyFactory,
+    LiquidGasTokenUser
+{
     // build a proxy for msg.sender with owner-only auth
     // auth can be changed later by the owner
     function buildAndFree(
@@ -119,7 +124,7 @@ contract ArgobytesProxyFactory is IArgobytesProxyFactory, LiquidGasTokenUser {
             new ArgobytesProxy{salt: salt}(first_owner, first_authority)
         );
 
-        emit NewProxy(first_owner, first_authority, salt, deployed);
+        emit NewProxy(first_owner, address(first_authority), salt, deployed);
     }
 
     // deploy a contract and then call a function on it

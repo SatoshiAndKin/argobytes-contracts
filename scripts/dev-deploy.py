@@ -325,11 +325,10 @@ def main():
     quick_save("yvyCRV", YVYCRVAddress)
 
     # give the argobytes_proxy a bunch of coins. it will forward them when deploying the diamond
-    accounts[1].transfer(accounts[0], 50 * 1e18)
-    accounts[2].transfer(accounts[0], 50 * 1e18)
-    accounts[3].transfer(accounts[0], 50 * 1e18)
-    accounts[4].transfer(argobytes_proxy_owner, 30 * 1e18)
-    accounts[4].transfer(argobytes_proxy_arbitragers[0], 30 * 1e18)
+    accounts[1].transfer(DevHardwareAddress, 50 * 1e18)
+    accounts[2].transfer(DevHardwareAddress, 50 * 1e18)
+    accounts[3].transfer(DevHardwareAddress, 50 * 1e18)
+    accounts[4].transfer(DevMetamaskAddress, 50 * 1e18)
 
     # make a vault w/ auth for accounts[5] and approve a bot to call atomicArbitrage. then print total gas
     starting_balance = accounts[5].balance()
