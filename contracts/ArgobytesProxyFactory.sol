@@ -20,20 +20,20 @@ contract ArgobytesProxyFactoryEvents {
 
 // TODO: do we actually want `bytes memory extradata`? it could be useful, but i don't need it yet
 interface IArgobytesProxyFactory {
-    function buildAndFree(
+    function deployProxyAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt
     ) external payable returns (address deployed);
 
-    function buildAndFree(
+    function deployProxyAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
         IArgobytesAuthority first_authority
     ) external payable returns (address deployed);
 
-    function buildAndFree(
+    function deployProxyAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
@@ -41,13 +41,13 @@ interface IArgobytesProxyFactory {
         address first_owner
     ) external payable returns (address deployed);
 
-    function deploy2(
+    function deploy(
         bytes32 salt,
         bytes memory bytecode,
         bytes memory extradata
     ) external payable returns (address deployed);
 
-    function deploy2AndFree(
+    function deployAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
@@ -72,12 +72,12 @@ contract ArgobytesProxyFactory is
 {
     // build a proxy for msg.sender with owner-only auth
     // auth can be changed later by the owner
-    function buildAndFree(
+    function deployProxyAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt
     ) public override payable returns (address deployed) {
-        deployed = buildAndFree(
+        deployed = deployProxyAndFree(
             gas_token_amount,
             require_gas_token,
             salt,
@@ -87,13 +87,13 @@ contract ArgobytesProxyFactory is
     }
 
     // build a proxy for msg.sender with an authority set for more advanced auth
-    function buildAndFree(
+    function deployProxyAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
         IArgobytesAuthority first_authority
     ) public override payable returns (address deployed) {
-        deployed = buildAndFree(
+        deployed = deployProxyAndFree(
             gas_token_amount,
             require_gas_token,
             salt,
@@ -103,7 +103,7 @@ contract ArgobytesProxyFactory is
     }
 
     // build a proxy for `first_owner` with an authority set for more advanced auth
-    function buildAndFree(
+    function deployProxyAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
@@ -127,8 +127,8 @@ contract ArgobytesProxyFactory is
         emit NewProxy(first_owner, address(first_authority), salt, deployed);
     }
 
-    // deploy a contract and then call a function on it
-    function deploy2(
+    // deploy a contract with CREATE2 and then call a function on it
+    function deploy(
         bytes32 salt,
         bytes memory bytecode,
         bytes memory extradata
@@ -142,8 +142,8 @@ contract ArgobytesProxyFactory is
         }
     }
 
-    // free gas tokens, deploy a contract, and then call a function on it
-    function deploy2AndFree(
+    // free gas tokens, deploy a contract with CREATE2, and then call a function on it
+    function deployAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
@@ -153,7 +153,7 @@ contract ArgobytesProxyFactory is
         // since this deployment cost can be known, we free a specific amount tokens
         freeGasTokensFrom(gas_token_amount, require_gas_token, msg.sender);
 
-        deployed = deploy2(salt, bytecode, extradata);
+        deployed = deploy(salt, bytecode, extradata);
 
         // refund any excess ETH
         uint256 balance = address(this).balance;

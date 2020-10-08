@@ -44,7 +44,7 @@ def argobytes_proxy(argobytes_authority, ArgobytesProxy, argobytes_proxy_factory
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
     salt = ""
 
-    deploy_tx = argobytes_proxy_factory.buildAndFree(0, False, salt, argobytes_authority.address, accounts[0])
+    deploy_tx = argobytes_proxy_factory.deployProxyAndFree(0, False, salt, argobytes_authority.address, accounts[0])
 
     return ArgobytesProxy.at(deploy_tx.return_value, accounts[0])
 

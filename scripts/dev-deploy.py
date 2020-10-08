@@ -67,12 +67,12 @@ def main():
 
     starting_balance = accounts[0].balance()
 
-    def argobytes_proxy_factory_deploy2_helper(factory, contract):
+    def argobytes_proxy_factory_deploy_helper(factory, contract):
         gas_token_amount = 0
         require_gas_token = False
         salt = ""
 
-        deploy_tx = factory.deploy2AndFree(
+        deploy_tx = factory.deployAndFree(
             gas_token_amount,
             require_gas_token,
             salt,
@@ -164,11 +164,11 @@ def main():
         gas_token.approve(argobytes_proxy_factory, 2**256-1)
 
     # build an ArgobytesAuthority
-    argobytes_authority = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesAuthority)
+    argobytes_authority = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ArgobytesAuthority)
 
     # build an ArgobytesProxy using ArgobytesAuthority for programmable access
     # TODO: calculate gas_token_amount for an ArgobytesProxy
-    deploy_tx = argobytes_proxy_factory.buildAndFree(
+    deploy_tx = argobytes_proxy_factory.deployProxyAndFree(
         0,
         False,
         salt,
@@ -188,21 +188,21 @@ def main():
     # for now, owner-only access works, but we need to allow a bot in to call atomicArbitrage
 
     # deploy the main contracts
-    argobytes_trader = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesTrader)
-    argobytes_actor = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ArgobytesActor)
-    argobytes_liquid_gas_token_user = argobytes_proxy_factory_deploy2_helper(
+    argobytes_trader = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ArgobytesTrader)
+    argobytes_actor = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ArgobytesActor)
+    argobytes_liquid_gas_token_user = argobytes_proxy_factory_deploy_helper(
         argobytes_proxy_factory, ArgobytesLiquidGasTokenUser)
 
     # deploy all the actions
-    example_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ExampleAction)
-    onesplit_offchain_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, OneSplitOffchainAction)
-    kyber_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, KyberAction)
-    uniswap_v1_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, UniswapV1Action)
-    uniswap_v2_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, UniswapV2Action)
-    # zrx_v3_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, ZrxV3Action)
-    weth9_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, Weth9Action)
-    synthetix_depot_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, SynthetixDepotAction)
-    curve_fi_action = argobytes_proxy_factory_deploy2_helper(argobytes_proxy_factory, CurveFiAction)
+    example_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ExampleAction)
+    onesplit_offchain_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, OneSplitOffchainAction)
+    kyber_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, KyberAction)
+    uniswap_v1_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, UniswapV1Action)
+    uniswap_v2_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, UniswapV2Action)
+    # zrx_v3_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ZrxV3Action)
+    weth9_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, Weth9Action)
+    synthetix_depot_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, SynthetixDepotAction)
+    curve_fi_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, CurveFiAction)
 
     bulk_actions = [
         # allow bots to call argobytes_trader.atomicArbitrage
@@ -333,7 +333,7 @@ def main():
     # make a vault w/ auth for accounts[5] and approve a bot to call atomicArbitrage. then print total gas
     starting_balance = accounts[5].balance()
 
-    deploy_tx = argobytes_proxy_factory.buildAndFree(
+    deploy_tx = argobytes_proxy_factory.deployProxyAndFree(
         0,
         False,
         salt,
@@ -374,7 +374,7 @@ def main():
     # make a vault for accounts[6]. then print total gas
     starting_balance = accounts[6].balance()
 
-    deploy_tx = argobytes_proxy_factory.buildAndFree(
+    deploy_tx = argobytes_proxy_factory.deployProxyAndFree(
         0,
         False,
         salt,
