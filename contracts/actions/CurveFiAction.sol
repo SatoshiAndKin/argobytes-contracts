@@ -1,12 +1,4 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-/* The Depot is a place to deposit any excess sUSD for others to purchase it with ETH
-
-https://docs.synthetix.io/contracts/depot/
-https://docs.synthetix.io/contracts/walkthrus/depot/
-https://github.com/Synthetixio/synthetix/blob/develop/contracts/Depot.sol#L20
-
-The depot is capable of trading SNX, too. However, that is only done on Testnets.
-*/
 pragma solidity 0.7.1;
 pragma experimental ABIEncoderV2;
 
