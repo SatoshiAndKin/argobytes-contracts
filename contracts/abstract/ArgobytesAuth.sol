@@ -35,7 +35,8 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents {
         _;
     }
 
-    // pull the owner out
+    // pull the owner out of the contract code
+    // since calls to this are always delegate calls, this will be the code of the caller
     // TODO: an immutable keyword would be nice here, but because of how we make the proxy, we don't have a constructor
     function owner() public view returns (address) {
         address thisAddress = address(this);
@@ -46,14 +47,9 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents {
             let size := extcodesize(thisAddress)
             // allocate output byte array
             thisCode := mload(0x40)
-            // new "memory end" including padding
-            mstore(
-                0x40,
-                add(thisCode, and(add(add(size, 0x20), 0x1f), not(0x1f)))
-            )
-            // store length in memory
-            mstore(thisCode, size)
-            // get the last 20 (0x14) bytes of code minus padding (which should be our address)
+            // setup enough space for the address
+            mstore(thisCode, 32)
+            // get the last 20 (32-12; 0x14) bytes of code minus padding (which should be our address)
             extcodecopy(
                 thisAddress,
                 add(thisCode, 0x20),
