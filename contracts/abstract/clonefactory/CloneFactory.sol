@@ -30,9 +30,10 @@ contract CloneFactory {
     function createClone(
         address target,
         bytes32 salt,
-        bytes32 pepper
+        address staticOwner
     ) internal returns (address result) {
         bytes20 targetBytes = bytes20(target);
+        bytes20 staticOwnerBytes = bytes20(staticOwner);
         assembly {
             // Solidity manages memory in a very simple way: There is a “free memory pointer” at position 0x40 in memory.
             // If you want to allocate memory, just use the memory from that point on and update the pointer accordingly.
@@ -41,7 +42,7 @@ contract CloneFactory {
             // start of the contract
             mstore(
                 clone,
-                0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000000000000000000000
+                0x3d604180600a3d3981f3363d3d373d3d3d363d73000000000000000000000000
             )
             // target contract that the clone delegates all calls to
             mstore(add(clone, 0x14), targetBytes)
@@ -52,10 +53,10 @@ contract CloneFactory {
             )
             // add the hashed params to the end so we get a unique address from CREATE2
             // TODO: this might be a terrible idea. think more about it
-            mstore(add(clone, 0x37), pepper)
+            mstore(add(clone, 0x37), staticOwnerBytes)
 
             // deploy it
-            result := create2(0, clone, 0x57, salt)
+            result := create2(0, clone, 0x4b, salt)
         }
     }
 

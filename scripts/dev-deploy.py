@@ -44,6 +44,8 @@ def quick_save(contract_name, address):
 def main():
     os.makedirs(DEPLOY_DIR, exist_ok=True)
 
+    print("account 0:", accounts[0])
+
     # gas price should be 3.0x to 3.5x the mint price
     # TODO: double check and document why its 3.5x
     expected_mainnet_mint_price = "20 gwei"

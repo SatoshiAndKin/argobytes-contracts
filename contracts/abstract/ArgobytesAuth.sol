@@ -2,9 +2,9 @@
 pragma solidity 0.7.1;
 pragma experimental ABIEncoderV2;
 
-import {IArgobytesAuthority} from "contracts/ArgobytesAuthority.sol";
+import {Strings2} from "contracts/library/Strings2.sol";
 
-import {Ownable2} from "./Ownable2.sol";
+import {IArgobytesAuthority} from "contracts/ArgobytesAuthority.sol";
 
 contract ArgobytesAuthEvents {
     event AuthorityTransferred(
@@ -13,14 +13,18 @@ contract ArgobytesAuthEvents {
     );
 }
 
-abstract contract ArgobytesAuth is ArgobytesAuthEvents, Ownable2 {
+abstract contract ArgobytesAuth is ArgobytesAuthEvents {
+    using Strings2 for address;
+
+    bool internal initialized = false;
     IArgobytesAuthority public authority;
 
-    // TODO: think more about this. how does OZ do it?
-    function initArgobytesAuth(address owner, IArgobytesAuthority authority_)
-        internal
-    {
-        initOwnable2(owner);
+    // TODO: think more about this. how does OZ do initialization functions?
+    function initArgobytesAuth(IArgobytesAuthority authority_) internal {
+        require(initialized == false, "already initialized");
+
+        initialized = true;
+
         authority = authority_;
     }
 
@@ -31,22 +35,54 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, Ownable2 {
         _;
     }
 
+    // pull the owner out
+    // TODO: an immutable keyword would be nice here, but because of how we make the proxy, we don't have a constructor
+    function owner() public view returns (address) {
+        address thisAddress = address(this);
+        bytes memory thisCode;
+
+        assembly {
+            // retrieve the size of the code
+            let size := extcodesize(thisAddress)
+            // allocate output byte array
+            thisCode := mload(0x40)
+            // new "memory end" including padding
+            mstore(
+                0x40,
+                add(thisCode, and(add(add(size, 0x20), 0x1f), not(0x1f)))
+            )
+            // store length in memory
+            mstore(thisCode, size)
+            // get the last 20 (0x14) bytes of code minus padding (which should be our address)
+            extcodecopy(
+                thisAddress,
+                add(thisCode, 0x20),
+                sub(size, 32),
+                sub(size, 12)
+            )
+        }
+
+        return abi.decode(thisCode, (address));
+    }
+
     function isAuthorized(
         address sender,
         address target,
         bytes4 sig
     ) internal view returns (bool) {
-        if (sender == owner()) {
-            // the owner always has access to all functions
-            return true;
-        } else if (authority == IArgobytesAuthority(0)) {
-            // the contract does not have an authorization contract to check
-            return false;
-        } else {
-            // use a smart contract to check auth
-            // TODO? do we want to split canCall and canDelegateCall? this is actually used for delegates
-            return authority.canCall(sender, target, sig);
-        }
+        // if (sender == owner()) {
+        //     // the owner always has access to all functions
+        //     return true;
+        // } else if (authority == IArgobytesAuthority(0)) {
+        //     // the contract does not have an authorization contract to check
+        //     // TODO: do we even need this check? authority.canCall will revert if authority doesn't exist
+        //     return false;
+        // } else {
+        //     // use a smart contract to check auth
+        //     // TODO? do we want to split canCall and canDelegateCall? this is actually used for delegates
+        //     return authority.canCall(sender, target, sig);
+        // }
+        return sender == owner() || authority.canCall(sender, target, sig);
     }
 
     function requireAuth(address target, bytes4 sig) internal view {

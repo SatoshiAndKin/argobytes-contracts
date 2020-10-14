@@ -20,7 +20,6 @@ import {IArgobytesFactory} from "./ArgobytesFactory.sol";
 import {ArgobytesAuth} from "./abstract/ArgobytesAuth.sol";
 import {Address2} from "./library/Address2.sol";
 import {Bytes2} from "./library/Bytes2.sol";
-import {Ownable2} from "./abstract/Ownable2.sol";
 import {IArgobytesAuthority} from "./ArgobytesAuthority.sol";
 
 // it is super important that all these functions have strong authentication!
@@ -47,12 +46,12 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy {
 
     constructor() {
         // block all access. users should setup a proxy to this contract and then call init
-        init(address(0), IArgobytesAuthority(0));
+        init(IArgobytesAuthority(0));
     }
 
     // call this immediatly after constructing a clone of this contract
-    function init(address owner, IArgobytesAuthority authority) public {
-        initArgobytesAuth(owner, authority);
+    function init(IArgobytesAuthority authority) public {
+        initArgobytesAuth(authority);
     }
 
     /*

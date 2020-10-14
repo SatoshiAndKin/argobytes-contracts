@@ -114,28 +114,24 @@ contract ArgobytesFactory is
     function deployClone(
         address original,
         bytes32 salt,
-        address first_owner,
+        address immutable_owner,
         IArgobytesAuthority first_authority
     ) external override {
         // TODO: do an ERC165 check on `original`?
 
-        // TODO: maybe it would be better to do `salt = keccack256(first_owner, first_authority, salt)`, but that makes using ERADICATE2 harder
-        bytes32 pepper = keccak256(
-            abi.encodePacked(first_owner, first_authority)
-        );
-
-        address clone = createClone(original, salt, pepper);
+        // TODO: maybe it would be better to do `salt = keccack256(immutable_owner, salt)`, but that makes using ERADICATE2 harder
+        address clone = createClone(original, salt, immutable_owner);
 
         emit NewClone(
             original,
             clone,
             salt,
-            first_owner,
+            immutable_owner,
             address(first_authority)
         );
 
         // TODO: make this more generic? what if the next version of the proxy has different arguments for init?
-        ArgobytesProxy(payable(clone)).init(first_owner, first_authority);
+        ArgobytesProxy(payable(clone)).init(first_authority);
     }
 
     // deploy a contract if it doesn't already exist
