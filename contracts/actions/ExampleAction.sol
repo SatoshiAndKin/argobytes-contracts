@@ -4,10 +4,9 @@ pragma experimental ABIEncoderV2;
 
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
-import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {UniversalERC20} from "contracts/library/UniversalERC20.sol";
 
-contract ExampleAction is AbstractERC20Exchange {
+contract ExampleAction {
     using UniversalERC20 for IERC20;
 
     // some simple storage used for burning gas
@@ -46,31 +45,5 @@ contract ExampleAction is AbstractERC20Exchange {
         token.universalTransfer(to, balance);
 
         burnGas(extra_gas);
-    }
-
-    function token_supported(address exchange, address token)
-        public
-        returns (bool)
-    {
-        revert("ExampleAction.token_supported: unimplemented");
-    }
-
-    function getAmounts(
-        address token_a,
-        uint256 token_a_amount,
-        address token_b
-    ) external view returns (Amount[] memory) {
-        bytes memory extra_data = "";
-
-        return _getAmounts(token_a, token_a_amount, token_b, extra_data);
-    }
-
-    function newAmount(
-        address maker_address,
-        uint256 taker_wei,
-        address taker_address,
-        bytes memory extra_data
-    ) public override view returns (Amount memory) {
-        revert("ExampleAction.newAmount: unimplemented");
     }
 }

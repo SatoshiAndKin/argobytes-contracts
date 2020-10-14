@@ -11,50 +11,6 @@ import {IOneSplit} from "contracts/interfaces/onesplit/IOneSplit.sol";
 contract OneSplitOffchainAction is AbstractERC20Exchange {
     using SafeERC20 for IERC20;
 
-    // call this function offchain. do not include it in your actual transaction or the gas costs are excessive
-    function encodeExtraData(
-        address src_token,
-        address dest_token,
-        uint256 src_amount,
-        uint256 dest_min_tokens,
-        address exchange,
-        uint256 parts,
-        uint256 disable_flags
-    ) external view returns (uint256, bytes memory) {
-        require(
-            dest_min_tokens > 0,
-            "OneSplitOffchainAction.encodeExtraData: dest_min_tokens must be > 0"
-        );
-
-        (uint256 expected_return, uint256[] memory distribution) = IOneSplit(
-            exchange
-        )
-            .getExpectedReturn(
-            src_token,
-            dest_token,
-            src_amount,
-            parts,
-            disable_flags
-        );
-
-        require(
-            expected_return >= dest_min_tokens,
-            "OneSplitOffchainAction.encodeExtraData: LOW_EXPECTED_RETURN"
-        );
-
-        // i'd like to put the exchange here, but we need it seperate so that modifiers can access it
-        bytes memory encoded = abi.encode(distribution, disable_flags);
-
-        return (expected_return, encoded);
-    }
-
-    function token_supported(address exchange, address token)
-        public
-        returns (bool)
-    {
-        revert("wip");
-    }
-
     function tradeEtherToToken(
         address exchange,
         address to,
@@ -174,65 +130,5 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         );
 
         Address.sendValue(to, dest_balance);
-    }
-
-    function encodeAmountsExtraData(uint256 parts)
-        external
-        view
-        returns (bytes memory)
-    {
-        return abi.encode(parts);
-    }
-
-    function getAmounts(
-        address token_a,
-        uint256 token_a_amount,
-        address token_b,
-        address exchange,
-        uint256 parts,
-        uint256 disable_flags
-    ) external view returns (Amount[] memory) {
-        bytes memory extra_data = abi.encode(exchange, parts, disable_flags);
-
-        return _getAmounts(token_a, token_a_amount, token_b, extra_data);
-    }
-
-    function newAmount(
-        address maker_token,
-        uint256 taker_wei,
-        address taker_token,
-        bytes memory extra_data
-    ) public override view returns (Amount memory) {
-        // TODO: use a struct here
-        (address exchange, uint256 parts, uint256 disable_flags) = abi.decode(
-            extra_data,
-            (address, uint256, uint256)
-        );
-
-        Amount memory a = newPartialAmount(maker_token, taker_wei, taker_token);
-
-        (uint256 expected_return, bytes memory encoded) = this.encodeExtraData(
-            a.taker_token,
-            a.maker_token,
-            a.taker_wei,
-            1,
-            exchange,
-            parts,
-            disable_flags
-        );
-
-        a.maker_wei = expected_return;
-        a.trade_extra_data = encoded;
-        a.exchange_data = abi.encode(exchange);
-
-        if (maker_token == ADDRESS_ZERO) {
-            a.selector = this.tradeTokenToEther.selector;
-        } else if (taker_token == ADDRESS_ZERO) {
-            a.selector = this.tradeEtherToToken.selector;
-        } else {
-            a.selector = this.tradeTokenToToken.selector;
-        }
-
-        return a;
     }
 }

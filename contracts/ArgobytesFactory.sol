@@ -118,9 +118,13 @@ contract ArgobytesFactory is
         IArgobytesAuthority first_authority
     ) external override {
         // TODO: do an ERC165 check on `original`?
-        // TODO: get original out of state?
 
-        address clone = createClone(original);
+        // TODO: maybe it would be better to do `salt = keccack256(first_owner, first_authority, salt)`, but that makes using ERADICATE2 harder
+        bytes32 pepper = keccak256(
+            abi.encodePacked(first_owner, first_authority)
+        );
+
+        address clone = createClone(original, salt, pepper);
 
         emit NewClone(
             original,
@@ -130,6 +134,7 @@ contract ArgobytesFactory is
             address(first_authority)
         );
 
+        // TODO: make this more generic? what if the next version of the proxy has different arguments for init?
         ArgobytesProxy(payable(clone)).init(first_owner, first_authority);
     }
 

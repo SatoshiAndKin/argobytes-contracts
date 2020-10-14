@@ -67,7 +67,7 @@ def main():
 
     starting_balance = accounts[0].balance()
 
-    def argobytes_proxy_factory_deploy_helper(factory, contract):
+    def argobytes_proxy_factory_deploy_helper(factory, contract, *deploy_args):
         gas_token_amount = 0
         require_gas_token = False
         salt = ""
@@ -76,7 +76,7 @@ def main():
             gas_token_amount,
             require_gas_token,
             salt,
-            contract.deploy.encode_input(),
+            contract.deploy.encode_input(*deploy_args),
             to_bytes(hexstr="0x"),
             {
                 "gas_price": expected_mainnet_gas_price,
@@ -170,7 +170,7 @@ def main():
     argobytes_proxy = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ArgobytesProxy)
     quick_save_contract(argobytes_proxy)
 
-    # clone ArgobytesProxy
+    # clone ArgobytesProxy for accounts[0]
     deploy_tx = argobytes_proxy_factory.deployClone(
         argobytes_proxy.address,
         salt,
@@ -199,7 +199,7 @@ def main():
     # deploy all the actions
     example_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ExampleAction)
     onesplit_offchain_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, OneSplitOffchainAction)
-    kyber_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, KyberAction)
+    kyber_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, KyberAction, accounts[0])
     uniswap_v1_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, UniswapV1Action)
     uniswap_v2_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, UniswapV2Action)
     # zrx_v3_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ZrxV3Action)
@@ -219,34 +219,6 @@ def main():
             ),
             False,
         ),
-        # add the curve fi contracts
-        (
-            curve_fi_action.address,
-            curve_fi_action.saveExchange.encode_input(CurveFiBUSDAddress, 4),
-            False,
-        ),
-        (
-            curve_fi_action.address,
-            curve_fi_action.saveExchange.encode_input(CurveFiCompoundAddress, 2),
-            False,
-        ),
-        (
-            curve_fi_action.address,
-            curve_fi_action.saveExchange.encode_input(CurveFiSUSDV2Address, 4),
-            False,
-        ),
-        (
-            curve_fi_action.address,
-            curve_fi_action.saveExchange.encode_input(CurveFiYAddress, 4),
-            False,
-        ),
-        (
-            curve_fi_action.address,
-            curve_fi_action.saveExchange.encode_input(CurveFiBUSDAddress, 4),
-            False,
-        ),
-        # TODO: bitcoin curve pools
-        # TODO: add swerve pool
         # register for kyber's fee program
         (
             KyberRegisterWalletAddress,
@@ -333,7 +305,7 @@ def main():
     accounts[3].transfer(DevHardwareAddress, 50 * 1e18)
     accounts[4].transfer(DevMetamaskAddress, 50 * 1e18)
 
-    # make a vault w/ auth for accounts[5] and approve a bot to call atomicArbitrage. then print total gas
+    # make a clone vault w/ auth for accounts[5] and approve a bot to call atomicArbitrage. then print total gas
     starting_balance = accounts[5].balance()
 
     # TODO: gas golf deployClone function that uses msg.sender instead of owner in the calldata?
@@ -375,7 +347,7 @@ def main():
 
     print("ETH used by accounts[5] to deploy a proxy with auth:", (starting_balance - ending_balance) / 1e18)
 
-    # make a vault for accounts[6]. then print total gas
+    # make a clone for accounts[6]. then print total gas
     starting_balance = accounts[6].balance()
 
     deploy_tx = argobytes_proxy_factory.deployClone(
