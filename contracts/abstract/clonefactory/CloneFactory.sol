@@ -85,5 +85,7 @@ contract CloneFactory {
                 eq(mload(add(clone, 0xd)), mload(add(other, 0xd)))
             )
         }
+        
+        revert("wip. need to update to match createClone (or delete)")
     }
 }
