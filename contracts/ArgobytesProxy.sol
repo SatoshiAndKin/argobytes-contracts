@@ -44,14 +44,13 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy {
     using Address2 for address;
     using Bytes2 for bytes;
 
-    constructor() {
-        // block all access. users should setup a proxy to this contract and then call init
-        init(IArgobytesAuthority(0));
-    }
+    /*
+    Instead of deploying this contract, most users should setup a proxy to this contract that uses delegatecall
 
-    // call this immediatly after constructing a clone of this contract
-    function init(IArgobytesAuthority authority) public {
-        initArgobytesAuth(authority);
+    If you do want to use this contract directly, you need to be sure to append the owner's address to the end of the bytecode!
+    */
+    constructor() {
+
     }
 
     /*

@@ -177,7 +177,6 @@ def main():
         argobytes_proxy.address,
         salt,
         accounts[0],
-        argobytes_authority.address,
         {
             "from": accounts[0],
             "gas_price": expected_mainnet_gas_price,
@@ -315,7 +314,6 @@ def main():
         argobytes_proxy.address,
         salt,
         accounts[5],
-        argobytes_authority.address,
         {
             "from": accounts[5],
             "gas_price": expected_mainnet_gas_price,
@@ -356,7 +354,6 @@ def main():
         argobytes_proxy.address,
         salt,
         accounts[6],
-        ZeroAddress,
         {
             "from": accounts[6],
             "gas_price": expected_mainnet_gas_price,

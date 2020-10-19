@@ -15,6 +15,7 @@ import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
 import {LiquidGasTokenUser} from "./abstract/LiquidGasTokenUser.sol";
+import {Strings2} from "./library/Strings2.sol";
 import {ArgobytesProxy} from "./ArgobytesProxy.sol";
 import {IArgobytesAuthority} from "./ArgobytesAuthority.sol";
 import {CloneFactory} from "./abstract/clonefactory/CloneFactory.sol";
@@ -22,11 +23,10 @@ import {CloneFactory} from "./abstract/clonefactory/CloneFactory.sol";
 // TODO: what order should the events be in?
 contract ArgobytesFactoryEvents {
     event NewClone(
-        address indexed original,
-        address clone,
+        address indexed target,
         bytes32 salt,
-        address indexed first_owner,
-        address indexed first_authority
+        address indexed immutable_owner,
+        address clone
     );
 
     event NewDeploy(address indexed deployer, bytes32 salt, address deployed);
@@ -49,10 +49,9 @@ interface IArgobytesFactory {
     ) external payable returns (address deployed);
 
     function deployClone(
-        address original,
+        address target,
         bytes32 salt,
-        address first_owner,
-        IArgobytesAuthority first_authority
+        address immutable_owner
     ) external;
 
     function existingOrCreate2(bytes32 salt, bytes memory bytecode)
@@ -71,6 +70,8 @@ contract ArgobytesFactory is
     IArgobytesFactory,
     LiquidGasTokenUser
 {
+    using Strings2 for address;
+
     // deploy a contract with CREATE2 and then call a function on it
     function deploy(
         bytes32 salt,
@@ -110,28 +111,39 @@ contract ArgobytesFactory is
         }
     }
 
-    // deploy and initialize a clone of a ArgobytesProxy (or other compatible) contract
+    /*
+    Deploy a very lightweight "clone" contract that delegates all calls to the `target` contract.
+
+    We take target as a parameter to allow for easy upgrades or forks in the future.
+
+    Some contracts (such as curve's vote locking contract) only allow access from EOAs and from DAO-approved smart wallets.
+    Transfers would bypass Curve's time-locked votes since you could just sell your smart wallet.
+    People could still sell their keys, but that is dangerous behavior that also applies to EOAs.
+    We would like our ArgobytesProxy clones to qualify for these contracts and so the smart wallet CANNOT be transfered.
+
+    To accomplish this, the clone has the `immutable_owner` address appended to the end of its code. This data cannot be changed.
+    If the target contract uses ArgobytesAuth (or compatible) for authentication, then ownership of this clone *cannot* be transferred.
+
+    We originally allowed setting an authority here, but that allowed for some shenanigans.
+    It may cost slightly more, but a user will have to send a second transaction if they want to set an authority.
+    */
     function deployClone(
-        address original,
+        address target,
         bytes32 salt,
-        address immutable_owner,
-        IArgobytesAuthority first_authority
+        address immutable_owner
     ) external override {
-        // TODO: do an ERC165 check on `original`?
+        // TODO: do an ERC165 check on `target`?
 
         // TODO: maybe it would be better to do `salt = keccack256(immutable_owner, salt)`, but that makes using ERADICATE2 harder
-        address clone = createClone(original, salt, immutable_owner);
+        address clone = createClone(target, salt, immutable_owner);
 
-        emit NewClone(
-            original,
-            clone,
-            salt,
-            immutable_owner,
-            address(first_authority)
-        );
+        emit NewClone(target, salt, immutable_owner, clone);
 
-        // TODO: make this more generic? what if the next version of the proxy has different arguments for init?
-        ArgobytesProxy(payable(clone)).init(first_authority);
+        // TODO: remove this when done debugging
+        // ArgobytesProxy proxy = ArgobytesProxy(payable(clone));
+        // revert(immutable_owner.toString());
+        // revert(proxy.owner().toString()); // expects 0x57ba9e012762bd38f3a9a2cd1178b5d79b1e266f
+        // require(proxy.owner() == immutable_owner, "deployClone bad owner");
     }
 
     // deploy a contract if it doesn't already exist
