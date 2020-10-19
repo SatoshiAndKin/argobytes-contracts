@@ -73,7 +73,7 @@ contract CloneFactory {
     }
 
     function isClone(address target, address query)
-        internal
+        public
         view
         returns (bool result, address owner)
     {
