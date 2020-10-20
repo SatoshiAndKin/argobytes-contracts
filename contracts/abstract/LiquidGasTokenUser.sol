@@ -12,7 +12,9 @@ abstract contract LiquidGasTokenUser {
     using Strings for uint256;
     using SafeMath for uint256;
 
-    ILiquidGasToken public constant lgt = ILiquidGasToken(0x000000000000C1CB11D5c062901F32D06248CE48);
+    ILiquidGasToken public constant lgt = ILiquidGasToken(
+        0x000000000000C1CB11D5c062901F32D06248CE48
+    );
 
     /**
      * @notice Based on the gas spent, buy and free optimal number of this contract's gas tokens.
@@ -22,26 +24,22 @@ abstract contract LiquidGasTokenUser {
         returns (bool)
     {
         // getEthToTokenOutputPrice reverts if optimal_tokens aren't available
-        try
-            lgt.getEthToTokenOutputPrice(gas_token_amount)
-            returns (uint256 buy_cost)
-        {
+        try lgt.getEthToTokenOutputPrice(gas_token_amount) returns (
+            uint256 buy_cost
+        ) {
             // TODO: if buy_cost is too much, return false
 
             // TODO: these numbers are going to change
             if (buy_cost < ((18145 * gas_token_amount) - 24000) * tx.gasprice) {
                 // buying and freeing tokens is profitable
                 // TODO: we used to catch a revert here, but i don't think we need that
-                lgt.buyAndFree22457070633{
-                    value: buy_cost
-                }(gas_token_amount);
+                lgt.buyAndFree22457070633{value: buy_cost}(gas_token_amount);
 
                 return true;
             }
         } catch Error(string memory reason) {
             // a revert was called inside getEthToTokenOutputPrice
             // and a reason string was provided.
-
             // we don't want to actually revert. we just want to return false
         } catch (
             bytes memory /*lowLevelData*/
@@ -49,7 +47,6 @@ abstract contract LiquidGasTokenUser {
             // This is executed in case revert() was used
             // or there was a failing assertion, division
             // by zero, etc. inside getEthToTokenOutputPrice.
-
             // we don't want to actually revert. we just want to return false
         }
 
@@ -59,20 +56,14 @@ abstract contract LiquidGasTokenUser {
     /**
      * @notice Free a specified number of another contract's gas tokens.
      */
-    function _freeGasTokens(uint256 gas_token_amount)
-        internal
-        returns (bool)
-    {
+    function _freeGasTokens(uint256 gas_token_amount) internal returns (bool) {
         // TODO: option to freeFrom instead of free?
         // TODO: is try/catch what we need? we might just do address(lgt).call and return their success bool
-        try
-            lgt.free(gas_token_amount)
-        {
+        try lgt.free(gas_token_amount)  {
             return true;
         } catch Error(string memory reason) {
             // a revert was called inside getEthToTokenOutputPrice
             // and a reason string was provided.
-
             // we don't want to actually revert. we just want to return false
         } catch (
             bytes memory /*lowLevelData*/
@@ -80,7 +71,6 @@ abstract contract LiquidGasTokenUser {
             // This is executed in case revert() was used
             // or there was a failing assertion, division
             // by zero, etc. inside lgt.freeFrom
-
             // we don't want to actually revert. we just want to return false
         }
 
@@ -96,14 +86,11 @@ abstract contract LiquidGasTokenUser {
     {
         // TODO: option to freeFrom instead of free?
         // TODO: is try/catch what we need? we might just do address(lgt).call and return their success bool
-        try
-            lgt.freeFrom(gas_token_amount, from)
-        {
+        try lgt.freeFrom(gas_token_amount, from)  {
             return true;
         } catch Error(string memory reason) {
             // a revert was called inside getEthToTokenOutputPrice
             // and a reason string was provided.
-
             // we don't want to actually revert. we just want to return false
         } catch (
             bytes memory /*lowLevelData*/
@@ -111,7 +98,6 @@ abstract contract LiquidGasTokenUser {
             // This is executed in case revert() was used
             // or there was a failing assertion, division
             // by zero, etc. inside lgt.freeFrom
-
             // we don't want to actually revert. we just want to return false
         }
 
@@ -141,7 +127,11 @@ abstract contract LiquidGasTokenUser {
         }
     }
 
-    function freeGasTokensFrom(uint256 amount, bool revert_on_fail, address from) internal {
+    function freeGasTokensFrom(
+        uint256 amount,
+        bool revert_on_fail,
+        address from
+    ) internal {
         if (amount == 0) {
             return;
         }
@@ -166,9 +156,12 @@ abstract contract LiquidGasTokenUser {
 
     // TODO: return success boolean? revert?
     // this shouldn't ever revert. we care more about the rest of the transaction succeeding than this succeeding
-    function freeOptimalGasTokens(uint256 initial_gas, bool revert_on_fail) internal {
+    function freeOptimalGasTokens(uint256 initial_gas, bool revert_on_fail)
+        internal
+        returns (uint256 optimal_tokens)
+    {
         if (initial_gas == 0) {
-            return;
+            return optimal_tokens;
         }
         // if initial_gas is set, we can assume we should free gas tokens
 
@@ -183,10 +176,10 @@ abstract contract LiquidGasTokenUser {
         // TODO: these numbers are going to change
         // i don't think overflow checks are necessary here
         // keep the nnumber of calculatiosn after this as low as possible
-        uint256 optimal_tokens = (initial_gas - gasleft() + 55000) / 41300;
+        optimal_tokens = (initial_gas - gasleft() + 55000) / 41300;
 
         if (optimal_tokens == 0) {
-            return;
+            return optimal_tokens;
         }
 
         // TODO: how much of a refund will we get for freeing?
@@ -196,7 +189,7 @@ abstract contract LiquidGasTokenUser {
         // if we have gas_token set, then we can assume we are at a high gas price
         // (the caller should set gas_token to 0x0 when gas prices are low)
         if (_freeGasTokens(optimal_tokens)) {
-            return;
+            return optimal_tokens;
         }
 
         // recalculate optimal_tokens since we might have done some calls above
@@ -208,17 +201,25 @@ abstract contract LiquidGasTokenUser {
         // our LGT bot will try to make sure we always have LGT to spend, so we probably won't use this often
         // but if LGT liquidity grows a lot and stays cheap, this could be useful
         if (_buyAndFreeGasTokens(optimal_tokens)) {
-            return;
+            return optimal_tokens;
         }
 
         if (revert_on_fail) {
-            revert("LiquidGasTokenUser.freeOptimalGasTokens couldn't source lgt");
+            revert(
+                "LiquidGasTokenUser.freeOptimalGasTokens couldn't source lgt"
+            );
         }
+
+        return 0;
     }
 
-    // TODO: return success boolean? revert?
+    // TODO: return success boolean? revert? or maybe return the number of gas tokens that were freed
     // this shouldn't ever revert. we care more about the rest of the transaction succeeding than this succeeding
-    function freeOptimalGasTokensFrom(uint256 initial_gas, bool revert_on_fail, address from) internal {
+    function freeOptimalGasTokensFrom(
+        uint256 initial_gas,
+        bool revert_on_fail,
+        address from
+    ) internal {
         if (initial_gas == 0) {
             return;
         }
@@ -234,7 +235,7 @@ abstract contract LiquidGasTokenUser {
 
         // TODO: these numbers are going to change
         // i don't think overflow checks are necessary here
-        // keep the nnumber of calculatiosn after this as low as possible
+        // keep the number of calculations after this as low as possible
         uint256 optimal_tokens = (initial_gas - gasleft() + 55000) / 41300;
 
         if (optimal_tokens == 0) {
@@ -264,7 +265,9 @@ abstract contract LiquidGasTokenUser {
         }
 
         if (revert_on_fail) {
-            revert("LiquidGasTokenUser.freeOptimalGasTokens couldn't source lgt");
+            revert(
+                "LiquidGasTokenUser.freeOptimalGasTokens couldn't source lgt"
+            );
         }
     }
 

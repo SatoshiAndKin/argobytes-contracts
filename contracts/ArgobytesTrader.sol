@@ -45,6 +45,20 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
     // TODO: be careful not to leave coins here!
     receive() external payable {}
 
+    // TODO: flash loan from dydx
+    // TODO: return gas tokens freed?
+    function dydxFlashArbitrage(
+        bool free_gas_token,
+        bool require_gas_token,
+        uint256 borrow_id,
+        uint256 borrow_amount,
+        IArgobytesActor argobytes_actor,
+        IArgobytesActor.Action[] calldata actions
+    ) external override payable returns (uint256 primary_profit) {
+        revert("wip");
+    }
+
+    // TODO: return gas tokens freed?
     function atomicArbitrage(
         bool free_gas_token,
         bool require_gas_token,
@@ -119,6 +133,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         // TODO: refund excess ETH
     }
 
+    // TODO: return gas tokens freed?
     /**
      * @notice Transfer `first_amount` `tokens[0]`, call some functions, and return tokens to msg.sender.
      * @notice You'll need to call this from another smart contract that has authentication.
@@ -165,6 +180,4 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
             );
         }
     }
-
-    // TODO? function that uses kollateral to do callActions
 }

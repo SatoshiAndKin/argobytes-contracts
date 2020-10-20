@@ -46,6 +46,7 @@ contract CloneFactory {
 
             // start of the contract (+20 bytes)
             // 10 of these bytes are for setup. the contract bytecode is 10 bytes shorter
+            // the "0x41" below is the actual contract length
             mstore(
                 code,
                 0x3d604180600a3d3981f3363d3d373d3d3d363d73000000000000000000000000
@@ -66,7 +67,7 @@ contract CloneFactory {
             result := create2(0, code, 75, salt)
         }
 
-        // TODO: quick and dirty debugging of isClone
+        // // quick and dirty debugging of isClone
         // (bool result2, address owner) = isClone(target, result);
         // revert(staticOwner.toString());
         // revert(owner.toString()); // should be 0x57ba9e012762bd38f3a9a2cd1178b5d79b1e266f
@@ -107,7 +108,7 @@ contract CloneFactory {
 
             result := and(
                 // check bytes 0 through 31
-                eq(mload(clone), mload(other)), // check that the first 32 bytes match //and(
+                eq(mload(clone), mload(other)),
                 // check bytes 13 through 44
                 // we don't care about checking the owner bytes (45 through 65)
                 eq(mload(add(clone, 13)), mload(add(other, 13)))

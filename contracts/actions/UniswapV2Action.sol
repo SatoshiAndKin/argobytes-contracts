@@ -10,4 +10,7 @@ import {
 } from "contracts/interfaces/uniswap/IUniswapV2Router01.sol";
 import {IUniswapV2Pair} from "contracts/interfaces/uniswap/IUniswapV2Pair.sol";
 
-contract UniswapV2Action is AbstractERC20Exchange {}
+contract UniswapV2Action is AbstractERC20Exchange {
+    // TODO: trading
+    // TODO: flash loans
+}
