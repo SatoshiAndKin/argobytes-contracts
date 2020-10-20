@@ -67,11 +67,11 @@ contract CloneFactory {
         }
 
         // TODO: quick and dirty debugging of isClone
-        (bool result2, address owner) = isClone(target, result);
+        // (bool result2, address owner) = isClone(target, result);
         // revert(staticOwner.toString());
         // revert(owner.toString()); // should be 0x57ba9e012762bd38f3a9a2cd1178b5d79b1e266f
-        require(result2, "bad clone");
-        require(owner == staticOwner, "bad owner");
+        // require(result2, "bad clone");
+        // require(owner == staticOwner, "bad owner");
     }
 
     // TODO: how much cheaper is this than storing all the clone addresses in a mapping of bools?
