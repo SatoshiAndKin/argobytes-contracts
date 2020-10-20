@@ -42,56 +42,57 @@ contract CloneFactory {
         assembly {
             // Solidity manages memory in a very simple way: There is a “free memory pointer” at position 0x40 in memory.
             // If you want to allocate memory, just use the memory from that point on and update the pointer accordingly.
-            let clone := mload(0x40)
+            let code := mload(0x40)
 
-            // start of the contract
+            // start of the contract (+20 bytes)
+            // 10 of these bytes are for setup. the contract bytecode is 10 bytes shorter
             mstore(
-                clone,
+                code,
                 0x3d604180600a3d3981f3363d3d373d3d3d363d73000000000000000000000000
             )
-            // target contract that the clone delegates all calls to
-            mstore(add(clone, 0x14), targetBytes)
-            // end of the contract
+            // target contract that the clone delegates all calls to (+20 bytes = 40)
+            mstore(add(code, 0x14), targetBytes)
+            // end of the contract (+15 bytes = 55)
             mstore(
-                add(clone, 0x28),
+                add(code, 0x28),
                 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000
             )
-            // add the hashed params to the end so we get a unique address from CREATE2
-            // TODO: this might be a terrible idea. think more about it
-            mstore(add(clone, 0x37), staticOwnerBytes)
+            // add the owner to the end (+20 bytes = 75)
+            // 1. so we get a unique address from CREATE2
+            // 2. so it can be used as an immutable owner
+            mstore(add(code, 0x37), staticOwnerBytes)
 
             // deploy it
-            // the contract and owner is 75 (0x4b) bytes long
-            result := create2(0, clone, 0x4b, salt)
+            result := create2(0, code, 75, salt)
         }
 
         // TODO: quick and dirty debugging of isClone
-        // (bool result2, address owner) = isClone(target, result);
+        (bool result2, address owner) = isClone(target, result);
         // revert(staticOwner.toString());
-        // require(result2, "bad clone");
-        // require(owner == staticOwner, "bad owner");
+        // revert(owner.toString()); // should be 0x57ba9e012762bd38f3a9a2cd1178b5d79b1e266f
+        require(result2, "bad clone");
+        require(owner == staticOwner, "bad owner");
     }
 
+    // TODO: how much cheaper is this than storing all the clone addresses in a mapping of bools?
     function isClone(address target, address query)
         public
         view
         returns (bool result, address owner)
     {
-        // TODO: is this cast necessary?
         bytes20 targetBytes = bytes20(target);
-        bytes20 ownerBytes;
 
         assembly {
             let other := mload(0x40)
 
-            // TODO: right now our contract is 55 bytes + 20 bytes for the owner address, but this will change if we use shorter addresses
-            extcodecopy(query, other, 0, 75)
+            // TODO: right now our contract is 45 bytes + 20 bytes for the owner address, but this will change if we use shorter addresses
+            extcodecopy(query, other, 0, 65)
 
-            // load 32 bytes
-            // TODO: cut this down to 20 bytes
-            ownerBytes := mload(add(other, 45))
+            // load 32 bytes (12 of the bytes will be ignored)
+            // the last 20 bytes of this are the owner's address
+            owner := mload(add(other, 33))
 
-            let clone := add(other, 75)
+            let clone := add(other, 65)
             mstore(
                 clone,
                 0x363d3d373d3d3d363d7300000000000000000000000000000000000000000000
@@ -101,21 +102,16 @@ contract CloneFactory {
                 add(clone, 0x1e),
                 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000
             )
-            mstore(add(clone, 0x2d), ownerBytes)
+            // we could copy the owner, but theres no real need
+            // mstore(add(clone, 0x2d), owner)
 
             result := and(
-                and(
-                    // check that the first 32 bytes match
-                    eq(mload(clone), mload(other)),
-                    // check that the next 32 bytes match
-                    eq(mload(add(clone, 32)), mload(add(other, 32)))
-                ),
-                // check that the last bytes match
-                // TODO: if we use vanity addresses, this will be shorter!
-                eq(mload(add(clone, 43)), mload(add(other, 43)))
+                // check bytes 0 through 31
+                eq(mload(clone), mload(other)), // check that the first 32 bytes match //and(
+                // check bytes 13 through 44
+                // we don't care about checking the owner bytes (45 through 65)
+                eq(mload(add(clone, 13)), mload(add(other, 13)))
             )
         }
-
-        owner = address(ownerBytes);
     }
 }
