@@ -34,6 +34,15 @@ interface IArgobytesTrader {
         IArgobytesActor argobytes_actor,
         IArgobytesActor.Action[] calldata actions
     ) external payable;
+
+    function dydxFlashArbitrage(
+        bool free_gas_token,
+        bool require_gas_token,
+        uint256 borrow_id,
+        uint256 borrow_amount,
+        IArgobytesActor argobytes_actor,
+        IArgobytesActor.Action[] calldata actions
+    ) external payable returns (uint256 primary_profit);
 }
 
 // TODO: this isn't right. this works for the owner account, but needs more thought for authenticating a bot
@@ -44,19 +53,6 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
     // we want to receive because we might sweep tokens between actions
     // TODO: be careful not to leave coins here!
     receive() external payable {}
-
-    // TODO: flash loan from dydx
-    // TODO: return gas tokens freed?
-    function dydxFlashArbitrage(
-        bool free_gas_token,
-        bool require_gas_token,
-        uint256 borrow_id,
-        uint256 borrow_amount,
-        IArgobytesActor argobytes_actor,
-        IArgobytesActor.Action[] calldata actions
-    ) external override payable returns (uint256 primary_profit) {
-        revert("wip");
-    }
 
     // TODO: return gas tokens freed?
     function atomicArbitrage(
@@ -179,5 +175,18 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
                 borrow_from
             );
         }
+    }
+
+    // TODO: flash loan from dydx
+    // TODO: return gas tokens freed?
+    function dydxFlashArbitrage(
+        bool free_gas_token,
+        bool require_gas_token,
+        uint256 borrow_id,
+        uint256 borrow_amount,
+        IArgobytesActor argobytes_actor,
+        IArgobytesActor.Action[] calldata actions
+    ) external override payable returns (uint256 primary_profit) {
+        revert("wip");
     }
 }
