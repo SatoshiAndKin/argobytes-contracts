@@ -9,6 +9,7 @@ import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
 
 import {IArgobytesActor} from "./ArgobytesActor.sol";
 import {LiquidGasTokenUser} from "./abstract/LiquidGasTokenUser.sol";
+import {DyDxTypes, ISoloMargin} from "./interfaces/dydx/ISoloMargin.sol";
 
 interface IArgobytesTrader {
     struct Borrow {
@@ -38,9 +39,10 @@ interface IArgobytesTrader {
     function dydxFlashArbitrage(
         bool free_gas_token,
         bool require_gas_token,
+        ISoloMargin soloMargin,
         uint256 borrow_id,
         uint256 borrow_amount,
-        IArgobytesActor argobytes_actor,
+        address argobytes_actor,
         IArgobytesActor.Action[] calldata actions
     ) external payable returns (uint256 primary_profit);
 }
@@ -49,6 +51,11 @@ interface IArgobytesTrader {
 // TODO: maybe have a function approvedAtomicAbitrage that calls transferFrom. and another that that assumes its used from the owner of the funnds with delegatecall
 contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
     using SafeERC20 for IERC20;
+
+    ISoloMargin constant DYDX_SOLO_MARGIN = ISoloMargin(
+        0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e
+    );
+    address constant WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     // we want to receive because we might sweep tokens between actions
     // TODO: be careful not to leave coins here!
@@ -182,11 +189,83 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
     function dydxFlashArbitrage(
         bool free_gas_token,
         bool require_gas_token,
+        ISoloMargin soloMargin,
         uint256 borrow_id,
         uint256 borrow_amount,
-        IArgobytesActor argobytes_actor,
+        address argobytes_actor,
         IArgobytesActor.Action[] calldata actions
     ) external override payable returns (uint256 primary_profit) {
-        revert("wip");
+        // we want to give coins to argobytes actor
+        // TODO: why is the linter doing weird things to this line?
+        // TODO: what account number should we use?
+
+            DyDxTypes.AccountInfo[] memory accountInfos
+         = new DyDxTypes.AccountInfo[](1);
+        accountInfos[0] = DyDxTypes.AccountInfo({
+            owner: address(this),
+            number: 0
+        });
+
+        // setup multiple actions
+        DyDxTypes.ActionArgs[] memory operations = new DyDxTypes.ActionArgs[](
+            3
+        );
+
+        // 1. borrow some token
+        operations[0] = DyDxTypes.ActionArgs({
+            actionType: DyDxTypes.ActionType.Withdraw,
+            accountId: 0,
+            amount: DyDxTypes.AssetAmount({
+                sign: false,
+                denomination: DyDxTypes.AssetDenomination.Wei,
+                ref: DyDxTypes.AssetReference.Delta,
+                value: borrow_amount
+            }),
+            primaryMarketId: borrow_id,
+            secondaryMarketId: 0,
+            otherAddress: argobytes_actor,
+            otherAccountId: 0,
+            data: ""
+        });
+
+        // 2. call Argobytes actor
+        // the last action should return coins to this contract
+        operations[1] = DyDxTypes.ActionArgs({
+            actionType: DyDxTypes.ActionType.Call,
+            accountId: 0,
+            amount: DyDxTypes.AssetAmount({
+                sign: false,
+                denomination: DyDxTypes.AssetDenomination.Wei,
+                ref: DyDxTypes.AssetReference.Delta,
+                value: 0
+            }),
+            primaryMarketId: 0,
+            secondaryMarketId: 0,
+            otherAddress: argobytes_actor,
+            otherAccountId: 0,
+            data: abi.encode(actions)
+        });
+
+        // 3. return what we borrowed (plus a super tiny 2 wei fee)
+        // we have to add 1 or 2 wei depending on the market
+        // i think it costs more in gas than it does to just always include 2
+        operations[2] = DyDxTypes.ActionArgs({
+            actionType: DyDxTypes.ActionType.Deposit,
+            accountId: 0,
+            amount: DyDxTypes.AssetAmount({
+                sign: true,
+                denomination: DyDxTypes.AssetDenomination.Wei,
+                ref: DyDxTypes.AssetReference.Delta,
+                value: borrow_amount + 2
+            }),
+            primaryMarketId: borrow_id,
+            secondaryMarketId: 0,
+            otherAddress: address(this),
+            otherAccountId: 0,
+            data: ""
+        });
+
+        // do the magic
+        soloMargin.operate(accountInfos, operations);
     }
 }

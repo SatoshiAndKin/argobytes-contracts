@@ -3,9 +3,10 @@ pragma solidity 0.7.1;
 pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
+import {ICallee} from "contracts/interfaces/dydx/ICallee.sol";
+import {DyDxTypes} from "contracts/interfaces/dydx/DyDxTypes.sol";
 
 interface IArgobytesActor {
-    // TODO: option to delegatecall?
     struct Action {
         address payable target;
         bytes data;
@@ -18,7 +19,7 @@ interface IArgobytesActor {
     function callActions(Action[] calldata actions) external payable;
 }
 
-contract ArgobytesActor is IArgobytesActor {
+contract ArgobytesActor is IArgobytesActor, ICallee {
     using Address for address payable;
 
     // we want to receive because we might sweep tokens between actions
@@ -30,7 +31,7 @@ contract ArgobytesActor is IArgobytesActor {
      *
      *  transfer tokens to the actions before calling this
      */
-    function callActions(Action[] calldata actions) external override payable {
+    function callActions(Action[] calldata actions) public override payable {
         // TODO: re-entrancy?
         // an action can do whatever it wants (liquidate, swap, refinance, etc.)
         for (uint256 i = 0; i < actions.length; i++) {
@@ -60,5 +61,16 @@ contract ArgobytesActor is IArgobytesActor {
             );
             require(success, "ArgobytesActor: REFUND_FAILED");
         }
+    }
+
+    /*
+    Entrypoint for dYdX operations.
+    */
+    function callFunction(
+        address sender,
+        DyDxTypes.AccountInfo calldata accountInfo,
+        bytes calldata data
+    ) external override {
+        return this.callActions(abi.decode(data, (Action[])));
     }
 }

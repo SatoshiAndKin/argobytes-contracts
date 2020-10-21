@@ -26,10 +26,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // TODO: CloneFactory16
 
-import {Strings2} from "contracts/library/Strings2.sol";
+// import {Strings2} from "contracts/library/Strings2.sol";
 
 contract CloneFactory {
-    using Strings2 for address;
+    // using Strings2 for address;
 
     function createClone(
         address target,
