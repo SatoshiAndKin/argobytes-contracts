@@ -41,6 +41,7 @@ interface IArgobytesTrader {
         bool require_gas_token,
         ISoloMargin soloMargin,
         uint256 borrow_id,
+        IERC20 borrow_token,
         uint256 borrow_amount,
         address argobytes_actor,
         IArgobytesActor.Action[] calldata actions
@@ -81,7 +82,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
             start_balances[i] = borrows[i].token.balanceOf(borrow_from);
 
             // TODO: think about this and approvals more
-            // TODO: do we want this address(0) check?
+            // TODO: do we want this address(0) check? i think it will be helpful in the case where the clone is holding the coins
             if (borrow_from == address(0)) {
                 borrows[i].token.safeTransfer(
                     borrows[i].dest,
@@ -99,7 +100,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         // we call a seperate contract because we don't want any sneaky transferFroms
         // this contract (or the actions) MUST return all borrowed tokens to msg.sender
         // TODO: pass ETH along? this might be helpful for exchanges like 0x. maybe better to borrow WETH for the action
-        // TODO: msg.sender or address(this).balance?!
+        // TODO: msg.value or address(this).balance?!
         argobytes_actor.callActions{value: msg.value}(actions);
 
         // make sure the source's balances did not decrease
@@ -133,7 +134,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         // TODO: pass max ETH spent to this?
         freeOptimalGasTokensFrom(initial_gas, require_gas_token, borrow_from);
 
-        // TODO: refund excess ETH
+        // TODO: refund excess ETH?
     }
 
     // TODO: return gas tokens freed?
@@ -169,7 +170,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
             }
         }
 
-        // TODO: msg.sender or address(this).balance?!
+        // TODO: msg.value or address(this).balance?!
         // we call a seperate contract because we don't want any sneaky transferFroms
         argobytes_actor.callActions{value: msg.value}(actions);
 
@@ -182,15 +183,18 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
                 borrow_from
             );
         }
+
+        // TODO: refund excess ETH?
     }
 
-    // TODO: flash loan from dydx
+    // flash loan from dydx
     // TODO: return gas tokens freed?
     function dydxFlashArbitrage(
         bool free_gas_token,
         bool require_gas_token,
         ISoloMargin soloMargin,
         uint256 borrow_id,
+        IERC20 borrow_token,
         uint256 borrow_amount,
         address argobytes_actor,
         IArgobytesActor.Action[] calldata actions
@@ -198,6 +202,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         // we want to give coins to argobytes actor
         // TODO: why is the linter doing weird things to this line?
         // TODO: what account number should we use?
+
 
             DyDxTypes.AccountInfo[] memory accountInfos
          = new DyDxTypes.AccountInfo[](1);
@@ -247,6 +252,12 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         });
 
         // 3. return what we borrowed (plus a super tiny 2 wei fee)
+
+        // approve the deposit
+        // TODO: think about this more. maybe do an infinite approval seperately
+        // TODO: safeApprove?
+        borrow_token.approve(address(soloMargin), borrow_amount + 2);
+
         // we have to add 1 or 2 wei depending on the market
         // i think it costs more in gas than it does to just always include 2
         operations[2] = DyDxTypes.ActionArgs({
@@ -267,5 +278,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
 
         // do the magic
         soloMargin.operate(accountInfos, operations);
+
+        // we could check for actual profit here, but i don't think its necessary
     }
 }
