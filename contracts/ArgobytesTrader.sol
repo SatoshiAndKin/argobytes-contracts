@@ -39,6 +39,7 @@ interface IArgobytesTrader {
     function dydxFlashArbitrage(
         bool free_gas_token,
         bool require_gas_token,
+        address gas_token_from,
         ISoloMargin soloMargin,
         uint256 borrow_id,
         IERC20 borrow_token,
@@ -56,6 +57,8 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
     ISoloMargin constant DYDX_SOLO_MARGIN = ISoloMargin(
         0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e
     );
+
+    // TODO: WETH10 is coming
     address constant WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     // we want to receive because we might sweep tokens between actions
@@ -174,15 +177,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         // we call a seperate contract because we don't want any sneaky transferFroms
         argobytes_actor.callActions{value: msg.value}(actions);
 
-        if (borrow_from == address(0)) {
-            freeOptimalGasTokens(initial_gas, require_gas_token);
-        } else {
-            freeOptimalGasTokensFrom(
-                initial_gas,
-                require_gas_token,
-                borrow_from
-            );
-        }
+        freeOptimalGasTokensFrom(initial_gas, require_gas_token, borrow_from);
 
         // TODO: refund excess ETH?
     }
@@ -192,6 +187,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
     function dydxFlashArbitrage(
         bool free_gas_token,
         bool require_gas_token,
+        address gas_token_from,
         ISoloMargin soloMargin,
         uint256 borrow_id,
         IERC20 borrow_token,
@@ -199,13 +195,16 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         address argobytes_actor,
         IArgobytesActor.Action[] calldata actions
     ) external override payable returns (uint256 primary_profit) {
+        uint256 initial_gas = initialGas(free_gas_token);
+
         // we want to give coins to argobytes actor
-        // TODO: why is the linter doing weird things to this line?
-        // TODO: what account number should we use?
+        // TODO: why is the linter adding extra line breaks?!
 
 
             DyDxTypes.AccountInfo[] memory accountInfos
          = new DyDxTypes.AccountInfo[](1);
+
+        // TODO: what account number should we use?
         accountInfos[0] = DyDxTypes.AccountInfo({
             owner: address(this),
             number: 0
@@ -217,6 +216,8 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         );
 
         // 1. borrow some token
+        // set borrow_id to match https://docs.dydx.exchange/#solo-markets
+        // 0 = WETH, 1 = SAI, 2 = USDC, 3 = DAI
         operations[0] = DyDxTypes.ActionArgs({
             actionType: DyDxTypes.ActionType.Withdraw,
             accountId: 0,
@@ -234,7 +235,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         });
 
         // 2. call Argobytes actor
-        // the last action should return coins to this contract
+        // the last action should return borrowed coins (+ 2 wei fee) to this contract
         operations[1] = DyDxTypes.ActionArgs({
             actionType: DyDxTypes.ActionType.Call,
             accountId: 0,
@@ -259,7 +260,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         borrow_token.approve(address(soloMargin), borrow_amount + 2);
 
         // we have to add 1 or 2 wei depending on the market
-        // i think it costs more in gas than it does to just always include 2
+        // i think it costs more in gas to check than it does to just always include 2
         operations[2] = DyDxTypes.ActionArgs({
             actionType: DyDxTypes.ActionType.Deposit,
             accountId: 0,
@@ -271,14 +272,21 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
             }),
             primaryMarketId: borrow_id,
             secondaryMarketId: 0,
-            otherAddress: address(this),
+            otherAddress: address(this), // this contract (not argobytes_actor) is going to pay back the debt
             otherAccountId: 0,
             data: ""
         });
 
-        // do the magic
+        // do all the operations
         soloMargin.operate(accountInfos, operations);
 
         // we could check for actual profit here, but i don't think its necessary
+
+        // since actions might have highly variable gas costs (especially on revert), we calculate the gas tokens needed
+        freeOptimalGasTokensFrom(
+            initial_gas,
+            require_gas_token,
+            gas_token_from
+        );
     }
 }
