@@ -1,10 +1,44 @@
 # Argobytes Smart Contracts
 
-Open source contracts for atomic trading. What's an Argobytes? It's a non-sense word that makes searching easy.
+What's an Argobytes? It's a non-sense word that makes searching easy. I'll probably rename it.
 
-My initial goal is for atomic arbitrage, but these contracts can be used for combining all sorts of ethereum smart contract actions.
+The initial use of these contracts is atomic arbitrage, but they can be used for combining all sorts of ethereum smart contract functions.
 
-There are 3 main components: ArgobytesAtomicActions, ArgobytesOwnedVault, and Actions.
+There are many components: ArgobytesProxy, ArgobytesActor, ArgobytesTrader, ArgobytesAuthority, ArgobytesFactory, and a bunch Actions.
+
+## ArgobytesProxy
+
+The proxy is a very lightweight contract that uses "delegatecall" to use another contract's logic but with its own state and balances. Anyone can deploy a contract with new logic and then anyone else can use it through their proxy.
+
+The other contract will have **complete control** of the proxy's state and balances, so the proxy must only ever call trusted contracts!
+
+The proxy has an immutable owner. By default, only the owner can use the proxy.
+
+Owners can opt into more advanced authentication that lets them approve other addresses to call specific functions on specific contracts. Done properly, this allows for some very powerful features.
+
+A common pattern will be sending one setup transaction that calls `approve` on an ERC-20 token for the proxy. Then sending a second transaction that calls the Proxy's `execute` function with another contract's address and calldata. The other contract will then transfer that ERC-20 token to make money somehow, and then return the proceeds to the owner.
+
+## ArgobytesActor
+
+Calling just one function on another contract isn't very exciting; you can already do that with your EOA. The Actor contract's `callActions` function takes a list of multiple contract addresses and functions. If any fail, the whole thing reverts.
+
+This contract is a key part of other contracts. It probably won't be deployed by itself.
+
+## ArgobytesTrader
+
+Most sets of actions will probably involve trading tokens. The Trader's `atomicTrade` function uses ERC-20 approvals and ArgobytesActor to transfer and trade tokens. This can be helpful for aggregating trades across multiple exchanges.
+
+The Trader's `*Arbitrage` functions are designed so that unless the trade completes with a positive arbitrage, the entire transaction reverts. This means that you can approve other people or contracts to trade with your balances. `atomicArbitrage` uses your own funds to do the arbitrage. `dydxFlashArbitrage` uses a (nearly) free flash loan from dYdX to do the arbitrage.
+
+## ArgobytesAuthority
+
+A surprisingly simple, but hopefully powerful way to authorize other contracts to use your proxy. For each authorization, you specify an addresses to call a specific function on a specific contract. Approval can be revoked at any time. Given a properly designed contract this should allow you to safely delegate permissions to others without them having custody of your funds.
+
+## ArgobytesFactory
+
+The Factory contract can be used to deploy any other contract as well as clones of the Proxy contract.
+
+Every user needs their own proxy contract, but deploying it requires 672k gas. So instead, the proxy contract is deployed once. Then, the `cloneProxy` function is called to deploy a modified EIP-1167 proxy for only 69k gas. This proxy is hard coded to use the ArgobytesProxy contract for all its logic. It cannot be upgraded. If a new ArgobytesProxy is released, a new clone will need to be created. This is cheap though and so I think is far preferable to the complexity of upgradable contracts.
 
 ## Actions
 
@@ -20,40 +54,6 @@ The various "Action" contracts are for taking some sort of action on one or more
 - Weth9Action: [Wrap and unwrap ETH](https://weth.io/)
 
 Lots more actions are in development. Anyone can write an action.
-
-## ArgobytesAtomicActions
-
-*OUTDATED*
-
-This smart contract lets you borrow tokens in a [flash loan](https://kollateral.co/) and then chain together multiple actions. If one of them fails, all of them are cancelled.
-
-Anyone can use this contract. This contract cannot be upgraded or turned off.
-
-This contract is designed to be called from other contracts. While it is possible to call this contract directly from an account, ERC20 approvals are unsafe as anyone can call functions on it, so be very careful!
-
-## ArgobytesOwnedVault
-
-*OUTDATED*
-
-This contract holds all the cryptocurrency that I am going to use for decentralized trading. It has two roles that are allowed to interact with it.
-
-1. Admin - This role can add other admins, upgrade the contract, trade tokens, and withdraw tokens. The have full and complete control of the contract!
-2. Trusted Arbitrager - This role is only allowed to call the `atomicArbitrage` function.
-
-Most functions on this contract can optionally save on transaction fees by freeing [Liquid Gas Token](https://lgt.exchange/) (an improvement on [GasToken](https://gastoken.io)).
-
-The `atomicArbitrage` function is the key part of this contract.
-
-1. If the vault has enough tokens to start the arbitrage trade, it transfers them to the ArgobytesAtomicActions contract.
-2. Then it calls `ArgobytesAtomicActions.atomicTrades`
-   1. If the contract has enough tokens to do the actions, it starts doing them. Else, the contract borrows tokens from kollateral and then starts doing them.
-   2. Each action passes tokens (and optionally ETH) to the next action until all actions are completed. If any action fails, the transaction reverts.
-   3. Once all actions succeed, any tokens borrowed from kollateral are returned.
-   4. Then any remaining tokens are returned to the vault
-3. The contract checks to make sure that its balance increased. If it decreased, the transaction reverts.
-4. Finally, gas tokens are freed to reduce our transaction fees
-
-I originally planned to tokenize deposits into this contract. That would allow anyone to deposit funds and share in the arbitrage profits. However, I think it is better for people to instead put their tokens into one of the platforms supported by kollateral. This should be more profitable for everyone.
 
 # Developing
 
