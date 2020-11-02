@@ -5,38 +5,15 @@ import pytest
 import brownie
 
 
-def test_get_amounts(address_zero, dai_erc20, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, weth9_erc20):
-    eth_amount = 1e18
-    dai_amount = 1e20
-
-    # getAmounts(address token_a, uint token_a_amount, address token_b, uint256 parts)
-    # TODO: we could call these, but there is a problem decoding their return_value!
-    amounts = uniswap_v1_action.getAmounts(address_zero, eth_amount, dai_erc20, uniswap_v1_factory)
-
-    print("amounts 1", amounts)
-    # TODO: what should we assert?
-
-    # TODO: use amounts from the previous call
-    amounts = uniswap_v1_action.getAmounts(dai_erc20, dai_amount, address_zero, uniswap_v1_factory)
-
-    print("amounts 2", amounts)
-    # TODO: key access doesn't work yet. hopefully in 1.8.6
-    # assert(amounts[0]["taker_token"] == dai_erc20)
-    # assert(amounts[0]["maker_token"] == address_zero)
-    # assert(amounts[0]["taker_wei"] == dai_amount)
-    # assert(amounts[0]["maker_wei"] > 0)
-    # TODO: what should we assert?
-
-
-def test_get_exchange_weth9(address_zero, uniswap_v1_factory, uniswap_v1_action, weth9_erc20):
-    exchange = uniswap_v1_action.getExchange.call(uniswap_v1_factory, weth9_erc20)
+def test_get_exchange_weth9(address_zero, uniswap_v1_factory, weth9_erc20):
+    exchange = uniswap_v1_factory.getExchange.call(weth9_erc20)
     print("exchange:", exchange)
 
     assert exchange != address_zero
 
 
-def test_get_exchange_failure(address_zero, uniswap_v1_factory, uniswap_v1_action):
-    exchange = uniswap_v1_action.getExchange.call(uniswap_v1_factory, address_zero)
+def test_get_exchange_failure(address_zero, uniswap_v1_factory):
+    exchange = uniswap_v1_factory.getExchange.call(address_zero)
     print("exchange:", exchange)
 
     assert exchange == address_zero
@@ -52,8 +29,8 @@ def test_action(address_zero, uniswap_v1_factory, uniswap_v1_action, dai_erc20, 
     # make sure balances match what we expect
     assert uniswap_v1_action.balance() == value
 
-    usdc_exchange = uniswap_v1_action.getExchange(uniswap_v1_factory, usdc_erc20)
-    dai_exchange = uniswap_v1_action.getExchange(uniswap_v1_factory, dai_erc20)
+    usdc_exchange = uniswap_v1_factory.getExchange(usdc_erc20)
+    dai_exchange = uniswap_v1_factory.getExchange(dai_erc20)
 
     # trade ETH to USDC
     # tradeEtherToToken(address to, address exchange, address dest_token, uint256 dest_min_tokens, uint256 trade_gas)

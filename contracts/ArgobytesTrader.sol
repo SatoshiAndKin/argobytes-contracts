@@ -19,6 +19,7 @@ interface IArgobytesTrader {
         address dest;
     }
 
+    // TODO: instead of 'bool free_gas_token', do 'uint256 something'?
     function atomicArbitrage(
         bool free_gas_token,
         bool require_gas_token,
