@@ -7,8 +7,9 @@ pragma experimental ABIEncoderV2;
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
 
-import {IArgobytesActor} from "./ArgobytesActor.sol";
+import {ArgobytesActor} from "./ArgobytesActor.sol";
 import {LiquidGasTokenUser} from "./abstract/LiquidGasTokenUser.sol";
+import {ICallee} from "./interfaces/dydx/ICallee.sol";
 import {DyDxTypes, ISoloMargin} from "./interfaces/dydx/ISoloMargin.sol";
 
 interface IArgobytesTrader {
@@ -23,8 +24,8 @@ interface IArgobytesTrader {
         bool require_gas_token,
         address borrow_from,
         Borrow[] calldata borrows,
-        IArgobytesActor argobytes_actor,
-        IArgobytesActor.Action[] calldata actions
+        ArgobytesActor argobytes_actor,
+        ArgobytesActor.Action[] calldata actions
     ) external payable returns (uint256 primary_profit);
 
     function atomicTrade(
@@ -32,8 +33,8 @@ interface IArgobytesTrader {
         bool require_gas_token,
         address borrow_from,
         Borrow[] calldata borrows,
-        IArgobytesActor argobytes_actor,
-        IArgobytesActor.Action[] calldata actions
+        ArgobytesActor argobytes_actor,
+        ArgobytesActor.Action[] calldata actions
     ) external payable;
 
     function dydxFlashArbitrage(
@@ -45,25 +46,26 @@ interface IArgobytesTrader {
         IERC20 borrow_token,
         uint256 borrow_amount,
         address argobytes_actor,
-        IArgobytesActor.Action[] calldata actions
+        ArgobytesActor.Action[] calldata actions
     ) external payable returns (uint256 primary_profit);
 }
 
 // TODO: this isn't right. this works for the owner account, but needs more thought for authenticating a bot
 // TODO: maybe have a function approvedAtomicAbitrage that calls transferFrom. and another that that assumes its used from the owner of the funnds with delegatecall
-contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
+contract ArgobytesTrader is
+    ArgobytesActor,
+    IArgobytesTrader,
+    ICallee,
+    LiquidGasTokenUser
+{
     using SafeERC20 for IERC20;
 
     ISoloMargin constant DYDX_SOLO_MARGIN = ISoloMargin(
         0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e
     );
 
-    // TODO: WETH10 is coming
+    // TODO: WETH10 is maybe coming
     address constant WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
-
-    // we want to receive because we might sweep tokens between actions
-    // TODO: be careful not to leave coins here!
-    receive() external payable {}
 
     // TODO: return gas tokens freed?
     function atomicArbitrage(
@@ -71,8 +73,8 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         bool require_gas_token,
         address borrow_from,
         Borrow[] calldata borrows,
-        IArgobytesActor argobytes_actor,
-        IArgobytesActor.Action[] calldata actions
+        ArgobytesActor argobytes_actor,
+        ArgobytesActor.Action[] calldata actions
     ) external override payable returns (uint256 primary_profit) {
         uint256 initial_gas = initialGas(free_gas_token);
 
@@ -100,7 +102,8 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
             }
         }
 
-        // we call a seperate contract because we don't want any sneaky transferFroms
+        // we call this as a seperate contract because we don't want any sneaky transferFroms
+        // TODO: make sure this actually does what we want by doing a "transferFrom" in the actions!
         // this contract (or the actions) MUST return all borrowed tokens to msg.sender
         // TODO: pass ETH along? this might be helpful for exchanges like 0x. maybe better to borrow WETH for the action
         // TODO: msg.value or address(this).balance?!
@@ -150,8 +153,8 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         bool require_gas_token,
         address borrow_from,
         Borrow[] calldata borrows,
-        IArgobytesActor argobytes_actor,
-        IArgobytesActor.Action[] calldata actions
+        ArgobytesActor argobytes_actor,
+        ArgobytesActor.Action[] calldata actions
     ) external override payable {
         uint256 initial_gas = initialGas(free_gas_token);
 
@@ -193,7 +196,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
         IERC20 borrow_token,
         uint256 borrow_amount,
         address argobytes_actor,
-        IArgobytesActor.Action[] calldata actions
+        ArgobytesActor.Action[] calldata actions
     ) external override payable returns (uint256 primary_profit) {
         uint256 initial_gas = initialGas(free_gas_token);
 
@@ -206,7 +209,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
 
         // TODO: what account number should we use?
         accountInfos[0] = DyDxTypes.AccountInfo({
-            owner: address(this),
+            owner: address(this), // with delegatecall, `this` is a proxy
             number: 0
         });
 
@@ -272,7 +275,7 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
             }),
             primaryMarketId: borrow_id,
             secondaryMarketId: 0,
-            otherAddress: address(this), // this contract (not argobytes_actor) is going to pay back the debt
+            otherAddress: address(this), // this contract (not argobytes_actor) is going to pay back the debt. with delegatecall, `this` is a proxy
             otherAccountId: 0,
             data: ""
         });
@@ -282,11 +285,25 @@ contract ArgobytesTrader is IArgobytesTrader, LiquidGasTokenUser {
 
         // we could check for actual profit here, but i don't think its necessary
 
-        // since actions might have highly variable gas costs (especially on revert), we calculate the gas tokens needed
+        // since actions might have highly variable gas costs, we calculate the gas tokens needed
+        // TODO: do this even if soloMargin reverts
         freeOptimalGasTokensFrom(
             initial_gas,
             require_gas_token,
             gas_token_from
         );
+    }
+
+    /*
+    Entrypoint for dYdX operations (from ICallee).
+
+    TODO: do we care about the first two args (sender or accountInfo)?
+    */
+    function callFunction(
+        address,
+        DyDxTypes.AccountInfo calldata,
+        bytes calldata data
+    ) external override {
+        return this.callActions(abi.decode(data, (Action[])));
     }
 }

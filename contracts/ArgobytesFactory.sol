@@ -134,6 +134,8 @@ contract ArgobytesFactory is
     ) external override {
         // TODO: do an ERC165 check on `target`?
 
+        // we used to allow setting authority here, but i can sense some security issues with that so we'll skip for now
+
         // TODO: maybe it would be better to do `salt = keccack256(immutable_owner, salt)`, but that makes using ERADICATE2 harder
         address clone = createClone(target, salt, immutable_owner);
 

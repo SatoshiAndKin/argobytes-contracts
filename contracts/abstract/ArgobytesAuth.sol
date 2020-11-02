@@ -20,6 +20,7 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, CloneOwner {
     modifier auth {
         // do auth first. that is safest
         // theres some cases where it may be possible to do the auth check last, but it is too risky for me
+        // TODO: GSN?
         requireAuth(address(this), msg.sig);
         _;
     }
@@ -39,6 +40,7 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, CloneOwner {
         address target,
         bytes4 sig
     ) internal view returns (bool authorized) {
+        // TODO: this reverts without a reason if authority isn't set and the caller is not the owner. is that okay?
         authorized =
             sender == owner() ||
             authority.canCall(sender, target, sig);

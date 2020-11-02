@@ -8,7 +8,7 @@ from hypothesis import settings
 
 
 # TODO: test access for all the functions!
-def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argobytes_proxy, argobytes_trader, example_action):
+def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argobytes_clone, argobytes_trader, example_action):
     value = 1
 
     borrows = []
@@ -25,32 +25,35 @@ def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argob
     )
 
     # check that accounts[0] is allowed
-    argobytes_proxy.execute(
+    argobytes_clone.execute(
         argobytes_trader.address,
         argobytes_trader_calldata,
         {"from": accounts[0]}
     )
 
     # check that accounts[1] is NOT allowed
-    with brownie.reverts("ArgobytesAuth: 403"):
-        argobytes_proxy.execute(
+    # TODO: this used to revert with "ArgobytesAuth: 403" but we don't bother checking authority before calling anymore to save gas
+    with brownie.reverts(""):
+        argobytes_clone.execute(
             argobytes_trader.address,
             argobytes_trader_calldata,
             {"from": accounts[1]}
         )
 
-    # TODO: approve accounts[1]
-    # assert False
+    # TODO: set authority
+
+    # TODO: check revert message if accounts[1] tries to call something
+
+    # TODO: authorize accounts[1]
 
     # TODO: check that accounts[1] is allowed
-    # assert False
 
 
-def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes_proxy, example_action, kollateral_invoker):
+def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes_clone, example_action):
     value = 1e18
 
     # make sure the arbitrage contract has no funds
-    assert argobytes_proxy.balance() == 0
+    assert argobytes_clone.balance() == 0
     assert example_action.balance() == 0
 
     starting_balance = accounts[0].balance()
@@ -64,7 +67,7 @@ def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes
         )
     ]
 
-    atomic_arbitrage_tx = argobytes_proxy.execute(
+    atomic_arbitrage_tx = argobytes_clone.execute(
         argobytes_trader.address,
         argobytes_trader.atomicArbitrage.encode_input(
             address_zero,
@@ -82,11 +85,6 @@ def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes
 
     profit = decode_single('uint256', atomic_arbitrage_tx.return_value)
 
-    assert argobytes_proxy.balance() == 0
+    assert argobytes_clone.balance() == 0
     assert accounts[0].balance() == starting_balance
     assert profit == 0
-
-
-@pytest.mark.skip(reason="Refactor removed kollateral. need to rethink adding it again")
-def test_simple_kollateral(address_zero, argobytes_trader, argobytes_proxy, example_action, example_action_2, kollateral_invoker):
-    assert False

@@ -40,18 +40,24 @@ def argobytes_proxy_factory(ArgobytesFactory):
 
 
 @pytest.fixture(scope="function")
-def argobytes_proxy(argobytes_authority, ArgobytesProxy, argobytes_proxy_factory):
+def argobytes_clone(argobytes_authority, argobytes_proxy, ArgobytesProxy, argobytes_proxy_factory):
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
     salt = ""
 
-    deploy_tx = argobytes_proxy_factory.deployProxyAndFree(0, False, salt, argobytes_authority.address, accounts[0])
+    deploy_tx = argobytes_proxy_factory.deployClone(argobytes_proxy.address, salt, accounts[0])
 
-    return ArgobytesProxy.at(deploy_tx.return_value, accounts[0])
+    return ArgobytesProxy.at(deploy_tx.events['NewClone']['clone'], accounts[0])
+
+
+@pytest.fixture(scope="function")
+def argobytes_proxy(ArgobytesProxy):
+    # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests=
+    return accounts[0].deploy(ArgobytesProxy)
 
 
 @pytest.fixture(scope="function")
 def argobytes_trader(ArgobytesTrader):
-    return ArgobytesTrader.deploy({"from": accounts[0]})
+    return accounts[0].deploy(ArgobytesTrader)
 
 
 @pytest.fixture(scope="session")
@@ -77,12 +83,7 @@ def curve_fi_compound(CurveFiAction):
 
 @pytest.fixture(scope="function")
 def curve_fi_action(CurveFiAction, curve_fi_compound):
-    curve_fi = accounts[0].deploy(CurveFiAction)
-
-    # TODO: add the other exchanges
-    curve_fi.saveExchange(curve_fi_compound, 2)
-
-    return curve_fi
+    return accounts[0].deploy(CurveFiAction)
 
 
 @pytest.fixture(scope="session")

@@ -5,26 +5,6 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-# TODO: coverage used to work here. why is it failing now? geth upgrade?
-def test_get_amounts(address_zero, dai_erc20, kyber_action, kyber_network_proxy, usdc_erc20, weth9_erc20):
-    eth_amount = 1e18
-    dai_amount = 1e20
-
-    # even though kyber uses it's own 0x0000eeee... address, we use the zero address for ETH
-
-    # getAmounts(address token_a, uint token_a_amount, address token_b, address kyber_network_proxy)
-    amounts = kyber_action.getAmounts(address_zero, eth_amount, dai_erc20, kyber_network_proxy)
-
-    print("amounts 1", amounts)
-
-    # TODO: use amounts from the previous call
-    amounts = kyber_action.getAmounts(dai_erc20, dai_amount, address_zero, kyber_network_proxy)
-
-    print("amounts 2", amounts)
-
-    # TODO: what should we assert?
-
-
 def test_action(address_zero, kyber_action, kyber_network_proxy, dai_erc20, usdc_erc20):
     value = 1e17
 

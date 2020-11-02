@@ -49,9 +49,7 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy {
 
     If you do want to use this contract directly, you need to be sure to append the owner's address to the end of the bytecode!
     */
-    constructor() {
-
-    }
+    constructor() {}
 
     /*
      * we shouldn't store ETH here outside a transaction,
@@ -97,4 +95,7 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy {
             "ArgobytesProxy.deployAndExecute failed"
         );
     }
+
+    // TODO: EIP-165? EIP-721 receiver?
+    // TODO: gasless transactions
 }
