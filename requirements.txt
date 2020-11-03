@@ -58,7 +58,7 @@ py-solc-ast==1.2.5        # via eth-brownie
 py-solc-x==1.0.0          # via eth-brownie
 py==1.9.0                 # via eth-brownie, pytest, pytest-forked
 pycodestyle==2.6.0        # via autopep8
-pycryptodome==3.9.8       # via eth-hash, eth-keyfile, vyper
+pycryptodome==3.9.9       # via eth-hash, eth-keyfile, vyper
 pygments-lexer-solidity==0.5.1  # via eth-brownie
 pygments==2.6.1           # via eth-brownie, pygments-lexer-solidity
 pyjwt==1.7.1              # via pythx

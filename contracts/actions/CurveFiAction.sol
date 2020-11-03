@@ -7,6 +7,7 @@ import {Strings} from "@OpenZeppelin/utils/Strings.sol";
 import {ICurveFi} from "contracts/interfaces/curvefi/ICurveFi.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
+import {ArgobytesERC20} from "contracts/library/ArgobytesERC20.sol";
 import {Strings2} from "contracts/library/Strings2.sol";
 import {
     IERC20,
@@ -15,6 +16,7 @@ import {
 } from "contracts/library/UniversalERC20.sol";
 
 contract CurveFiAction is AbstractERC20Exchange {
+    using ArgobytesERC20 for IERC20;
     using UniversalERC20 for IERC20;
     using SafeERC20 for IERC20;
     using Strings for uint256;
@@ -28,21 +30,22 @@ contract CurveFiAction is AbstractERC20Exchange {
         address to,
         address src_token,
         address dest_token,
-        uint256 dest_min_tokens,
-        bytes calldata extra_data
-    ) external returnLeftoverToken(src_token, ADDRESS_ZERO) {
-        // Use the full balance of tokens transferred from the trade executor
+        uint256 dest_min_tokens
+    ) external returnLeftoverToken(src_token) {
+        // Use the full balance of tokens
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
-        require(src_amount > 0, "CurveFiAction.trade: NO_SOURCE_AMOUNT");
+        require(src_amount > 0, "CurveFiAction.trade !src_amount");
+
+        IERC20(src_token).excessiveApprove(exchange, src_amount);
 
         // do the trade (approve was already called)
         ICurveFi(exchange).exchange(i, j, src_amount, dest_min_tokens);
 
-        // forward the tokens that we bought
+        // check that we received what we expected
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
         require(
             dest_balance >= dest_min_tokens,
-            "CurveFiAction.trade: LOW_DEST_BALANCE"
+            "CurveFiAction.trade !dest_balance"
         );
 
         // forward the tokens that we bought
@@ -50,7 +53,6 @@ contract CurveFiAction is AbstractERC20Exchange {
     }
 
     // trade stablecoins
-    // we use ADDRESS_ZERO for returnLeftoverToken because we do NOT want to clear our infinite approvals
     function tradeUnderlying(
         address exchange,
         int128 i,
@@ -58,17 +60,13 @@ contract CurveFiAction is AbstractERC20Exchange {
         address to,
         address src_token,
         address dest_token,
-        uint256 dest_min_tokens,
-        bytes calldata extra_data
-    ) external returnLeftoverToken(src_token, ADDRESS_ZERO) {
-        // TODO: get src_token and dest_token from storage?
-
-        // Use the full balance of tokens transferred from the trade executor
+        uint256 dest_min_tokens
+    ) external returnLeftoverToken(src_token) {
+        // Use the full balance of tokens
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
-        require(
-            src_amount > 0,
-            "CurveFiAction.tradeUnderlying: NO_SOURCE_AMOUNT"
-        );
+        require(src_amount > 0, "CurveFiAction.tradeUnderlying !src_amount");
+
+        IERC20(src_token).excessiveApprove(exchange, src_amount);
 
         // do the trade (approve was already called)
         ICurveFi(exchange).exchange_underlying(
@@ -82,7 +80,7 @@ contract CurveFiAction is AbstractERC20Exchange {
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
         require(
             dest_balance >= dest_min_tokens,
-            "CurveFiAction.tradeUnderlying: LOW_DEST_BALANCE"
+            "CurveFiAction.tradeUnderlying !dest_balance"
         );
 
         // forward the tokens that we bought

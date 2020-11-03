@@ -3,12 +3,14 @@ pragma solidity 0.7.1;
 pragma experimental ABIEncoderV2;
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
+import {ArgobytesERC20} from "contracts/library/ArgobytesERC20.sol";
 import {
     IKyberNetworkProxy
 } from "contracts/interfaces/kyber/IKyberNetworkProxy.sol";
 import {IERC20, UniversalERC20, SafeERC20} from "contracts/library/UniversalERC20.sol";
 
 contract KyberAction is AbstractERC20Exchange {
+    using ArgobytesERC20 for IERC20;
     using SafeERC20 for IERC20;
     using UniversalERC20 for IERC20;
 
@@ -83,7 +85,7 @@ contract KyberAction is AbstractERC20Exchange {
         address dest_token,
         uint256 dest_min_tokens,
         uint256 dest_max_tokens
-    ) external returnLeftoverToken(src_token, network_proxy) {
+    ) external returnLeftoverToken(src_token) {
         // Use the full balance of tokens transferred from the trade executor
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
         require(
@@ -92,7 +94,7 @@ contract KyberAction is AbstractERC20Exchange {
         );
 
         // Approve the exchange to transfer tokens from this contract to the reserve
-        IERC20(src_token).safeApprove(network_proxy, src_amount);
+        IERC20(src_token).excessiveApprove(network_proxy, src_amount);
 
         if (dest_max_tokens == 0) {
             dest_max_tokens = MAX_QTY;
@@ -120,7 +122,7 @@ contract KyberAction is AbstractERC20Exchange {
         address src_token,
         uint256 dest_min_tokens,
         uint256 dest_max_tokens
-    ) external returnLeftoverToken(src_token, network_proxy) {
+    ) external returnLeftoverToken(src_token) {
         // Use the full balance of tokens transferred from the trade executor
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
         require(
@@ -129,7 +131,7 @@ contract KyberAction is AbstractERC20Exchange {
         );
 
         // Approve the exchange to transfer tokens from this contract to the reserve
-        IERC20(src_token).safeApprove(network_proxy, src_amount);
+        IERC20(src_token).excessiveApprove(network_proxy, src_amount);
 
         if (dest_max_tokens == 0) {
             dest_max_tokens = MAX_QTY;

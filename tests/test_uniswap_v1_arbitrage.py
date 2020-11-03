@@ -6,12 +6,11 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-# @given(
-#     value=strategy('uint256', max_value=1e18, min_value=1e8),
-# )
 # @pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/611")
-def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_trader, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, weth9_erc20):
+def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_clone, argobytes_trader, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, dai_erc20):
+    assert argobytes_clone.balance() == 0
     assert argobytes_trader.balance() == 0
+    assert argobytes_actor.balance() == 0
     assert uniswap_v1_action.balance() == 0
 
     value = 1e18
@@ -23,10 +22,11 @@ def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_trader, unis
     assert accounts[0].balance() > value
     assert uniswap_v1_action.balance() == value
 
-    usdc_exchange = uniswap_v1_action.getExchange(uniswap_v1_factory, usdc_erc20)
-    weth9_exchange = uniswap_v1_action.getExchange(uniswap_v1_factory, weth9_erc20)
+    usdc_exchange = uniswap_v1_factory.getExchange(usdc_erc20)
+    dai_exchange = uniswap_v1_factory.getExchange(dai_erc20)
 
     # doesn't borrow anything because it trades ETH from the caller
+    # TODO: do a test with weth9 and approvals instead
     borrows = []
 
     actions = [
@@ -37,31 +37,40 @@ def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_trader, unis
             uniswap_v1_action.tradeEtherToToken.encode_input(uniswap_v1_action, usdc_exchange, usdc_erc20, 1, 0),
             True,
         ),
-        # trade USDC to WETH9
+        # trade USDC to DAI
         (
             uniswap_v1_action,
             # uniswap_v1_action.tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint dest_min_tokens, uint trade_gas)
             uniswap_v1_action.tradeTokenToToken.encode_input(
-                uniswap_v1_action, usdc_exchange, usdc_erc20, weth9_erc20, 1, 0),
+                uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1, 0),
             False,
         ),
-        # trade WETH9 to ETH
+        # trade DAI to ETH
         (
             uniswap_v1_action,
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens, uint trade_gas)
-            uniswap_v1_action.tradeTokenToEther.encode_input(address_zero, weth9_exchange, weth9_erc20, 1, 0),
+            uniswap_v1_action.tradeTokenToEther.encode_input(address_zero, dai_exchange, dai_erc20, 1, 0),
             False
         ),
     ]
 
-    arbitrage_tx = argobytes_trader.atomicArbitrage(
-        address_zero, False, accounts[0], borrows, argobytes_actor, actions,
+    arbitrage_tx = argobytes_clone.execute(
+        argobytes_trader.address,
+        argobytes_trader.atomicArbitrage.encode_input(
+            address_zero,
+            False,
+            accounts[0],
+            borrows,
+            argobytes_actor,
+            actions,
+        ),
         {
             "value": value,
+            "gasPrice": 0,
         }
     )
 
-    assert argobytes_proxy.balance() > value
+    assert argobytes_clone.balance() > value
 
     # TODO: https://github.com/trufflesuite/ganache-core/issues/611
     # make sure the transaction succeeded

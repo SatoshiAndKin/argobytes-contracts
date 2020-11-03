@@ -117,10 +117,9 @@ def kollateral_invoker():
     return Contract.from_explorer(KollateralInvokerAddress)
 
 
-# TODO: diamond instead of argobytes_owned_vault
 @pytest.fixture(scope="function")
 def kyber_action(KyberAction):
-    return accounts[0].deploy(KyberAction)
+    return accounts[0].deploy(KyberAction, accounts[0])
 
 
 @pytest.fixture(scope="session")
@@ -148,9 +147,11 @@ def onesplit_helper(address_zero, onesplit, interface):
         flags = 0
 
         # not sure why, but uniswap v2 is not working well. i think its a ganache-core bug
-        flags += 0x1E000000  # FLAG_DISABLE_UNISWAP_V2_ALL
+        # flags += 0x1E000000  # FLAG_DISABLE_UNISWAP_V2_ALL
 
         expected_return = onesplit.getExpectedReturn(address_zero, dest_token, eth_amount, parts, flags)
+
+        assert(expected_return > 1)
 
         expected_return_amount = expected_return[0]
         distribution = expected_return[1]
@@ -163,19 +164,23 @@ def onesplit_helper(address_zero, onesplit, interface):
 
         if expected_return_amount != actual_return_amount:
             # TODO: actual warning?
+            # TODO: why is this happening?
             print(
                 f"WARNING! expected_return_amount ({expected_return_amount}) != actual_return_amount ({actual_return_amount})")
+            
+            assert(actual_return_amount > 0)
 
-        # TODO: safeTransfer?
         dest_token.transfer(to, actual_return_amount, {"from": accounts[0]})
 
         actual_transfer_amount = dest_token.balanceOf.call(to)
 
         # some tokens take fees or otherwise have unexpected changes to the amount. this isn't necessarily something to raise over, but we should warn about it
-        if expected_return_amount != actual_transfer_amount:
+        if actual_return_amount != actual_transfer_amount:
             # TODO: actual warning?
             print(
-                f"WARNING! expected_return_amount ({expected_return_amount}) != actual_return_amount ({actual_return_amount})")
+                f"WARNING! actual_return_amount ({actual_return_amount}) != actual_transfer_amount ({actual_transfer_amount})")
+            
+            assert(actual_transfer_amount > 0)
 
         return actual_transfer_amount
 
@@ -188,34 +193,42 @@ def onesplit_offchain_action(OneSplitOffchainAction):
 
 
 @pytest.fixture(scope="session")
-def susd_erc20():
-    # TODO: web3.toPaddedBytes
-    # # proxy_susd_bytes = web3.toBytes(text="ProxyERC20sUSD")
-    # # susd_bytes = web3.toBytes(text="SynthsUSD")
+def susd_erc20(address_zero, synthetix_address_resolver):
+    proxy = synthetix_address_resolver.getAddress(to_bytes32(text="ProxyERC20sUSD"))
+    # proxy = synthetix_address_resolver.getAddress(to_bytes32(text="ProxysUSD")) # deprecated name
 
-    # # susd_address = synthetix_address_resolver.getAddress(susd_bytes)
+    assert(proxy != address_zero)
 
-    # assert susd_address == sUSDAddress
-
-    return Contract.from_explorer(ProxysUSDAddress, as_proxy_for=sUSDAddress)
+    return Contract.from_explorer(proxy, as_proxy_for=proxy.target())
 
 
 @pytest.fixture(scope="session")
 def synthetix_address_resolver(interface):
     # this is actually the ReadProxyAddressResolver
-    return interface.IAddressResolver(SynthetixAddressResolverAddress)
+    proxy = Contract.from_explorer(SynthetixAddressResolverAddress)
+
+    # this is the contract with the actual logic in it
+    return Contract.from_explorer(proxy, as_proxy_for=proxy.target())
+
+    # return interface.IAddressResolver(SynthetixAddressResolverAddress)
 
 
 @pytest.fixture(scope="session")
-def synthetix_exchange_rates(interface):
-    # TODO: use padded bytes
-    # rates_bytes = web3.toBytes(text="ExchangeRates")
+def synthetix_depot(address_zero, synthetix_address_resolver):
+    depot_address = synthetix_address_resolver.getAddress(to_bytes32(text="Depot"))
 
-    # rates = synthetix_address_resolver.getAddress(rates_bytes)
+    assert(depot_address != address_zero)
 
-    rates = SynthetixExchangeRatesAddress
+    return Contract.from_explorer(depot_address)
 
-    return interface.IExchangeRates(rates)
+
+@pytest.fixture(scope="session")
+def synthetix_exchange_rates(address_zero, synthetix_address_resolver):
+    rates = synthetix_address_resolver.getAddress(to_bytes32(text="ExchangeRates"))
+
+    assert(rates != address_zero)
+
+    return Contract.from_explorer(rates)
 
 
 @pytest.fixture(scope="function")

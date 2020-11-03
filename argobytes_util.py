@@ -57,3 +57,7 @@ def reset_block_time(synthetix_depot_action):
     assert latest_block_time != 0
 
     web3.testing.mine(last_update_time)
+
+
+def to_bytes32(primitive=None, hexstr=None, text=None):
+    return to_bytes(primitive, hexstr, text).ljust(32, b'\0')

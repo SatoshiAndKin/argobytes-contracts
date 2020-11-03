@@ -3,6 +3,7 @@ pragma solidity 0.7.1;
 pragma experimental ABIEncoderV2;
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
+import {ArgobytesERC20} from "contracts/library/ArgobytesERC20.sol";
 import {IERC20, SafeERC20} from "contracts/library/UniversalERC20.sol";
 import {
     IUniswapFactory
@@ -12,6 +13,7 @@ import {
 } from "contracts/interfaces/uniswap/IUniswapExchange.sol";
 
 contract UniswapV1Action is AbstractERC20Exchange {
+    using ArgobytesERC20 for IERC20;
     using SafeERC20 for IERC20;
 
     function tradeEtherToToken(
@@ -39,7 +41,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
             // it's fine to trust their returned "received". the msg.sender should check balances at the very end
             require(
                 received >= dest_min_tokens,
-                "UniswapV1Action.tradeEtherToToken: BAD_EXCHANGE"
+                "UniswapV1Action.tradeEtherToToken BAD_EXCHANGE"
             );
         } catch Error(string memory reason) {
             // a revert was called inside ethToTokenTransferInput
@@ -53,7 +55,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
             // or there was a failing assertion, division
             // by zero, etc. inside atomicTrade.
 
-            revert("UniswapV1Action.tradeEtherToToken: reverted");
+            revert("UniswapV1Action.tradeEtherToToken reverted");
         }
     }
 
@@ -65,10 +67,10 @@ contract UniswapV1Action is AbstractERC20Exchange {
         address dest_token,
         uint256 dest_min_tokens,
         uint256 trade_gas
-    ) external returnLeftoverToken(src_token, exchange) {
+    ) external returnLeftoverToken(src_token) {
         uint256 src_balance = IERC20(src_token).balanceOf(address(this));
 
-        IERC20(src_token).safeApprove(exchange, src_balance);
+        IERC20(src_token).excessiveApprove(exchange, src_balance);
 
         // TODO: what gas limits? https://hackmd.io/@Uniswap/HJ9jLsfTz#Gas-Benchmarks
         trade_gas += 140000;
@@ -132,7 +134,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
         address src_token,
         uint256 dest_min_tokens,
         uint256 trade_gas
-    ) external returnLeftoverToken(src_token, exchange) {
+    ) external returnLeftoverToken(src_token) {
         uint256 src_balance = IERC20(src_token).balanceOf(address(this));
 
         IERC20(src_token).safeApprove(exchange, src_balance);

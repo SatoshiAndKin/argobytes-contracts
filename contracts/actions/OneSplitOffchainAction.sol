@@ -4,12 +4,51 @@ pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
+import {ArgobytesERC20} from "contracts/library/ArgobytesERC20.sol";
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {IERC20, SafeERC20} from "contracts/library/UniversalERC20.sol";
 import {IOneSplit} from "contracts/interfaces/onesplit/IOneSplit.sol";
 
 contract OneSplitOffchainAction is AbstractERC20Exchange {
+    using ArgobytesERC20 for IERC20;
     using SafeERC20 for IERC20;
+
+    // call this function offchain. do not include it in your actual transaction or the gas costs are excessive
+    function encodeExtraData(
+        address src_token,
+        address dest_token,
+        uint256 src_amount,
+        uint256 dest_min_tokens,
+        address exchange,
+        uint256 parts,
+        uint256 disable_flags
+    ) external view returns (uint256, bytes memory) {
+        require(
+            dest_min_tokens > 0,
+            "OneSplitOffchainAction.encodeExtraData: dest_min_tokens must be > 0"
+        );
+
+        (uint256 expected_return, uint256[] memory distribution) = IOneSplit(
+            exchange
+        )
+            .getExpectedReturn(
+            src_token,
+            dest_token,
+            src_amount,
+            parts,
+            disable_flags
+        );
+
+        require(
+            expected_return >= dest_min_tokens,
+            "OneSplitOffchainAction.encodeExtraData: LOW_EXPECTED_RETURN"
+        );
+
+        // i'd like to put the exchange here, but we need it seperate so that modifiers can access it
+        bytes memory encoded = abi.encode(distribution, disable_flags);
+
+        return (expected_return, encoded);
+    }
 
     function tradeEtherToToken(
         address exchange,
@@ -58,7 +97,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         address dest_token,
         uint256 dest_min_tokens,
         bytes calldata extra_data
-    ) external returnLeftoverToken(src_token, exchange) {
+    ) external returnLeftoverToken(src_token) {
         (uint256[] memory distribution, uint256 disable_flags) = abi.decode(
             extra_data,
             (uint256[], uint256)
@@ -70,7 +109,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             "OneSplitOffchainAction.tradeTokenToToken: NO_SRC_BALANCE"
         );
 
-        IERC20(src_token).safeApprove(exchange, src_balance);
+        IERC20(src_token).excessiveApprove(exchange, src_balance);
 
         // do the actual swap
         IOneSplit(exchange).swap(
@@ -98,7 +137,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
         address src_token,
         uint256 dest_min_tokens,
         bytes calldata extra_data
-    ) external returnLeftoverToken(src_token, exchange) {
+    ) external returnLeftoverToken(src_token) {
         (uint256[] memory distribution, uint256 disable_flags) = abi.decode(
             extra_data,
             (uint256[], uint256)
@@ -110,7 +149,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             "OneSplitOffchainAction._tradeTokenToEther: NO_SRC_BALANCE"
         );
 
-        IERC20(src_token).safeApprove(exchange, src_balance);
+        IERC20(src_token).excessiveApprove(exchange, src_balance);
 
         // do the actual swap
         IOneSplit(exchange).swap(

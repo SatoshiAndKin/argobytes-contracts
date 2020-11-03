@@ -31,12 +31,6 @@ contract SynthetixDepotAction is AbstractERC20Exchange {
     using Strings for uint256;
     using Strings2 for address;
 
-    bytes32 public constant BYTESTR_DEPOT = "Depot";
-    bytes32 public constant BYTESTR_EXRATES = "ExchangeRates";
-    bytes32 public constant BYTESTR_SUSD = "SynthsUSD";
-    bytes32 public constant BYTESTR_STATUS = "SystemStatus";
-    bytes32 public constant BYTESTR_ETH = "ETH";
-
     // solium-disable-next-line security/no-assign-params
     function tradeEtherToSynthUSD(
         address to,

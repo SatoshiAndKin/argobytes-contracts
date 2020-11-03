@@ -1,6 +1,7 @@
 from hypothesis import settings
 from brownie.test import given, strategy
 from brownie import accounts
+from argobytes_util import *
 import pytest
 import brownie
 
@@ -8,16 +9,12 @@ address_zero = "0x0000000000000000000000000000000000000000"
 
 
 def test_byte_strs(synthetix_depot_action, web3):
-    # This needs to match `npx bytes32 ETH`
-    eth_bytestr = web3.toHex(text="ETH").ljust(2+(32)*2, '0')
+    eth_bytestr = to_bytes32(text="ETH")
 
-    eth_bytestr_hardcoded = "0x4554480000000000000000000000000000000000000000000000000000000000"
+    # From `npx bytes32 ETH`
+    eth_bytestr_hardcoded = to_bytes(hexstr="0x4554480000000000000000000000000000000000000000000000000000000000")
 
     assert eth_bytestr == eth_bytestr_hardcoded
-
-    eth_bytestr_contract = synthetix_depot_action.BYTESTR_ETH()
-
-    assert eth_bytestr == eth_bytestr_contract
 
 
 def reset_block_time(synthetix_exchange_rates, token_bytestr, web3):
@@ -47,11 +44,7 @@ def test_action(no_call_coverage, skip_coverage, synthetix_address_resolver, syn
     reset_block_time(synthetix_exchange_rates, eth_bytestr, web3)
 
     # make the trade for ETH -> sUSD
-    amounts = synthetix_depot_action.getAmounts(address_zero, eth_amount, susd_erc20, synthetix_address_resolver)
-
-    print("amounts:", amounts)
-
-    synthetix_depot_action.tradeEtherToSynthUSD(address_zero, 1, amounts[0][5], {"from": accounts[0]})
+    synthetix_depot_action.tradeEtherToSynthUSD(address_zero, 1, depot, sUSD, {"from": accounts[0]})
 
     # check the balance
     assert(susd_erc20.balanceOf(accounts[0]) > 0)

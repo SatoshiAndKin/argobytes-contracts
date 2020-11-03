@@ -40,34 +40,24 @@ contract AbstractERC20Exchange {
     }
 
     /// @dev after the function, send any remaining tokens to an address
-    modifier returnLeftoverToken(address token, address approved) {
+    modifier returnLeftoverToken(address token) {
         _;
 
         uint256 balance = IERC20(token).balanceOf(address(this));
 
         if (balance > 0) {
             IERC20(token).safeTransfer(msg.sender, balance);
-
-            if (approved != ADDRESS_ZERO) {
-                // clear the approval since we didn't trade everything
-                IERC20(token).safeApprove(approved, 0);
-            }
         }
     }
 
     /// @dev after the function, send any remaining ether or tokens to an address
-    modifier returnLeftoverUniversal(address token, address approved) {
+    modifier returnLeftoverUniversal(address token) {
         _;
 
         uint256 balance = IERC20(token).universalBalanceOf(address(this));
 
         if (balance > 0) {
             IERC20(token).universalTransfer(msg.sender, balance);
-
-            if (approved != ADDRESS_ZERO) {
-                // clear the approval since we didn't trade everything
-                IERC20(token).safeApprove(approved, 0);
-            }
         }
     }
 }

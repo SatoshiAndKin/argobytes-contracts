@@ -365,3 +365,5 @@ def main():
     print("ETH used by accounts[6] to deploy a proxy:", (starting_balance - ending_balance) / 1e18)
 
     reset_block_time(synthetix_depot_action)
+
+    assert False
