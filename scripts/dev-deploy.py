@@ -340,7 +340,7 @@ def main():
     argobytes_proxy_clone_5.execute(
         argobytes_actor,
         argobytes_actor.callActions.encode_input(bulk_actions),
-        {"gasPrice": expected_mainnet_gas_price, "value": "1 ether"}
+        {"gasPrice": expected_mainnet_gas_price}
     )
 
     ending_balance = accounts[5].balance()

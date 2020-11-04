@@ -6,7 +6,6 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-# @pytest.mark.xfail(reason="https://github.com/trufflesuite/ganache-core/issues/611")
 def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_clone, argobytes_trader, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, dai_erc20):
     assert argobytes_clone.balance() == 0
     assert argobytes_trader.balance() == 0
@@ -21,6 +20,7 @@ def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_clone, argob
     # make sure balances match what we expect
     assert accounts[0].balance() > value
     assert uniswap_v1_action.balance() == value
+    assert argobytes_clone.balance() == 0
 
     usdc_exchange = uniswap_v1_factory.getExchange(usdc_erc20)
     dai_exchange = uniswap_v1_factory.getExchange(dai_erc20)
@@ -49,7 +49,7 @@ def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_clone, argob
         (
             uniswap_v1_action,
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens, uint trade_gas)
-            uniswap_v1_action.tradeTokenToEther.encode_input(address_zero, dai_exchange, dai_erc20, 1, 0),
+            uniswap_v1_action.tradeTokenToEther.encode_input(argobytes_clone, dai_exchange, dai_erc20, 1, 0),
             False
         ),
     ]
@@ -70,6 +70,9 @@ def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_clone, argob
         }
     )
 
+    # TODO: should we compare this to running with burning gas token?
+    print("gas used: ", arbitrage_tx.gas_used)
+
     assert argobytes_clone.balance() > value
 
     # TODO: https://github.com/trufflesuite/ganache-core/issues/611
@@ -78,8 +81,4 @@ def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_clone, argob
     assert arbitrage_tx.status == 1
     assert arbitrage_tx.return_value is not None
 
-    # TODO: what actual amounts should we expect? it's going to be variable since we forked mainnet
-    assert arbitrage_tx.return_value > 0
-
-    # TODO: should we compare this to running with burning gas token?
-    print("gas used: ", arbitrage_tx.gas_used)
+    # TODO: check event logs to know profits

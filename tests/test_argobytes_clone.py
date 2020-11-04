@@ -2,7 +2,6 @@ import brownie
 import pytest
 from brownie import accounts
 from brownie.test import given, strategy
-from eth_abi import decode_single
 from eth_utils import to_bytes
 from hypothesis import settings
 
@@ -49,7 +48,7 @@ def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argob
     # TODO: check that accounts[1] is allowed
 
 
-def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes_clone, example_action):
+def test_simple_execute(address_zero, argobytes_actor, argobytes_trader, argobytes_clone, example_action):
     value = 1e18
 
     # make sure the arbitrage contract has no funds
@@ -60,6 +59,7 @@ def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes
 
     borrows = []
     actions = [
+        # call the sweep contract when its empty
         (
             example_action,
             example_action.sweep.encode_input(accounts[0], address_zero, 0),
@@ -83,8 +83,7 @@ def test_simple_sweep(address_zero, argobytes_actor, argobytes_trader, argobytes
         }
     )
 
-    profit = decode_single('uint256', atomic_arbitrage_tx.return_value)
-
     assert argobytes_clone.balance() == 0
     assert accounts[0].balance() == starting_balance
-    assert profit == 0
+
+    # TODO: check event logs to know profits

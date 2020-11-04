@@ -19,7 +19,7 @@ interface IArgobytesTrader {
         address dest;
     }
 
-    // TODO: instead of 'bool free_gas_token', do 'uint256 something'?
+    // TODO: instead of 'bool free_gas_token', do 'uint256 max_eth_spent_on_gastoken'?
     function atomicArbitrage(
         bool free_gas_token,
         bool require_gas_token,
@@ -27,7 +27,7 @@ interface IArgobytesTrader {
         Borrow[] calldata borrows,
         ArgobytesActor argobytes_actor,
         ArgobytesActor.Action[] calldata actions
-    ) external payable returns (uint256 primary_profit);
+    ) external payable;
 
     function atomicTrade(
         bool free_gas_token,
@@ -48,7 +48,7 @@ interface IArgobytesTrader {
         uint256 borrow_amount,
         address argobytes_actor,
         ArgobytesActor.Action[] calldata actions
-    ) external payable returns (uint256 primary_profit);
+    ) external payable;
 }
 
 // TODO: this isn't right. this works for the owner account, but needs more thought for authenticating a bot
@@ -76,7 +76,7 @@ contract ArgobytesTrader is
         Borrow[] calldata borrows,
         ArgobytesActor argobytes_actor,
         ArgobytesActor.Action[] calldata actions
-    ) external override payable returns (uint256 primary_profit) {
+    ) external override payable {
         uint256 initial_gas = initialGas(free_gas_token);
 
         uint256[] memory start_balances = new uint256[](borrows.length);
@@ -128,12 +128,6 @@ contract ArgobytesTrader is
                 end_balance >= start_balances[j],
                 "ArgobytesTrader: BAD_ARBITRAGE"
             );
-
-            if (j == 0) {
-                // TODO? return the profit in all tokens so a caller can decide if the trade is worthwhile
-                // we do not need safemath's `sub` here because we check for `end_balance < start_balance` above
-                primary_profit = end_balance - start_balances[j];
-            }
         }
 
         // TODO: gas golf placement
@@ -198,7 +192,7 @@ contract ArgobytesTrader is
         uint256 borrow_amount,
         address argobytes_actor,
         ArgobytesActor.Action[] calldata actions
-    ) external override payable returns (uint256 primary_profit) {
+    ) external override payable {
         uint256 initial_gas = initialGas(free_gas_token);
 
         // we want to give coins to argobytes actor

@@ -66,6 +66,10 @@ def test_simple_arbitrage(address_zero, argobytes_actor, argobytes_trader, examp
     # assert arbitrage_tx.return_value > 0
 
 
+def test_simple_dydx_flashloan():
+    assert False
+
+
 def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trader, example_action, liquidgastoken):
     value = 1e18
 

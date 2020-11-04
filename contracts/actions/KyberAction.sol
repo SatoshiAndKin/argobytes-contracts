@@ -25,6 +25,7 @@ contract KyberAction is AbstractERC20Exchange {
 
     constructor(address wallet_id) {
         _wallet_id = wallet_id;
+        // TODO: register the wallet id here?
     }
 
     function setWalletId(address wallet_id) public {
@@ -34,6 +35,8 @@ contract KyberAction is AbstractERC20Exchange {
         );
 
         _wallet_id = wallet_id;
+
+        // TODO: register the wallet id here?
     }
 
     function tradeEtherToToken(

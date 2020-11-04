@@ -7,12 +7,13 @@ from hypothesis import settings
 from argobytes_mainnet import CurveFiCompoundAddress
 
 
+# TODO: parametrize this
 @pytest.mark.xfail(reason="bug in ganache-cli? tradeUnderlying works, so this should, too")
 def test_compound_action(curve_fi_action, curve_fi_compound, cdai_erc20, cusdc_erc20, onesplit_helper):
     # buy some cDAI for the curve_fi_action
     cdai_balance = onesplit_helper(1e18, cdai_erc20, curve_fi_action)
 
-    # TODO: check balance
+    # TODO: get i/j from the token addresses
 
     curve_fi_action.trade(CurveFiCompoundAddress, 0, 1, curve_fi_action, cdai_erc20, cusdc_erc20, 1)
 
@@ -24,11 +25,12 @@ def test_compound_action(curve_fi_action, curve_fi_compound, cdai_erc20, cusdc_e
     # TODO: actually assert things
 
 
+# TODO: parametrize this
 def test_compound_underlying_action(curve_fi_action, curve_fi_compound, dai_erc20, onesplit_helper, usdc_erc20):
     # buy some DAI for the curve_fi_action
     dai_balance = onesplit_helper(1e18, dai_erc20, curve_fi_action)
 
-    # TODO: check dai balance
+    # TODO: get i/j from the token addresses
 
     curve_fi_action.tradeUnderlying(CurveFiCompoundAddress, 0, 1, curve_fi_action, dai_erc20, usdc_erc20, 1)
 
