@@ -366,4 +366,5 @@ def main():
 
     reset_block_time(synthetix_depot_action)
 
-    assert False
+    # TODO: can we detect if brownie is running with -I?
+    # assert False

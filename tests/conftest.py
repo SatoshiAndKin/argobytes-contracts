@@ -149,17 +149,16 @@ def onesplit_helper(address_zero, onesplit, interface):
         # not sure why, but uniswap v2 is not working well. i think its a ganache-core bug
         # flags += 0x1E000000  # FLAG_DISABLE_UNISWAP_V2_ALL
 
-        expected_return = onesplit.getExpectedReturn(address_zero, dest_token, eth_amount, parts, flags)
-
-        assert(expected_return > 1)
+        expected_return = onesplit.getExpectedReturn.call(address_zero, dest_token, eth_amount, parts, flags)
 
         expected_return_amount = expected_return[0]
         distribution = expected_return[1]
 
+        assert(expected_return_amount > 1)
+
         onesplit.swap(address_zero, dest_token, eth_amount, 1,
                       distribution, flags, {"from": accounts[0], "value": eth_amount})
 
-        # TODO: this feels too greedy. but it probably works for now. why can't we just use expected_return_amount?
         actual_return_amount = dest_token.balanceOf.call(accounts[0])
 
         if expected_return_amount != actual_return_amount:
@@ -167,7 +166,7 @@ def onesplit_helper(address_zero, onesplit, interface):
             # TODO: why is this happening?
             print(
                 f"WARNING! expected_return_amount ({expected_return_amount}) != actual_return_amount ({actual_return_amount})")
-            
+
             assert(actual_return_amount > 0)
 
         dest_token.transfer(to, actual_return_amount, {"from": accounts[0]})
@@ -179,7 +178,7 @@ def onesplit_helper(address_zero, onesplit, interface):
             # TODO: actual warning?
             print(
                 f"WARNING! actual_return_amount ({actual_return_amount}) != actual_transfer_amount ({actual_transfer_amount})")
-            
+
             assert(actual_transfer_amount > 0)
 
         return actual_transfer_amount
@@ -194,8 +193,9 @@ def onesplit_offchain_action(OneSplitOffchainAction):
 
 @pytest.fixture(scope="session")
 def susd_erc20(address_zero, synthetix_address_resolver):
-    proxy = synthetix_address_resolver.getAddress(to_bytes32(text="ProxyERC20sUSD"))
-    # proxy = synthetix_address_resolver.getAddress(to_bytes32(text="ProxysUSD")) # deprecated name
+    # The AddressResolver is not populated with everything right now, only those internal contract addresses that do not change. ProxyERC20 (SNX) and ProxyERC20sUSD (sUSD) are static addresses you can simply hard code in if you need
+    # proxy = synthetix_address_resolver.requireAndGetAddress(to_hex32(text="ProxyERC20sUSD"), "No Proxy")
+    proxy = Contract.from_explorer(sUSDAddress)
 
     assert(proxy != address_zero)
 
@@ -215,7 +215,7 @@ def synthetix_address_resolver(interface):
 
 @pytest.fixture(scope="session")
 def synthetix_depot(address_zero, synthetix_address_resolver):
-    depot_address = synthetix_address_resolver.getAddress(to_bytes32(text="Depot"))
+    depot_address = synthetix_address_resolver.getAddress(to_hex32(text="Depot"))
 
     assert(depot_address != address_zero)
 
@@ -224,7 +224,7 @@ def synthetix_depot(address_zero, synthetix_address_resolver):
 
 @pytest.fixture(scope="session")
 def synthetix_exchange_rates(address_zero, synthetix_address_resolver):
-    rates = synthetix_address_resolver.getAddress(to_bytes32(text="ExchangeRates"))
+    rates = synthetix_address_resolver.getAddress(to_hex32(text="ExchangeRates"))
 
     assert(rates != address_zero)
 

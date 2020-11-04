@@ -9,10 +9,10 @@ address_zero = "0x0000000000000000000000000000000000000000"
 
 
 def test_byte_strs(synthetix_depot_action, web3):
-    eth_bytestr = to_bytes32(text="ETH")
+    eth_bytestr = to_hex32(text="ETH")
 
     # From `npx bytes32 ETH`
-    eth_bytestr_hardcoded = to_bytes(hexstr="0x4554480000000000000000000000000000000000000000000000000000000000")
+    eth_bytestr_hardcoded = to_hex(hexstr="0x4554480000000000000000000000000000000000000000000000000000000000")
 
     assert eth_bytestr == eth_bytestr_hardcoded
 
@@ -33,18 +33,21 @@ def reset_block_time(synthetix_exchange_rates, token_bytestr, web3):
     web3.testing.mine(last_update_time)
 
 
-def test_action(no_call_coverage, skip_coverage, synthetix_address_resolver, synthetix_depot_action, synthetix_exchange_rates, susd_erc20, web3):
-    eth_amount = 1e18
+def test_action(no_call_coverage, skip_coverage, susd_erc20, synthetix_address_resolver, synthetix_depot, synthetix_depot_action, synthetix_exchange_rates, web3):
+    eth_amount = 1e17
+
+    # TODO: add some sUSD to the depot
 
     # send some ETH into the action
     accounts[0].transfer(synthetix_depot_action, eth_amount)
 
-    eth_bytestr = synthetix_depot_action.BYTESTR_ETH()
+    eth_bytestr = to_hex32(text="ETH")
 
     reset_block_time(synthetix_exchange_rates, eth_bytestr, web3)
 
     # make the trade for ETH -> sUSD
-    synthetix_depot_action.tradeEtherToSynthUSD(address_zero, 1, depot, sUSD, {"from": accounts[0]})
+    tx = synthetix_depot_action.tradeEtherToSynthUSD(
+        address_zero, 1, synthetix_depot, susd_erc20, {"from": accounts[0]})
 
     # check the balance
     assert(susd_erc20.balanceOf(accounts[0]) > 0)

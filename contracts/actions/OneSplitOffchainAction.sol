@@ -109,7 +109,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             "OneSplitOffchainAction.tradeTokenToToken: NO_SRC_BALANCE"
         );
 
-        IERC20(src_token).excessiveApprove(exchange, src_balance);
+        IERC20(src_token).approveUnlimitedIfNeeded(exchange, src_balance);
 
         // do the actual swap
         IOneSplit(exchange).swap(
@@ -149,7 +149,7 @@ contract OneSplitOffchainAction is AbstractERC20Exchange {
             "OneSplitOffchainAction._tradeTokenToEther: NO_SRC_BALANCE"
         );
 
-        IERC20(src_token).excessiveApprove(exchange, src_balance);
+        IERC20(src_token).approveUnlimitedIfNeeded(exchange, src_balance);
 
         // do the actual swap
         IOneSplit(exchange).swap(

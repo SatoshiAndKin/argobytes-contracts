@@ -22,7 +22,7 @@ library ArgobytesERC20 {
     using SafeERC20 for IERC20;
 
     // if the current approval isn't enough, approve maxint
-    function excessiveApprove(
+    function approveUnlimitedIfNeeded(
         IERC20 token,
         address to,
         uint256 amount

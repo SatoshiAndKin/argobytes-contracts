@@ -70,7 +70,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
     ) external returnLeftoverToken(src_token) {
         uint256 src_balance = IERC20(src_token).balanceOf(address(this));
 
-        IERC20(src_token).excessiveApprove(exchange, src_balance);
+        IERC20(src_token).approveUnlimitedIfNeeded(exchange, src_balance);
 
         // TODO: what gas limits? https://hackmd.io/@Uniswap/HJ9jLsfTz#Gas-Benchmarks
         trade_gas += 140000;

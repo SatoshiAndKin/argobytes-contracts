@@ -11,13 +11,11 @@ import {ArgobytesERC20} from "contracts/library/ArgobytesERC20.sol";
 import {Strings2} from "contracts/library/Strings2.sol";
 import {
     IERC20,
-    SafeERC20,
-    UniversalERC20
+    SafeERC20
 } from "contracts/library/UniversalERC20.sol";
 
 contract CurveFiAction is AbstractERC20Exchange {
     using ArgobytesERC20 for IERC20;
-    using UniversalERC20 for IERC20;
     using SafeERC20 for IERC20;
     using Strings for uint256;
     using Strings2 for address;
@@ -36,9 +34,9 @@ contract CurveFiAction is AbstractERC20Exchange {
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
         require(src_amount > 0, "CurveFiAction.trade !src_amount");
 
-        IERC20(src_token).excessiveApprove(exchange, src_amount);
+        IERC20(src_token).approveUnlimitedIfNeeded(exchange, src_amount);
 
-        // do the trade (approve was already called)
+        // do the trade
         ICurveFi(exchange).exchange(i, j, src_amount, dest_min_tokens);
 
         // check that we received what we expected
@@ -66,9 +64,9 @@ contract CurveFiAction is AbstractERC20Exchange {
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
         require(src_amount > 0, "CurveFiAction.tradeUnderlying !src_amount");
 
-        IERC20(src_token).excessiveApprove(exchange, src_amount);
+        IERC20(src_token).approveUnlimitedIfNeeded(exchange, src_amount);
 
-        // do the trade (approve was already called)
+        // do the trade
         ICurveFi(exchange).exchange_underlying(
             i,
             j,

@@ -1,6 +1,6 @@
 from brownie import *
 from eth_abi.packed import encode_abi_packed
-from eth_utils import keccak, to_checksum_address, to_bytes
+from eth_utils import keccak, to_checksum_address, to_bytes, to_hex
 import os
 import rlp
 
@@ -42,7 +42,7 @@ def reset_block_time(synthetix_depot_action):
     # TODO: get this from the address resolver instead
     synthetix_exchange_rates = Contract.from_explorer("0x9D7F70AF5DF5D5CC79780032d47a34615D1F1d77")
 
-    token_bytestr = synthetix_depot_action.BYTESTR_ETH()
+    token_bytestr = to_hex32(text="ETH")
 
     last_update_time = synthetix_exchange_rates.lastRateUpdateTimes(token_bytestr)
 
@@ -59,5 +59,5 @@ def reset_block_time(synthetix_depot_action):
     web3.testing.mine(last_update_time)
 
 
-def to_bytes32(primitive=None, hexstr=None, text=None):
-    return to_bytes(primitive, hexstr, text).ljust(32, b'\0')
+def to_hex32(primitive=None, hexstr=None, text=None):
+    return to_hex(primitive, hexstr, text).ljust(66, '0')
