@@ -20,7 +20,6 @@ def test_compound_action(curve_fi_action, curve_fi_compound, cdai_erc20, cusdc_e
     # TODO: check balance of cusdc and cdai
 
     curve_fi_action.trade(CurveFiCompoundAddress, 1, 0, curve_fi_action, cusdc_erc20, cdai_erc20, 1)
-
     # TODO: check balance of cusdc and cdai
     # TODO: actually assert things
 
