@@ -70,6 +70,10 @@ def test_simple_dydx_flashloan():
     assert False
 
 
+def test_simple_atomic_trade():
+    assert False
+
+
 def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trader, example_action, liquidgastoken):
     value = 1e18
 
@@ -77,7 +81,7 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
     actions = [
         (
             example_action,
-            example_action.sweep.encode_input(accounts[0], address_zero, 1000000),
+            example_action.sweep.encode_input(accounts[0], address_zero, 400000),
             True,
         )
     ]
