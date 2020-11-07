@@ -75,10 +75,8 @@ def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_clone, argob
 
     assert argobytes_clone.balance() > value
 
-    # TODO: https://github.com/trufflesuite/ganache-core/issues/611
     # make sure the transaction succeeded
-    # there should be a revert above if status == 0, but something is wrong
     assert arbitrage_tx.status == 1
     assert arbitrage_tx.return_value is not None
 
-    # TODO: check event logs to know profits
+    # TODO: check event logs for profits

@@ -19,6 +19,7 @@ def session_defaults():
     web3.enable_strict_bytes_type_checking()
 
 
+# TODO: i think brownie provides this now
 @pytest.fixture(scope="session")
 def address_zero():
     return "0x0000000000000000000000000000000000000000"
@@ -72,13 +73,18 @@ def chi():
 
 
 @pytest.fixture(scope="session")
-def cusdc_erc20():
-    return Contract.from_explorer(cUSDCAddress)
+def curve_fi_3pool():
+    return Contract.from_explorer(CurveFi3poolAddress)
 
 
 @pytest.fixture(scope="session")
-def curve_fi_compound(CurveFiAction):
+def curve_fi_compound():
     return Contract.from_explorer(CurveFiCompoundAddress)
+
+
+@pytest.fixture(scope="session")
+def cusdc_erc20():
+    return Contract.from_explorer(cUSDCAddress)
 
 
 @pytest.fixture(scope="function")

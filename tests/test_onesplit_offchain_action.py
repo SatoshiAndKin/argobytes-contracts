@@ -4,8 +4,7 @@ from brownie import accounts
 from brownie.test import given, strategy
 
 
-# we skip coverage because this can end up being a LOT of calls which crashes ganche-cli
-def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action, skip_coverage, weth9_erc20):
+def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action, weth9_erc20):
     value = 1e17
 
     # make sure balances start zeroed

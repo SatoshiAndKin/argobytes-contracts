@@ -5,7 +5,8 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-def test_action(address_zero, kyber_action, kyber_network_proxy, dai_erc20, usdc_erc20):
+# TODO: this test crashes ganache when we try to collect coverage
+def test_action(address_zero, kyber_action, kyber_network_proxy, dai_erc20, skip_coverage, usdc_erc20):
     value = 1e17
 
     # send some ETH into the action
