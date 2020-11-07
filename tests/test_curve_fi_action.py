@@ -5,7 +5,7 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-def test_3pool_trade(curve_fi_action, curve_fi_3pool, dai_erc20, onesplit_helper, usdc_erc20):
+def test_3pool_trade(curve_fi_action, curve_fi_3pool, onesplit_helper):
     a_id = 0
     b_id = 1
 
@@ -36,7 +36,7 @@ def test_3pool_trade(curve_fi_action, curve_fi_3pool, dai_erc20, onesplit_helper
 
 
 # TODO: this is failing but 3pool works. ganache-bug?
-def test_compound_trade(curve_fi_action, curve_fi_compound, dai_erc20, onesplit_helper, usdc_erc20):
+def test_compound_trade(curve_fi_action, curve_fi_compound, onesplit_helper):
     a_id = 0
     b_id = 1
 
@@ -65,7 +65,7 @@ def test_compound_trade(curve_fi_action, curve_fi_compound, dai_erc20, onesplit_
     # TODO: actually assert things
 
 
-def test_compound_trade_underlying(curve_fi_action, curve_fi_compound, dai_erc20, onesplit_helper, usdc_erc20):
+def test_compound_trade_underlying(curve_fi_action, curve_fi_compound, onesplit_helper):
     a_id = 0
     b_id = 1
 
