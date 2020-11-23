@@ -5,6 +5,7 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
+# TODO: parameterize this
 def test_3pool_trade(curve_fi_action, curve_fi_3pool, onesplit_helper):
     a_id = 0
     b_id = 1
