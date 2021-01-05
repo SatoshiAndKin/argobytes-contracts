@@ -54,6 +54,12 @@ interface IArgobytesFactory {
         address immutable_owner
     ) external;
 
+    function deployClones(
+        address target,
+        bytes32[] calldata salts,
+        address immutable_owner
+    ) external;
+
     function existingOrCreate2(bytes32 salt, bytes memory bytecode)
         external
         payable
@@ -131,7 +137,7 @@ contract ArgobytesFactory is
         address target,
         bytes32 salt,
         address immutable_owner
-    ) external override {
+    ) public override {
         // TODO: do an ERC165 check on `target`?
 
         // we used to allow setting authority here, but i can sense some security issues with that so we'll skip for now
@@ -146,6 +152,16 @@ contract ArgobytesFactory is
         // revert(immutable_owner.toString());
         // revert(proxy.owner().toString()); // expects 0x57ba9e012762bd38f3a9a2cd1178b5d79b1e266f
         // require(proxy.owner() == immutable_owner, "deployClone bad owner");
+    }
+
+    function deployClones(
+        address target,
+        bytes32[] calldata salts,
+        address immutable_owner
+    ) external override {
+        for (uint i = 0; i < salts.length; i++) {
+            deployClone(target, salts[i], immutable_owner);
+        }
     }
 
     // deploy a contract if it doesn't already exist

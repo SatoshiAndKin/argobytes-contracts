@@ -69,7 +69,7 @@ def main():
 
     starting_balance = accounts[0].balance()
 
-    def argobytes_proxy_factory_deploy_helper(factory, contract, *deploy_args):
+    def argobytes_factory_deploy_helper(factory, contract, *deploy_args):
         gas_token_amount = 0
         require_gas_token = False
         salt = ""
@@ -157,23 +157,23 @@ def main():
     )
     # TODO: check how much we spent on gas token
 
-    argobytes_proxy_factory = ArgobytesFactory.at(deploy_tx.return_value, accounts[0])
-    quick_save_contract(argobytes_proxy_factory)
+    argobytes_factory = ArgobytesFactory.at(deploy_tx.return_value, accounts[0])
+    quick_save_contract(argobytes_factory)
     # the ArgobytesFactory is deployed and ready for use!
 
     # let the proxy use our gas token
     if FREE_GAS_TOKEN:
-        gas_token.approve(argobytes_proxy_factory, 2**256-1)
+        gas_token.approve(argobytes_factory, 2**256-1)
 
     # build an ArgobytesAuthority
-    argobytes_authority = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ArgobytesAuthority)
+    argobytes_authority = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesAuthority)
 
     # build an ArgobytesProxy to use for cloning
-    argobytes_proxy = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ArgobytesProxy)
+    argobytes_proxy = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesProxy)
     quick_save_contract(argobytes_proxy)
 
     # clone ArgobytesProxy for accounts[0]
-    deploy_tx = argobytes_proxy_factory.deployClone(
+    deploy_tx = argobytes_factory.deployClone(
         argobytes_proxy.address,
         salt,
         accounts[0],
@@ -192,21 +192,21 @@ def main():
     # for now, owner-only access works, but we need to allow a bot in to call atomicArbitrage
 
     # deploy the main contracts
-    argobytes_trader = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ArgobytesTrader)
-    argobytes_actor = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ArgobytesActor)
-    argobytes_liquid_gas_token_user = argobytes_proxy_factory_deploy_helper(
-        argobytes_proxy_factory, ArgobytesLiquidGasTokenUser)
+    argobytes_trader = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesTrader)
+    argobytes_actor = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesActor)
+    argobytes_liquid_gas_token_user = argobytes_factory_deploy_helper(
+        argobytes_factory, ArgobytesLiquidGasTokenUser)
 
     # deploy all the actions
-    example_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ExampleAction)
-    onesplit_offchain_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, OneSplitOffchainAction)
-    kyber_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, KyberAction, accounts[0])
-    uniswap_v1_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, UniswapV1Action)
-    uniswap_v2_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, UniswapV2Action)
-    # zrx_v3_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, ZrxV3Action)
-    weth9_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, Weth9Action)
-    synthetix_depot_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, SynthetixDepotAction)
-    curve_fi_action = argobytes_proxy_factory_deploy_helper(argobytes_proxy_factory, CurveFiAction)
+    example_action = argobytes_factory_deploy_helper(argobytes_factory, ExampleAction)
+    onesplit_offchain_action = argobytes_factory_deploy_helper(argobytes_factory, OneSplitOffchainAction)
+    kyber_action = argobytes_factory_deploy_helper(argobytes_factory, KyberAction, accounts[0])
+    uniswap_v1_action = argobytes_factory_deploy_helper(argobytes_factory, UniswapV1Action)
+    uniswap_v2_action = argobytes_factory_deploy_helper(argobytes_factory, UniswapV2Action)
+    # zrx_v3_action = argobytes_factory_deploy_helper(argobytes_factory, ZrxV3Action)
+    weth9_action = argobytes_factory_deploy_helper(argobytes_factory, Weth9Action)
+    synthetix_depot_action = argobytes_factory_deploy_helper(argobytes_factory, SynthetixDepotAction)
+    curve_fi_action = argobytes_factory_deploy_helper(argobytes_factory, CurveFiAction)
 
     bulk_actions = [
         # allow bots to call argobytes_trader.atomicArbitrage
@@ -310,7 +310,7 @@ def main():
     starting_balance = accounts[5].balance()
 
     # TODO: gas golf deployClone function that uses msg.sender instead of owner in the calldata?
-    deploy_tx = argobytes_proxy_factory.deployClone(
+    deploy_tx = argobytes_factory.deployClone(
         argobytes_proxy.address,
         salt,
         accounts[5],
@@ -350,7 +350,7 @@ def main():
     # make a clone for accounts[6]. then print total gas
     starting_balance = accounts[6].balance()
 
-    deploy_tx = argobytes_proxy_factory.deployClone(
+    deploy_tx = argobytes_factory.deployClone(
         argobytes_proxy.address,
         salt,
         accounts[6],
