@@ -19,7 +19,7 @@
 
 */
 
-pragma solidity 0.7.1;
+pragma solidity 0.7.4;
 
 import {IInvocationHook} from "./IInvocationHook.sol";
 

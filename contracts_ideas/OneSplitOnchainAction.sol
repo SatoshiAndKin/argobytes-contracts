@@ -1,4 +1,4 @@
-pragma solidity 0.7.1;
+pragma solidity 0.7.4;
 pragma experimental ABIEncoderV2;
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";

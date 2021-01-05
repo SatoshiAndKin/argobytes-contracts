@@ -3,7 +3,7 @@
 
 /* https://developer.kyber.network/docs/DappsGuide/ */
 
-pragma solidity 0.7.1;
+pragma solidity 0.7.4;
 
 // TODO: we should be able to include a smaller interface, but we need it to be named "ERC20" so that the function signatures match!
 // TODO: actually, IERC20 turns into "address" in the function signature

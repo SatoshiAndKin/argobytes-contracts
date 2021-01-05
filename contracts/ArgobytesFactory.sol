@@ -9,7 +9,7 @@
 
 */
 
-pragma solidity 0.7.1;
+pragma solidity 0.7.4;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";

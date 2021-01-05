@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.7.1;
+pragma solidity 0.7.4;
 
 interface IUniswapV2Pair {
     event Approval(

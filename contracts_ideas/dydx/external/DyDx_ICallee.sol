@@ -13,7 +13,7 @@
     https://github.com/dydxprotocol/solo/blob/2d8454e02702fe5bc455b848556660629c3cad36/contracts/protocol/interfaces/ICallee.sol
 */
 
-pragma solidity 0.7.1;
+pragma solidity 0.7.4;
 pragma experimental ABIEncoderV2;
 
 import {DyDx_Account} from "./DyDx_Account.sol";

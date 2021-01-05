@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity 0.7.1;
+pragma solidity 0.7.4;
 
 import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";
