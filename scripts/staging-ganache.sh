@@ -20,6 +20,7 @@ exec ganache-cli \
     --gasLimit 12000000 \
     --mnemonic "opinion adapt negative bone suit ill fossil alcohol razor script damp fold" \
     --port 8555 \
+    --unlock "0x5668EAd1eDB8E2a4d724C8fb9cB5fFEabEB422dc" \
     --verbose \
     --networkId 1 \
     "$@" \

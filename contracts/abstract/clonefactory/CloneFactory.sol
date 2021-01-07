@@ -67,6 +67,9 @@ contract CloneFactory {
             result := create2(0, code, 75, salt)
         }
 
+        // revert if the contract was already deployed
+        require(result != address(0), "create2 failed");
+
         // // quick and dirty debugging of isClone
         // (bool result2, address owner) = isClone(target, result);
         // revert(staticOwner.toString());
