@@ -12,7 +12,8 @@ abstract contract CloneOwner {
     TODO: i'm sure this could be **much** better
     */
     function owner() public view returns (address ownerAddress) {
-        // i think we need to use "this" to properly handle delegatecalls. codesize and codecopy weren't working right
+        // we need to use "this" to properly handle delegatecalls
+        // otherwise, codesize and codecopy point to the wrong contract
         address thisAddress = address(this);
 
         assembly {

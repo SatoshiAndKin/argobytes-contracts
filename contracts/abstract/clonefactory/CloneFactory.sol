@@ -26,19 +26,17 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // TODO: CloneFactory16
 
-// import {Strings2} from "contracts/library/Strings2.sol";
+import {Address} from "@OpenZeppelin/utils/Address.sol";
+import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
 contract CloneFactory {
-    // using Strings2 for address;
+    using Address for address;
 
     function createClone(
         address target,
         bytes32 salt,
-        address staticOwner
+        address immutableOwner
     ) internal returns (address result) {
-        // TODO: is this cast necessary? does it pad without it?
-        bytes20 targetBytes = bytes20(target);
-        bytes20 staticOwnerBytes = bytes20(staticOwner);
         assembly {
             // Solidity manages memory in a very simple way: There is a “free memory pointer” at position 0x40 in memory.
             // If you want to allocate memory, just use the memory from that point on and update the pointer accordingly.
@@ -52,7 +50,7 @@ contract CloneFactory {
                 0x3d604180600a3d3981f3363d3d373d3d3d363d73000000000000000000000000
             )
             // target contract that the clone delegates all calls to (+20 bytes = 40)
-            mstore(add(code, 0x14), targetBytes)
+            mstore(add(code, 0x14), target)
             // end of the contract (+15 bytes = 55)
             mstore(
                 add(code, 0x28),
@@ -61,7 +59,7 @@ contract CloneFactory {
             // add the owner to the end (+20 bytes = 75)
             // 1. so we get a unique address from CREATE2
             // 2. so it can be used as an immutable owner
-            mstore(add(code, 0x37), staticOwnerBytes)
+            mstore(add(code, 0x37), immutableOwner)
 
             // deploy it
             result := create2(0, code, 75, salt)
@@ -69,23 +67,53 @@ contract CloneFactory {
 
         // revert if the contract was already deployed
         require(result != address(0), "create2 failed");
+    }
 
-        // // quick and dirty debugging of isClone
-        // (bool result2, address owner) = isClone(target, result);
-        // revert(staticOwner.toString());
-        // revert(owner.toString()); // should be 0x57ba9e012762bd38f3a9a2cd1178b5d79b1e266f
-        // require(result2, "bad clone");
-        // require(owner == staticOwner, "bad owner");
+    function hasClone(
+        address target,
+        bytes32 salt,
+        address immutableOwner
+    ) internal returns (bool cloneExists, address cloneAddr) {
+        bytes32 bytecodeHash;
+        assembly {
+            // Solidity manages memory in a very simple way: There is a “free memory pointer” at position 0x40 in memory.
+            // If you want to allocate memory, just use the memory from that point on and update the pointer accordingly.
+            let code := mload(0x40)
+
+            // start of the contract (+20 bytes)
+            // 10 of these bytes are for setup. the contract bytecode is 10 bytes shorter
+            // the "0x41" below is the actual contract length
+            mstore(
+                code,
+                0x3d604180600a3d3981f3363d3d373d3d3d363d73000000000000000000000000
+            )
+            // target contract that the clone delegates all calls to (+20 bytes = 40)
+            mstore(add(code, 0x14), target)
+            // end of the contract (+15 bytes = 55)
+            mstore(
+                add(code, 0x28),
+                0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000
+            )
+            // add the owner to the end (+20 bytes = 75)
+            // 1. so we get a unique address from CREATE2
+            // 2. so it can be used as an immutable owner
+            mstore(add(code, 0x37), immutableOwner)
+
+            bytecodeHash := keccak256(code, 75)
+        }
+
+        cloneAddr = Create2.computeAddress(salt, bytecodeHash);
+
+        cloneExists = cloneAddr.isContract();
     }
 
     // TODO: how much cheaper is this than storing all the clone addresses in a mapping of bools?
+    // TODO: if target is address(0), skip the target check?
     function isClone(address target, address query)
         public
         view
         returns (bool result, address owner)
     {
-        bytes20 targetBytes = bytes20(target);
-
         assembly {
             let other := mload(0x40)
 
@@ -101,7 +129,7 @@ contract CloneFactory {
                 clone,
                 0x363d3d373d3d3d363d7300000000000000000000000000000000000000000000
             )
-            mstore(add(clone, 0xa), targetBytes)
+            mstore(add(clone, 0xa), target)
             mstore(
                 add(clone, 0x1e),
                 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000
