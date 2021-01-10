@@ -15,12 +15,15 @@ contract ArgobytesAuthEvents {
 }
 
 abstract contract ArgobytesAuth is ArgobytesAuthEvents, CloneOwner {
+    // note that this is state!
+    // TODO: how can we be careful that a sneaky delegatecall doesn't change this
     IArgobytesAuthority public authority = IArgobytesAuthority(0);
 
     modifier auth {
         // do auth first. that is safest
         // theres some cases where it may be possible to do the auth check last, but it is too risky for me
         // TODO: GSN?
+        // TODO: i can see cases where msg.data could be used, but i think thats more complex than we need
         requireAuth(address(this), msg.sig);
         _;
     }

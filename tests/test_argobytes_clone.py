@@ -23,6 +23,8 @@ def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argob
         address_zero, False, accounts[0], borrows, argobytes_actor, actions,
     )
 
+    assert(argobytes_clone.owner() == accounts[0])
+
     # check that accounts[0] is allowed
     argobytes_clone.execute(
         argobytes_trader.address,
