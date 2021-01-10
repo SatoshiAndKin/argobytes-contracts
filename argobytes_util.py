@@ -56,6 +56,7 @@ def reset_block_time(synthetix_depot_action):
 
     assert latest_block_time != 0
 
+    # TODO: unstead of last update time we just went back 10 years
     web3.testing.mine(last_update_time)
 
 
