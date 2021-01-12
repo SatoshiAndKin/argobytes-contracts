@@ -45,7 +45,7 @@ def argobytes_clone(argobytes_authority, argobytes_proxy, ArgobytesProxy, argoby
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
     salt = ""
 
-    deploy_tx = argobytes_factory.deployClone(argobytes_proxy.address, salt, accounts[0])
+    deploy_tx = argobytes_factory.createClone(argobytes_proxy.address, salt, accounts[0])
 
     return ArgobytesProxy.at(deploy_tx.events['NewClone']['clone'], accounts[0])
 

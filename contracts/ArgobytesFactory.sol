@@ -1,13 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-// deploy delegatecall proxies and free liquid gas tokens.
-
-/*
-
-"create" means using CREATE or CREATE2
-
-"deploy" means using "create" and then calling some more functions
-
-*/
+// Deploy contracts using CREATE2.
 
 pragma solidity 0.7.4;
 
@@ -22,25 +14,18 @@ import {CloneFactory} from "./abstract/clonefactory/CloneFactory.sol";
 
 // TODO: what order should the events be in?
 contract ArgobytesFactoryEvents {
-    event NewClone(
-        address indexed target,
-        bytes32 salt,
-        address indexed immutable_owner,
-        address clone
-    );
-
     event NewDeploy(address indexed deployer, bytes32 salt, address deployed);
 }
 
 // TODO: do we actually want `bytes memory extradata`? it could be useful, but i don't use it yet
 interface IArgobytesFactory {
-    function deploy(
+    function createContract(
         bytes32 salt,
         bytes memory bytecode,
         bytes memory extradata
     ) external payable returns (address deployed);
 
-    function deployAndFree(
+    function createContractAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
@@ -48,19 +33,25 @@ interface IArgobytesFactory {
         bytes memory extradata
     ) external payable returns (address deployed);
 
-    function deployClone(
+    // createClone and createClones are inherited from CloneFactory
+
+    function createCloneAndFree(
+        uint256 gas_token_amount,
+        bool require_gas_token,
         address target,
         bytes32 salt,
         address immutable_owner
-    ) external;
+    ) external payable returns (address clone);
 
-    function deployClones(
+    function createClonesAndFree(
+        uint256 gas_token_amount,
+        bool require_gas_token,
         address target,
         bytes32[] calldata salts,
         address immutable_owner
-    ) external;
+    ) external payable;
 
-    function existingOrCreate2(bytes32 salt, bytes memory bytecode)
+    function checkedCreateContract(bytes32 salt, bytes memory bytecode)
         external
         payable
         returns (address deployed);
@@ -76,10 +67,38 @@ contract ArgobytesFactory is
     IArgobytesFactory,
     LiquidGasTokenUser
 {
-    using Strings2 for address;
+    // createClone and createClones are inherited from CloneFactory
+
+    function createCloneAndFree(
+        uint256 gas_token_amount,
+        bool require_gas_token,
+        address target,
+        bytes32 salt,
+        address immutable_owner
+    ) external override payable returns (address deployed) {
+        // since this deployment cost can be known, we free a specific amount tokens
+        // we could calculate gas costs for the deploy based on bytecode size, but that might change in the future
+        freeGasTokensFrom(gas_token_amount, require_gas_token, msg.sender);
+
+        return createClone(target, salt, immutable_owner);
+    }
+
+    function createClonesAndFree(
+        uint256 gas_token_amount,
+        bool require_gas_token,
+        address target,
+        bytes32[] calldata salts,
+        address immutable_owner
+    ) external override payable {
+        // since this deployment cost can be known, we free a specific amount tokens
+        // we could calculate gas costs for the deploy based on bytecode size, but that might change in the future
+        freeGasTokensFrom(gas_token_amount, require_gas_token, msg.sender);
+
+        createClones(target, salts, immutable_owner);
+    }
 
     // deploy a contract with CREATE2 and then call a function on it
-    function deploy(
+    function createContract(
         bytes32 salt,
         bytes memory bytecode,
         bytes memory extradata
@@ -96,7 +115,7 @@ contract ArgobytesFactory is
     }
 
     // free gas tokens, deploy a contract with CREATE2, and then call a function on it
-    function deployAndFree(
+    function createContractAndFree(
         uint256 gas_token_amount,
         bool require_gas_token,
         bytes32 salt,
@@ -104,9 +123,10 @@ contract ArgobytesFactory is
         bytes memory extradata
     ) public override payable returns (address deployed) {
         // since this deployment cost can be known, we free a specific amount tokens
+        // we could calculate gas costs for the deploy based on bytecode size, but that might change in the future
         freeGasTokensFrom(gas_token_amount, require_gas_token, msg.sender);
 
-        deployed = deploy(salt, bytecode, extradata);
+        deployed = createContract(salt, bytecode, extradata);
 
         emit NewDeploy(msg.sender, salt, deployed);
 
@@ -117,55 +137,8 @@ contract ArgobytesFactory is
         }
     }
 
-    /*
-    Deploy a very lightweight "clone" contract that delegates all calls to the `target` contract.
-
-    We take target as a parameter to allow for easy upgrades or forks in the future.
-
-    Some contracts (such as curve's vote locking contract) only allow access from EOAs and from DAO-approved smart wallets.
-    Transfers would bypass Curve's time-locked votes since you could just sell your smart wallet.
-    People could still sell their keys, but that is dangerous behavior that also applies to EOAs.
-    We would like our ArgobytesProxy clones to qualify for these contracts and so the smart wallet CANNOT be transfered.
-
-    To accomplish this, the clone has the `immutable_owner` address appended to the end of its code. This data cannot be changed.
-    If the target contract uses ArgobytesAuth (or compatible) for authentication, then ownership of this clone *cannot* be transferred.
-
-    We originally allowed setting an authority here, but that allowed for some shenanigans.
-    It may cost slightly more, but a user will have to send a second transaction if they want to set an authority.
-    */
-    function deployClone(
-        address target,
-        bytes32 salt,
-        address immutable_owner
-    ) public override {
-        // TODO: do an ERC165 check on `target`?
-
-        // we used to allow setting authority here, but i can sense some security issues with that so we'll skip for now
-
-        // TODO: maybe it would be better to do `salt = keccack256(immutable_owner, salt)`, but that makes using ERADICATE2 harder
-        address clone = createClone(target, salt, immutable_owner);
-
-        emit NewClone(target, salt, immutable_owner, clone);
-
-        // TODO: remove this when done debugging
-        // ArgobytesProxy proxy = ArgobytesProxy(payable(clone));
-        // revert(immutable_owner.toString());
-        // revert(proxy.owner().toString()); // expects 0x57ba9e012762bd38f3a9a2cd1178b5d79b1e266f
-        // require(proxy.owner() == immutable_owner, "deployClone bad owner");
-    }
-
-    function deployClones(
-        address target,
-        bytes32[] calldata salts,
-        address immutable_owner
-    ) external override {
-        for (uint i = 0; i < salts.length; i++) {
-            deployClone(target, salts[i], immutable_owner);
-        }
-    }
-
     // deploy a contract if it doesn't already exist
-    function existingOrCreate2(bytes32 salt, bytes memory bytecode)
+    function checkedCreateContract(bytes32 salt, bytes memory bytecode)
         external
         override
         payable

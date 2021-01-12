@@ -43,7 +43,8 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, CloneOwner {
         address target,
         bytes4 sig
     ) internal view returns (bool authorized) {
-        // TODO: this reverts without a reason if authority isn't set and the caller is not the owner. is that okay?
+        // this reverts without a reason if authority isn't set and the caller is not the owner. is that okay?
+        // we could check != address(0) and do authority.canCall in a try/catch, but that costs more gas
         authorized =
             sender == owner() ||
             authority.canCall(sender, target, sig);

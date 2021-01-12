@@ -29,14 +29,37 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
-contract CloneFactory {
+contract CloneFactoryEvents {
+    event NewClone(
+        address indexed target,
+        bytes32 salt,
+        address indexed immutable_owner,
+        address clone
+    );
+}
+
+contract CloneFactory is CloneFactoryEvents {
     using Address for address;
 
+    /*
+    Create a very lightweight "clone" contract that delegates all calls to the `target` contract.
+
+    Some contracts (such as curve's vote locking contract) only allow access from EOAs and from DAO-approved smart wallets.
+    Transfers would bypass Curve's time-locked votes since you could just sell your smart wallet.
+    People could still sell their keys, but that is dangerous behavior that also applies to EOAs.
+    We would like our ArgobytesProxy clones to qualify for these contracts and so the smart wallet CANNOT be transfered.
+
+    To accomplish this, the clone has the `immutable_owner` address appended to the end of its code. This data cannot be changed.
+    If the target contract uses ArgobytesAuth (or compatible) for authentication, then ownership of this clone *cannot* be transferred.
+
+    We originally allowed setting an authority here, but that allowed for some shenanigans.
+    It may cost slightly more, but a user will have to send a second transaction if they want to set an authority.
+    */
     function createClone(
         address target,
         bytes32 salt,
         address immutableOwner
-    ) internal returns (address result) {
+    ) public returns (address clone) {
         bytes20 targetBytes = bytes20(target);
         bytes20 immutableOwnerBytes = bytes20(immutableOwner);
 
@@ -65,18 +88,31 @@ contract CloneFactory {
             mstore(add(code, 0x37), immutableOwnerBytes)
 
             // deploy it
-            result := create2(0, code, 75, salt)
+            clone := create2(0, code, 75, salt)
         }
 
         // revert if the contract was already deployed
-        require(result != address(0), "create2 failed");
+        require(clone != address(0), "create2 failed");
+
+        emit NewClone(target, salt, immutableOwner, clone);
     }
 
+    function createClones(
+        address target,
+        bytes32[] calldata salts,
+        address immutable_owner
+    ) public {
+        for (uint i = 0; i < salts.length; i++) {
+            createClone(target, salts[i], immutable_owner);
+        }
+    }
+
+    /* Check if a clone has already been created for the given arguments.*/
     function hasClone(
         address target,
         bytes32 salt,
         address immutableOwner
-    ) internal returns (bool cloneExists, address cloneAddr) {
+    ) public view returns (bool cloneExists, address cloneAddr) {
         bytes20 targetBytes = bytes20(target);
         bytes20 immutableOwnerBytes = bytes20(immutableOwner);
 

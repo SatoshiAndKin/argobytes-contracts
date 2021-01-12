@@ -74,7 +74,9 @@ def main():
         require_gas_token = False
         salt = ""
 
-        deploy_tx = factory.deployAndFree(
+        # TODO: calculate the gas_token_amount needed (maybe by deploying inside a fork)
+
+        deploy_tx = factory.createContractAndFree(
             gas_token_amount,
             require_gas_token,
             salt,
@@ -173,7 +175,8 @@ def main():
     quick_save_contract(argobytes_proxy)
 
     # clone ArgobytesProxy for accounts[0]
-    deploy_tx = argobytes_factory.deployClone(
+    # TODO: optionally free gas token
+    deploy_tx = argobytes_factory.createClone(
         argobytes_proxy.address,
         salt,
         accounts[0],
@@ -186,7 +189,7 @@ def main():
     argobytes_proxy_clone = ArgobytesProxy.at(deploy_tx.events['NewClone']['clone'], accounts[0])
 
     if FREE_GAS_TOKEN:
-        gas_token.approve(argobytes_proxy_clone, -1)
+        gas_token.approve(argobytes_proxy_clone, 2 ** 256 - 1)
 
     # TODO: setup auth for the proxy
     # for now, owner-only access works, but we need to allow a bot in to call atomicArbitrage
@@ -309,8 +312,9 @@ def main():
     # make a clone vault w/ auth for accounts[5] and approve a bot to call atomicArbitrage. then print total gas
     starting_balance = accounts[5].balance()
 
-    # TODO: gas golf deployClone function that uses msg.sender instead of owner in the calldata?
-    deploy_tx = argobytes_factory.deployClone(
+    # TODO: gas golf createClone function that uses msg.sender instead of owner in the calldata?
+    # TODO: free gas token
+    deploy_tx = argobytes_factory.createClone(
         argobytes_proxy.address,
         salt,
         accounts[5],
@@ -350,7 +354,8 @@ def main():
     # make a clone for accounts[6]. then print total gas
     starting_balance = accounts[6].balance()
 
-    deploy_tx = argobytes_factory.deployClone(
+    # TODO: optionally free gas token
+    deploy_tx = argobytes_factory.createClone(
         argobytes_proxy.address,
         salt,
         accounts[6],
@@ -365,6 +370,3 @@ def main():
     print("ETH used by accounts[6] to deploy a proxy:", (starting_balance - ending_balance) / 1e18)
 
     reset_block_time(synthetix_depot_action)
-
-    # TODO: can we detect if brownie is running with -I?
-    # assert False

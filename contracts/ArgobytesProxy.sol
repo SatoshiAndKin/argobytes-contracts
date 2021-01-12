@@ -31,7 +31,7 @@ interface IArgobytesProxy {
         returns (bytes memory response);
 
     // deploy a contract (if not already deployed), delegatecall a function on that contract
-    function deployAndExecute(
+    function createContractAndExecute(
         IArgobytesFactory factory,
         bytes32 target_salt,
         bytes memory target_code,
@@ -70,32 +70,32 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy {
             "ArgobytesProxy.execute BAD_TARGET"
         );
 
-        // we just checked that `target` is a contract
+        // uncheckedDelegateCall is safe because we just checked that `target` is a contract
         response = target.uncheckedDelegateCall(
             target_calldata,
             "ArgobytesProxy.execute failed"
         );
     }
 
-    function deployAndExecute(
+    function createContractAndExecute(
         IArgobytesFactory factory,
         bytes32 target_salt,
         bytes memory target_code,
         bytes memory target_calldata
     ) public override payable returns (address target, bytes memory response) {
-        // TODO: i think we want an empty salt. maybe take it as an argument though
-        // adding a salt adds to the calldata would negate some of savings from 0 bytes in target
-        target = factory.existingOrCreate2(target_salt, target_code);
+        // most cases will probably want an empty salt and a self-destructing target_code
+        // adding a salt adds to the calldata. that negates some of the savings from 0 bytes in target
+        target = factory.checkedCreateContract(target_salt, target_code);
 
         requireAuth(target, target_calldata.toBytes4());
 
-        // thanks to `existingOrCreate2`, we know `target` is a contract
+        // uncheckedDelegateCall is safe because we just used `existingOrCreate2`
         response = target.uncheckedDelegateCall(
             target_calldata,
-            "ArgobytesProxy.deployAndExecute failed"
+            "ArgobytesProxy.createContractAndExecute failed"
         );
     }
 
     // TODO: EIP-165? EIP-721 receiver?
-    // TODO: gasless transactions
+    // TODO: gasless transactions?
 }
