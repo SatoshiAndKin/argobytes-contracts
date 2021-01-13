@@ -23,11 +23,21 @@ contract AbstractERC20Exchange {
     using SafeERC20 for IERC20;
     using UniversalERC20 for IERC20;
 
-    address constant ADDRESS_ZERO = address(0);
-
     // this contract must be able to receive ether if it is expected to return it
     receive() external payable {}
 
+    /* just in case some token approve gets stuck non-zero and needs to be reset.
+    
+    I'll write a blog post about this one day, but all the tokens doing fancy things for front-running prevention have made this annoying.
+    */
+    function clearApproval(
+        address token,
+        address who
+    ) external {
+        IERC20(token).approve(who, 0);
+    }
+
+    // TODO: i dont think we actually need these modifiers. i think we always trade all the source token
     /// @dev after the function, send any remaining ether back to msg.sender
     modifier returnLeftoverEther() {
         _;

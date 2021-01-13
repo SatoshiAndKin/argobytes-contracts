@@ -4,7 +4,6 @@ pragma experimental ABIEncoderV2;
 
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
-import {ArgobytesERC20} from "contracts/library/ArgobytesERC20.sol";
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {
     IUniswapV2Router01

@@ -2,27 +2,15 @@
 pragma solidity 0.7.4;
 pragma experimental ABIEncoderV2;
 
-import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
-import {ArgobytesERC20} from "contracts/library/ArgobytesERC20.sol";
-import {IERC20, SafeERC20} from "contracts/library/UniversalERC20.sol";
-import {
-    IUniswapFactory
-} from "contracts/interfaces/uniswap/IUniswapFactory.sol";
+import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
+
 import {
     IUniswapExchange
 } from "contracts/interfaces/uniswap/IUniswapExchange.sol";
 
-contract UniswapV1Action is AbstractERC20Exchange {
-    using ArgobytesERC20 for IERC20;
-    using SafeERC20 for IERC20;
+import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
-    /* just in case some token approve gets stuck */
-    function clearApproval(
-        address token,
-        address who
-    ) external {
-        IERC20(token).approve(who, 0);
-    }
+contract UniswapV1Action is AbstractERC20Exchange {
 
     function tradeEtherToToken(
         address to,
