@@ -33,8 +33,8 @@ def test_action(address_zero, uniswap_v1_factory, uniswap_v1_action, dai_erc20, 
     dai_exchange = uniswap_v1_factory.getExchange(dai_erc20)
 
     # trade ETH to USDC
-    # tradeEtherToToken(address to, address exchange, address dest_token, uint256 dest_min_tokens, uint256 trade_gas)
-    uniswap_v1_action.tradeEtherToToken(uniswap_v1_action, usdc_exchange, usdc_erc20, 1, 0)
+    # tradeEtherToToken(address to, address exchange, address dest_token, uint256 dest_min_tokens)
+    uniswap_v1_action.tradeEtherToToken(uniswap_v1_action, usdc_exchange, usdc_erc20, 1)
 
     # make sure ETH balance on the action is zero (it will be swept back to accounts[0])
     assert uniswap_v1_action.balance() == 0
@@ -43,8 +43,8 @@ def test_action(address_zero, uniswap_v1_factory, uniswap_v1_action, dai_erc20, 
     assert usdc_erc20.balanceOf(uniswap_v1_action) > 0
 
     # trade USDC to DAI
-    # tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint256 dest_min_tokens, uint256 trade_gas)
-    uniswap_v1_action.tradeTokenToToken(uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1, 0)
+    # tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint256 dest_min_tokens)
+    uniswap_v1_action.tradeTokenToToken(uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1)
 
     # make sure USDC balance on the action is zero
     assert usdc_erc20.balanceOf(uniswap_v1_action) == 0
@@ -58,8 +58,8 @@ def test_action(address_zero, uniswap_v1_factory, uniswap_v1_action, dai_erc20, 
     # TODO: we really should test that setting "to" to address_zero sends to msg.sender on all of them
 
     # trade DAI to ETH
-    # tradeTokenToEther(address payable to, address exchange, address src_token, uint256 dest_min_tokens, uint256 trade_gas)
-    uniswap_v1_action.tradeTokenToEther(accounts[0], dai_exchange, dai_erc20, 1, 0)
+    # tradeTokenToEther(address payable to, address exchange, address src_token, uint256 dest_min_tokens)
+    uniswap_v1_action.tradeTokenToEther(accounts[0], dai_exchange, dai_erc20, 1)
 
     # make sure DAI balance on the action is zero (i think it will be swept back to accounts[0])
     assert dai_erc20.balanceOf(uniswap_v1_action) == 0
