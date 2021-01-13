@@ -180,6 +180,18 @@ contract ArgobytesTrader is
         // TODO: refund excess ETH?
     }
 
+    /* optional safety check for the end of your `atomicTrade` actions
+    */
+    function checkERC20Balance(IERC20 token, address who, uint256 min_balance) public {
+        require(token.balanceOf(who) >= min_balance, "low balance");
+    }
+
+    /* optional safety check for the end of your `atomicTrade` actions
+    */
+    function checkBalance(address who, uint256 min_balance) public {
+        require(who.balance >= min_balance, "low balance");
+    }
+
     // flash loan from dydx
     // TODO: return gas tokens freed?
     function dydxFlashArbitrage(

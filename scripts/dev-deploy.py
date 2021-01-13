@@ -69,7 +69,7 @@ def main():
 
     starting_balance = accounts[0].balance()
 
-    def argobytes_factory_deploy_helper(factory, contract, *deploy_args):
+    def argobytes_factory_deploy_helper(factory, contract, gas_price=expected_mainnet_gas_price, constructor_args=[]):
         gas_token_amount = 0
         require_gas_token = False
         salt = ""
@@ -80,7 +80,7 @@ def main():
             gas_token_amount,
             require_gas_token,
             salt,
-            contract.deploy.encode_input(*deploy_args),
+            contract.deploy.encode_input(*constructor_args),
             to_bytes(hexstr="0x"),
             {
                 "gas_price": expected_mainnet_gas_price,
@@ -201,14 +201,14 @@ def main():
         argobytes_factory, ArgobytesLiquidGasTokenUser)
 
     # deploy all the actions
-    example_action = argobytes_factory_deploy_helper(argobytes_factory, ExampleAction)
+    example_action = argobytes_factory_deploy_helper(argobytes_factory, ExampleAction, gas_price=0)
     onesplit_offchain_action = argobytes_factory_deploy_helper(argobytes_factory, OneSplitOffchainAction)
-    kyber_action = argobytes_factory_deploy_helper(argobytes_factory, KyberAction, accounts[0])
+    kyber_action = argobytes_factory_deploy_helper(argobytes_factory, KyberAction, constructor_args=[accounts[0]])
     uniswap_v1_action = argobytes_factory_deploy_helper(argobytes_factory, UniswapV1Action)
     uniswap_v2_action = argobytes_factory_deploy_helper(argobytes_factory, UniswapV2Action)
     # zrx_v3_action = argobytes_factory_deploy_helper(argobytes_factory, ZrxV3Action)
     weth9_action = argobytes_factory_deploy_helper(argobytes_factory, Weth9Action)
-    synthetix_depot_action = argobytes_factory_deploy_helper(argobytes_factory, SynthetixDepotAction)
+    # synthetix_depot_action = argobytes_factory_deploy_helper(argobytes_factory, SynthetixDepotAction)
     curve_fi_action = argobytes_factory_deploy_helper(argobytes_factory, CurveFiAction)
 
     bulk_actions = [
@@ -369,4 +369,4 @@ def main():
 
     print("ETH used by accounts[6] to deploy a proxy:", (starting_balance - ending_balance) / 1e18)
 
-    reset_block_time(synthetix_depot_action)
+    # reset_block_time(synthetix_depot_action)

@@ -34,7 +34,7 @@ contract KyberAction is AbstractERC20Exchange {
     function setPlatformWallet(address payable platform_wallet) public {
         require(
             msg.sender == _platform_wallet,
-            "KyberAction.setWalletId: 403"
+            "KyberAction.setPlatformWallet: 403"
         );
 
         _platform_wallet = platform_wallet;
@@ -48,6 +48,8 @@ contract KyberAction is AbstractERC20Exchange {
         bytes calldata hint
     ) public payable {
         uint256 src_amount = address(this).balance;
+
+        // require(src_amount > 0, "KyberAction.tradeEtherToToken: no src_amount");
 
         uint256 received = IKyberNetworkProxy(network_proxy).tradeWithHintAndFee{
             value: src_amount
@@ -81,6 +83,8 @@ contract KyberAction is AbstractERC20Exchange {
         // Use the full balance of tokens transferred from the trade executor
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
 
+        // require(src_amount > 0, "KyberAction.tradeTokenToToken: no src_amount");
+
         // Approve the exchange to transfer tokens from this contract to the reserve
         IERC20(src_token).approve(network_proxy, src_amount);
 
@@ -112,6 +116,8 @@ contract KyberAction is AbstractERC20Exchange {
     ) external returnLeftoverToken(src_token) {
         // Use the full balance of tokens transferred from the trade executor
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
+
+        // require(src_amount > 0, "KyberAction.tradeTokenToEther: no src_amount");
 
         // Approve the exchange to transfer tokens from this contract to the reserve
         IERC20(src_token).approve(network_proxy, src_amount);

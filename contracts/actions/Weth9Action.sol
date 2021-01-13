@@ -13,7 +13,7 @@ contract Weth9Action {
     function wrap_all_to(address weth, address to) external payable {
         uint256 balance = address(this).balance;
 
-        require(balance > 0, "Weth9Action:wrap_all_to: no balance");
+        // require(balance > 0, "Weth9Action:wrap_all_to: no balance");
 
         // convert all ETH into WETH
         IWETH9(weth).deposit{value: balance}();
@@ -30,7 +30,7 @@ contract Weth9Action {
     function unwrap_all_to(address weth, address payable to) external {
         uint256 balance = IWETH9(weth).balanceOf(address(this));
 
-        require(balance > 0, "Weth9Action:unwrap_all_to: no balance");
+        // require(balance > 0, "Weth9Action:unwrap_all_to: no balance");
 
         // convert all WETH into ETH
         IWETH9(weth).withdraw(balance);

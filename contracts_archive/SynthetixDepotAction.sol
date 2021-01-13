@@ -21,15 +21,9 @@ import {IDepot} from "contracts/interfaces/synthetix/IDepot.sol";
 import {
     IExchangeRates
 } from "contracts/interfaces/synthetix/IExchangeRates.sol";
-import {ISystemStatus} from "contracts/interfaces/synthetix/ISystemStatus.sol";
 import {IProxy} from "contracts/interfaces/synthetix/IProxy.sol";
-import {UniversalERC20} from "contracts/library/UniversalERC20.sol";
-import {Strings2} from "contracts/library/Strings2.sol";
 
 contract SynthetixDepotAction is AbstractERC20Exchange {
-    using UniversalERC20 for IERC20;
-    using Strings for uint256;
-    using Strings2 for address;
 
     // solium-disable-next-line security/no-assign-params
     function tradeEtherToSynthUSD(

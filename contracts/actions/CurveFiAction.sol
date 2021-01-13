@@ -25,6 +25,8 @@ contract CurveFiAction is AbstractERC20Exchange {
         // Use the full balance of tokens
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
 
+        // require(src_amount > 0, "CurveFiAction.trade: no src_amount");
+
         IERC20(src_token).approve(exchange, src_amount);
 
         // do the trade
@@ -48,6 +50,8 @@ contract CurveFiAction is AbstractERC20Exchange {
     ) external {
         // Use the full balance of tokens
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
+
+        // require(src_amount > 0, "CurveFiAction.tradeUnderlying: no src_amount");
 
         IERC20(src_token).approve(exchange, src_amount);
 
