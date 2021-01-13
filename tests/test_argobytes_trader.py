@@ -110,3 +110,10 @@ def test_simple_dydx_flashloan():
 def test_simple_atomic_trade():
     assert False
 
+
+def test_check_balance():
+    assert False
+
+
+def test_check_erc20_balance():
+    assert False

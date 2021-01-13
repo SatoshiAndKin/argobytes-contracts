@@ -30,6 +30,17 @@ interface IKyberNetworkProxy {
         address wallet_id
     ) external payable returns (uint256);
 
+    function tradeWithHint(
+        IERC20 src,
+        uint256 srcAmount,
+        IERC20 dest,
+        address payable destAddress,
+        uint256 maxDestAmount,
+        uint256 minConversionRate,
+        address payable walletId,
+        bytes calldata hint
+    ) external payable returns (uint256);
+
     function tradeWithHintAndFee(
         IERC20 src,
         uint256 srcAmount,
