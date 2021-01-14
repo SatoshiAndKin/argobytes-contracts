@@ -252,6 +252,16 @@ def uniswap_v1_factory():
     return Contract.from_explorer(UniswapV1FactoryAddress)
 
 
+@pytest.fixture(scope="function")
+def uniswap_v2_action(UniswapV2Action):
+    return accounts[0].deploy(UniswapV2Action)
+
+
+@pytest.fixture(scope="session")
+def uniswap_v2_router():
+    return Contract.from_explorer(UniswapV2RouterAddress)
+
+
 @pytest.fixture(scope="session")
 def uniswap_v1_helper(uniswap_v1_factory, interface):
 

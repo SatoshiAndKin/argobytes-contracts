@@ -202,7 +202,7 @@ def main():
 
     # deploy all the actions
     example_action = argobytes_factory_deploy_helper(argobytes_factory, ExampleAction, gas_price=0)
-    onesplit_offchain_action = argobytes_factory_deploy_helper(argobytes_factory, OneSplitOffchainAction)
+    # onesplit_offchain_action = argobytes_factory_deploy_helper(argobytes_factory, OneSplitOffchainAction)
     kyber_action = argobytes_factory_deploy_helper(argobytes_factory, KyberAction, constructor_args=[accounts[0]])
     uniswap_v1_action = argobytes_factory_deploy_helper(argobytes_factory, UniswapV1Action)
     uniswap_v2_action = argobytes_factory_deploy_helper(argobytes_factory, UniswapV2Action)
@@ -285,6 +285,7 @@ def main():
     quick_save("OneSplit", OneSplitAddress)
     quick_save("SynthetixAddressResolver", SynthetixAddressResolverAddress)
     quick_save("UniswapFactory", UniswapV1FactoryAddress)
+    quick_save("UniswapV2Router", UniswapV2RouterAddress)
     quick_save("YearnWethVault", YearnWethVaultAddress)
 
     # TODO: this list is going to get long. use tokenlists.org instead
