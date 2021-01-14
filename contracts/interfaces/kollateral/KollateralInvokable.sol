@@ -17,7 +17,7 @@
 
 */
 
-pragma solidity 0.7.4;
+pragma solidity 0.7.6;
 
 import {BalanceCarrier} from "./BalanceCarrier.sol";
 import {IInvocationHook} from "./IInvocationHook.sol";

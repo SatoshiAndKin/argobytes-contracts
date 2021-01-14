@@ -1,7 +1,7 @@
 /* Like https://github.com/makerdao/multicall, but compatible with DyDx calls */
 // i thought about adding a helper function to transfer out stuck funds, but callFunction already looks generic enough
 
-pragma solidity 0.7.4;
+pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import {DyDx_ICallee, DyDx_Account} from "./external/DyDx_ICallee.sol";

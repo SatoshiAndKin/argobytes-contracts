@@ -45,7 +45,7 @@ mccabe==0.6.1             # via pylint
 more-itertools==8.6.0     # via pytest
 multiaddr==0.0.9          # via ipfshttpclient
 mythx-models==1.9.1       # via pythx
-netaddr==0.8.0            # via multiaddr
+netaddr==0.7.6            # via multiaddr
 packaging==20.8           # via pytest
 parsimonious==0.8.1       # via eth-abi
 pathspec==0.8.1           # via black

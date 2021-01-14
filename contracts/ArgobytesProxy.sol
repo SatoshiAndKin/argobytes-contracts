@@ -11,7 +11,7 @@
 
  * vault isn't very accurate. the vault doesn't hold any funds. its approved to use them instead
  */
-pragma solidity 0.7.4;
+pragma solidity 0.7.6;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";

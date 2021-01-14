@@ -2,7 +2,7 @@
 /*
 This can be useful as a standalone contract, or you can do `contract MyContract is ArgobytesActor`. For an example, see ArgobytesTrader.
 */
-pragma solidity 0.7.4;
+pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";

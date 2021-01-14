@@ -4,7 +4,7 @@
 // 2. owner calls Proxy.execute(ArgobytesActor.callActions([action1, action2, ..., LGT.freeFrom(...)]))
 // 3. owner or bot calls Proxy.execute(ContractThatIsLiquidGasTokenUser.something(...)))
 
-pragma solidity 0.7.4;
+pragma solidity 0.7.6;
 
 import {LiquidGasTokenUser} from "contracts/abstract/LiquidGasTokenUser.sol";
 

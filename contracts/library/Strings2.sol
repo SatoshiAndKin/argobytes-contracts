@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity 0.7.4;
+pragma solidity 0.7.6;
 
 library Strings2 {
     function toString(address x) internal pure returns (string memory) {

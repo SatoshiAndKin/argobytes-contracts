@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-pragma solidity 0.7.4;
+pragma solidity 0.7.6;
 
 library Bytes2 {
     function toBytes4(bytes memory input) internal pure returns (bytes4 output) {
