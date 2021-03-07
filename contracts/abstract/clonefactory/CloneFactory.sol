@@ -60,9 +60,6 @@ contract CloneFactory is CloneFactoryEvents {
         bytes32 salt,
         address immutableOwner
     ) public returns (address clone) {
-        bytes20 targetBytes = bytes20(target);
-        bytes20 immutableOwnerBytes = bytes20(immutableOwner);
-
         assembly {
             // Solidity manages memory in a very simple way: There is a “free memory pointer” at position 0x40 in memory.
             // If you want to allocate memory, just use the memory from that point on and update the pointer accordingly.
@@ -76,7 +73,7 @@ contract CloneFactory is CloneFactoryEvents {
                 0x3d604180600a3d3981f3363d3d373d3d3d363d73000000000000000000000000
             )
             // target contract that the clone delegates all calls to (+20 bytes = 40)
-            mstore(add(code, 0x14), targetBytes)
+            mstore(add(code, 0x14), shl(0x60, target))
             // end of the contract (+15 bytes = 55)
             mstore(
                 add(code, 0x28),
@@ -85,7 +82,7 @@ contract CloneFactory is CloneFactoryEvents {
             // add the owner to the end (+20 bytes = 75)
             // 1. so we get a unique address from CREATE2
             // 2. so it can be used as an immutable owner
-            mstore(add(code, 0x37), immutableOwnerBytes)
+            mstore(add(code, 0x37), shl(0x60, immutableOwner))
 
             // deploy it
             clone := create2(0, code, 75, salt)
@@ -113,9 +110,6 @@ contract CloneFactory is CloneFactoryEvents {
         bytes32 salt,
         address immutableOwner
     ) public view returns (bool cloneExists, address cloneAddr) {
-        bytes20 targetBytes = bytes20(target);
-        bytes20 immutableOwnerBytes = bytes20(immutableOwner);
-
         bytes32 bytecodeHash;
         assembly {
             // Solidity manages memory in a very simple way: There is a “free memory pointer” at position 0x40 in memory.
@@ -130,7 +124,7 @@ contract CloneFactory is CloneFactoryEvents {
                 0x3d604180600a3d3981f3363d3d373d3d3d363d73000000000000000000000000
             )
             // target contract that the clone delegates all calls to (+20 bytes = 40)
-            mstore(add(code, 0x14), targetBytes)
+            mstore(add(code, 0x14), shl(0x60, target))
             // end of the contract (+15 bytes = 55)
             mstore(
                 add(code, 0x28),
@@ -139,11 +133,12 @@ contract CloneFactory is CloneFactoryEvents {
             // add the owner to the end (+20 bytes = 75)
             // 1. so we get a unique address from CREATE2
             // 2. so it can be used as an immutable owner
-            mstore(add(code, 0x37), immutableOwnerBytes)
+            mstore(add(code, 0x37), shl(0x60, immutableOwner))
 
             bytecodeHash := keccak256(code, 75)
         }
 
+        // TODO: do this all here in assembly? the compiler should be smart enough to not have any savings doing that
         cloneAddr = Create2.computeAddress(salt, bytecodeHash);
 
         cloneExists = cloneAddr.isContract();
@@ -156,8 +151,6 @@ contract CloneFactory is CloneFactoryEvents {
         view
         returns (bool result, address owner)
     {
-        bytes20 targetBytes = bytes20(target);
-
         assembly {
             let other := mload(0x40)
 
@@ -173,7 +166,7 @@ contract CloneFactory is CloneFactoryEvents {
                 clone,
                 0x363d3d373d3d3d363d7300000000000000000000000000000000000000000000
             )
-            mstore(add(clone, 0xa), targetBytes)
+            mstore(add(clone, 0xa), shl(0x60, target))
             mstore(
                 add(clone, 0x1e),
                 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000
