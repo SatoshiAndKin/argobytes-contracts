@@ -14,8 +14,8 @@ def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argob
     actions = [
         (
             example_action,
+            0,
             example_action.sweep.encode_input(address_zero, address_zero, 0),
-            False,
         )
     ]
 
@@ -64,8 +64,8 @@ def test_simple_execute(address_zero, argobytes_actor, argobytes_trader, argobyt
         # call the sweep contract when its empty
         (
             example_action,
+            1,
             example_action.sweep.encode_input(accounts[0], address_zero, 0),
-            True,
         )
     ]
 

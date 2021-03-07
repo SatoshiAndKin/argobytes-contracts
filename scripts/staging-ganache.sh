@@ -23,6 +23,7 @@ exec ganache-cli \
     --unlock "0x5668EAd1eDB8E2a4d724C8fb9cB5fFEabEB422dc" \
     --verbose \
     --networkId 1 \
+    --chainId 1 \
     "$@" \
 ;
     # TODO: do we want this? it makes it work more like geth, but also makes debugging annoying

@@ -19,10 +19,11 @@ interface IArgobytesActor {
         Msg
     }
 
+    // TODO: have a "requireSuccess" bool?
     struct Action {
         address payable target;
+        ValueMode value_mode;
         bytes data;
-        uint8 value_mode;
     }
 
     function callActions(Action[] calldata actions) external payable;
@@ -47,6 +48,7 @@ contract ArgobytesActor is IArgobytesActor {
             // IMPORTANT! it is up to the caller to make sure that they trust this target!
 
             if (ValueMode(actions[i].value_mode) == ValueMode.None) {
+                // if every single action uses value_mode none, the caller should probably just use Multicall.sol instead
                 actions[i].target.functionCall(
                     actions[i].data,
                     "ArgobytesActions.callActions external call failed"
@@ -66,16 +68,5 @@ contract ArgobytesActor is IArgobytesActor {
                 );
             }
         }
-    }
-
-    function withdrawBalance(address to) public {
-        withdraw(to, address(this).balance);
-    }
-
-    function withdraw(address to, uint256 amount) public {
-        (bool success, ) = msg.sender.call{value: amount}(
-            ""
-        );
-        require(success, "ArgobytesActor !withdraw");
     }
 }

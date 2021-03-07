@@ -13,8 +13,8 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
     actions = [
         (
             example_action,
+            1,
             example_action.sweep.encode_input(accounts[0], address_zero, 400000),
-            True,
         )
     ]
 
@@ -82,8 +82,8 @@ def test_simple_arbitrage(address_zero, argobytes_actor, argobytes_trader, examp
         # sweep WETH
         (
             example_action,
+            0,
             example_action.sweep.encode_input(accounts[0], weth9_erc20, 0),
-            False
         ),
     ]
 

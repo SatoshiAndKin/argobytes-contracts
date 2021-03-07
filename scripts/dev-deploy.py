@@ -216,12 +216,12 @@ def main():
         # TODO: think about this more. the msg.sendere might not be what we need
         (
             argobytes_authority.address,
+            0,
             argobytes_authority.allow.encode_input(
                 argobytes_proxy_arbitragers,
                 argobytes_trader.address,
                 argobytes_trader.atomicArbitrage.signature,
             ),
-            False,
         ),
         # register for kyber's fee program
         (
@@ -332,12 +332,12 @@ def main():
         # TODO: think about this more. the msg.sendere might not be what we need
         (
             argobytes_authority.address,
+            0,
             argobytes_authority.allow.encode_input(
                 argobytes_proxy_arbitragers,
                 argobytes_trader.address,
                 argobytes_trader.atomicArbitrage.signature,
             ),
-            False,
         ),
         # TODO: gas_token.buyAndFree or gas_token.free depending on off-chain balance/price checks
     ]

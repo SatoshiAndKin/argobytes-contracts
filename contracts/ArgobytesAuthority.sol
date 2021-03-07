@@ -1,4 +1,11 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
+/*
+A shared registry for storing authorizations.
+
+This is a seperate contract from the proxy so that there's no chance of delegatecalls changing storage.
+
+The key includes msg.sender which should prevent most shinanengans.
+*/
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
@@ -8,16 +15,21 @@ interface IArgobytesAuthority {
         address target,
         bytes4 sig
     ) external view returns (bool);
+
+    function allow(
+        address[] calldata senders,
+        address target,
+        bytes4 sig
+    ) external;
+
+    function deny(
+        address[] calldata senders,
+        address target,
+        bytes4 sig
+    ) external;
 }
 
-/*
-A shared registry for storing authorizations.
-
-This is a seperate contract from the proxy so that there's no chance of delegatecalls changing storage.
-
-The key includes msg.sender which should prevent most shinanengans.
-*/
-contract ArgobytesAuthority {
+contract ArgobytesAuthority is IArgobytesAuthority{
     // key is from `createKey`
     mapping(bytes => bool) authorizations;
 
@@ -36,17 +48,18 @@ contract ArgobytesAuthority {
         address sender,
         address target,
         bytes4 sig
-    ) external view returns (bool) {
+    ) external override view returns (bool) {
         bytes memory key = createKey(msg.sender, sender, target, sig);
 
         return authorizations[key];
     }
 
+    // SECURITY! If `target` is upgradable, the function at `sig` could be changed and a `sender` may be able to do something malicious!
     function allow(
         address[] calldata senders,
         address target,
         bytes4 sig
-    ) external {
+    ) external override {
         bytes memory key;
 
         for (uint256 i = 0; i < senders.length; i++) {
@@ -60,7 +73,7 @@ contract ArgobytesAuthority {
         address[] calldata senders,
         address target,
         bytes4 sig
-    ) external {
+    ) external override {
         bytes memory key;
 
         for (uint256 i = 0; i < senders.length; i++) {

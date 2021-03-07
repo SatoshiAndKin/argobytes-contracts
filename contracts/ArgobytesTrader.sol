@@ -264,13 +264,10 @@ contract ArgobytesTrader is
 
         // 3. return what we borrowed (plus a super tiny 2 wei fee)
 
-        // approve the deposit
-        // TODO: think about this more. maybe do an infinite approval seperately
-        // TODO: safeApprove?
+        // approve the return
+        // we have to add 1 or 2 wei depending on the market
         borrow_token.approve(address(soloMargin), borrow_amount + 2);
 
-        // we have to add 1 or 2 wei depending on the market
-        // i think it costs more in gas to check than it does to just always include 2
         operations[2] = DyDxTypes.ActionArgs({
             actionType: DyDxTypes.ActionType.Deposit,
             accountId: 0,

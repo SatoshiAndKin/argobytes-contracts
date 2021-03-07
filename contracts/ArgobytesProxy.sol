@@ -96,6 +96,7 @@ contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy {
         );
     }
 
+    // TODO: function implementation that returns the target contract?
     // TODO: EIP-165? EIP-721 receiver?
     // TODO: gasless transactions?
 }

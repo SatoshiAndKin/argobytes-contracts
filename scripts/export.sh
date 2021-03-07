@@ -21,6 +21,8 @@ mkdir -p "$ARGOBYTES_WEB_ADDR_DIR"
 function export_argobytes_contract() {
     cp "build/contracts/$1.json" "$ARGOBYTES_BACKEND_CONTRACT_DIR/$1.json"
 
+    # TODO: use jq to pull out just the abi. Save it as .abi.json
+
     cp "$ARGOBYTES_BACKEND_CONTRACT_DIR/$1.json" "$ARGOBYTES_WEB_CONTRACT_DIR/$1.json"
 }
 
@@ -29,11 +31,15 @@ function export_brownie_contract() {
 
     cp "$HOME/.brownie/packages/$1.json" "$ARGOBYTES_BACKEND_CONTRACT_DIR/$contract_filename"
 
+    # TODO: use jq to pull out just the abi. Save it as .abi.json
+
     cp "$ARGOBYTES_BACKEND_CONTRACT_DIR/$contract_filename" "$ARGOBYTES_WEB_CONTRACT_DIR/$contract_filename"
 }
 
 function export_interface() {
     cp "build/interfaces/$1.json" "$ARGOBYTES_BACKEND_CONTRACT_DIR/$1.json"
+
+    # TODO: use jq to pull out just the abi. Save it as .abi.json
 
     cp "$ARGOBYTES_BACKEND_CONTRACT_DIR/$1.json" "$ARGOBYTES_WEB_CONTRACT_DIR/$1.json"
 }
