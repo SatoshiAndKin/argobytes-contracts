@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {
     IKyberNetworkProxy
-} from "contracts/interfaces/kyber/IKyberNetworkProxy.sol";
+} from "contracts/external/kyber/IKyberNetworkProxy.sol";
 import {IERC20} from "contracts/library/UniversalERC20.sol";
 
 contract KyberAction is AbstractERC20Exchange {

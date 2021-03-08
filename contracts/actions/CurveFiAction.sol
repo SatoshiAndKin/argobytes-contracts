@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
 
-import {ICurveFi} from "contracts/interfaces/curvefi/ICurveFi.sol";
+import {ICurvePool} from "contracts/external/curvefi/ICurvePool.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
@@ -30,7 +30,7 @@ contract CurveFiAction is AbstractERC20Exchange {
         IERC20(src_token).approve(exchange, src_amount);
 
         // do the trade
-        ICurveFi(exchange).exchange(i, j, src_amount, dest_min_tokens);
+        ICurvePool(exchange).exchange(i, j, src_amount, dest_min_tokens);
 
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
 
@@ -56,7 +56,7 @@ contract CurveFiAction is AbstractERC20Exchange {
         IERC20(src_token).approve(exchange, src_amount);
 
         // do the trade
-        ICurveFi(exchange).exchange_underlying(
+        ICurvePool(exchange).exchange_underlying(
             i,
             j,
             src_amount,

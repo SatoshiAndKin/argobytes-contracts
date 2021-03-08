@@ -10,17 +10,20 @@
  * Bot can waste our liquidgastoken
 
  * vault isn't very accurate. the vault doesn't hold any funds. its approved to use them instead
+ *
+ * TODO: think more about this. it doesn't play nice with flash loans
+ * 
  */
 pragma solidity 0.7.6;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
-import {IArgobytesFactory} from "./ArgobytesFactory.sol";
-import {ArgobytesAuth} from "./abstract/ArgobytesAuth.sol";
-import {Address2} from "./library/Address2.sol";
-import {Bytes2} from "./library/Bytes2.sol";
-import {IArgobytesAuthority} from "./ArgobytesAuthority.sol";
+import {IArgobytesAuthorizationRegistry} from "contracts/ArgobytesAuthorizationRegistry.sol";
+import {IArgobytesFactory} from "contracts/ArgobytesFactory.sol";
+import {ArgobytesClone} from "contracts/abstract/ArgobytesClone.sol";
+import {Address2} from "contracts/library/Address2.sol";
+import {Bytes2} from "contracts/library/Bytes2.sol";
 
 // it is super important that all these functions have strong authentication!
 interface IArgobytesProxy {
@@ -39,7 +42,8 @@ interface IArgobytesProxy {
     ) external payable returns (address target, bytes memory response);
 }
 
-contract ArgobytesProxy is ArgobytesAuth, IArgobytesProxy {
+// TODO: move this onto contracts/abstract/ArgobytesClone.sol
+contract ArgobytesProxy is ArgobytesClone, IArgobytesProxy {
     using Address for address;
     using Address2 for address;
     using Bytes2 for bytes;

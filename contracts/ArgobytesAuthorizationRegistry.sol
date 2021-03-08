@@ -9,7 +9,7 @@ The key includes msg.sender which should prevent most shinanengans.
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-interface IArgobytesAuthority {
+interface IArgobytesAuthorizationRegistry {
     function canCall(
         address caller,
         address target,
@@ -29,7 +29,7 @@ interface IArgobytesAuthority {
     ) external;
 }
 
-contract ArgobytesAuthority is IArgobytesAuthority{
+contract ArgobytesAuthorizationRegistry is IArgobytesAuthorizationRegistry{
     // key is from `createKey`
     mapping(bytes => bool) authorizations;
 

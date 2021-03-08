@@ -5,12 +5,12 @@ pragma experimental ABIEncoderV2;
 import {DyDxTypes} from "./DyDxTypes.sol";
 
 /**
- * @title ICallee
+ * @title IDyDxCallee
  * @author dYdX
  *
  * Interface that Callees for Solo must implement in order to ingest data.
  */
-interface ICallee {
+interface IDyDxCallee {
     /**
      * Allows users to send this contract arbitrary data.
      *

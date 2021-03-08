@@ -6,10 +6,10 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_clone, argobytes_trader, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, dai_erc20):
+def test_uniswap_arbitrage(address_zero, argobytes_multicall, argobytes_clone, argobytes_trader, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, dai_erc20):
     assert argobytes_clone.balance() == 0
     assert argobytes_trader.balance() == 0
-    assert argobytes_actor.balance() == 0
+    assert argobytes_multicall.balance() == 0
     assert uniswap_v1_action.balance() == 0
 
     value = 1e18
@@ -48,9 +48,9 @@ def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_clone, argob
         # trade DAI to ETH
         (
             uniswap_v1_action,
+            0,
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens)
             uniswap_v1_action.tradeTokenToEther.encode_input(argobytes_clone, dai_exchange, dai_erc20, 1),
-            False
         ),
     ]
 
@@ -61,7 +61,7 @@ def test_uniswap_arbitrage(address_zero, argobytes_actor, argobytes_clone, argob
             False,
             accounts[0],
             borrows,
-            argobytes_actor,
+            argobytes_multicall,
             actions,
         ),
         {

@@ -1,7 +1,13 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: LGPL-3.0-or-later
 pragma solidity 0.7.6;
 
-abstract contract CloneOwner {
+abstract contract ImmutablyOwnedClone {
+
+    modifier onlyOwner() {
+        require(owner() == msg.sender, "!owner");
+        _;
+    }
+
     /*
     Get the clone's owner.
 

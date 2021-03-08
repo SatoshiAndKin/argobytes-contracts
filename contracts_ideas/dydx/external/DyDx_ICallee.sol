@@ -10,7 +10,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
-    https://github.com/dydxprotocol/solo/blob/2d8454e02702fe5bc455b848556660629c3cad36/contracts/protocol/interfaces/ICallee.sol
+    https://github.com/dydxprotocol/solo/blob/2d8454e02702fe5bc455b848556660629c3cad36/contracts/protocol/external/IDyDxCallee.sol
 */
 
 pragma solidity 0.7.6;
@@ -19,12 +19,12 @@ pragma experimental ABIEncoderV2;
 import {DyDx_Account} from "./DyDx_Account.sol";
 
 /**
- * @title ICallee
+ * @title IDyDxCallee
  * @author dYdX
  *
  * Interface that Callees for Solo must implement in order to ingest data.
  */
-abstract contract DyDx_ICallee {
+abstract contract DyDx_IDyDxCallee {
     // ============ Public Functions ============
 
     /**

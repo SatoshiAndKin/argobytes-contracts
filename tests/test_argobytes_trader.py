@@ -6,7 +6,7 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trader, example_action, liquidgastoken):
+def test_liquidgastoken_saves_gas(address_zero, argobytes_multicall, argobytes_trader, example_action, liquidgastoken):
     value = 1e18
 
     borrows = []
@@ -24,7 +24,7 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
         False,
         accounts[0],
         borrows,
-        argobytes_actor,
+        argobytes_multicall,
         actions,
         {
             "gasPrice": 300,
@@ -40,7 +40,7 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
         True,
         accounts[0],
         borrows,
-        argobytes_actor,
+        argobytes_multicall,
         actions,
         {
             "gasPrice": 300,
@@ -50,7 +50,7 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_actor, argobytes_trade
     assert atomic_arbitrage_lgt_tx.gas_used < atomic_arbitrage_tx.gas_used
 
 
-def test_simple_arbitrage(address_zero, argobytes_actor, argobytes_trader, example_action, weth9_erc20):
+def test_simple_arbitrage(address_zero, argobytes_multicall, argobytes_trader, example_action, weth9_erc20):
     value = 1e18
 
     # get some WETH
@@ -88,12 +88,12 @@ def test_simple_arbitrage(address_zero, argobytes_actor, argobytes_trader, examp
     ]
 
     arbitrage_tx = argobytes_trader.atomicArbitrage(
-        False, False, accounts[0], borrows, argobytes_actor, actions
+        False, False, accounts[0], borrows, argobytes_multicall, actions
     )
 
     assert weth9_erc20.balanceOf(example_action) == 0
     assert weth9_erc20.balanceOf(argobytes_trader) == 0
-    assert weth9_erc20.balanceOf(argobytes_actor) == 0
+    assert weth9_erc20.balanceOf(argobytes_multicall) == 0
     assert weth9_erc20.balanceOf(accounts[0]) == 2 * value
 
     # make sure the transaction succeeded

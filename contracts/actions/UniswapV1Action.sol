@@ -6,7 +6,7 @@ import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
 import {
     IUniswapExchange
-} from "contracts/interfaces/uniswap/IUniswapExchange.sol";
+} from "contracts/external/uniswap/IUniswapExchange.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 

@@ -96,57 +96,17 @@ def main():
     salt = ""
     salt_uint = 0
 
-    gas_token = interface.ILiquidGasToken(LiquidGasTokenAddress, accounts[0])
-
-    # we save the contract even if we aren't burning gas token here
-    # still good to test that it works and we might use it outside this script
-    quick_save_contract(gas_token)
-
-    if FREE_GAS_TOKEN:
-        gas_token_for_freeing = gas_token
-    else:
-        gas_token_for_freeing = "0x0000000000000000000000000000000000000000"
-
     # deploy a dsproxy just to compare gas costs
     # TODO: whats the deploy cost of DSProxyFactory?
     ds_proxy_factory = interface.DSProxyFactory(DSProxyFactoryAddress, accounts[5])
     ds_proxy_tx = ds_proxy_factory.build()
 
-    # TODO: do this earlier and transfer the coins to the diamond_creator address before deployment
-    # mint some gas token so we can have cheaper deploys for the rest of the contracts
-    if MINT_GAS_TOKEN:
-        deadline = 999999999999999
-        num_mints = 16
-
-        print("Minting gas_token for", accounts[0])
-
-        # add some LGT liquidity
-        # TODO: how many tokens should we mint? what size liquidity pool and at what price do we expect to see?
-        # TODO: what should we set the price of LGT to?
-        mint_batch_amount = 50
-        for _ in range(0, num_mints):
-            # TODO: im still not positive we want mintToLiqudity instead of mintTo
-            # TODO: keep track of gas spent minting liquidity
-            # gas_token.mintToLiquidity(mint_batch_amount, 0, deadline, accounts[0], {
-            #                           'value': 1e19, "gasPrice": expected_mainnet_mint_price})
-            gas_token.mintFor(mint_batch_amount, accounts[0], {"gasPrice": expected_mainnet_mint_price})
-
-        gas_tokens_start = gas_token.balanceOf.call(accounts[0])
-
-        print("Starting gas_token balance:", gas_tokens_start)
-
-        assert gas_tokens_start == mint_batch_amount * num_mints
-
     # deploy ArgobytesFactory using LGT's create2 helper
     # when combined with a salt found by ERADICATE2, we can have an address with lots of 0 bytes
-    if FREE_GAS_TOKEN:
-        # TODO: calculate the optimal number of gas to buy
-        free_num_gas_tokens = 19
-    else:
-        free_num_gas_tokens = 0
+    # TODO: originally i wanted to use gastoken, but i'm really seeing it now as pollution
 
     deploy_tx = gas_token.create2(
-        free_num_gas_tokens,
+        0,
         deadline,
         salt_uint,
         ArgobytesFactory.deploy.encode_input(),
@@ -167,8 +127,8 @@ def main():
     if FREE_GAS_TOKEN:
         gas_token.approve(argobytes_factory, 2**256-1)
 
-    # build an ArgobytesAuthority
-    argobytes_authority = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesAuthority)
+    # build an ArgobytesAuthorizationRegistry
+    argobytes_authority = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesAuthorizationRegistry)
 
     # build an ArgobytesProxy to use for cloning
     argobytes_proxy = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesProxy)
@@ -188,15 +148,12 @@ def main():
 
     argobytes_proxy_clone = ArgobytesProxy.at(deploy_tx.events['NewClone']['clone'], accounts[0])
 
-    if FREE_GAS_TOKEN:
-        gas_token.approve(argobytes_proxy_clone, 2 ** 256 - 1)
-
     # TODO: setup auth for the proxy
     # for now, owner-only access works, but we need to allow a bot in to call atomicArbitrage
 
     # deploy the main contracts
     argobytes_trader = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesTrader)
-    argobytes_actor = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesActor)
+    argobytes_multicall = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesMulticall)
     argobytes_liquid_gas_token_user = argobytes_factory_deploy_helper(
         argobytes_factory, ArgobytesLiquidGasTokenUser)
 
@@ -233,31 +190,10 @@ def main():
     ]
 
     argobytes_proxy_clone.execute(
-        argobytes_actor,
-        argobytes_actor.callActions.encode_input(bulk_actions),
+        argobytes_multicall,
+        argobytes_multicall.callActions.encode_input(bulk_actions),
         {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
     )
-
-    if FREE_GAS_TOKEN:
-        # make sure we still have some gastoken left
-        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_proxy_owner)
-
-        print("gas token:", gas_token.address)
-
-        print("gas_tokens_remaining:", gas_tokens_remaining, "/", gas_tokens_start)
-
-        assert gas_tokens_remaining > 0
-        assert gas_tokens_remaining <= mint_batch_amount
-    elif MINT_GAS_TOKEN:
-        gas_tokens_remaining = gas_token.balanceOf.call(argobytes_proxy_owner)
-
-        print("gas token:", gas_token.address)
-
-        print("gas_tokens_remaining:", gas_tokens_remaining)
-
-        assert gas_tokens_remaining > 0
-    else:
-        print("gas_tokens_remaining: N/A")
 
     print("gas used by accounts[0]:", accounts[0].gas_used)
 
@@ -268,7 +204,6 @@ def main():
     print("ETH used by accounts[0]:", (starting_balance - ending_balance) / 1e18)
 
     # save all the addresses we might use, not just ones for own contracts
-    quick_save("CHI", CHIAddress)
     quick_save("CurveFiBUSD", CurveFiBUSDAddress)
     quick_save("CurveFiCompound", CurveFiCompoundAddress)
     quick_save("CurveFiPAX", CurveFiPAXAddress)
@@ -277,11 +212,9 @@ def main():
     quick_save("CurveFiTBTC", CurveFiTBTCAddress)
     quick_save("CurveFiUSDT", CurveFiUSDTAddress)
     quick_save("CurveFiY", CurveFiYAddress)
-    quick_save("GasToken2", GasToken2Address)
     quick_save("KollateralInvoker", KollateralInvokerAddress)
     quick_save("KyberNetworkProxy", KyberNetworkProxyAddress)
     quick_save("KyberRegisterWallet", KyberRegisterWalletAddress)
-    quick_save("LiquidGasToken", LiquidGasTokenAddress)
     quick_save("OneSplit", OneSplitAddress)
     quick_save("SynthetixAddressResolver", SynthetixAddressResolverAddress)
     quick_save("UniswapFactory", UniswapV1FactoryAddress)
@@ -343,8 +276,8 @@ def main():
     ]
 
     argobytes_proxy_clone_5.execute(
-        argobytes_actor,
-        argobytes_actor.callActions.encode_input(bulk_actions),
+        argobytes_multicall,
+        argobytes_multicall.callActions.encode_input(bulk_actions),
         {"gasPrice": expected_mainnet_gas_price}
     )
 

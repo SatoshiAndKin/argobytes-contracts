@@ -16,12 +16,12 @@ import {Strings} from "@OpenZeppelin/utils/Strings.sol";
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {
     IAddressResolver
-} from "contracts/interfaces/synthetix/IAddressResolver.sol";
-import {IDepot} from "contracts/interfaces/synthetix/IDepot.sol";
+} from "contracts/external/synthetix/IAddressResolver.sol";
+import {IDepot} from "contracts/external/synthetix/IDepot.sol";
 import {
     IExchangeRates
-} from "contracts/interfaces/synthetix/IExchangeRates.sol";
-import {IProxy} from "contracts/interfaces/synthetix/IProxy.sol";
+} from "contracts/external/synthetix/IExchangeRates.sol";
+import {IProxy} from "contracts/external/synthetix/IProxy.sol";
 
 contract SynthetixDepotAction is AbstractERC20Exchange {
 

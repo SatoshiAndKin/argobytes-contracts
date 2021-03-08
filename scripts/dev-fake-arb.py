@@ -27,10 +27,10 @@ def reset_block_time(synthetix_depot_action):
 
 def main():
     synthetix_depot_action = None  # TODO: how should we get this?
-    argobytes_actor = None
+    argobytes_multicall = None
 
     reset_block_time(synthetix_depot_action)
 
     # put some ETH on the atomic trade wrapper to fake an arbitrage opportunity
     # TODO: make a script to help with this
-    accounts[1].transfer(argobytes_actor, 1e18)
+    accounts[1].transfer(argobytes_multicall, 1e18)

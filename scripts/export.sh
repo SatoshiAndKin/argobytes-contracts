@@ -37,7 +37,7 @@ function export_brownie_contract() {
 }
 
 function export_interface() {
-    cp "build/interfaces/$1.json" "$ARGOBYTES_BACKEND_CONTRACT_DIR/$1.json"
+    cp "build/external/$1.json" "$ARGOBYTES_BACKEND_CONTRACT_DIR/$1.json"
 
     # TODO: use jq to pull out just the abi. Save it as .abi.json
 
@@ -47,8 +47,8 @@ function export_interface() {
 ./venv/bin/brownie compile
 
 # we don't need to export all contract jsons. we just need the one's for contracts that we expect to call
-export_argobytes_contract ArgobytesActor
-export_argobytes_contract ArgobytesAuthority
+export_argobytes_contract ArgobytesMulticall
+export_argobytes_contract ArgobytesAuthorizationRegistry
 export_argobytes_contract ArgobytesLiquidGasTokenUser
 export_argobytes_contract ArgobytesProxy
 export_argobytes_contract ArgobytesFactory

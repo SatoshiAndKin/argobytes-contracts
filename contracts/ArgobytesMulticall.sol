@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /*
-This can be useful as a standalone contract, or you can do `contract MyContract is ArgobytesActor`. For an example, see ArgobytesTrader.
+This is similar to MakerDAO's Multicall, but it can also pass value. If you don't need value, Multicall may be better.
+
+It can also be a target for DyDx's flashloans.
 */
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
-import {DyDxTypes} from "contracts/interfaces/dydx/DyDxTypes.sol";
 
-interface IArgobytesActor {
+import {DyDxTypes, IDyDxCallee} from "contracts/external/dydx/IDyDxCallee.sol";
+
+
+interface IArgobytesMulticall is IDyDxCallee {
 
     // TODO: there's also cases where we want to do a specific amount. think more about this
     // TODO: i think we can just make a different Actor contract for them
@@ -29,7 +33,7 @@ interface IArgobytesActor {
     function callActions(Action[] calldata actions) external payable;
 }
 
-contract ArgobytesActor is IArgobytesActor {
+contract ArgobytesMulticall is IArgobytesMulticall {
     using Address for address payable;
 
     // we want to receive because we might sweep tokens between actions
@@ -41,7 +45,7 @@ contract ArgobytesActor is IArgobytesActor {
      *
      *  transfer tokens to the actions before calling this
      */
-    function callActions(Action[] calldata actions) external override payable {
+    function callActions(Action[] memory actions) external override payable {
         // TODO: re-entrancy?
         // an action can do whatever it wants (liquidate, swap, refinance, etc.)
         for (uint256 i = 0; i < actions.length; i++) {
@@ -68,5 +72,21 @@ contract ArgobytesActor is IArgobytesActor {
                 );
             }
         }
+    }
+
+    /*
+    Entrypoint for dYdX operations (from IDyDxCallee).
+
+    TODO: do we care about the first two args (sender or accountInfo)?
+    TODO: flash loans aren't going to play nince with delegatecall
+    */
+    function callFunction(
+        address /*sender*/,
+        DyDxTypes.AccountInfo calldata /*accountInfo*/,
+        bytes calldata data
+    ) external override {
+        Action[] memory actions = abi.decode(data, (Action[]));
+
+        return this.callActions(actions);
     }
 }

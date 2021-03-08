@@ -17,7 +17,7 @@ import {UniversalERC20} from "contracts/library/UniversalERC20.sol";
 import {
     IArgobytesAtomicActions,
     IArgobytesOwnedVault
-} from "contracts/interfaces/argobytes/IArgobytesOwnedVault.sol";
+} from "contracts/external/argobytes/IArgobytesOwnedVault.sol";
 
 // we do NOT give this contract a `receive` function since it should only be used through a diamond
 contract ArgobytesProxy is

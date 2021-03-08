@@ -7,7 +7,7 @@ from hypothesis import settings
 
 
 # TODO: test access for all the functions!
-def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argobytes_clone, argobytes_trader, example_action):
+def test_argobytes_arbitrage_access_control(address_zero, argobytes_multicall, argobytes_clone, argobytes_trader, example_action):
     value = 1
 
     borrows = []
@@ -20,7 +20,7 @@ def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argob
     ]
 
     argobytes_trader_calldata = argobytes_trader.atomicArbitrage.encode_input(
-        address_zero, False, accounts[0], borrows, argobytes_actor, actions,
+        address_zero, False, accounts[0], borrows, argobytes_multicall, actions,
     )
 
     assert(argobytes_clone.owner() == accounts[0])
@@ -33,7 +33,7 @@ def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argob
     )
 
     # check that accounts[1] is NOT allowed
-    # TODO: this used to revert with "ArgobytesAuth: 403" but we don't bother checking authority before calling anymore to save gas
+    # TODO: this used to revert with "ArgobytesClone: 403" but we don't bother checking authority before calling anymore to save gas
     with brownie.reverts(""):
         argobytes_clone.execute(
             argobytes_trader.address,
@@ -50,7 +50,7 @@ def test_argobytes_arbitrage_access_control(address_zero, argobytes_actor, argob
     # TODO: check that accounts[1] is allowed
 
 
-def test_simple_execute(address_zero, argobytes_actor, argobytes_trader, argobytes_clone, example_action):
+def test_simple_execute(address_zero, argobytes_multicall, argobytes_trader, argobytes_clone, example_action):
     value = 1e18
 
     # make sure the arbitrage contract has no funds
@@ -76,7 +76,7 @@ def test_simple_execute(address_zero, argobytes_actor, argobytes_trader, argobyt
             False,
             accounts[0],
             borrows,
-            argobytes_actor,
+            argobytes_multicall,
             actions,
         ),
         {

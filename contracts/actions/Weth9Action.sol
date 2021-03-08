@@ -3,7 +3,7 @@ pragma solidity 0.7.6;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
-import {IWETH9} from "contracts/interfaces/weth9/IWETH9.sol";
+import {IWETH9} from "contracts/external/weth9/IWETH9.sol";
 
 contract Weth9Action {
     // this function must be able to receive ether if it is expected to wrap it

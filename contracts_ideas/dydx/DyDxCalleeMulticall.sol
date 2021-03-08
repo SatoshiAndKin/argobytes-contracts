@@ -4,9 +4,9 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {DyDx_ICallee, DyDx_Account} from "./external/DyDx_ICallee.sol";
+import {DyDx_IDyDxCallee, DyDx_Account} from "./external/DyDx_IDyDxCallee.sol";
 
-contract DyDxCalleeMulticall is DyDx_ICallee {
+contract DyDxCalleeMulticall is DyDx_IDyDxCallee {
     struct Call {
         address target;
         bytes callData;

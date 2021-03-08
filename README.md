@@ -6,7 +6,7 @@ What's an Argobytes? It's a non-sense word that makes searching easy. I'll proba
 
 The initial use of these contracts is atomic arbitrage, but they can be used for combining all sorts of ethereum smart contract functions.
 
-There are many components: ArgobytesProxy, ArgobytesActor, ArgobytesTrader, ArgobytesAuthority, ArgobytesFactory, and a bunch Actions.
+There are many components: ArgobytesProxy, ArgobytesMulticall, ArgobytesTrader, ArgobytesAuthorizationRegistry, ArgobytesFactory, and a bunch Actions.
 
 ## ArgobytesProxy
 
@@ -20,7 +20,7 @@ Owners can opt into more advanced authentication that lets them approve other ad
 
 A common pattern will be sending one setup transaction that calls `approve` on an ERC-20 token for the proxy. Then sending a second transaction that calls the Proxy's `execute` function with another contract's address and calldata. The other contract will then transfer that ERC-20 token to make money somehow, and then return the proceeds to the owner.
 
-## ArgobytesActor
+## ArgobytesMulticall
 
 Calling just one function on another contract isn't very exciting; you can already do that with your EOA. The Actor contract's `callActions` function takes a list of multiple contract addresses and functions. If any fail, the whole thing reverts.
 
@@ -28,11 +28,11 @@ This contract is a key part of other contracts. It probably won't be deployed by
 
 ## ArgobytesTrader
 
-Most sets of actions will probably involve trading tokens. The Trader's `atomicTrade` function uses ERC-20 approvals and ArgobytesActor to transfer and trade tokens. This can be helpful for aggregating trades across multiple exchanges.
+Most sets of actions will probably involve trading tokens. The Trader's `atomicTrade` function uses ERC-20 approvals and ArgobytesMulticall to transfer and trade tokens. This can be helpful for aggregating trades across multiple exchanges.
 
 The Trader's `*Arbitrage` functions are designed so that unless the trade completes with a positive arbitrage, the entire transaction reverts. This means that you can approve other people or contracts to trade with your balances. `atomicArbitrage` uses your own funds to do the arbitrage. `dydxFlashArbitrage` uses a (nearly) free flash loan from dYdX to do the arbitrage.
 
-## ArgobytesAuthority
+## ArgobytesAuthorizationRegistry
 
 A surprisingly simple, but hopefully powerful way to authorize other contracts to use your proxy. For each authorization, you specify an addresses to call a specific function on a specific contract. Approval can be revoked at any time. Given a properly designed contract this should allow you to safely delegate permissions to others without them having custody of your funds.
 

@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import {DyDxTypes} from "./DyDxTypes.sol";
 
-interface ISoloMargin {
+interface IDyDxSoloMargin {
     function operate(
         DyDxTypes.AccountInfo[] memory accounts,
         DyDxTypes.ActionArgs[] memory actions
