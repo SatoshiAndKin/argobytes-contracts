@@ -6,14 +6,12 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import {Constants} from "./Constants.sol";
-import {DyDxCallee, DyDxTypes} from "./DyDxCallee.sol";
 
+import {DyDxCallee, DyDxTypes} from "contracts/abstract/DyDxCallee.sol";
 import {ArgobytesClone} from "contracts/abstract/ArgobytesClone.sol";
 
 
 contract EnterCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
-
-    bool _pending_flashloan = false;
 
     struct EnterData {
         uint256 dai;
@@ -99,9 +97,7 @@ contract EnterCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
         flash_dai_amount *= 74;
         flash_dai_amount /= 10;
 
-        _pending_flashloan = true;
-
-        _flashloanDAI(flash_dai_amount, abi.encode(loan_data));
+        _DyDxFlashloan(3, address(DAI), flash_dai_amount, abi.encode(loan_data));
     }
 
     /*
@@ -113,12 +109,7 @@ contract EnterCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
         address sender,
         DyDxTypes.AccountInfo calldata /*account_info*/,
         bytes memory encoded_data
-    ) external override {
-        require(_pending_flashloan, "!pending_flashloan");
-        require(sender == address(this), "!sender");  // TODO: is this check needed? pending_flashloan should be enough
-
-        _pending_flashloan = false;
-
+    ) external override authFlashLoan {
         (uint256 flash_dai_amount, EnterLoanData memory data) = abi.decode(encoded_data, (uint256, EnterLoanData));
 
         // approvals

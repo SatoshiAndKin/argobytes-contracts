@@ -9,14 +9,15 @@ pragma experimental ABIEncoderV2;
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
 
+import {ArgobytesClone} from "contracts/abstract/ArgobytesClone.sol";
 import {ArgobytesMulticall} from "contracts/ArgobytesMulticall.sol";
 import {IDyDxCallee} from "contracts/external/dydx/IDyDxCallee.sol";
 import {DyDxTypes, IDyDxSoloMargin} from "contracts/external/dydx/IDyDxSoloMargin.sol";
 
 interface IArgobytesTrader {
     struct Borrow {
-        IERC20 token;
         uint256 amount;
+        IERC20 token;
         address dest;
     }
 
@@ -46,7 +47,7 @@ interface IArgobytesTrader {
 
 // TODO: this isn't right. this works for the owner account, but needs more thought for authenticating a bot
 // TODO: maybe have a function approvedAtomicAbitrage that calls transferFrom. and another that that assumes its used from the owner of the funnds with delegatecall
-contract ArgobytesTrader is IArgobytesTrader {
+contract ArgobytesTrader is IArgobytesTrader, ArgobytesClone {
     using SafeERC20 for IERC20;
 
     bool _pending_flashloan = false;
@@ -55,7 +56,6 @@ contract ArgobytesTrader is IArgobytesTrader {
         0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e
     );
 
-    // TODO: WETH910 is maybe coming
     address constant WETH9 = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     // TODO: return gas tokens freed?
@@ -129,9 +129,7 @@ contract ArgobytesTrader is IArgobytesTrader {
         Borrow[] calldata borrows,
         ArgobytesMulticall argobytes_multicall,
         ArgobytesMulticall.Action[] calldata actions
-    ) external override payable {
-        revert("require auth");
-
+    ) external override payable auth {
         // transfer tokens from msg.sender to arbitrary destinations
         // this is dangerous! be careful with this!
         for (uint256 i = 0; i < borrows.length; i++) {
@@ -178,86 +176,13 @@ contract ArgobytesTrader is IArgobytesTrader {
         uint256 borrow_amount,
         address argobytes_multicall,
         ArgobytesMulticall.Action[] calldata actions
-    ) external override payable {
-        revert("require auth");
-
+    ) external override payable auth {
+        // TODO: move this dydx stuff to a helper
         // we want to give coins to argobytes actor
         // TODO: why is the linter adding extra line breaks?!
         DyDxTypes.AccountInfo[] memory accountInfos = new DyDxTypes.AccountInfo[](1);
-        // TODO: what account number should we use?
-        accountInfos[0] = DyDxTypes.AccountInfo({
-            owner: address(this), // with delegatecall, `this` is a proxy
-            number: 0
-        });
-
-        // setup multiple actions
-        DyDxTypes.ActionArgs[] memory operations = new DyDxTypes.ActionArgs[](
-            3
-        );
-
-        // 1. borrow some token
-        // set borrow_id to match https://docs.dydx.exchange/#solo-markets
-        // 0 = WETH9, 1 = SAI, 2 = USDC, 3 = DAI
-        operations[0] = DyDxTypes.ActionArgs({
-            actionType: DyDxTypes.ActionType.Withdraw,
-            accountId: 0,
-            amount: DyDxTypes.AssetAmount({
-                sign: false,
-                denomination: DyDxTypes.AssetDenomination.Wei,
-                ref: DyDxTypes.AssetReference.Delta,
-                value: borrow_amount
-            }),
-            primaryMarketId: borrow_id,
-            secondaryMarketId: 0,
-            otherAddress: argobytes_multicall,
-            otherAccountId: 0,
-            data: ""
-        });
-
-        // 2. call Argobytes actor
-        // the last action should return borrowed coins (+ 2 wei fee) to this contract
-        operations[1] = DyDxTypes.ActionArgs({
-            actionType: DyDxTypes.ActionType.Call,
-            accountId: 0,
-            amount: DyDxTypes.AssetAmount({
-                sign: false,
-                denomination: DyDxTypes.AssetDenomination.Wei,
-                ref: DyDxTypes.AssetReference.Delta,
-                value: 0
-            }),
-            primaryMarketId: 0,
-            secondaryMarketId: 0,
-            otherAddress: argobytes_multicall,
-            otherAccountId: 0,
-            data: abi.encode(actions)
-        });
-
-        // 3. return what we borrowed (plus a super tiny 2 wei fee)
-
-        // approve the return
-        // we have to add 1 or 2 wei depending on the market
-        borrow_token.approve(address(soloMargin), borrow_amount + 2);
-
-        operations[2] = DyDxTypes.ActionArgs({
-            actionType: DyDxTypes.ActionType.Deposit,
-            accountId: 0,
-            amount: DyDxTypes.AssetAmount({
-                sign: true,
-                denomination: DyDxTypes.AssetDenomination.Wei,
-                ref: DyDxTypes.AssetReference.Delta,
-                value: borrow_amount + 2
-            }),
-            primaryMarketId: borrow_id,
-            secondaryMarketId: 0,
-            otherAddress: address(this), // this contract (not argobytes_multicall) is going to pay back the debt. with delegatecall, `this` is a proxy
-            otherAccountId: 0,
-            data: ""
-        });
-
-        _pending_flashloan = true;
-
-        // do all the operations
-        soloMargin.operate(accountInfos, operations);
+        
+        abi.encode(actions)
 
         // we could check for actual profit here, but i don't think its necessary
     }

@@ -6,14 +6,12 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import {Constants} from "./Constants.sol";
-import {DyDxCallee, DyDxTypes} from "./DyDxCallee.sol";
 
+import {DyDxCallee, DyDxTypes} from "contracts/abstract/DyDxCallee.sol";
 import {ArgobytesClone} from "contracts/abstract/ArgobytesClone.sol";
 
 
 contract ExitCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
-
-    bool _pending_flashloan = false;
 
     struct ExitLoanData {
         uint256 min_remove_liquidity_dai;
@@ -46,10 +44,8 @@ contract ExitCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
 
         require(dai_borrow_balance > 0, "!borrowBalance");
 
-        _pending_flashloan = true;
-
         // flash loan enough DAI to fully pay back the loan
-        _flashloanDAI(dai_borrow_balance, abi.encode(data));
+        _DyDxFlashloan(3, address(DAI), dai_borrow_balance, abi.encode(data));
     }
 
     /*
@@ -66,14 +62,11 @@ contract ExitCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
         address sender,
         DyDxTypes.AccountInfo calldata /*account_info*/,
         bytes memory encoded_data
-    ) external override {
-        require(_pending_flashloan, "!pending_flashloan");
+    ) external override authFlashLoan {
         // sender is our original caller. msg.sender is the flash loan provider
         // this isn't really a security check. this is more a safety check
         // TODO: is this check needed? pending_flashloan should be enough
         require(sender == address(this), "!sender");
-
-        _pending_flashloan = false;
 
         uint256 temp;  // we are going to check a lot of balances
 

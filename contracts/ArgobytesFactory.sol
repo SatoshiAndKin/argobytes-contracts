@@ -36,6 +36,8 @@ interface IArgobytesFactory {
         address immutableOwner
     ) external view returns (bool cloneExists, address cloneAddr);
 
+    // TODO: function that returns the target contract for a given proxy?
+
     function createContract(
         bytes32 salt,
         bytes memory bytecode,

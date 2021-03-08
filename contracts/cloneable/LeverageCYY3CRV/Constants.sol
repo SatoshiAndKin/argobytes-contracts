@@ -33,9 +33,6 @@ abstract contract Constants {
     ICERC20 public constant CY_Y_THREE_CRV = ICERC20(0x7589C9E17BCFcE1Ccaa1f921196FDa177F0207Fc);
     ICERC20 public constant CY_DAI = ICERC20(0x8e595470Ed749b85C6F7669de83EAe304C2ec68F);
 
-    // dydx
-    IDyDxSoloMargin public constant DYDX_SOLO_MARGIN = IDyDxSoloMargin(0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e);
-
     // yearn
     IYVault public constant Y_THREE_CRV = IYVault(0x9cA85572E6A3EbF24dEDd195623F188735A5179f);
 }
