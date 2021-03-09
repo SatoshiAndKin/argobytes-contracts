@@ -7,9 +7,19 @@ import {Address} from "@OpenZeppelin/utils/Address.sol";
  * @dev Collection of openzepplin's unreleased functions related to the address type
  */
 library Address2 {
-    using Address for address;
 
-    // make sure to check Address.isContract(target) first!
+    function uncheckedCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
+        // TODO: allow calling with value
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, bytes memory returndata) = target.call(data);
+        return _verifyCallResult(success, returndata, errorMessage);
+    }
+
+    /// @dev make sure to check Address.isContract(target) first!
     function uncheckedDelegateCall(
         address target,
         bytes memory data,

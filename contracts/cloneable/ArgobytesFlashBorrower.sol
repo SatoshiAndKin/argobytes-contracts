@@ -3,18 +3,17 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
+import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
-import {ArgobytesClone} from "../ArgobytesClone.sol";
+import {ArgobytesClone} from "./ArgobytesClone.sol";
 
+import {ArgobytesAuth} from "contracts/abstract/ArgobytesAuth.sol";
 import {Address2} from "contracts/library/Address2.sol";
 import {IERC3156FlashBorrower} from "contracts/external/erc3156/IERC3156FlashBorrower.sol";
 import {IERC3156FlashLender} from "contracts/external/erc3156/IERC3156FlashLender.sol";
 
 contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
-
-    // the callback's return is already taken
-    event TargetReturn(address indexed target, bytes returned);
 
     // because we make heavy use of delegatecall, we want to make sure our storage is durable
     bytes32 constant FLASH_BORROWER_POSITION = keccak256("argobytes.storage.FlashBorrower.lender") - 1;
@@ -32,7 +31,7 @@ contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
         }
     }
 
-    function setLender(address new_lender) external auth {
+    function setLender(address new_lender) external auth() {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
         s.lender = IERC3156FlashLender(new_lender);
@@ -45,13 +44,14 @@ contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
         address token,
         uint256 amount,
         address pending_target,
+        ArgobytesAuth.CallType call_type,
         bytes pending_calldata
     ) public returns (bytes memory returned) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
         // check auth
         if (msg.sender != owner()) {
-            requireAuth(action.target, action.target_calldata.toBytes4());
+            requireAuth(action.target, call_type, action.target_calldata.toBytes4());
         }
 
         // we could pass the calldata to the lender and have them pass it back, but that seems less safe
@@ -63,7 +63,7 @@ contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
         s.lender.flashLoan(this, token, amount, "");
         // s.pending_loan is changed to false
 
-        // copy returned value
+        // copy the call's returned value to return it from this function
         returned = s.pending_return;
 
         // clear the pending values
@@ -89,7 +89,7 @@ contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
             "FlashBorrower !pending_loan"
         );
         require(
-            msg.sender == address(lender),
+            msg.sender == address(s.lender),
             "FlashBorrower !lender"
         );
         require(
@@ -108,16 +108,22 @@ contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
 
         // uncheckedDelegateCall is safe because we just checked that `target` is a contract
         // emit an event with the response?
-        bytes memory returned = Address2.uncheckedDelegateCall(
-            s.pending_target,
-            s.pending_calldata,
-            "FlashLoanBorrower.onFlashLoan !delegatecall"
-        );
+        bytes memory returned;
+        if (call_type == ArgobytesAuth.CallType.DELEGATE) {
+            returned = Address2.uncheckedDelegateCall(
+                s.pending_target,
+                s.pending_calldata,
+                "FlashLoanBorrower.onFlashLoan !delegatecall"
+            );
+        } else {
+            revert("wip");
+        }
+
+        // since we can't return the call's return from here, we store it in state
+        s.pending_return = returned;
 
         // approve paying back the loan
         IERC20(token).approve(address(s.lender), amount + fee);
-
-        s.pending_return = returned;
 
         // return their special response
         return keccak256("ERC3156FlashBorrower.onFlashLoan");

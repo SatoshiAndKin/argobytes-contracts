@@ -27,10 +27,15 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
     using Address2 for address;
     using Bytes2 for bytes;
 
-    bytes32 constant AUTHORITY_POSITION = keccak256("argobytes.storage.ArgobytesAuth.authority") - 1;
+    enum CallType {
+        Call,
+        Delegate,
+        Admin
+    }
 
     // note that this is state!
     // TODO: how can we be sure that a sneaky delegatecall doesn't change this
+    bytes32 constant AUTHORITY_POSITION = keccak256("argobytes.storage.ArgobytesAuth.authority") - 1;
     function authorityStorage() internal pure returns (IArgobytesAuthorizationRegistry storage s) {
         bytes32 position = AUTHORITY_POSITION;
         assembly {
@@ -38,13 +43,13 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
         }
     }
 
-    modifier auth {
+    modifier auth(CallType call_type) {
         // do auth first. that is safest
         // theres some cases where it may be possible to do the auth check last, but it is too risky for me
         // TODO: GSN?
         // TODO: i can see cases where msg.data could be used, but i think thats more complex than we need
         if (msg.sender != owner()) {
-            requireAuth(address(this), msg.sig);
+            requireAuth(address(this), call_type, msg.sig);
         }
         _;
     }
@@ -60,6 +65,7 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
     */
     function isAuthorized(
         address sender,
+        CallType call_type,
         address target,
         bytes4 sig
     ) internal view returns (bool authorized) {
@@ -67,11 +73,11 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
 
         // this reverts without a reason if authority isn't set and the caller is not the owner. is that okay?
         // we could check != address(0) and do authority.canCall in a try/catch, but that costs more gas
-        authorized = authority.canCall(sender, target, sig);
+        authorized = authority.canCall(sender, call_type, target, sig);
     }
 
-    function requireAuth(address target, bytes4 sig) internal view {
-        require(isAuthorized(msg.sender, target, sig), "ArgobytesAuth: 403");
+    function requireAuth(CallType call_type, address target, bytes4 sig) internal view {
+        require(isAuthorized(msg.sender, call_type, target, sig), "ArgobytesAuth: 403");
     }
 
     function setAuthority(IArgobytesAuthorizationRegistry new_authority) public auth {

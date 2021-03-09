@@ -31,14 +31,14 @@ abstract contract ArgobytesClone is ArgobytesAuth {
      * The owner is allowed to call anything. This is helpful in case funds get somehow stuck.
      * The owner can authorize other contracts 
      */
-    function execute(address target, bytes memory target_calldata)
+    function execute(address target, ArgobytesAuth.CallType call_type, bytes memory target_calldata)
         public
         payable
         returns (bytes memory response)
     {
         // check auth
         if (msg.sender != owner()) {
-            requireAuth(target, target_calldata.toBytes4());
+            requireAuth(target, call_type, target_calldata.toBytes4());
         }
 
         require(
@@ -63,6 +63,7 @@ abstract contract ArgobytesClone is ArgobytesAuth {
     function createContractAndExecute(
         IArgobytesFactory factory,
         bytes32 target_salt,
+        ArgobytesAuth.CallType call_type,
         bytes memory target_code,
         bytes memory target_calldata
     ) public payable returns (address target, bytes memory response) {
@@ -71,14 +72,23 @@ abstract contract ArgobytesClone is ArgobytesAuth {
         target = factory.checkedCreateContract(target_salt, target_code);
 
         if (msg.sender != owner()) {
-            requireAuth(target, target_calldata.toBytes4());
+            requireAuth(target, call_type, target_calldata.toBytes4());
         }
 
         // uncheckedDelegateCall is safe because we just used `existingOrCreate2`
-        response = target.uncheckedDelegateCall(
-            target_calldata,
-            "ArgobytesProxy.createContractAndExecute failed"
-        );
+        if (call_type == ArgobytesAuth.CallType.DELEGATE) {
+            response = Address2.uncheckedDelegateCall(
+                target,
+                target_calldata,
+                "ArgobytesProxy.createContractAndExecute failed"
+            );
+        } else {
+            response = Address2.uncheckedCall(
+                target,
+                target_calldata,
+                "ArgobytesProxy.createContractAndExecute failed"
+            );
+        }
     }
 
     // TODO: EIP-165? EIP-721 receiver? those should probably be sent to the owner and then the owner approves this contract

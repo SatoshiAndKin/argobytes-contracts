@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-// don't call this contract directly! use a proxy like DSProxy or ArgobytesProxy!
-// TODO: use a generic flash loan contract instead of hard coding dydx?
+// TODO: rewrite this to be a target for ArgobytesFlashBorrower
 // TODO: consistent revert strings
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import {Constants} from "./Constants.sol";
 
-import {DyDxCallee, DyDxTypes} from "contracts/abstract/DyDxCallee.sol";
-import {ArgobytesClone} from "../ArgobytesClone.sol";
 
-
-contract EnterCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
+contract EnterCYY3CRV is Constants {
 
     struct EnterData {
         uint256 dai;
@@ -32,8 +28,8 @@ contract EnterCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
     function enter(
         EnterData calldata data,
         EnterLoanData calldata loan_data
-    ) external payable onlyOwner {
-        // TODO: add the "onlyOwner" modifier to this once it works
+    ) external payable {
+        // TODO: we don't need auth here anymore. this is only used via delegatecall that already has auth. but think about it more
 
         uint256 temp;  // we are going to be checking a lot of balances
         uint256 flash_dai_amount = 0;
@@ -97,7 +93,8 @@ contract EnterCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
         flash_dai_amount *= 74;
         flash_dai_amount /= 10;
 
-        _DyDxFlashLoan(3, address(DAI), flash_dai_amount, abi.encode(loan_data));
+        // _DyDxFlashLoan(3, address(DAI), flash_dai_amount, abi.encode(loan_data));
+        revert("wip");
     }
 
     /*
@@ -105,9 +102,10 @@ contract EnterCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
 
     TODO: do we care about the account_info?
     */
+    /*
     function callFunction(
         address sender,
-        DyDxTypes.AccountInfo calldata /*account_info*/,
+        DyDxTypes.AccountInfo calldata /\*account_info*\/,
         bytes memory encoded_data
     ) external override authFlashLoan {
         (uint256 flash_dai_amount, EnterLoanData memory data) = abi.decode(encoded_data, (uint256, EnterLoanData));
@@ -178,4 +176,5 @@ contract EnterCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
         // we already approved this
         require(CY_DAI.borrow(flash_dai_amount) == 0, "!cydai.borrow");
     }
+    */
 }

@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-// don't call this contract directly! use a proxy like DSProxy or ArgobytesProxy!
-// TODO: use a generic flash loan contract instead of hard coding dydx?
+// TODO: rewrite this to be a target for ArgobytesFlashBorrower
 // TODO: consistent revert strings
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import {Constants} from "./Constants.sol";
 
-import {DyDxCallee, DyDxTypes} from "contracts/abstract/DyDxCallee.sol";
-import {ArgobytesClone} from "../ArgobytesClone.sol";
 
-
-contract ExitCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
+contract ExitCYY3CRV is Constants {
 
     struct ExitLoanData {
         uint256 min_remove_liquidity_dai;
@@ -24,7 +20,9 @@ contract ExitCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
     /* Users should delegatecall this function through a proxy. */
     function exit(
         ExitLoanData calldata data
-    ) external auth payable {
+    ) external payable {
+        // TODO: does this need auth? not if delegatecall is used. enforce that?
+
         // send any ETH as a tip to the developer
         if (msg.value > 0) {
             (bool success, ) = data.tip_address.call{value: msg.value}("");
@@ -45,7 +43,9 @@ contract ExitCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
         require(dai_borrow_balance > 0, "!borrowBalance");
 
         // flash loan enough DAI to fully pay back the loan
-        _DyDxFlashLoan(3, address(DAI), dai_borrow_balance, abi.encode(data));
+        // _DyDxFlashLoan(3, address(DAI), dai_borrow_balance, abi.encode(data));
+
+        revert("wip");
     }
 
     /*
@@ -58,9 +58,10 @@ contract ExitCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
     it would be nice to allow exiting into other tokens, but that got rather complex
     someone could easily make their own exit contract that does that if they want it
     */
+    /*
     function callFunction(
         address sender,
-        DyDxTypes.AccountInfo calldata /*account_info*/,
+        DyDxTypes.AccountInfo calldata /\*account_info*\/,
         bytes memory encoded_data
     ) external override authFlashLoan {
         // sender is our original caller. msg.sender is the flash loan provider
@@ -122,4 +123,5 @@ contract ExitCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
         // transfer the rest of the DAI
         require(DAI.transfer(sender, temp), "!DAI.transfer");
     }
+    */
 }
