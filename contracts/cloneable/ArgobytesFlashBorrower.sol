@@ -66,14 +66,14 @@ contract ArgobytesFlashBorrower is ArgobytesClone, ArgobytesFlashBorrowerEvents,
     ) public returns (bytes memory returned) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
-        // check auth
+        // check auth (owner is always allowed to use any lender and any action)
         if (msg.sender != owner()) {
             requireAuth(action.target, action.call_type, Bytes2.toBytes4(action.target_calldata));
+            require(
+                s.allowed_lenders[lender],
+                "FlashBorrower.flashBorrow !lender"
+            );
         }
-        require(
-            s.allowed_lenders[lender],
-            "FlashBorrower.flashBorrow !lender"
-        );
 
         // we could pass the calldata to the lender and have them pass it back, but that seems less safe
         // use storage so that no one can change it
