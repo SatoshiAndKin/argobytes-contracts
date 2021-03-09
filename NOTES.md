@@ -26,7 +26,7 @@ we could still have a proxy factory contract that buys and frees gas tokens. hop
 
 
 test gas usage of different ways of doing proxying:
-- proxy.execute(ArgobytesProxyFactory.address, "", ExampleAction.initcode, exampleAction.burnGas(1000))
+- proxy.execute(ArgobytesFactory.address, "", ExampleAction.initcode, exampleAction.burnGas(1000))
 - proxy.execute(ExampleAction.address, exampleAction.burnGas(1000))
 
 still not sure how we want to do gas token approvals vs buying 

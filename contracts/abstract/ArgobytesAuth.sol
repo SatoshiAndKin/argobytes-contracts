@@ -6,7 +6,6 @@ pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
-import {Strings2} from "contracts/library/Strings2.sol";
 import {IArgobytesAuthority} from "contracts/ArgobytesAuthority.sol";
 import {IArgobytesFactory} from "contracts/ArgobytesFactory.sol";
 import {Address2} from "contracts/library/Address2.sol";

@@ -13,7 +13,6 @@ import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
 import {LiquidGasTokenUser} from "contracts/LiquidGasTokenUser.sol";
 import {UniversalERC20} from "contracts/library/UniversalERC20.sol";
-// import {Strings2} from "contracts/library/Strings2.sol";
 import {
     IArgobytesAtomicActions,
     IArgobytesOwnedVault
@@ -25,11 +24,10 @@ contract ArgobytesProxy is
     LiquidGasTokenUser,
     IArgobytesOwnedVault
 {
-    using Address for address payable;
     using SafeMath for uint256;
-    using Strings for uint256;
-    // using Strings2 for address;
-    using UniversalERC20 for IERC20;
+    // using Address for address payable;
+    // using Strings for uint256;
+    // using UniversalERC20 for IERC20;
 
     address internal constant ADDRESS_ZERO = address(0);
 

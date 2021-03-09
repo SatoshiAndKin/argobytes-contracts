@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // Store profits and provide them for flash lending
 // Burns LiquidGasToken (or compatible contracts)
-// TODO: finish ArgobytesClone refactor
+// TODO: finish ArgobytesProxy refactor
 // TODO: rewrite this to use the FlashLoan EIP instead of dydx. this allows lots more tokens
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;

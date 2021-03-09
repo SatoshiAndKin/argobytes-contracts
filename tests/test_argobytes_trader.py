@@ -1,12 +1,12 @@
 import brownie
 import pytest
 import warnings
-from brownie import accounts
+from brownie import accounts, ZERO_ADDRESS
 from brownie.test import given, strategy
 from hypothesis import settings
 
 
-def test_liquidgastoken_saves_gas(address_zero, argobytes_multicall, argobytes_trader, example_action, liquidgastoken):
+def test_liquidgastoken_saves_gas(argobytes_multicall, argobytes_trader, example_action, liquidgastoken):
     value = 1e18
 
     borrows = []
@@ -14,7 +14,7 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_multicall, argobytes_t
         (
             example_action,
             1,
-            example_action.sweep.encode_input(accounts[0], address_zero, 400000),
+            example_action.sweep.encode_input(accounts[0], ZERO_ADDRESS, 400000),
         )
     ]
 
@@ -50,7 +50,7 @@ def test_liquidgastoken_saves_gas(address_zero, argobytes_multicall, argobytes_t
     assert atomic_arbitrage_lgt_tx.gas_used < atomic_arbitrage_tx.gas_used
 
 
-def test_simple_arbitrage(address_zero, argobytes_multicall, argobytes_trader, example_action, weth9_erc20):
+def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action, weth9_erc20):
     value = 1e18
 
     # get some WETH

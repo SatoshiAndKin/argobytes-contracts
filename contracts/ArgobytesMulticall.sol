@@ -2,7 +2,7 @@
 /*
 This is similar to MakerDAO's Multicall, but it can also pass value. If you don't need value, Multicall may be better.
 
-TODO: think about this smore. make it re-use code in ArgobytesClone?
+TODO: think about this smore. make it re-use code in ArgobytesProxy?
 */
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;

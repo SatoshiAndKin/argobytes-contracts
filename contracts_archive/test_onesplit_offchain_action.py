@@ -1,10 +1,10 @@
 import brownie
 import pytest
-from brownie import accounts
+from brownie import accounts, ZERO_ADDRESS
 from brownie.test import given, strategy
 
 
-def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action, weth9_erc20):
+def test_action(dai_erc20, no_call_coverage, onesplit, onesplit_offchain_action, weth9_erc20):
     value = 1e17
 
     # make sure balances start zeroed
@@ -27,7 +27,7 @@ def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_of
     # calculation distributions on-chain is expensive, so we do it here instead
     # function encodeExtraData(address src_token, address dest_token, uint src_amount, uint dest_min_tokens, uint256 parts)
     (expected_return_eth_to_token, extra_data_eth_to_token) = onesplit_offchain_action.encodeExtraData(
-        address_zero, weth9_erc20, value, 1, onesplit, parts, disable_flags)
+        ZERO_ADDRESS, weth9_erc20, value, 1, onesplit, parts, disable_flags)
 
     # tradeEtherToToken(address to, address dest_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
     _eth_to_token_tx = onesplit_offchain_action.tradeEtherToToken(
@@ -69,7 +69,7 @@ def test_action(address_zero, dai_erc20, no_call_coverage, onesplit, onesplit_of
     # function encodeExtraData(address src_token, address dest_token, uint src_amount, uint dest_min_tokens, uint256 parts)
     # TODO: proper src_amount based on the previous transaction
     (expected_return_token_to_eth, extra_data_token_to_eth) = onesplit_offchain_action.encodeExtraData(
-        dai_erc20, address_zero, dai_balance, 1, onesplit, parts, disable_flags)
+        dai_erc20, ZERO_ADDRESS, dai_balance, 1, onesplit, parts, disable_flags)
 
     # tradeTokenToEther(address to, address src_token, uint dest_min_tokens, uint dest_max_tokens, bytes calldata extra_data)
     onesplit_offchain_action.tradeTokenToEther(

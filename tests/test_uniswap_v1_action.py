@@ -1,26 +1,26 @@
 from hypothesis import settings
 from brownie.test import given, strategy
-from brownie import accounts
+from brownie import accounts, ZERO_ADDRESS
 import pytest
 import brownie
 
 
-def test_get_exchange_weth9(address_zero, uniswap_v1_factory, weth9_erc20):
+def test_get_exchange_weth9(uniswap_v1_factory, weth9_erc20):
     exchange = uniswap_v1_factory.getExchange.call(weth9_erc20)
     print("exchange:", exchange)
 
-    assert exchange != address_zero
+    assert exchange != ZERO_ADDRESS
 
 
-def test_get_exchange_failure(address_zero, uniswap_v1_factory):
-    exchange = uniswap_v1_factory.getExchange.call(address_zero)
+def test_get_exchange_failure(uniswap_v1_factory):
+    exchange = uniswap_v1_factory.getExchange.call(ZERO_ADDRESS)
     print("exchange:", exchange)
 
-    assert exchange == address_zero
+    assert exchange == ZERO_ADDRESS
 
 
 # @pytest.mark.xfail(reason="test passes when its run by itself, but it fails when everything is run together. bug in test isolation? bug in ganache-cli?")
-def test_action(address_zero, uniswap_v1_factory, uniswap_v1_action, dai_erc20, usdc_erc20):
+def test_action(uniswap_v1_factory, uniswap_v1_action, dai_erc20, usdc_erc20):
     value = 1e17
 
     # send some ETH into the action
@@ -55,7 +55,7 @@ def test_action(address_zero, uniswap_v1_factory, uniswap_v1_action, dai_erc20, 
     # save ETH balance for accounts[0]
     starting_eth_balance = accounts[0].balance()
 
-    # TODO: we really should test that setting "to" to address_zero sends to msg.sender on all of them
+    # TODO: we really should test that setting "to" to ZERO_ADDRESS sends to msg.sender on all of them
 
     # trade DAI to ETH
     # tradeTokenToEther(address payable to, address exchange, address src_token, uint256 dest_min_tokens)

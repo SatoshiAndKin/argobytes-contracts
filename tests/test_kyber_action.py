@@ -1,13 +1,13 @@
 import brownie
 import pytest
-from brownie import accounts
+from brownie import accounts, ZERO_ADDRESS
 from brownie.test import given, strategy
 from eth_utils import to_bytes
 from hypothesis import settings
 
 
 # TODO: this test crashes ganache when we try to collect coverage
-def test_action(address_zero, kyber_action, kyber_network_proxy, dai_erc20, skip_coverage, usdc_erc20):
+def test_action(kyber_action, kyber_network_proxy, dai_erc20, skip_coverage, usdc_erc20):
     value = 1e17
 
     # TODO: build proper hints for the different trades

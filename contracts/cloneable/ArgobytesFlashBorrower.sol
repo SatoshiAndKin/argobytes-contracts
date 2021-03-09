@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-// use the flash loan EIP to receive tokens and then call arbitrary actions
+/**
+ * ArgobytesFlashBorrower is an extension to ArgobytesProxy that is also an IERC3156 Flash Loan Borrower.
+ */
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
-
-import {ArgobytesClone} from "./ArgobytesClone.sol";
 
 import {ArgobytesAuthTypes} from "contracts/abstract/ArgobytesAuth.sol";
 import {Address2} from "contracts/library/Address2.sol";
@@ -14,11 +14,13 @@ import {Bytes2} from "contracts/library/Bytes2.sol";
 import {IERC3156FlashBorrower} from "contracts/external/erc3156/IERC3156FlashBorrower.sol";
 import {IERC3156FlashLender} from "contracts/external/erc3156/IERC3156FlashLender.sol";
 
+import {ArgobytesProxy} from "./ArgobytesProxy.sol";
+
 abstract contract ArgobytesFlashBorrowerEvents {
     event Lender(address indexed sender, address indexed lender, bool allowed);
 }
 
-contract ArgobytesFlashBorrower is ArgobytesClone, ArgobytesFlashBorrowerEvents, IERC3156FlashBorrower {
+contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents, IERC3156FlashBorrower {
 
     /// @dev diamond storage
     bytes32 constant FLASH_BORROWER_POSITION = keccak256("argobytes.storage.FlashBorrower.lender");

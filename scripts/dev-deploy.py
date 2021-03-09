@@ -46,15 +46,11 @@ def main():
 
     print("account 0:", accounts[0])
 
-    # gas price should be 3.0x to 3.5x the mint price
-    # TODO: double check and document why its 3.5x
-    expected_mainnet_mint_price = "20 gwei"
     # unless you are in a rush, it is better to not use gas token and just deploy at expected_mainnet_mint_price
-    expected_mainnet_gas_price = "60 gwei"
+    expected_mainnet_gas_price = "120 gwei"
 
     deadline = 90000000000000000000
 
-    kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWalletAddress)
 
     # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
     argobytes_proxy_owner = accounts[0]
@@ -70,8 +66,6 @@ def main():
     starting_balance = accounts[0].balance()
 
     def argobytes_factory_deploy_helper(factory, contract, gas_price=expected_mainnet_gas_price, constructor_args=[]):
-        gas_token_amount = 0
-        require_gas_token = False
         salt = ""
 
         # TODO: calculate the gas_token_amount needed (maybe by deploying inside a fork)
@@ -168,6 +162,8 @@ def main():
     # synthetix_depot_action = argobytes_factory_deploy_helper(argobytes_factory, SynthetixDepotAction)
     curve_fi_action = argobytes_factory_deploy_helper(argobytes_factory, CurveFiAction)
 
+    kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWalletAddress)
+
     bulk_actions = [
         # allow bots to call argobytes_trader.atomicArbitrage
         # TODO: think about this more. the msg.sendere might not be what we need
@@ -182,9 +178,9 @@ def main():
         ),
         # register for kyber's fee program
         (
-            KyberRegisterWalletAddress,
+            kyber_register_wallet,
+            0,
             kyber_register_wallet.registerWallet.encode_input(argobytes_proxy_owner),
-            False,
         ),
         # TODO: gas_token.buyAndFree or gas_token.free depending on off-chain balance/price checks
     ]

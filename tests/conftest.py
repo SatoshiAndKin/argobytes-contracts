@@ -19,29 +19,23 @@ def session_defaults():
     web3.enable_strict_bytes_type_checking()
 
 
-# TODO: i think brownie provides this now
-@pytest.fixture(scope="session")
-def address_zero():
-    return "0x0000000000000000000000000000000000000000"
-
-
 @pytest.fixture(scope="function")
 def argobytes_multicall(ArgobytesMulticall):
-    return ArgobytesMulticall.deploy({"from": accounts[0]})
+    return accounts[0].deploy(ArgobytesMulticall)
 
 
 @pytest.fixture(scope="function")
 def argobytes_authority(ArgobytesAuthority):
-    return ArgobytesAuthority.deploy({"from": accounts[0]})
+    return accounts[0].deploy(ArgobytesAuthority)
 
 
 @pytest.fixture(scope="function")
 def argobytes_factory(ArgobytesFactory):
-    return ArgobytesFactory.deploy({"from": accounts[0]})
+    return accounts[0].deploy(ArgobytesFactory)
 
 
 @pytest.fixture(scope="function")
-def argobytes_clone(argobytes_authority, argobytes_proxy, ArgobytesProxy, argobytes_factory):
+def argobytes_proxy(argobytes_authority, argobytes_proxy, ArgobytesProxy, argobytes_factory):
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
     salt = ""
 
@@ -143,7 +137,7 @@ def onesplit():
 
 
 @pytest.fixture(scope="session")
-def onesplit_helper(address_zero, onesplit, interface):
+def onesplit_helper(onesplit, interface):
 
     def inner_onesplit_helper(eth_amount, dest_token, to):
         # TODO: actual ERC20 interface
@@ -155,14 +149,14 @@ def onesplit_helper(address_zero, onesplit, interface):
         # not sure why, but uniswap v2 is not working well. i think its a ganache-core bug
         # flags += 0x1E000000  # FLAG_DISABLE_UNISWAP_V2_ALL
 
-        expected_return = onesplit.getExpectedReturn.call(address_zero, dest_token, eth_amount, parts, flags)
+        expected_return = onesplit.getExpectedReturn.call(ZERO_ADDRESS, dest_token, eth_amount, parts, flags)
 
         expected_return_amount = expected_return[0]
         distribution = expected_return[1]
 
         assert(expected_return_amount > 1)
 
-        onesplit.swap(address_zero, dest_token, eth_amount, 1,
+        onesplit.swap(ZERO_ADDRESS, dest_token, eth_amount, 1,
                       distribution, flags, {"from": accounts[0], "value": eth_amount})
 
         actual_return_amount = dest_token.balanceOf.call(accounts[0])
@@ -198,12 +192,12 @@ def onesplit_offchain_action(OneSplitOffchainAction):
 
 
 @pytest.fixture(scope="session")
-def susd_erc20(address_zero, synthetix_address_resolver):
+def susd_erc20(synthetix_address_resolver):
     # The AddressResolver is not populated with everything right now, only those internal contract addresses that do not change. ProxyERC20 (SNX) and ProxyERC20sUSD (sUSD) are static addresses you can simply hard code in if you need
     # proxy = synthetix_address_resolver.requireAndGetAddress(to_hex32(text="ProxyERC20sUSD"), "No Proxy")
     proxy = Contract.from_explorer(sUSDAddress)
 
-    assert(proxy != address_zero)
+    assert(proxy != ZERO_ADDRESS)
 
     return Contract.from_explorer(proxy, as_proxy_for=proxy.target())
 
@@ -220,19 +214,10 @@ def synthetix_address_resolver(interface):
 
 
 @pytest.fixture(scope="session")
-def synthetix_depot(address_zero, synthetix_address_resolver):
-    depot_address = synthetix_address_resolver.getAddress(to_hex32(text="Depot"))
-
-    assert(depot_address != address_zero)
-
-    return Contract.from_explorer(depot_address)
-
-
-@pytest.fixture(scope="session")
-def synthetix_exchange_rates(address_zero, synthetix_address_resolver):
+def synthetix_exchange_rates(synthetix_address_resolver):
     rates = synthetix_address_resolver.getAddress(to_hex32(text="ExchangeRates"))
 
-    assert(rates != address_zero)
+    assert(rates != ZERO_ADDRESS)
 
     return Contract.from_explorer(rates)
 

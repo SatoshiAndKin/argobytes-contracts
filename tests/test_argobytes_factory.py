@@ -1,13 +1,13 @@
 import brownie
 
 
-def test_deploy_clone(address_zero, argobytes_factory, argobytes_proxy):
+def test_deploy_clone(argobytes_factory, argobytes_proxy):
     tx = argobytes_factory.createClone(argobytes_proxy, "", brownie.accounts[0])
 
     assert len(tx.events['NewClone']) == 1
 
 
-def test_deploy_clones(address_zero, argobytes_factory, argobytes_proxy):
+def test_deploy_clones(argobytes_factory, argobytes_proxy):
     salts = [
         0,
         1,

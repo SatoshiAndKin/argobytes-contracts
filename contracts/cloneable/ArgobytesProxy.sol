@@ -6,18 +6,12 @@ pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
-import {Strings2} from "contracts/library/Strings2.sol";
 import {IArgobytesFactory} from "contracts/ArgobytesFactory.sol";
+import {ArgobytesAuth, ArgobytesAuthTypes} from "contracts/abstract/ArgobytesAuth.sol";
 import {Address2} from "contracts/library/Address2.sol";
 import {Bytes2} from "contracts/library/Bytes2.sol";
 
-import {ArgobytesAuth, ArgobytesAuthTypes} from "contracts/abstract/ArgobytesAuth.sol";
-
-// TODO: should this be able to receive a flash loan?
-abstract contract ArgobytesClone is ArgobytesAuth {
-    using Address for address;
-    using Address2 for address;
-    using Bytes2 for bytes;
+contract ArgobytesProxy is ArgobytesAuth {
 
     struct Action {
         address target;
@@ -45,8 +39,9 @@ abstract contract ArgobytesClone is ArgobytesAuth {
     {
         // check auth
         if (msg.sender != owner()) {
-            requireAuth(action.target, action.call_type, action.target_calldata.toBytes4());
+            requireAuth(action.target, action.call_type, Bytes2.toBytes4(action.target_calldata));
         }
+
         // re-entrancy protection?
 
         require(
