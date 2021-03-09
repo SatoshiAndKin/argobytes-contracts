@@ -31,8 +31,8 @@ def argobytes_multicall(ArgobytesMulticall):
 
 
 @pytest.fixture(scope="function")
-def argobytes_authority(ArgobytesAuthorizationRegistry):
-    return ArgobytesAuthorizationRegistry.deploy({"from": accounts[0]})
+def argobytes_authority(ArgobytesAuthority):
+    return ArgobytesAuthority.deploy({"from": accounts[0]})
 
 
 @pytest.fixture(scope="function")

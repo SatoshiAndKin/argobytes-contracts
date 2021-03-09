@@ -127,8 +127,8 @@ def main():
     if FREE_GAS_TOKEN:
         gas_token.approve(argobytes_factory, 2**256-1)
 
-    # build an ArgobytesAuthorizationRegistry
-    argobytes_authority = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesAuthorizationRegistry)
+    # build an ArgobytesAuthority
+    argobytes_authority = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesAuthority)
 
     # build an ArgobytesProxy to use for cloning
     argobytes_proxy = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesProxy)

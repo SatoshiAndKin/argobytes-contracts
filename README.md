@@ -6,7 +6,7 @@ What's an Argobytes? It's a non-sense word that makes searching easy. I'll proba
 
 The initial use of these contracts is atomic arbitrage, but they can be used for combining all sorts of ethereum smart contract functions.
 
-There are many components: ArgobytesProxy, ArgobytesMulticall, ArgobytesTrader, ArgobytesAuthorizationRegistry, ArgobytesFactory, and a bunch Actions.
+There are many components: ArgobytesProxy, ArgobytesMulticall, ArgobytesTrader, ArgobytesAuthority, ArgobytesFactory, and a bunch Actions.
 
 ## ArgobytesProxy
 
@@ -32,7 +32,7 @@ Most sets of actions will probably involve trading tokens. The Trader's `atomicT
 
 The Trader's `*Arbitrage` functions are designed so that unless the trade completes with a positive arbitrage, the entire transaction reverts. This means that you can approve other people or contracts to trade with your balances. `atomicArbitrage` uses your own funds to do the arbitrage. `dydxFlashArbitrage` uses a (nearly) free flash loan from dYdX to do the arbitrage.
 
-## ArgobytesAuthorizationRegistry
+## ArgobytesAuthority
 
 A surprisingly simple, but hopefully powerful way to authorize other contracts to use your proxy. For each authorization, you specify an addresses to call a specific function on a specific contract. Approval can be revoked at any time. Given a properly designed contract this should allow you to safely delegate permissions to others without them having custody of your funds.
 

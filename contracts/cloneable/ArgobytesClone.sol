@@ -11,7 +11,7 @@ import {IArgobytesFactory} from "contracts/ArgobytesFactory.sol";
 import {Address2} from "contracts/library/Address2.sol";
 import {Bytes2} from "contracts/library/Bytes2.sol";
 
-import {ArgobytesAuth} from "contracts/abstract/ArgobytesAuth.sol";
+import {ArgobytesAuth, ArgobytesAuthTypes} from "contracts/abstract/ArgobytesAuth.sol";
 
 // TODO: should this be able to receive a flash loan?
 abstract contract ArgobytesClone is ArgobytesAuth {
@@ -21,7 +21,7 @@ abstract contract ArgobytesClone is ArgobytesAuth {
 
     struct Action {
         address target;
-        ArgobytesAuth.CallType call_type;
+        ArgobytesAuthTypes.Call call_type;
         bool forward_value;
         bytes target_calldata;
     }
@@ -47,6 +47,7 @@ abstract contract ArgobytesClone is ArgobytesAuth {
         if (msg.sender != owner()) {
             requireAuth(action.target, action.call_type, action.target_calldata.toBytes4());
         }
+        // re-entrancy protection?
 
         require(
             Address.isContract(action.target),
@@ -54,7 +55,7 @@ abstract contract ArgobytesClone is ArgobytesAuth {
         );
 
         // uncheckedDelegateCall is safe because we just checked that `target` is a contract
-        if (action.call_type == ArgobytesAuth.CallType.DELEGATE) {
+        if (action.call_type == ArgobytesAuthTypes.Call.DELEGATE) {
             response = Address2.uncheckedDelegateCall(
                 action.target,
                 action.target_calldata,
@@ -69,17 +70,19 @@ abstract contract ArgobytesClone is ArgobytesAuth {
         }
     }
 
-    // TODO: write example of using this to deploy a contract, then call a function on it
+    // TODO: write example of using this to deploy a contract, then calling a function on it
     function executeMany(Action[] calldata actions)
         public
         payable
         returns (bytes[] memory responses)
     {
-        responses = bytes[](actions.length);
+        responses = new bytes[](actions.length);
 
         for (uint256 i = 0; i < actions.length; i++) {
             responses[i] = this.execute(actions[i]);
         }
+
+        return responses;
     }
 
     // TODO: EIP-165? EIP-721 receiver? those should probably be sent to the owner and then the owner approves this contract

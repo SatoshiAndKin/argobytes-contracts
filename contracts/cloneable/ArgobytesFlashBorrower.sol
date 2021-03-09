@@ -8,8 +8,9 @@ import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
 import {ArgobytesClone} from "./ArgobytesClone.sol";
 
-import {ArgobytesAuth} from "contracts/abstract/ArgobytesAuth.sol";
+import {ArgobytesAuthTypes} from "contracts/abstract/ArgobytesAuth.sol";
 import {Address2} from "contracts/library/Address2.sol";
+import {Bytes2} from "contracts/library/Bytes2.sol";
 import {IERC3156FlashBorrower} from "contracts/external/erc3156/IERC3156FlashBorrower.sol";
 import {IERC3156FlashLender} from "contracts/external/erc3156/IERC3156FlashLender.sol";
 
@@ -20,6 +21,7 @@ contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
     struct FlashBorrowerStorage {
         mapping(IERC3156FlashLender => bool) lenders;
         bool pending_flashloan;
+        address pending_lender;
         Action pending_action;
         bytes pending_return;
     }
@@ -30,7 +32,7 @@ contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
         }
     }
 
-    function approveLender(IERC3156FlashLender lender) external auth(ArgobytesAuth.CallType.ADMIN) {
+    function approveLender(IERC3156FlashLender lender) external auth(ArgobytesAuthTypes.Call.ADMIN) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
         s.lenders[lender] = true;
@@ -38,7 +40,7 @@ contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
         // TODO: emit an event
     }
 
-    function denyLender(IERC3156FlashLender lender) external auth(ArgobytesAuth.CallType.ADMIN) {
+    function denyLender(IERC3156FlashLender lender) external auth(ArgobytesAuthTypes.Call.ADMIN) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
         delete s.lenders[lender];
@@ -55,22 +57,28 @@ contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
 
         // check auth
         if (msg.sender != owner()) {
-            requireAuth(action.target, action.call_type, action.target_calldata.toBytes4());
+            requireAuth(action.target, action.call_type, Bytes2.toBytes4(action.target_calldata));
         }
-        revert("make sure lender is approved");
+        require(
+            s.lenders[lender],
+            "FlashBorrower.flashBorrow !lender"
+        );
 
         // we could pass the calldata to the lender and have them pass it back, but that seems less safe
         // use storage so that no one can change it
-        s.pending_action = action;
         s.pending_flashloan = true;
 
-        s.lender.flashLoan(this, token, amount, "");
-        // s.pending_loan is changed to false
+        s.pending_lender = address(lender);
+        s.pending_action = action;
+
+        lender.flashLoan(this, token, amount, "");
+        // s.pending_loan is now `false`
 
         // copy the call's returned value to return it from this function
         returned = s.pending_return;
 
-        // clear the pending values
+        // clear the pending values (pending_flashloan is already `false`)
+        delete s.pending_lender;
         delete s.pending_action;
         delete s.pending_return;
     }
@@ -89,30 +97,29 @@ contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
         // pending_loan is like the opposite of a re-entrancy guard
         require(
             s.pending_flashloan,
-            "FlashBorrower !pending_loan"
+            "FlashBorrower.onFlashLoan !pending_loan"
         );
         require(
-            msg.sender == address(s.lender),
-            "FlashBorrower !lender"
+            msg.sender == s.pending_lender,
+            "FlashBorrower.onFlashLoan !pending_lender"
         );
         require(
             initiator == address(this),
-            "FlashBorrower !initiator"
+            "FlashBorrower.onFlashLoan !initiator"
+        );
+        require(
+            Address.isContract(s.pending_action.target),
+            "FlashBorrower.onFlashLoan !target"
         );
 
         // clear pending_loan now in case the delegatecall tries to do something sneaky
         // though i think storing things in state will protect things better
         s.pending_flashloan = false;
 
-        require(
-            Address.isContract(s.pending_target),
-            "ArgobytesProxy.execute BAD_TARGET"
-        );
-
         // uncheckedDelegateCall is safe because we just checked that `target` is a contract
         // emit an event with the response?
         bytes memory returned;
-        if (s.pending_action.call_type == ArgobytesAuth.CallType.DELEGATE) {
+        if (s.pending_action.call_type == ArgobytesAuthTypes.Call.DELEGATE) {
             returned = Address2.uncheckedDelegateCall(
                 s.pending_action.target,
                 s.pending_action.target_calldata,
@@ -130,7 +137,7 @@ contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
         s.pending_return = returned;
 
         // approve paying back the loan
-        IERC20(token).approve(address(s.lender), amount + fee);
+        IERC20(token).approve(s.pending_lender, amount + fee);
 
         // return their special response
         return keccak256("ERC3156FlashBorrower.onFlashLoan");

@@ -57,13 +57,13 @@ contract ArgobytesTrader is IArgobytesTrader {
 
     /// @dev store argobytes_multicall address otherwise auth is too powerful
     /*
-    think about this more. i don't think this actually needs auth because 
+    think about this more. i don't think this actually needs auth because it will be called via an authed delegatecall
     maybe put a guard that checks that address(this) != some immutable?
     */
     function setArgobytesMulticall(ArgobytesMulticall new_argobytes_multicall) external {
         ArgobytesTraderStorage storage s = argobytesTraderStorage();
 
-        emit SetArgobytesMulticall(address(s.argobytes_multicall), new_argobytes_multicall);
+        emit SetArgobytesMulticall(address(s.argobytes_multicall), address(new_argobytes_multicall));
 
         s.argobytes_multicall = new_argobytes_multicall;
     }

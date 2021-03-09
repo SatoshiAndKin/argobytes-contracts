@@ -7,7 +7,7 @@ pragma experimental ABIEncoderV2;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
 import {Strings2} from "contracts/library/Strings2.sol";
-import {IArgobytesAuthorizationRegistry} from "contracts/ArgobytesAuthorizationRegistry.sol";
+import {IArgobytesAuthority} from "contracts/ArgobytesAuthority.sol";
 import {IArgobytesFactory} from "contracts/ArgobytesFactory.sol";
 import {Address2} from "contracts/library/Address2.sol";
 import {Bytes2} from "contracts/library/Bytes2.sol";
@@ -21,22 +21,24 @@ contract ArgobytesAuthEvents {
     );
 }
 
+contract ArgobytesAuthTypes {
+    enum Call {
+        CALL,
+        DELEGATE,
+        ADMIN
+    }
+}
+
 // TODO: should this be able to receive a flash loan?
 abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
     using Address for address;
     using Address2 for address;
     using Bytes2 for bytes;
 
-    enum CallType {
-        CALL,
-        DELEGATE,
-        ADMIN
-    }
-
     // note that this is state!
     // TODO: how can we be sure that a sneaky delegatecall doesn't change this
     struct ArgobytesAuthStorage {
-        IArgobytesAuthorizationRegistry authority;
+        IArgobytesAuthority authority;
     }
     bytes32 constant ARGOBYTES_AUTH_POSITION = keccak256("argobytes.storage.ArgobytesAuth");
     function argobytesAuthStorage() internal pure returns (ArgobytesAuthStorage storage s) {
@@ -46,7 +48,7 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
         }
     }
 
-    modifier auth(CallType call_type) {
+    modifier auth(ArgobytesAuthTypes.Call call_type) {
         // do auth first. that is safest
         // theres some cases where it may be possible to do the auth check last, but it is too risky for me
         // TODO: GSN?
@@ -68,7 +70,7 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
     */
     function isAuthorized(
         address sender,
-        CallType call_type,
+        ArgobytesAuthTypes.Call call_type,
         address target,
         bytes4 sig
     ) internal view returns (bool authorized) {
@@ -76,14 +78,14 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
 
         // this reverts without a reason if authority isn't set and the caller is not the owner. is that okay?
         // we could check != address(0) and do authority.canCall in a try/catch, but that costs more gas
-        authorized = s.authority.canCall(sender, call_type, target, sig);
+        authorized = s.authority.canCall(sender, target, call_type, sig);
     }
 
-    function requireAuth(address target, CallType call_type, bytes4 sig) internal view {
+    function requireAuth(address target, ArgobytesAuthTypes.Call call_type, bytes4 sig) internal view {
         require(isAuthorized(msg.sender, call_type, target, sig), "ArgobytesAuth: 403");
     }
 
-    function setAuthority(IArgobytesAuthorizationRegistry new_authority) public auth {
+    function setAuthority(IArgobytesAuthority new_authority) public auth(ArgobytesAuthTypes.Call.ADMIN) {
         ArgobytesAuthStorage storage s = argobytesAuthStorage();
 
         emit AuthorityTransferred(address(s.authority), address(new_authority));
