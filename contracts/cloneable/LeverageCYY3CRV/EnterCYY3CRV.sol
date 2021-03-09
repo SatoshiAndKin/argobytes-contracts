@@ -8,7 +8,7 @@ pragma abicoder v2;
 import {Constants} from "./Constants.sol";
 
 import {DyDxCallee, DyDxTypes} from "contracts/abstract/DyDxCallee.sol";
-import {ArgobytesClone} from "contracts/abstract/ArgobytesClone.sol";
+import {ArgobytesClone} from "../ArgobytesClone.sol";
 
 
 contract EnterCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
@@ -97,7 +97,7 @@ contract EnterCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
         flash_dai_amount *= 74;
         flash_dai_amount /= 10;
 
-        _DyDxFlashloan(3, address(DAI), flash_dai_amount, abi.encode(loan_data));
+        _DyDxFlashLoan(3, address(DAI), flash_dai_amount, abi.encode(loan_data));
     }
 
     /*

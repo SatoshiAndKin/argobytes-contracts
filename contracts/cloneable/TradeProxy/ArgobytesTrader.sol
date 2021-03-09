@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // Store profits and provide them for flash lending
 // Burns LiquidGasToken (or compatible contracts)
-// TODO: rewrite this to use the FlashLoan EIP
-// TODO: rewrite this to be an ArgobytesClone
+// TODO: finish ArgobytesClone refactor
+// TODO: rewrite this to use the FlashLoan EIP instead of dydx. this allows lots more tokens
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
 
-import {ArgobytesClone} from "contracts/abstract/ArgobytesClone.sol";
+import {ArgobytesClone} from "../ArgobytesClone.sol";
 import {ArgobytesMulticall} from "contracts/ArgobytesMulticall.sol";
-import {IDyDxCallee} from "contracts/external/dydx/IDyDxCallee.sol";
-import {DyDxTypes, IDyDxSoloMargin} from "contracts/external/dydx/IDyDxSoloMargin.sol";
+import {DyDxCallee, DyDxTypes, IDyDxCallee} from "contracts/abstract/DyDxCallee.sol";
 
-interface IArgobytesTrader {
+interface IArgobytesTrader is IDyDxCallee {
     struct Borrow {
         uint256 amount;
         IERC20 token;
@@ -36,7 +35,6 @@ interface IArgobytesTrader {
     ) external payable;
 
     function dydxFlashArbitrage(
-        IDyDxSoloMargin soloMargin,
         uint256 borrow_id,
         IERC20 borrow_token,
         uint256 borrow_amount,
@@ -47,16 +45,22 @@ interface IArgobytesTrader {
 
 // TODO: this isn't right. this works for the owner account, but needs more thought for authenticating a bot
 // TODO: maybe have a function approvedAtomicAbitrage that calls transferFrom. and another that that assumes its used from the owner of the funnds with delegatecall
-contract ArgobytesTrader is IArgobytesTrader, ArgobytesClone {
+contract ArgobytesTrader is IArgobytesTrader, ArgobytesClone, DyDxCallee {
     using SafeERC20 for IERC20;
 
-    bool _pending_flashloan = false;
-
-    IDyDxSoloMargin constant DYDX_SOLO_MARGIN = IDyDxSoloMargin(
-        0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e
-    );
-
     address constant WETH9 = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+
+    // TODO: use durable storage
+    address argobytes_multicall;
+
+    event SetArgobytesMulticall(address indexed old_addr, address indexed new_addr);
+
+    // store argobytes_multicall address otherwise auth is too powerful
+    function setArgobytesMulticall(address new_argobytes_multicall) external auth {
+        emit SetArgobytesMulticall(argobytes_multicall, new_argobytes_multicall);
+
+        argobytes_multicall = new_argobytes_multicall;
+    }
 
     // TODO: return gas tokens freed?
     function atomicArbitrage(
@@ -170,20 +174,30 @@ contract ArgobytesTrader is IArgobytesTrader, ArgobytesClone {
     // flash loan from dydx
     // TODO: return gas tokens freed?
     function dydxFlashArbitrage(
-        IDyDxSoloMargin soloMargin,
         uint256 borrow_id,
         IERC20 borrow_token,
         uint256 borrow_amount,
-        address argobytes_multicall,
         ArgobytesMulticall.Action[] calldata actions
     ) external override payable auth {
-        // TODO: move this dydx stuff to a helper
-        // we want to give coins to argobytes actor
-        // TODO: why is the linter adding extra line breaks?!
-        DyDxTypes.AccountInfo[] memory accountInfos = new DyDxTypes.AccountInfo[](1);
-        
-        abi.encode(actions)
+        revert("wip");
 
-        // we could check for actual profit here, but i don't think its necessary
+        bytes memory encoded_flashloan_data = abi.encode(msg.value, flashloanData);
+
+        _DyDxFlashLoan(borrow_id, borrow_token, dai_borrow_balance, argobytes_multicall, encoded_flashloan_data);
+
+        // we could check for actual profit here, but i don't think it would work well. a malicious call would be bad
     }
+
+    // DYDX flash loan receiver function
+    function callFunction(
+        address /*sender*/,
+        DyDxTypes.AccountInfo calldata /*account_info*/,
+        bytes memory encoded_data
+    ) external override authFlashLoan {
+        (uint256 msg_value, FlashLoanData memory data) = abi.decode(encoded_data, (uint256, FlashLoanData));
+
+        // TODO: i don't think this is right. this contract has the tokens. but multicall needs them
+        data.argobytes_multicall.callActions{value: msg_value}(data.actions);
+    }
+
 }

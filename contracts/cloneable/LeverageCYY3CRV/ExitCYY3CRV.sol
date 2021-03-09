@@ -8,7 +8,7 @@ pragma abicoder v2;
 import {Constants} from "./Constants.sol";
 
 import {DyDxCallee, DyDxTypes} from "contracts/abstract/DyDxCallee.sol";
-import {ArgobytesClone} from "contracts/abstract/ArgobytesClone.sol";
+import {ArgobytesClone} from "../ArgobytesClone.sol";
 
 
 contract ExitCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
@@ -45,7 +45,7 @@ contract ExitCYY3CRV is ArgobytesClone, Constants, DyDxCallee {
         require(dai_borrow_balance > 0, "!borrowBalance");
 
         // flash loan enough DAI to fully pay back the loan
-        _DyDxFlashloan(3, address(DAI), dai_borrow_balance, abi.encode(data));
+        _DyDxFlashLoan(3, address(DAI), dai_borrow_balance, abi.encode(data));
     }
 
     /*

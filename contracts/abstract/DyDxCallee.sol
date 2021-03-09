@@ -14,20 +14,27 @@ import {IDyDxCallee} from "contracts/external/dydx/IDyDxCallee.sol";
 abstract contract DyDxCallee is IDyDxCallee {
 
     IDyDxSoloMargin public constant DYDX_SOLO_MARGIN = IDyDxSoloMargin(0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e);
+    // TODO: subtract 1?
+    bytes32 constant PENDING_FLASHSLOAN_STORAGE_POSITION = keccak256("argobytes.storage.DyDxCallee.pending_flashloan") - 1;
 
-    bool private _pending_flashloan = false;
+    function pendingFlashLoanStorage() internal pure returns (bool storage s) {
+        bytes32 position = PENDING_FLASHSLOAN_STORAGE_POSITION;
+        assembly {
+            s.slot := position
+        }
+    }
 
     modifier authFlashLoan() {
-        require(_pending_flashloan, "!pending_flashloan");
+        bool storage pending_flashloan = pendingFlashLoanStorage();
+
+        require(pending_flashloan, "!pending_flashloan");
         _;
     }
 
     // i was going to have an enum for borrow_token/borrow_id, but what if they add new ones in the future?
 
-    function _DyDxFlashloan(uint256 borrow_id, address borrow_token, uint256 amount, address target, bytes memory data) internal {
+    function _DyDxFlashLoan(uint256 borrow_id, IERC20 borrow_token, uint256 amount, bytes memory flash_data) internal {
         // require(!_pending_flashloan, "pending_flashloan");   // TODO: do we need this check?
-
-        _pending_flashloan = true;
 
         // setup the flash loan account
         DyDxTypes.AccountInfo[] memory accountInfos = new DyDxTypes.AccountInfo[](1);
@@ -53,7 +60,7 @@ abstract contract DyDxCallee is IDyDxCallee {
             }),
             primaryMarketId: borrow_id,
             secondaryMarketId: 0,
-            otherAddress: target,
+            otherAddress: address(this),
             otherAccountId: 0,
             data: ""
         });
@@ -74,14 +81,14 @@ abstract contract DyDxCallee is IDyDxCallee {
             }),
             primaryMarketId: 0,
             secondaryMarketId: 0,
-            otherAddress: target,
+            otherAddress: address(this),
             otherAccountId: 0,
-            data: abi.encode(amount, data)
+            data: flash_data
         });
 
         // approve the return of the flash loan
         // TODO: maybe target should be the one doing the approve
-        IERC20(borrow_token).approve(address(DYDX_SOLO_MARGIN), amount);
+        borrow_token.approve(address(DYDX_SOLO_MARGIN), amount);
 
         // 3. repay the flash loan
         operations[2] = DyDxTypes.ActionArgs({
@@ -100,9 +107,15 @@ abstract contract DyDxCallee is IDyDxCallee {
             data: ""
         });
 
+        bool storage _pending_flashloan = pendingFlashLoanStorage();
+
+        // open the flashloan guard
+        _pending_flashloan = true;
+
         // do the flash loan
         DYDX_SOLO_MARGIN.operate(accountInfos, operations);
 
+        // close the flashloan guard
         _pending_flashloan = false;
     }
 }
