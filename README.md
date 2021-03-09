@@ -70,16 +70,20 @@ Lots more actions are in development. Anyone can write an action.
 5. Make a `.env` file:
     ```
     # We use etherscan for fetching mainnet contract data (https://etherscan.io/myapikey)
-    export ETHERSCAN_TOKEN=XXX
+    export ETHERSCAN_TOKEN="XXX"
 
     # URL for a mainnet Ethereum node (to fork at a specific block, append "@BLOCKNUM")
     export FORK_RPC="ws://localhost:8546"
 
     # Tracing transactions in ganache can use a lot more than the default 1.7GB
     export NODE_OPTIONS="--max-old-space-size=8096"
+
+    # Infura key (only if you don't run your own node)
+    export WEB3_INFURA_PROJECT_ID="YYY"
     ```
 6. Run `./scripts/setup.sh`
 7. Run `./venv/bin/brownie networks import brownie-network-config.yaml True`
+8. If you run your node, edit the `mainnet` section in `~/.brownie/network-config.yaml` 
 
 ## Development scripts
 

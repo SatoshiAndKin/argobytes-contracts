@@ -1,35 +1,4 @@
-live:
-  - name: Ethereum
-    networks:
-      - name: Mainnet (localhost)
-        chainid: 1
-        id: mainnet-localhost
-        host: ws://127.0.0.1:8546
-        explorer: https://api.etherscan.io/api
-
 development:
-  - name: Ganache-CLI
-    id: development
-    cmd: ganache-cli
-    host: http://127.0.0.1
-    cmd_settings:
-      port: 8565
-      gas_limit: 12000000
-      accounts: 10
-      evm_version: istanbul
-      mnemonic: opinion adapt negative bone suit ill fossil alcohol razor script damp fold
-  - name: Ganache-CLI (Mainnet Fork)
-    id: mainnet-fork-localhost
-    cmd: ganache-cli
-    host: http://127.0.0.1
-    timeout: 180
-    cmd_settings:
-      port: 8575
-      gas_limit: 12000000
-      accounts: 10
-      evm_version: istanbul
-      mnemonic: opinion adapt negative bone suit ill fossil alcohol razor script damp fold
-      fork: mainnet-localhost
   - name: Staging
     id: staging
     cmd: ganache-cli
@@ -39,6 +8,5 @@ development:
       port: 8555
       gas_limit: 12000000
       accounts: 10
-      evm_version: istanbul
       mnemonic: opinion adapt negative bone suit ill fossil alcohol razor script damp fold
-      fork: mainnet-localhost
+      fork: mainnet

@@ -14,4 +14,4 @@ export EXPORT_ARTIFACTS=0
 
 export MINT_GAS_TOKEN=${MINT_GAS_TOKEN:-$FREE_GAS_TOKEN}
 
-./venv/bin/brownie run dev-deploy --network mainnet-fork-localhost "$@"
+./venv/bin/brownie run dev-deploy --network mainnet-fork "$@"
