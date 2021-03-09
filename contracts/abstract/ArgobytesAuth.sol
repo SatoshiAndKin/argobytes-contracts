@@ -28,16 +28,19 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
     using Bytes2 for bytes;
 
     enum CallType {
-        Call,
-        Delegate,
-        Admin
+        CALL,
+        DELEGATE,
+        ADMIN
     }
 
     // note that this is state!
     // TODO: how can we be sure that a sneaky delegatecall doesn't change this
-    bytes32 constant AUTHORITY_POSITION = keccak256("argobytes.storage.ArgobytesAuth.authority") - 1;
-    function authorityStorage() internal pure returns (IArgobytesAuthorizationRegistry storage s) {
-        bytes32 position = AUTHORITY_POSITION;
+    struct ArgobytesAuthStorage {
+        IArgobytesAuthorizationRegistry authority;
+    }
+    bytes32 constant ARGOBYTES_AUTH_POSITION = keccak256("argobytes.storage.ArgobytesAuth");
+    function argobytesAuthStorage() internal pure returns (ArgobytesAuthStorage storage s) {
+        bytes32 position = ARGOBYTES_AUTH_POSITION;
         assembly {
             s.slot := position
         }
@@ -69,22 +72,22 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
         address target,
         bytes4 sig
     ) internal view returns (bool authorized) {
-        IArgobytesAuthorizationRegistry storage authority = authorityStorage();
+        ArgobytesAuthStorage storage s = argobytesAuthStorage();
 
         // this reverts without a reason if authority isn't set and the caller is not the owner. is that okay?
         // we could check != address(0) and do authority.canCall in a try/catch, but that costs more gas
-        authorized = authority.canCall(sender, call_type, target, sig);
+        authorized = s.authority.canCall(sender, call_type, target, sig);
     }
 
-    function requireAuth(CallType call_type, address target, bytes4 sig) internal view {
+    function requireAuth(address target, CallType call_type, bytes4 sig) internal view {
         require(isAuthorized(msg.sender, call_type, target, sig), "ArgobytesAuth: 403");
     }
 
     function setAuthority(IArgobytesAuthorizationRegistry new_authority) public auth {
-        IArgobytesAuthorizationRegistry storage authority = authorityStorage();
+        ArgobytesAuthStorage storage s = argobytesAuthStorage();
 
-        emit AuthorityTransferred(address(authority), address(new_authority));
+        emit AuthorityTransferred(address(s.authority), address(new_authority));
 
-        authority = new_authority;
+        s.authority = new_authority;
     }
 }

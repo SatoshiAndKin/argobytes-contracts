@@ -15,7 +15,7 @@ library Address2 {
     ) internal returns (bytes memory) {
         // TODO: allow calling with value
         // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.call(data);
+        (bool success, bytes memory returndata) = target.call{value: msg.value}(data);
         return _verifyCallResult(success, returndata, errorMessage);
     }
 

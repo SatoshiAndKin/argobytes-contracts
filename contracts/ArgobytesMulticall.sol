@@ -2,7 +2,7 @@
 /*
 This is similar to MakerDAO's Multicall, but it can also pass value. If you don't need value, Multicall may be better.
 
-It can also be a target for DyDx's flashloans.
+TODO: think about this smore. make it re-use code in ArgobytesClone?
 */
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;

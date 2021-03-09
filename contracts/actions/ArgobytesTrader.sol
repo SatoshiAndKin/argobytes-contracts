@@ -11,9 +11,8 @@ import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
 
 import {ArgobytesAuth} from "contracts/abstract/ArgobytesAuth.sol";
 import {ArgobytesMulticall} from "contracts/ArgobytesMulticall.sol";
-import {DyDxCallee, DyDxTypes, IDyDxCallee} from "contracts/abstract/DyDxCallee.sol";
 
-interface IArgobytesTrader is IDyDxCallee {
+interface IArgobytesTrader {
     struct Borrow {
         uint256 amount;
         IERC20 token;
@@ -23,14 +22,12 @@ interface IArgobytesTrader is IDyDxCallee {
     function atomicArbitrage(
         address borrow_from,
         Borrow[] calldata borrows,
-        ArgobytesMulticall argobytes_multicall,
         ArgobytesMulticall.Action[] calldata actions
     ) external payable;
 
     function atomicTrade(
         address borrow_from,
         Borrow[] calldata borrows,
-        ArgobytesMulticall argobytes_multicall,
         ArgobytesMulticall.Action[] calldata actions
     ) external payable;
 }
@@ -44,11 +41,15 @@ contract ArgobytesTrader is IArgobytesTrader {
 
     event SetArgobytesMulticall(address indexed old_addr, address indexed new_addr);
 
-    // durable storage for argobytes_multicall
-    bytes32 constant ARGOBYTES_MULTICALL_STORAGE = keccak256("argobytes.storage.argobytes_multicall") - 1;
+    // diamond storage
+    struct ArgobytesTraderStorage {
+        ArgobytesMulticall argobytes_multicall;
+    }
 
-    function argobytesMulticallStorage() internal pure returns (ArgobytesMulticall storage s) {
-        bytes32 position = ARGOBYTES_MULTICALL_STORAGE;
+    bytes32 constant ARGOBYTES_TRADER_STORAGE = keccak256("argobytes.storage.ArgobytesTrader");
+
+    function argobytesTraderStorage() internal pure returns (ArgobytesTraderStorage storage s) {
+        bytes32 position = ARGOBYTES_TRADER_STORAGE;
         assembly {
             s.slot := position
         }
@@ -57,23 +58,22 @@ contract ArgobytesTrader is IArgobytesTrader {
     /// @dev store argobytes_multicall address otherwise auth is too powerful
     /*
     think about this more. i don't think this actually needs auth because 
-    maybe put a guarg that checks that address(this) != some immutable?
+    maybe put a guard that checks that address(this) != some immutable?
     */
-    function setArgobytesMulticall(address new_argobytes_multicall) external {
-        ArgobytesMulticall storage argobytes_multicall = argobytesMulticallStorage();
+    function setArgobytesMulticall(ArgobytesMulticall new_argobytes_multicall) external {
+        ArgobytesTraderStorage storage s = argobytesTraderStorage();
 
-        emit SetArgobytesMulticall(argobytes_multicall, new_argobytes_multicall);
+        emit SetArgobytesMulticall(address(s.argobytes_multicall), new_argobytes_multicall);
 
-        argobytes_multicall = new_argobytes_multicall;
+        s.argobytes_multicall = new_argobytes_multicall;
     }
 
-    // TODO: return gas tokens freed?
     function atomicArbitrage(
         address borrow_from,
         Borrow[] calldata borrows,
         ArgobytesMulticall.Action[] calldata actions
     ) external override payable {
-        ArgobytesMulticall storage argobytes_multicall = argobytesMulticallStorage();
+        ArgobytesTraderStorage storage s = argobytesTraderStorage();
 
         uint256[] memory start_balances = new uint256[](borrows.length);
 
@@ -104,7 +104,7 @@ contract ArgobytesTrader is IArgobytesTrader {
         // this contract (or the actions) MUST return all borrowed tokens to msg.sender
         // TODO: pass ETH along? this might be helpful for exchanges like 0x. maybe better to borrow WETH9 for the action
         // TODO: msg.value or address(this).balance?!
-        argobytes_multicall.callActions{value: msg.value}(actions);
+        s.argobytes_multicall.callActions{value: msg.value}(actions);
 
         // make sure the source's balances did not decrease
         // we allow it to be equal because it's possible that we got our profits on another token or from LP fees
@@ -139,7 +139,7 @@ contract ArgobytesTrader is IArgobytesTrader {
         Borrow[] calldata borrows,
         ArgobytesMulticall.Action[] calldata actions
     ) external override payable {
-        ArgobytesMulticall storage argobytes_multicall = argobytesMulticallStorage();
+        ArgobytesTraderStorage storage s = argobytesTraderStorage();
 
         // transfer tokens from msg.sender to arbitrary destinations
         // this is dangerous! be careful with this!
@@ -161,7 +161,7 @@ contract ArgobytesTrader is IArgobytesTrader {
 
         // TODO: msg.value or address(this).balance?!
         // we call a seperate contract because we don't want any sneaky transferFroms
-        argobytes_multicall.callActions{value: msg.value}(actions);
+        s.argobytes_multicall.callActions{value: msg.value}(actions);
 
         // TODO: refund excess ETH?
     }

@@ -19,6 +19,13 @@ abstract contract ArgobytesClone is ArgobytesAuth {
     using Address2 for address;
     using Bytes2 for bytes;
 
+    struct Action {
+        address target;
+        ArgobytesAuth.CallType call_type;
+        bool forward_value;
+        bytes target_calldata;
+    }
+
     /*
      * we shouldn't store ETH here outside a transaction,
      * but we do want to be able to receive it in one call and return in another
@@ -31,63 +38,47 @@ abstract contract ArgobytesClone is ArgobytesAuth {
      * The owner is allowed to call anything. This is helpful in case funds get somehow stuck.
      * The owner can authorize other contracts 
      */
-    function execute(address target, ArgobytesAuth.CallType call_type, bytes memory target_calldata)
+    function execute(Action calldata action)
         public
         payable
         returns (bytes memory response)
     {
         // check auth
         if (msg.sender != owner()) {
-            requireAuth(target, call_type, target_calldata.toBytes4());
+            requireAuth(action.target, action.call_type, action.target_calldata.toBytes4());
         }
 
         require(
-            Address.isContract(target),
-            "ArgobytesProxy.execute BAD_TARGET"
+            Address.isContract(action.target),
+            "ArgobytesProxy.execute !target"
         );
 
         // uncheckedDelegateCall is safe because we just checked that `target` is a contract
-        response = target.uncheckedDelegateCall(
-            target_calldata,
-            "ArgobytesProxy.execute failed"
-        );
-    }
-
-    /**
-     * Deploy a contract and then call arbitrary functions on it.
-     * WARNING! This is essentially a backdoor that allows for anything to happen. This isn't DeFi. This is a personal wallet.
-     * The owner is allowed to call anything. This is helpful in case funds get somehow stuck.
-     * Before even deploying the contract, the owner can authorize other senders to call any functions on it.
-     * Then the sender can deploy it once it is needed. This should save on unnecessary deployments.
-     */
-    function createContractAndExecute(
-        IArgobytesFactory factory,
-        bytes32 target_salt,
-        ArgobytesAuth.CallType call_type,
-        bytes memory target_code,
-        bytes memory target_calldata
-    ) public payable returns (address target, bytes memory response) {
-        // most cases will probably want an empty salt and a self-destructing target_code
-        // adding a salt adds to the calldata. that negates some of the savings from 0 bytes in target
-        target = factory.checkedCreateContract(target_salt, target_code);
-
-        if (msg.sender != owner()) {
-            requireAuth(target, call_type, target_calldata.toBytes4());
-        }
-
-        // uncheckedDelegateCall is safe because we just used `existingOrCreate2`
-        if (call_type == ArgobytesAuth.CallType.DELEGATE) {
+        if (action.call_type == ArgobytesAuth.CallType.DELEGATE) {
             response = Address2.uncheckedDelegateCall(
-                target,
-                target_calldata,
-                "ArgobytesProxy.createContractAndExecute failed"
+                action.target,
+                action.target_calldata,
+                "ArgobytesProxy.execute !delegatecall"
             );
         } else {
             response = Address2.uncheckedCall(
-                target,
-                target_calldata,
-                "ArgobytesProxy.createContractAndExecute failed"
+                action.target,
+                action.target_calldata,
+                "ArgobytesProxy.execute !call"
             );
+        }
+    }
+
+    // TODO: write example of using this to deploy a contract, then call a function on it
+    function executeMany(Action[] calldata actions)
+        public
+        payable
+        returns (bytes[] memory responses)
+    {
+        responses = bytes[](actions.length);
+
+        for (uint256 i = 0; i < actions.length; i++) {
+            responses[i] = this.execute(actions[i]);
         }
     }
 

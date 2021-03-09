@@ -37,6 +37,8 @@ contract ArgobytesAuthorizationRegistry is IArgobytesAuthorizationRegistry{
         address proxy,
         address sender,
         address target,
+        // TODO: where should CallType be defined?
+        ArgobytesAuth.CallType call_type,
         bytes4 sig
     ) internal pure returns (bytes memory key) {
         // encodePacked should be safe because address and bytes4 are fixed size types
