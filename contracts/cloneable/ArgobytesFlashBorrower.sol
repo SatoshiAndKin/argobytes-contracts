@@ -14,17 +14,25 @@ import {Bytes2} from "contracts/library/Bytes2.sol";
 import {IERC3156FlashBorrower} from "contracts/external/erc3156/IERC3156FlashBorrower.sol";
 import {IERC3156FlashLender} from "contracts/external/erc3156/IERC3156FlashLender.sol";
 
-contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
+abstract contract ArgobytesFlashBorrowerEvents {
+    event Lender(address indexed sender, address indexed lender, bool allowed);
+}
 
-    // because we make heavy use of delegatecall, we want to make sure our storage is durable
+contract ArgobytesFlashBorrower is ArgobytesClone, ArgobytesFlashBorrowerEvents, IERC3156FlashBorrower {
+
+    /// @dev diamond storage
     bytes32 constant FLASH_BORROWER_POSITION = keccak256("argobytes.storage.FlashBorrower.lender");
+
+    /// @dev diamond storage
     struct FlashBorrowerStorage {
-        mapping(IERC3156FlashLender => bool) lenders;
+        mapping(IERC3156FlashLender => bool) allowed_lenders;
         bool pending_flashloan;
         address pending_lender;
         Action pending_action;
         bytes pending_return;
     }
+
+    /// @dev diamond storage
     function flashBorrowerStorage() internal pure returns (FlashBorrowerStorage storage s) {
         bytes32 position = FLASH_BORROWER_POSITION;
         assembly {
@@ -32,18 +40,21 @@ contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
         }
     }
 
-    function approveLender(IERC3156FlashLender lender) external auth(ArgobytesAuthTypes.Call.ADMIN) {
+    // TODO: gas golf this
+    function allowLender(IERC3156FlashLender lender) external auth(ArgobytesAuthTypes.Call.ADMIN) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
-        s.lenders[lender] = true;
+        s.allowed_lenders[lender] = true;
 
-        // TODO: emit an event
+        emit Lender(msg.sender, address(lender), true);
     }
 
     function denyLender(IERC3156FlashLender lender) external auth(ArgobytesAuthTypes.Call.ADMIN) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
-        delete s.lenders[lender];
+        delete s.allowed_lenders[lender];
+
+        emit Lender(msg.sender, address(lender), false);
     }
 
     /// @dev Initiate a flash loan
@@ -60,7 +71,7 @@ contract ArgobytesFlashBorrower is ArgobytesClone, IERC3156FlashBorrower {
             requireAuth(action.target, action.call_type, Bytes2.toBytes4(action.target_calldata));
         }
         require(
-            s.lenders[lender],
+            s.allowed_lenders[lender],
             "FlashBorrower.flashBorrow !lender"
         );
 
