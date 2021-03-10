@@ -6,50 +6,6 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-def test_liquidgastoken_saves_gas(argobytes_multicall, argobytes_trader, example_action, liquidgastoken):
-    value = 1e18
-
-    borrows = []
-    actions = [
-        (
-            example_action,
-            1,
-            example_action.sweep.encode_input(accounts[0], ZERO_ADDRESS, 400000),
-        )
-    ]
-
-    # do it once without lgt
-    atomic_arbitrage_tx = argobytes_trader.atomicArbitrage(
-        False,
-        False,
-        accounts[0],
-        borrows,
-        argobytes_multicall,
-        actions,
-        {
-            "gasPrice": 300,
-        }
-    )
-
-    # Now do it again with liquid gas token
-    liquidgastoken.mint(100, {"from": accounts[0]})
-    liquidgastoken.approve(argobytes_trader, 100, {"from": accounts[0]})
-
-    atomic_arbitrage_lgt_tx = argobytes_trader.atomicArbitrage(
-        True,
-        True,
-        accounts[0],
-        borrows,
-        argobytes_multicall,
-        actions,
-        {
-            "gasPrice": 300,
-        }
-    )
-
-    assert atomic_arbitrage_lgt_tx.gas_used < atomic_arbitrage_tx.gas_used
-
-
 def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action, weth9_erc20):
     value = 1e18
 
@@ -83,6 +39,7 @@ def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action,
         (
             example_action,
             0,
+            False,
             example_action.sweep.encode_input(accounts[0], weth9_erc20, 0),
         ),
     ]

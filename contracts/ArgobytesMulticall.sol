@@ -16,7 +16,7 @@ pragma experimental ABIEncoderV2;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
 
-interface IArgobytesMulticall {
+contract ArgobytesMulticall {
 
     // TODO: there's also cases where we want to do a specific amount. think more about this
     // TODO: i think we can just make a different Actor contract for them
@@ -34,12 +34,6 @@ interface IArgobytesMulticall {
         bytes data;
     }
 
-    function callActions(Action[] calldata actions) external payable;
-}
-
-contract ArgobytesMulticall is IArgobytesMulticall {
-    using Address for address payable;
-
     // we want to receive because we might sweep tokens between actions
     // TODO: be careful not to leave coins here!
     receive() external payable {}
@@ -49,7 +43,7 @@ contract ArgobytesMulticall is IArgobytesMulticall {
      *
      *  transfer tokens to the actions before calling this
      */
-    function callActions(Action[] memory actions) external override payable {
+    function callActions(Action[] memory actions) external payable {
         // TODO: re-entrancy?
         // an action can do whatever it wants (liquidate, swap, refinance, etc.)
         for (uint256 i = 0; i < actions.length; i++) {
@@ -57,19 +51,22 @@ contract ArgobytesMulticall is IArgobytesMulticall {
 
             if (ValueMode(actions[i].value_mode) == ValueMode.None) {
                 // if every single action uses value_mode none, the caller should probably just use Multicall.sol instead
-                actions[i].target.functionCall(
+                Address.functionCall(
+                    actions[i].target,
                     actions[i].data,
                     "ArgobytesActions.callActions external call failed"
                 );
             } else if (ValueMode(actions[i].value_mode) == ValueMode.Balance) {
-                actions[i].target.functionCallWithValue(
+                Address.functionCallWithValue(
+                    actions[i].target,
                     actions[i].data,
                     address(this).balance,
                     "ArgobytesActions.callActions external call with balance failed"
                 );
             } else {
                 // TODO: do we want this.balance, or msg.value?
-                actions[i].target.functionCallWithValue(
+                Address.functionCallWithValue(
+                    actions[i].target,
                     actions[i].data,
                     msg.value,
                     "ArgobytesActions.callActions external call with value failed"

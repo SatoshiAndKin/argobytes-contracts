@@ -11,24 +11,18 @@ def test_argobytes_arbitrage_access_control(argobytes_multicall, argobytes_proxy
     value = 1
 
     borrows = []
-    actions = [
-        (
-            example_action,
-            0,
-            example_action.sweep.encode_input(ZERO_ADDRESS, ZERO_ADDRESS, 0),
-        )
-    ]
-
-    argobytes_trader_calldata = argobytes_trader.atomicArbitrage.encode_input(
-        ZERO_ADDRESS, False, accounts[0], borrows, argobytes_multicall, actions,
+    action = (
+        example_action,
+        0,  # 0=Call
+        False,  # do not sweep ETH
+        example_action.sweep.encode_input(ZERO_ADDRESS, ZERO_ADDRESS, 0),
     )
 
     assert(argobytes_proxy.owner() == accounts[0])
 
     # check that accounts[0] is allowed
     argobytes_proxy.execute(
-        argobytes_trader.address,
-        argobytes_trader_calldata,
+        action,
         {"from": accounts[0]}
     )
 
@@ -36,8 +30,7 @@ def test_argobytes_arbitrage_access_control(argobytes_multicall, argobytes_proxy
     # TODO: this used to revert with "ArgobytesProxy: 403" but we don't bother checking authority before calling anymore to save gas
     with brownie.reverts(""):
         argobytes_proxy.execute(
-            argobytes_trader.address,
-            argobytes_trader_calldata,
+            action,
             {"from": accounts[1]}
         )
 
@@ -60,25 +53,16 @@ def test_simple_execute(argobytes_multicall, argobytes_trader, argobytes_proxy, 
     starting_balance = accounts[0].balance()
 
     borrows = []
-    actions = [
-        # call the sweep contract when its empty
-        (
-            example_action,
-            1,
-            example_action.sweep.encode_input(accounts[0], ZERO_ADDRESS, 0),
-        )
-    ]
+    # call the sweep contract when its empty
+    action = (
+        example_action,
+        0,  # 0=Call
+        False,  # do not sweep ETH
+        example_action.sweep.encode_input(accounts[0], ZERO_ADDRESS, 0),
+    )
 
     atomic_arbitrage_tx = argobytes_proxy.execute(
-        argobytes_trader.address,
-        argobytes_trader.atomicArbitrage.encode_input(
-            ZERO_ADDRESS,
-            False,
-            accounts[0],
-            borrows,
-            argobytes_multicall,
-            actions,
-        ),
+        action,
         {
             "value": value,
             "gasPrice": 0,

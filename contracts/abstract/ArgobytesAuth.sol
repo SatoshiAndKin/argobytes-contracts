@@ -6,8 +6,8 @@ pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
-import {IArgobytesAuthority} from "contracts/ArgobytesAuthority.sol";
-import {IArgobytesFactory} from "contracts/ArgobytesFactory.sol";
+import {ArgobytesAuthority} from "contracts/ArgobytesAuthority.sol";
+import {ArgobytesFactory} from "contracts/ArgobytesFactory.sol";
 import {AddressLib} from "contracts/library/AddressLib.sol";
 import {BytesLib} from "contracts/library/BytesLib.sol";
 
@@ -37,7 +37,7 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
     // note that this is state!
     // TODO: how can we be sure that a sneaky delegatecall doesn't change this
     struct ArgobytesAuthStorage {
-        IArgobytesAuthority authority;
+        ArgobytesAuthority authority;
     }
     bytes32 constant ARGOBYTES_AUTH_POSITION = keccak256("argobytes.storage.ArgobytesAuth");
     function argobytesAuthStorage() internal pure returns (ArgobytesAuthStorage storage s) {
@@ -84,7 +84,7 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
         require(isAuthorized(msg.sender, call_type, target, sig), "ArgobytesAuth: 403");
     }
 
-    function setAuthority(IArgobytesAuthority new_authority) public auth(ArgobytesAuthTypes.Call.ADMIN) {
+    function setAuthority(ArgobytesAuthority new_authority) public auth(ArgobytesAuthTypes.Call.ADMIN) {
         ArgobytesAuthStorage storage s = argobytesAuthStorage();
 
         emit AuthorityTransferred(address(s.authority), address(new_authority));

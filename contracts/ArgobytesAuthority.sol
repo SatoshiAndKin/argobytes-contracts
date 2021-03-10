@@ -12,30 +12,7 @@ pragma experimental ABIEncoderV2;
 import {ArgobytesAuthTypes} from "contracts/abstract/ArgobytesAuth.sol";
 
 
-interface IArgobytesAuthority {
-    function canCall(
-        address caller,
-        address target,
-        ArgobytesAuthTypes.Call call_type,
-        bytes4 sig
-    ) external view returns (bool);
-
-    function allow(
-        address[] calldata senders,
-        address target,
-        ArgobytesAuthTypes.Call call_type,
-        bytes4 sig
-    ) external;
-
-    function deny(
-        address[] calldata senders,
-        address target,
-        ArgobytesAuthTypes.Call call_type,
-        bytes4 sig
-    ) external;
-}
-
-contract ArgobytesAuthority is IArgobytesAuthority{
+contract ArgobytesAuthority{
     // key is from `createKey`
     mapping(bytes => bool) authorizations;
 
@@ -57,7 +34,7 @@ contract ArgobytesAuthority is IArgobytesAuthority{
         address target,
         ArgobytesAuthTypes.Call call_type,
         bytes4 sig
-    ) external override view returns (bool) {
+    ) external view returns (bool) {
         bytes memory key = createKey(msg.sender, sender, target, call_type, sig);
 
         return authorizations[key];
@@ -69,7 +46,7 @@ contract ArgobytesAuthority is IArgobytesAuthority{
         address target,
         ArgobytesAuthTypes.Call call_type,
         bytes4 sig
-    ) external override {
+    ) external {
         bytes memory key;
 
         for (uint256 i = 0; i < senders.length; i++) {
@@ -84,7 +61,7 @@ contract ArgobytesAuthority is IArgobytesAuthority{
         address target,
         ArgobytesAuthTypes.Call call_type,
         bytes4 sig
-    ) external override {
+    ) external {
         bytes memory key;
 
         for (uint256 i = 0; i < senders.length; i++) {

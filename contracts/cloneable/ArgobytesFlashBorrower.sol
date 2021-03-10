@@ -130,7 +130,6 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         s.pending_flashloan = false;
 
         // uncheckedDelegateCall is safe because we just checked that `target` is a contract
-        // emit an event with the response?
         bytes memory returned;
         if (s.pending_action.call_type == ArgobytesAuthTypes.Call.DELEGATE) {
             returned = AddressLib.uncheckedDelegateCall(
@@ -141,6 +140,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         } else {
             returned = AddressLib.uncheckedCall(
                 s.pending_action.target,
+                s.pending_action.forward_value,
                 s.pending_action.target_calldata,
                 "FlashLoanBorrower.onFlashLoan !call"
             );

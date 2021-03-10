@@ -6,7 +6,7 @@ pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
-import {IArgobytesFactory} from "contracts/ArgobytesFactory.sol";
+import {ArgobytesFactory} from "contracts/ArgobytesFactory.sol";
 import {ArgobytesAuth, ArgobytesAuthTypes} from "contracts/abstract/ArgobytesAuth.sol";
 import {AddressLib} from "contracts/library/AddressLib.sol";
 import {BytesLib} from "contracts/library/BytesLib.sol";
@@ -59,6 +59,7 @@ contract ArgobytesProxy is ArgobytesAuth {
         } else {
             response = AddressLib.uncheckedCall(
                 action.target,
+                action.forward_value,
                 action.target_calldata,
                 "ArgobytesProxy.execute !call"
             );

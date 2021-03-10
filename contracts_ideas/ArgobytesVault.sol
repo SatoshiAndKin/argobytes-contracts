@@ -14,15 +14,15 @@ import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 import {LiquidGasTokenUser} from "contracts/LiquidGasTokenUser.sol";
 import {UniversalERC20} from "contracts/library/UniversalERC20.sol";
 import {
-    IArgobytesAtomicActions,
-    IArgobytesOwnedVault
-} from "contracts/external/argobytes/IArgobytesOwnedVault.sol";
+    ArgobytesAtomicActions,
+    ArgobytesOwnedVault
+} from "contracts/external/argobytes/ArgobytesOwnedVault.sol";
 
 // we do NOT give this contract a `receive` function since it should only be used through a diamond
 contract ArgobytesProxy is
     AccessControl,
     LiquidGasTokenUser,
-    IArgobytesOwnedVault
+    ArgobytesOwnedVault
 {
     using SafeMath for uint256;
     // using Address for address payable;
@@ -53,7 +53,7 @@ contract ArgobytesProxy is
     function adminAtomicActions(
         address gas_token,
         address payable atomic_actor,
-        IArgobytesAtomicActions.Action[] calldata actions
+        ArgobytesAtomicActions.Action[] calldata actions
     ) external override payable returns (bytes memory) {
         // use address(0) for gas_token to skip gas token burning
         uint256 initial_gas = initialGas(gas_token);
@@ -71,7 +71,7 @@ contract ArgobytesProxy is
                 initial_gas,
                 atomic_actor,
                 abi.encodeWithSelector(
-                    IArgobytesAtomicActions.atomicActions.selector,
+                    ArgobytesAtomicActions.atomicActions.selector,
                     actions
                 )
             );
@@ -118,7 +118,7 @@ contract ArgobytesProxy is
         address kollateral_invoker,
         address[] calldata tokens, // ETH (address(0)) or ERC20. include any tokens that might need to be swept back
         uint256 first_amount,
-        IArgobytesAtomicActions.Action[] calldata actions
+        ArgobytesAtomicActions.Action[] calldata actions
     ) external override payable returns (uint256 primary_profit) {
         // use address(0) for gas_token to skip gas token burning
         uint256 initial_gas = initialGas(gas_token);
@@ -171,7 +171,7 @@ contract ArgobytesProxy is
         // we ignore the atomic_actor's return because we
         // we do NOT do a delegate call here. this should be safer, but malicious contracts could probably still do sneaky things
         try
-            IArgobytesAtomicActions(atomic_actor).atomicTrades(
+            ArgobytesAtomicActions(atomic_actor).atomicTrades(
                 kollateral_invoker,
                 tokens,
                 first_amount,
@@ -200,11 +200,11 @@ contract ArgobytesProxy is
             freeOptimalGasTokens(gas_token, initial_gas);
 
             revert(
-                "ArgobytesOwnedVault.atomicArbitrage -> IArgobytesAtomicActions.atomicTrades reverted without a reason"
+                "ArgobytesOwnedVault.atomicArbitrage -> ArgobytesAtomicActions.atomicTrades reverted without a reason"
             );
         }
 
-        // don't trust IArgobytesAtomicActions.atomicTrades's return. Check the balance ourselves
+        // don't trust ArgobytesAtomicActions.atomicTrades's return. Check the balance ourselves
         uint256 ending_vault_balance = borrow_token.universalBalanceOf(
             address(this)
         );
@@ -249,7 +249,7 @@ contract ArgobytesProxy is
         address kollateral_invoker,
         address[] calldata tokens, // ETH (address(0)) or ERC20. include any tokens that might need to be swept back
         uint256 first_amount,
-        IArgobytesAtomicActions.Action[] calldata actions
+        ArgobytesAtomicActions.Action[] calldata actions
     ) external override payable {
         // use address(0) for gas_token to skip gas token burning
         uint256 initial_gas = initialGas(gas_token);
@@ -301,7 +301,7 @@ contract ArgobytesProxy is
         // notice that this is "atomicTrades". it doesn't require a profitable arbitrage!
         // we do NOT do a delegate call here. this should be safer, but malicious contracts could probably still do sneaky things
         try
-            IArgobytesAtomicActions(atomic_actor).atomicTrades(
+            ArgobytesAtomicActions(atomic_actor).atomicTrades(
                 kollateral_invoker,
                 tokens,
                 first_amount,
@@ -330,7 +330,7 @@ contract ArgobytesProxy is
             freeOptimalGasTokens(gas_token, initial_gas);
 
             revert(
-                "ArgobytesOwnedVault.atomicTrades -> IArgobytesAtomicActions.atomicTrades reverted without a reason"
+                "ArgobytesOwnedVault.atomicTrades -> ArgobytesAtomicActions.atomicTrades reverted without a reason"
             );
         }
 

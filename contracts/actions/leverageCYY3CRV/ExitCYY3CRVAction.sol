@@ -9,17 +9,14 @@ import {Constants} from "./Constants.sol";
 
 contract ExitCYY3CRVAction is Constants {
 
-    struct ExitLoanData {
-        uint256 min_remove_liquidity_dai;
-        uint256 tip_dai;
-        address tip_address;
-        // true to exit for msg.sender. false to exit for this contract
-        bool exit_sender;
-    }
-
-    /* Users should delegatecall this function through a proxy. */
+    /// @notice leveraged cyy3crv -> y3crv -> 3crv -> stablecoins
+    /// @dev Delegatecall this from ArgobytesFlashBorrower.flashBorrow
     function exit(
-        ExitLoanData calldata data
+        uint256 min_remove_liquidity_dai,
+        uint256 tip_dai,
+        address tip_address,
+        // true to exit for msg.sender. false to exit for this contract
+        bool exit_sender
     ) external payable {
         // TODO: does this need auth? not if delegatecall is used. enforce that?
 
@@ -42,34 +39,6 @@ contract ExitCYY3CRVAction is Constants {
 
         require(dai_borrow_balance > 0, "!borrowBalance");
 
-        // flash loan enough DAI to fully pay back the loan
-        // _DyDxFlashLoan(3, address(DAI), dai_borrow_balance, abi.encode(data));
-
-        revert("wip");
-    }
-
-    /*
-    Entrypoint for dYdX operations (from IDyDxCallee).
-
-    TODO: this is wrong. this can't work via delegatecall
-
-    TODO: do we care about the account_info?
-
-    it would be nice to allow exiting into other tokens, but that got rather complex
-    someone could easily make their own exit contract that does that if they want it
-    */
-    /*
-    function callFunction(
-        address sender,
-        DyDxTypes.AccountInfo calldata /\*account_info*\/,
-        bytes memory encoded_data
-    ) external override authFlashLoan {
-        // sender is our original caller. msg.sender is the flash loan provider
-        // this isn't really a security check. this is more a safety check
-        // TODO: is this check needed? pending_flashloan should be enough
-        require(sender == address(this), "!sender");
-
-        uint256 temp;  // we are going to check a lot of balances
 
         (uint256 flash_dai_amount, ExitLoanData memory data) = abi.decode(encoded_data, (uint256, ExitLoanData));
 
@@ -123,5 +92,4 @@ contract ExitCYY3CRVAction is Constants {
         // transfer the rest of the DAI
         require(DAI.transfer(sender, temp), "!DAI.transfer");
     }
-    */
 }

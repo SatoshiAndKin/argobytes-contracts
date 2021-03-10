@@ -29,7 +29,7 @@ def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy, argobytes_trade
     # TODO: do a test with weth9 and approvals instead
     borrows = []
 
-    actions = [
+    trade_actions = [
         # trade ETH to USDC
         (
             uniswap_v1_action,
@@ -54,16 +54,21 @@ def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy, argobytes_trade
         ),
     ]
 
-    arbitrage_tx = argobytes_proxy.execute(
-        argobytes_trader.address,
-        argobytes_trader.atomicArbitrage.encode_input(
-            ZERO_ADDRESS,
-            False,
-            accounts[0],
-            borrows,
-            argobytes_multicall,
-            actions,
-        ),
+    proxy_actions = [
+        (
+            argobytes_trader,
+            1,  # delegatecall
+            True,  # pass ETH
+            argobytes_trader.atomicArbitrage.encode_input(
+                accounts[0],
+                borrows,
+                actions,
+            ),
+        )
+    ]
+
+    arbitrage_tx = argobytes_proxy.executeMany(
+        proxy_actions,
         {
             "value": value,
             "gasPrice": 0,

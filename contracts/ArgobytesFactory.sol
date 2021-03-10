@@ -17,57 +17,14 @@ contract ArgobytesFactoryEvents {
 }
 
 // TODO: do we actually want `bytes memory extradata`? it could be useful, but i don't use it yet
-interface IArgobytesFactory {
-    function createClone(
-        address target,
-        bytes32 salt
-    ) external returns (address clone);
-
-    function createClone(
-        address target,
-        bytes32 salt,
-        address immutable_owner
-    ) external returns (address clone);
-
-    function createClones(
-        address target,
-        bytes32[] calldata salts
-    ) external;
-
-    function createClones(
-        address target,
-        bytes32[] calldata salts,
-        address immutable_owner
-    ) external;
-    
-    function hasClone(
-        address target,
-        bytes32 salt,
-        address immutableOwner
-    ) external view returns (bool cloneExists, address cloneAddr);
-
-    // TODO: function that returns the target contract for a given proxy?
-
-    function createContract(
-        bytes32 salt,
-        bytes memory bytecode,
-        bytes memory extradata
-    ) external payable returns (address deployed);
-
-    function checkedCreateContract(bytes32 salt, bytes memory bytecode)
-        external
-        payable
-        returns (address deployed);
-}
 
 contract ArgobytesFactory is
-    ArgobytesFactoryEvents,
-    IArgobytesFactory
+    ArgobytesFactoryEvents
 {
     function createClone(
         address target,
         bytes32 salt
-    ) public override returns (address clone) {
+    ) public returns (address clone) {
         return createClone(target, salt, msg.sender);
     }
 
@@ -89,7 +46,7 @@ contract ArgobytesFactory is
         address target,
         bytes32 salt,
         address immutable_owner
-    ) public override returns (address clone) {
+    ) public returns (address clone) {
         assembly {
             // Solidity manages memory in a very simple way: There is a “free memory pointer” at position 0x40 in memory.
             // If you want to allocate memory, just use the memory from that point on and update the pointer accordingly.
@@ -127,7 +84,7 @@ contract ArgobytesFactory is
     function createClones(
         address target,
         bytes32[] calldata salts
-    ) public override {
+    ) public {
         createClones(target, salts, msg.sender);
     }
 
@@ -135,7 +92,7 @@ contract ArgobytesFactory is
         address target,
         bytes32[] calldata salts,
         address immutable_owner
-    ) public override {
+    ) public {
         for (uint i = 0; i < salts.length; i++) {
             createClone(target, salts[i], immutable_owner);
         }
@@ -148,7 +105,7 @@ contract ArgobytesFactory is
         address target,
         bytes32 salt,
         address immutableOwner
-    ) public override view returns (bool cloneExists, address cloneAddr) {
+    ) public view returns (bool cloneExists, address cloneAddr) {
         bytes32 bytecodeHash;
         assembly {
             // Solidity manages memory in a very simple way: There is a “free memory pointer” at position 0x40 in memory.
@@ -229,7 +186,7 @@ contract ArgobytesFactory is
         bytes32 salt,
         bytes memory bytecode,
         bytes memory extradata
-    ) public override payable returns (address deployed) {
+    ) public payable returns (address deployed) {
         deployed = Create2.deploy(msg.value, salt, bytecode);
 
         emit NewContract(msg.sender, salt, deployed);
@@ -245,7 +202,6 @@ contract ArgobytesFactory is
      */
     function checkedCreateContract(bytes32 salt, bytes memory bytecode)
         external
-        override
         payable
         returns (address deployed)
     {

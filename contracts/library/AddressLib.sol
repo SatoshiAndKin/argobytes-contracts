@@ -10,12 +10,21 @@ library AddressLib {
 
     function uncheckedCall(
         address target,
+        bool forward_value,
         bytes memory data,
         string memory errorMessage
     ) internal returns (bytes memory) {
-        // TODO: allow calling with value
+        bool success;
+        bytes memory returndata;
+
         // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.call{value: msg.value}(data);
+        if (forward_value) {
+            // TODO: use msg.balance instead?
+            (success, returndata) = target.call{value: msg.value}(data);
+        } else {
+            (success, returndata) = target.call(data);
+        }
+
         return _verifyCallResult(success, returndata, errorMessage);
     }
 
