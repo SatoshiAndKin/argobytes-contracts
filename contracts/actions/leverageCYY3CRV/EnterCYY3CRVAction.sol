@@ -100,8 +100,6 @@ contract EnterCYY3CRVAction is Constants {
         if (data.tip_3crv > 0) {
             // TODO: do we want to approve tip_address to pull funds instead and then call some function?
             require(THREE_CRV.transfer(data.tip_address, data.tip_3crv), "EnterCYY3CRVAction !tip_3crv");
-
-            temp -= data.tip_3crv;
         }
 
         // deposit 3crv for y3crv
@@ -135,7 +133,6 @@ contract EnterCYY3CRVAction is Constants {
         // TODO: optionally grab the user's cyy3crv. this will revert if they already have borrows. they should probably just exit first
 
         // make sure we can borrow enough DAI from cream
-        // TODO: should we use CREAM.getAccountLiquidity and then set the borrow based on that? that will give us some excess DAI
         (uint error, uint liquidity, uint shortfall) = CREAM.getHypotheticalAccountLiquidity(address(this), address(CY_DAI), 0, flash_dai_amount);
         require(error == 0, "EnterCYY3CRVAction CREAM error");
         require(shortfall == 0, "EnterCYY3CRVAction CREAM shortfall");

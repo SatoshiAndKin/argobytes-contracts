@@ -9,87 +9,99 @@ import {Constants} from "./Constants.sol";
 
 contract ExitCYY3CRVAction is Constants {
 
+    /// @dev call this offchain
+    function calculateExit(address exit_account) public returns (uint256 dai_borrow_balance) {
+        // https://compound.finance/docs#protocol-math
+        dai_borrow_balance = CY_DAI.exchangeRateCurrent();
+
+        if (exit_account == address(0)) {
+            dai_borrow_balance *= CY_DAI.borrowBalanceCurrent(address(this));
+        } else {
+            dai_borrow_balance *= CY_DAI.borrowBalanceCurrent(exit_account);
+        }
+
+        dai_borrow_balance /= 10 ** (18 + 18 - 8);
+    }
+
     /// @notice leveraged cyy3crv -> y3crv -> 3crv -> stablecoins
     /// @dev Delegatecall this from ArgobytesFlashBorrower.flashBorrow
     function exit(
         uint256 min_remove_liquidity_dai,
         uint256 tip_dai,
         address tip_address,
-        // true to exit for msg.sender. false to exit for this contract
-        bool exit_sender
+        address exit_from,
+        address exit_to
     ) external payable {
         // TODO: does this need auth? not if delegatecall is used. enforce that?
 
+        uint256 flash_dai_amount = DAI.balanceOf(address(this));
+
+        uint256 temp;  // we are going to check a lot of balances
+
         // send any ETH as a tip to the developer
         if (msg.value > 0) {
-            (bool success, ) = data.tip_address.call{value: msg.value}("");
+            (bool success, ) = tip_address.call{value: msg.value}("");
             require(success, "!tip");
         }
 
-        // https://compound.finance/docs#protocol-math
-        uint256 dai_borrow_balance = CY_DAI.exchangeRateCurrent();
+        uint256 dai_borrow_balance = calculateExit(exit_from);
 
-        if (data.exit_sender) {
-            dai_borrow_balance *= CY_DAI.borrowBalanceCurrent(msg.sender);
-        } else {
-            dai_borrow_balance *= CY_DAI.borrowBalanceCurrent(address(this));
-        }
-
-        dai_borrow_balance /= 10 ** (18 + 18 - 8);
-
-        require(dai_borrow_balance > 0, "!borrowBalance");
-
-
-        (uint256 flash_dai_amount, ExitLoanData memory data) = abi.decode(encoded_data, (uint256, ExitLoanData));
+        require(flash_dai_amount >= dai_borrow_balance, "!flash_dai_amount");
 
         // repay the full borrow amount to unlock all our CY_Y_THREE_CRV
-        // TODO: allow partially repaying? repay flash_dai_amount or 2 ** 256 - 1?
-        DAI.approve(address(CY_DAI), flash_dai_amount);
+        // TODO: allow partially repaying?
+        DAI.approve(address(CY_DAI), dai_borrow_balance);
 
-        if (data.exit_sender) {
-            (uint256 error, ) = CY_DAI.repayBorrowBehalf(sender, flash_dai_amount);
-            require(error == 0, "!CY_DAI.repayBorrowBehalf");
-
-            // sender has CY_Y_THREE_CRV free now
-            // TODO: don't assume we can move it all. they might want to have other borrows on this same proxy
-            temp = CY_Y_THREE_CRV.balanceOf(sender);
-
-            // take the sender's CY_Y_THREE_CRV
-            // TODO: make sure our script sets this approval
-            require(CY_Y_THREE_CRV.transferFrom(sender, address(this), temp), "!CY_Y_THREE_CRV.transferFrom");
-        } else {
-            require(CY_DAI.repayBorrow(flash_dai_amount) == 0, "!CY_DAI.repayBorrow");
+        if (exit_from == address(0)) {
+            require(CY_DAI.repayBorrow(dai_borrow_balance) == 0, "!CY_DAI.repayBorrow");
 
             // we have CY_Y_THREE_CRV free now
             // TODO: don't assume we can move it all. we might want to have other borrows on this same proxy
             temp = CY_Y_THREE_CRV.balanceOf(address(this));
+        } else {
+            (uint256 error, ) = CY_DAI.repayBorrowBehalf(exit_from, dai_borrow_balance);
+            require(error == 0, "!CY_DAI.repayBorrowBehalf");
+
+            // sender has CY_Y_THREE_CRV free now
+            // TODO: don't assume we can move it all. they might want to have other borrows on this same proxy
+            temp = CY_Y_THREE_CRV.balanceOf(exit_from);
+
+            // take the sender's CY_Y_THREE_CRV
+            // TODO: make sure our script sets this approval
+            require(CY_Y_THREE_CRV.transferFrom(exit_from, address(this), temp), "!CY_Y_THREE_CRV.transferFrom");
         }
 
-        // turn CY_Y_THREE_CRV into Y_THREE_CRV
+        // turn CY_Y_THREE_CRV into Y_THREE_CRV (no approval needed)
         require(CY_Y_THREE_CRV.redeem(temp) == 0, "!CY_Y_THREE_CRV.redeem");
 
-        // move Y_THREE_CRV
+        // turn Y_THREE_CRV into THREE_CRV (no approval needed)
         temp = Y_THREE_CRV.balanceOf(address(this));
-
-        // turn Y_THREE_CRV into THREE_CRV
         Y_THREE_CRV.withdraw(temp);
 
-        // turn THREE_CURVE into DAI
-        temp = THREE_CRV_POOL.remove_liquidity_one_coin(temp, 0, data.min_remove_liquidity_dai, true);
+        // turn all THREE_CRV into DAI
+        // TODO: option to just trade enough to pay back the flashloan
+        temp = THREE_CRV.balanceOf(address(this));
 
+        THREE_CRV.approve(address(THREE_CRV_POOL), temp);
+
+        THREE_CRV_POOL.remove_liquidity_one_coin(temp, 0, min_remove_liquidity_dai, true);
+        // remove_liquidity_one_coin returns the DAI balance, but we might have some excess from a bigger flash loan
+        temp = DAI.balanceOf(address(this));
+
+        // make sure we have enough DAI
         require(temp >= flash_dai_amount, "!flash_dai_amount");
 
         // set aside the DAI needed to pay back the flash loan
         temp -= flash_dai_amount;
 
         // tip DAI
-        if (data.tip_dai > 0) {
-            require(DAI.transfer(data.tip_address, data.tip_dai), "!DAI.transfer tip");
+        if (tip_dai > 0) {
+            require(DAI.transfer(tip_address, tip_dai), "!DAI.transfer tip");
 
-            temp -= data.tip_dai;
+            temp -= tip_dai;
         }
 
-        // transfer the rest of the DAI
-        require(DAI.transfer(sender, temp), "!DAI.transfer");
+        // send the rest of the DAI to the sender
+        require(DAI.transfer(exit_to, temp), "!DAI.transfer");
     }
 }
