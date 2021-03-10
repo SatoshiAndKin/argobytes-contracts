@@ -7,9 +7,7 @@ from hypothesis import settings
 
 
 # TODO: test access for all the functions!
-def test_argobytes_arbitrage_access_control(argobytes_multicall, argobytes_proxy, argobytes_trader, example_action):
-    value = 1
-
+def test_argobytes_arbitrage_access_control(argobytes_multicall, argobytes_proxy_clone, argobytes_trader, example_action):
     borrows = []
     action = (
         example_action,
@@ -18,10 +16,10 @@ def test_argobytes_arbitrage_access_control(argobytes_multicall, argobytes_proxy
         example_action.sweep.encode_input(ZERO_ADDRESS, ZERO_ADDRESS, 0),
     )
 
-    assert(argobytes_proxy.owner() == accounts[0])
+    assert(argobytes_proxy_clone.owner() == accounts[0])
 
     # check that accounts[0] is allowed
-    argobytes_proxy.execute(
+    argobytes_proxy_clone.execute(
         action,
         {"from": accounts[0]}
     )
@@ -29,7 +27,7 @@ def test_argobytes_arbitrage_access_control(argobytes_multicall, argobytes_proxy
     # check that accounts[1] is NOT allowed
     # TODO: this used to revert with "ArgobytesProxy: 403" but we don't bother checking authority before calling anymore to save gas
     with brownie.reverts(""):
-        argobytes_proxy.execute(
+        argobytes_proxy_clone.execute(
             action,
             {"from": accounts[1]}
         )

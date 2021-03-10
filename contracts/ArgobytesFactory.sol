@@ -101,7 +101,7 @@ contract ArgobytesFactory is
     /**
      * @dev Check if a clone has already been created for the given arguments.
      */
-    function hasClone(
+    function cloneExists(
         address target,
         bytes32 salt,
         address immutableOwner

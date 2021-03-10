@@ -1,4 +1,4 @@
-import brownie
+from brownie import accounts, ArgobytesFactory, Contract, EnterCYY3CRVAction
 import os
 import threading
 import multiprocessing
@@ -12,13 +12,14 @@ def _load_contract(address):
     if address.lower() == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
         # USDC does weird things to get their implementation
         # TODO: don't hard code this
-        contract = brownie.Contract(address, as_proxy_for="0xB7277a6e95992041568D9391D09d0122023778A2")
+        contract = Contract("0xB7277a6e95992041568D9391D09d0122023778A2")
+        contract.address = address
     else:    
-        contract = brownie.Contract(address)
+        contract = Contract(address)
         
         if hasattr(contract, 'implementation'):
-            impl = contract.implementation.call()
-            contract = brownie.Contract(address, as_proxy_for=impl)
+            contract = Contract(contract.implementation.call())
+            contract.address = address
 
     return contract
 
@@ -111,7 +112,7 @@ def unlocked_transfer(to, token, amount=10000, unlocked="0x85b931A32a0725Be14285
 
     amount *= 10 ** decimals
 
-    unlocked = brownie.accounts.at(unlocked, force=True)
+    unlocked = accounts.at(unlocked, force=True)
 
     token.transfer(to, amount, {"from": unlocked})
 
@@ -123,13 +124,16 @@ def main():
     min_3crv_to_claim = 50
 
     # TODO: we need an account with private keys
+    # TODO: only force if forking mode
     # account = os.environ['LEVERAGE_ACCOUNT']
-    # account = brownie.accounts[0]
-    account = brownie.accounts.at("5668e.eth", force=True)
+    # account = accounts[0]
+    account = accounts.at("5668e.eth", force=True)
 
     # use eip-2470 0xce0042B868300000d44A59004Da54A005ffdcf9f to create these with deterministic addresses
     # TODO: maybe use it for more of our deploys?
     SingletonFactory = Contract("0xce0042B868300000d44A59004Da54A005ffdcf9f")
+
+    salt = ""
 
     # TODO: make a helper that only deploys if necessary
     argobytes_factory_tx = SingletonFactory.deploy(
@@ -140,18 +144,17 @@ def main():
 
     argobytes_factory = ArgobytesFactory.at(argobytes_factory_tx.return_value, accounts[0])
 
-    salt = ""
-
     # TODO: this is wrong. we don't want a clone of cyy3crv action. we want a flashloanborrower and the action deployed
-    cloneAddress, cloneExists = argobytes_factory.cloneExists(enter_cyy3crv_action, salt, account)
+    assert False, "wip"
+    cloneAddress, cloneExists = argobytes_factory.cloneExists(EnterCYY3CRVAction, salt, account)
     if not cloneExists:
         print("Creating your clone of EnterCYY3CRV...")
-        newCloneAddress = clone_factory.clone(enter_cyy3crv_master, salt, account, {"from": account}).return_value
+        newCloneAddress = clone_factory.clone(EnterCYY3CRVAction, salt, account, {"from": account}).return_value
         assert cloneAddress == newCloneAddress, "bad address"
 
         cloneAddress = newCloneAddress
 
-    EnterCYY3CRV = brownie.EnterCYY3CRV.at(cloneAddress)
+    EnterCYY3CRV = EnterCYY3CRVAction.at(cloneAddress)
 
     cloneOwner = EnterCYY3CRV.owner()
 
@@ -189,7 +192,7 @@ def main():
     # TODO: calculate these
     min_3crv_mint_amount = 1
     tip_3crv = 1
-    tip_address = brownie.accounts[1]
+    tip_address = accounts[1]
 
     enter_data = EnterData(
         dai=balances[dai],

@@ -35,13 +35,13 @@ def argobytes_factory(ArgobytesFactory):
 
 
 @pytest.fixture(scope="function")
-def argobytes_proxy(argobytes_authority, argobytes_proxy, ArgobytesProxy, argobytes_factory):
+def argobytes_proxy_clone(argobytes_authority, argobytes_proxy, ArgobytesProxy, argobytes_factory):
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
     salt = ""
 
     deploy_tx = argobytes_factory.createClone(argobytes_proxy.address, salt, accounts[0])
 
-    return ArgobytesProxy.at(deploy_tx.events['NewClone']['clone'], accounts[0])
+    return ArgobytesProxy.contract.at(deploy_tx.return_value, accounts[0])
 
 
 @pytest.fixture(scope="function")
@@ -101,20 +101,14 @@ def example_action_2(ExampleAction):
     return accounts[0].deploy(ExampleAction)
 
 
-@pytest.fixture(scope="session")
-def gastoken():
-    return Contract(GasToken2Address)
-
-
-# TODO: with a larger scope, i'm getting "This contract no longer exists"
 @pytest.fixture(scope="function")
-def liquidgastoken(interface):
-    return interface.ILiquidGasToken(LiquidGasTokenAddress)
+def enter_cyy3crv_action(EnterCYY3CRVAction):
+    return accounts[0].deploy(EnterCYY3CRVAction)
 
 
-@pytest.fixture(scope="session")
-def kollateral_invoker():
-    return Contract(KollateralInvokerAddress)
+@pytest.fixture(scope="function")
+def exit_cyy3crv_action(ExitCYY3CRVAction):
+    return accounts[0].deploy(ExitCYY3CRVAction)
 
 
 @pytest.fixture(scope="function")
@@ -131,9 +125,7 @@ def kyber_network_proxy():
 
 @pytest.fixture(scope="session")
 def onesplit():
-    # 1split.eth
-    # TODO: does this support ENS? this is 1split.eth (although its probably better to have an address here)
-    return Contract(OneSplitAddress)
+    return Contract("1split.eth")
 
 
 @pytest.fixture(scope="session")
@@ -199,7 +191,10 @@ def susd_erc20(synthetix_address_resolver):
 
     assert(proxy != ZERO_ADDRESS)
 
-    return Contract(proxy, as_proxy_for=proxy.target())
+    target = Contract(proxy.target)
+    target.address = proxy.address
+
+    return target
 
 
 @pytest.fixture(scope="session")
@@ -208,9 +203,10 @@ def synthetix_address_resolver(interface):
     proxy = Contract(SynthetixAddressResolverAddress)
 
     # this is the contract with the actual logic in it
-    return Contract(proxy, as_proxy_for=proxy.target())
+    target = Contract(proxy.target())
+    target.address = proxy
 
-    # return interface.IAddressResolver(SynthetixAddressResolverAddress)
+    return target
 
 
 @pytest.fixture(scope="session")
@@ -283,8 +279,11 @@ def uniswap_v1_helper(uniswap_v1_factory, interface):
 def usdc_erc20():
     # TODO: how did etherscan figure out the proxy address?
     # https://etherscan.io/address/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48#readProxyContract
-    # TODO: better names for "USDCAddress" and "USDCProxiedAddress"
-    return Contract(USDCAddress, as_proxy_for=USDCProxiedAddress)
+    # TODO: better names for "USDCAddress" and "USDCImplementationAddress"
+    contract = Contract(USDCImplementationAddress)
+    contract.address = USDCAddress
+
+    return contract
 
 
 @pytest.fixture(scope="function")
