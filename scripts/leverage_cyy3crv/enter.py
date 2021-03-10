@@ -12,13 +12,13 @@ def _load_contract(address):
     if address.lower() == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
         # USDC does weird things to get their implementation
         # TODO: don't hard code this
-        contract = brownie.Contract.from_explorer(address, as_proxy_for="0xB7277a6e95992041568D9391D09d0122023778A2")
+        contract = brownie.Contract(address, as_proxy_for="0xB7277a6e95992041568D9391D09d0122023778A2")
     else:    
         contract = brownie.Contract(address)
         
         if hasattr(contract, 'implementation'):
             impl = contract.implementation.call()
-            contract = brownie.Contract.from_explorer(address, as_proxy_for=impl)
+            contract = brownie.Contract(address, as_proxy_for=impl)
 
     return contract
 
@@ -75,7 +75,7 @@ def get_balances(account, tokens):
     return {token: token.balanceOf(account) for token in tokens}
 
 
-def infinite_approvals(account, balances, EnterCYY3CRV, claimable_3crv):
+def infinite_approvals(account, balances, spender, claimable_3crv):
     max_approval = 2 ** 256
 
     for token, balance in balances.items():
@@ -87,7 +87,7 @@ def infinite_approvals(account, balances, EnterCYY3CRV, claimable_3crv):
         if balance == 0:
             continue
 
-        allowed = token.allowance(account, EnterCYY3CRV)
+        allowed = token.allowance(account, spender)
 
         if allowed >= max_approval:
             print(f"No approval needed for {token.address}")
@@ -98,11 +98,11 @@ def infinite_approvals(account, balances, EnterCYY3CRV, claimable_3crv):
         else:
             # TODO: do any of our tokens actually need this stupid check?
             print(f"Clearing {token.address} approval...")
-            allowed = token.approve(EnterCYY3CRV, 0, {"from": account})
+            allowed = token.approve(spender, 0, {"from": account})
 
         # TODO: unlimited approval?
         print(f"Approving {balance} {token.address}...")
-        token.approve(EnterCYY3CRV, balance, {"from": account})
+        token.approve(spender, balance, {"from": account})
 
 
 def unlocked_transfer(to, token, amount=10000, unlocked="0x85b931A32a0725Be14285B66f1a22178c672d69B"):
@@ -127,13 +127,23 @@ def main():
     # account = brownie.accounts[0]
     account = brownie.accounts.at("5668e.eth", force=True)
 
-    # TODO: use LGT deployer to create these with deterministic addresses
-    clone_factory = account.deploy(brownie.ImmutablyOwnedCloneFactory)
-    enter_cyy3crv_master = account.deploy(brownie.EnterCYY3CRV)
+    # use eip-2470 0xce0042B868300000d44A59004Da54A005ffdcf9f to create these with deterministic addresses
+    # TODO: maybe use it for more of our deploys?
+    SingletonFactory = Contract("0xce0042B868300000d44A59004Da54A005ffdcf9f")
+
+    # TODO: make a helper that only deploys if necessary
+    argobytes_factory_tx = SingletonFactory.deploy(
+        ArgobytesFactory.deploy.encode_input(),
+        salt,
+        {"from": accounts[0]},
+    )
+
+    argobytes_factory = ArgobytesFactory.at(argobytes_factory_tx.return_value, accounts[0])
 
     salt = ""
 
-    cloneAddress, cloneExists = clone_factory.cloneExists(enter_cyy3crv_master, salt, account)
+    # TODO: this is wrong. we don't want a clone of cyy3crv action. we want a flashloanborrower and the action deployed
+    cloneAddress, cloneExists = argobytes_factory.cloneExists(enter_cyy3crv_action, salt, account)
     if not cloneExists:
         print("Creating your clone of EnterCYY3CRV...")
         newCloneAddress = clone_factory.clone(enter_cyy3crv_master, salt, account, {"from": account}).return_value

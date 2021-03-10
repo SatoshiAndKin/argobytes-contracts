@@ -1,3 +1,5 @@
+autofetch_sources: true
+
 compiler:
   solc:
     optimizer:

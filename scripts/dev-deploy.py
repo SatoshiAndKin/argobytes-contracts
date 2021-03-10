@@ -52,7 +52,7 @@ def main():
     deadline = 90000000000000000000
 
     # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
-    argobytes_proxy_owner = accounts[0]
+    argobytes_tip_address = accounts[0]
 
     argobytes_proxy_arbitragers = [
         accounts[0],
@@ -91,7 +91,6 @@ def main():
     # TODO: docs for using ERADICATE2
     # TODO: openzepplin helper uses bytes32, but gastoken uses uint256.
     salt = ""
-    salt_uint = 0
 
     # deploy a dsproxy just to compare gas costs
     # TODO: whats the deploy cost of DSProxyFactory?
@@ -118,7 +117,19 @@ def main():
 
     argobytes_factory = ArgobytesFactory.at(deploy_tx.return_value, accounts[0])
     """
-    argobytes_factory = accounts[0].deploy(ArgobytesFactory)
+
+    # use eip-2470 0xce0042B868300000d44A59004Da54A005ffdcf9f to create these with deterministic addresses
+    # TODO: maybe use it for more of our deploys?
+    SingletonFactory = Contract("0xce0042B868300000d44A59004Da54A005ffdcf9f")
+
+    # TODO: make a helper that only deploys if necessary
+    argobytes_factory_tx = SingletonFactory.deploy(
+        ArgobytesFactory.deploy.encode_input(),
+        salt,
+        {"from": accounts[0]},
+    )
+
+    argobytes_factory = ArgobytesFactory.at(argobytes_factory_tx.return_value, accounts[0])
 
     quick_save_contract(argobytes_factory)
     # the ArgobytesFactory is deployed and ready for use!
@@ -153,15 +164,15 @@ def main():
     argobytes_trader = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesTrader)
 
     # deploy all the exchange actions
-    example_action = argobytes_factory_deploy_helper(argobytes_factory, ExampleAction, gas_price=0)
+    # example_action = argobytes_factory_deploy_helper(argobytes_factory, ExampleAction, gas_price=0)
     # onesplit_offchain_action = argobytes_factory_deploy_helper(argobytes_factory, OneSplitOffchainAction)
-    kyber_action = argobytes_factory_deploy_helper(argobytes_factory, KyberAction, constructor_args=[accounts[0]])
-    uniswap_v1_action = argobytes_factory_deploy_helper(argobytes_factory, UniswapV1Action)
-    uniswap_v2_action = argobytes_factory_deploy_helper(argobytes_factory, UniswapV2Action)
+    # kyber_action = argobytes_factory_deploy_helper(argobytes_factory, KyberAction, constructor_args=[accounts[0]])
+    # uniswap_v1_action = argobytes_factory_deploy_helper(argobytes_factory, UniswapV1Action)
+    # uniswap_v2_action = argobytes_factory_deploy_helper(argobytes_factory, UniswapV2Action)
     # zrx_v3_action = argobytes_factory_deploy_helper(argobytes_factory, ZrxV3Action)
-    weth9_action = argobytes_factory_deploy_helper(argobytes_factory, Weth9Action)
+    # weth9_action = argobytes_factory_deploy_helper(argobytes_factory, Weth9Action)
     # synthetix_depot_action = argobytes_factory_deploy_helper(argobytes_factory, SynthetixDepotAction)
-    curve_fi_action = argobytes_factory_deploy_helper(argobytes_factory, CurveFiAction)
+    # curve_fi_action = argobytes_factory_deploy_helper(argobytes_factory, CurveFiAction)
 
     # deploy leverage cyy3crv actions
     enter_cyy3crv_action = argobytes_factory_deploy_helper(argobytes_factory, EnterCYY3CRVAction)
@@ -190,7 +201,7 @@ def main():
             kyber_register_wallet,
             0,  # 0=CALL
             False,
-            kyber_register_wallet.registerWallet.encode_input(argobytes_proxy_owner),
+            kyber_register_wallet.registerWallet.encode_input(argobytes_tip_address),
         ),
         # TODO: gas_token.buyAndFree or gas_token.free depending on off-chain balance/price checks
     ]

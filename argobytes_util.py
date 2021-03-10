@@ -40,7 +40,7 @@ def reset_block_time(synthetix_depot_action):
     # synthetix_address_resolver = interface.IAddressResolver(SynthetixAddressResolver)
 
     # TODO: get this from the address resolver instead
-    synthetix_exchange_rates = Contract.from_explorer("0x9D7F70AF5DF5D5CC79780032d47a34615D1F1d77")
+    synthetix_exchange_rates = Contract("0x9D7F70AF5DF5D5CC79780032d47a34615D1F1d77")
 
     token_bytestr = to_hex32(text="ETH")
 

@@ -1,7 +1,9 @@
+python-dotenv
 eth-abi
 eth-brownie
 bandit
 autopep8
+lazy_load
 pylint
 pytest-random-order
 pytest-timeout
