@@ -6,7 +6,7 @@ import {Address} from "@OpenZeppelin/utils/Address.sol";
 /**
  * @dev Collection of openzepplin's unreleased functions related to the address type
  */
-library Address2 {
+library AddressLib {
 
     function uncheckedCall(
         address target,

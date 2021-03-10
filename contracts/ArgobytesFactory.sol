@@ -20,9 +20,19 @@ contract ArgobytesFactoryEvents {
 interface IArgobytesFactory {
     function createClone(
         address target,
+        bytes32 salt
+    ) external returns (address clone);
+
+    function createClone(
+        address target,
         bytes32 salt,
         address immutable_owner
     ) external returns (address clone);
+
+    function createClones(
+        address target,
+        bytes32[] calldata salts
+    ) external;
 
     function createClones(
         address target,
@@ -48,21 +58,18 @@ interface IArgobytesFactory {
         external
         payable
         returns (address deployed);
-
-}
-
-
-import {Address} from "@OpenZeppelin/utils/Address.sol";
-import {Create2} from "@OpenZeppelin/utils/Create2.sol";
-
-contract CloneFactoryEvents {
 }
 
 contract ArgobytesFactory is
     ArgobytesFactoryEvents,
     IArgobytesFactory
 {
-    using Address for address;
+    function createClone(
+        address target,
+        bytes32 salt
+    ) public override returns (address clone) {
+        return createClone(target, salt, msg.sender);
+    }
 
     /*
     Create a very lightweight "clone" contract that delegates all calls to the `target` contract.
@@ -119,6 +126,13 @@ contract ArgobytesFactory is
 
     function createClones(
         address target,
+        bytes32[] calldata salts
+    ) public override {
+        createClones(target, salts, msg.sender);
+    }
+
+    function createClones(
+        address target,
         bytes32[] calldata salts,
         address immutable_owner
     ) public override {
@@ -166,7 +180,7 @@ contract ArgobytesFactory is
         // TODO: do this all here in assembly? the compiler should be smart enough to not have any savings doing that
         cloneAddr = Create2.computeAddress(salt, bytecodeHash);
 
-        cloneExists = cloneAddr.isContract();
+        cloneExists = Address.isContract(cloneAddr);
     }
 
     // openzeppelin and optionality do this differently. what is cheaper?

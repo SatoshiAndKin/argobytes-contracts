@@ -7,7 +7,7 @@ pragma abicoder v2;
 import {Constants} from "./Constants.sol";
 
 
-contract EnterCYY3CRV is Constants {
+contract EnterCYY3CRVAction is Constants {
 
     struct EnterData {
         uint256 dai;

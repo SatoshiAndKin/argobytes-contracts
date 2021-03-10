@@ -8,8 +8,8 @@ import {Address} from "@OpenZeppelin/utils/Address.sol";
 
 import {IArgobytesFactory} from "contracts/ArgobytesFactory.sol";
 import {ArgobytesAuth, ArgobytesAuthTypes} from "contracts/abstract/ArgobytesAuth.sol";
-import {Address2} from "contracts/library/Address2.sol";
-import {Bytes2} from "contracts/library/Bytes2.sol";
+import {AddressLib} from "contracts/library/AddressLib.sol";
+import {BytesLib} from "contracts/library/BytesLib.sol";
 
 contract ArgobytesProxy is ArgobytesAuth {
 
@@ -39,7 +39,7 @@ contract ArgobytesProxy is ArgobytesAuth {
     {
         // check auth
         if (msg.sender != owner()) {
-            requireAuth(action.target, action.call_type, Bytes2.toBytes4(action.target_calldata));
+            requireAuth(action.target, action.call_type, BytesLib.toBytes4(action.target_calldata));
         }
 
         // re-entrancy protection?
@@ -51,13 +51,13 @@ contract ArgobytesProxy is ArgobytesAuth {
 
         // uncheckedDelegateCall is safe because we just checked that `target` is a contract
         if (action.call_type == ArgobytesAuthTypes.Call.DELEGATE) {
-            response = Address2.uncheckedDelegateCall(
+            response = AddressLib.uncheckedDelegateCall(
                 action.target,
                 action.target_calldata,
                 "ArgobytesProxy.execute !delegatecall"
             );
         } else {
-            response = Address2.uncheckedCall(
+            response = AddressLib.uncheckedCall(
                 action.target,
                 action.target_calldata,
                 "ArgobytesProxy.execute !call"
@@ -74,7 +74,7 @@ contract ArgobytesProxy is ArgobytesAuth {
         responses = new bytes[](actions.length);
 
         for (uint256 i = 0; i < actions.length; i++) {
-            responses[i] = this.execute(actions[i]);
+            responses[i] = execute(actions[i]);
         }
 
         return responses;

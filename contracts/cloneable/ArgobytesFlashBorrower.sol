@@ -9,8 +9,8 @@ import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
 import {ArgobytesAuthTypes} from "contracts/abstract/ArgobytesAuth.sol";
-import {Address2} from "contracts/library/Address2.sol";
-import {Bytes2} from "contracts/library/Bytes2.sol";
+import {AddressLib} from "contracts/library/AddressLib.sol";
+import {BytesLib} from "contracts/library/BytesLib.sol";
 import {IERC3156FlashBorrower} from "contracts/external/erc3156/IERC3156FlashBorrower.sol";
 import {IERC3156FlashLender} from "contracts/external/erc3156/IERC3156FlashLender.sol";
 
@@ -70,7 +70,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
 
         // check auth (owner is always allowed to use any lender and any action)
         if (msg.sender != owner()) {
-            requireAuth(action.target, action.call_type, Bytes2.toBytes4(action.target_calldata));
+            requireAuth(action.target, action.call_type, BytesLib.toBytes4(action.target_calldata));
             require(
                 s.allowed_lenders[lender],
                 "FlashBorrower.flashBorrow !lender"
@@ -133,13 +133,13 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         // emit an event with the response?
         bytes memory returned;
         if (s.pending_action.call_type == ArgobytesAuthTypes.Call.DELEGATE) {
-            returned = Address2.uncheckedDelegateCall(
+            returned = AddressLib.uncheckedDelegateCall(
                 s.pending_action.target,
                 s.pending_action.target_calldata,
                 "FlashLoanBorrower.onFlashLoan !delegatecall"
             );
         } else {
-            returned = Address2.uncheckedCall(
+            returned = AddressLib.uncheckedCall(
                 s.pending_action.target,
                 s.pending_action.target_calldata,
                 "FlashLoanBorrower.onFlashLoan !call"

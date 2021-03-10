@@ -21,7 +21,7 @@ Owners can opt into more advanced authentication that lets them approve other ad
 
 A common pattern will be sending one setup transaction that calls `approve` on an ERC-20 token for the proxy. Then sending a second transaction that calls the Proxy's `execute` function with another contract's address and calldata. The other contract will then transfer that ERC-20 token to make money somehow, and then return the proceeds to the owner.
 
-If the owner of the proxy is a smart contract, then very powerful security should be possible.
+If the owner of the proxy is a smart contract like [Compound's Timelock](https://github.com/compound-finance/compound-protocol/blob/master/contracts/Timelock.sol), then very powerful security should be possible.
 
 
 ## ArgobytesFlashBorrower
@@ -79,7 +79,7 @@ When combined with the ArgobytesFlashBorrower, this will allow atomic arbitrage 
 
 ### leverageCYY3CRV
 
-#### EnterCYY3CRV
+#### EnterCYY3CRVAction
 
 1. Start with some DAI/USDC/USDT/3CRV/y3CRV
 2. Flash loan more DAI (7.4x more)
@@ -90,20 +90,9 @@ When combined with the ArgobytesFlashBorrower, this will allow atomic arbitrage 
 7. Pay back flashloan
 
 
-#### ExitCYY3CRV
+#### ExitCYY3CRVAction
 
-Reverse of EnterCYY3CRV.
-
-
-## ArgobytesMulticall
-
-Calling just one function on another contract isn't very exciting; you can already do that with your EOA. The ArgobytesMulticall contract's `callActions` function takes a list of multiple contract addresses and functions. If any fail, the whole thing reverts.
-
-This contract is a key part of some action contracts.
-
-This is similar to [MakerDAO's multicall](https://github.com/makerdao/multicall) but with the added ability to transfer ETH.
-
-If you need more complex ways to call multiple actions and move ETH around, you probably just want to write an action contract.
+Reverse of EnterCYY3CRVAction.
 
 
 # Developing

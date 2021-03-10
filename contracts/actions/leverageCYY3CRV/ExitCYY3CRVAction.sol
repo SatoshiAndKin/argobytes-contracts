@@ -7,7 +7,7 @@ pragma abicoder v2;
 import {Constants} from "./Constants.sol";
 
 
-contract ExitCYY3CRV is Constants {
+contract ExitCYY3CRVAction is Constants {
 
     struct ExitLoanData {
         uint256 min_remove_liquidity_dai;

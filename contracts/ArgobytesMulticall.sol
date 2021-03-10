@@ -1,8 +1,14 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /*
-This is similar to MakerDAO's Multicall, but it can also pass value. If you don't need value, Multicall may be better.
+Calling just one function on another contract isn't very exciting; you can already do that with your EOA. The ArgobytesMulticall contract's `callActions` function takes a list of multiple contract addresses and functions. If any fail, the whole thing reverts.
 
-TODO: think about this smore. make it re-use code in ArgobytesProxy?
+This contract is a key part of some action contracts.
+
+This is similar to [MakerDAO's multicall](https://github.com/makerdao/multicall) but with the added ability to transfer ETH.
+
+If you need more complex ways to call multiple actions and move ETH around, you probably just want to write an action contract.
+
+TODO: think about this smore. make it re-use code in ArgobytesProxy? do we even need it anymore?
 */
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;

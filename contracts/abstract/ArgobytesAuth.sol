@@ -8,8 +8,8 @@ import {Address} from "@OpenZeppelin/utils/Address.sol";
 
 import {IArgobytesAuthority} from "contracts/ArgobytesAuthority.sol";
 import {IArgobytesFactory} from "contracts/ArgobytesFactory.sol";
-import {Address2} from "contracts/library/Address2.sol";
-import {Bytes2} from "contracts/library/Bytes2.sol";
+import {AddressLib} from "contracts/library/AddressLib.sol";
+import {BytesLib} from "contracts/library/BytesLib.sol";
 
 import {ImmutablyOwnedClone} from "./ImmutablyOwnedClone.sol";
 
@@ -31,8 +31,8 @@ contract ArgobytesAuthTypes {
 // TODO: should this be able to receive a flash loan?
 abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
     using Address for address;
-    using Address2 for address;
-    using Bytes2 for bytes;
+    using AddressLib for address;
+    using BytesLib for bytes;
 
     // note that this is state!
     // TODO: how can we be sure that a sneaky delegatecall doesn't change this

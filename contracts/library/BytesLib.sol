@@ -2,7 +2,7 @@
 
 pragma solidity 0.7.6;
 
-library Bytes2 {
+library BytesLib {
     function toBytes4(bytes memory input) internal pure returns (bytes4 output) {
         if (input.length == 0) {
             return 0x0;

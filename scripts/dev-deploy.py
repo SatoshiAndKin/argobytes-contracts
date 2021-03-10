@@ -51,7 +51,6 @@ def main():
 
     deadline = 90000000000000000000
 
-
     # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
     argobytes_proxy_owner = accounts[0]
 
@@ -65,22 +64,26 @@ def main():
 
     starting_balance = accounts[0].balance()
 
-    def argobytes_factory_deploy_helper(factory, contract, gas_price=expected_mainnet_gas_price, constructor_args=[]):
-        salt = ""
-
-        # TODO: calculate the gas_token_amount needed (maybe by deploying inside a fork)
-
-        deploy_tx = factory.createContractAndFree(
-            gas_token_amount,
-            require_gas_token,
+    def argobytes_factory_deploy_helper(
+        factory,
+        contract,
+        deployer=accounts[0],
+        gas_price=expected_mainnet_gas_price,
+        constructor_args=[],
+        extra_hexstr="0x",
+        salt="",
+    ):
+        deploy_tx = factory.createContract(
             salt,
             contract.deploy.encode_input(*constructor_args),
-            to_bytes(hexstr="0x"),
+            to_bytes(hexstr=extra_hexstr),
             {
                 "gas_price": expected_mainnet_gas_price,
+                "from": deployer,
             },
         )
-        deployed = contract.at(deploy_tx.return_value, accounts[0])
+
+        deployed = contract.at(deploy_tx.return_value, deployer)
         quick_save_contract(deployed)
 
         return deployed
@@ -97,8 +100,8 @@ def main():
 
     # deploy ArgobytesFactory using LGT's create2 helper
     # when combined with a salt found by ERADICATE2, we can have an address with lots of 0 bytes
-    # TODO: originally i wanted to use gastoken, but i'm really seeing it now as pollution
-
+    # TODO: originally i wanted to use gastoken, but i'm really seeing it now as pollution. their create2 helper is still helpful though
+    """
     deploy_tx = gas_token.create2(
         0,
         deadline,
@@ -114,24 +117,22 @@ def main():
     # TODO: check how much we spent on gas token
 
     argobytes_factory = ArgobytesFactory.at(deploy_tx.return_value, accounts[0])
+    """
+    argobytes_factory = accounts[0].deploy(ArgobytesFactory)
+
     quick_save_contract(argobytes_factory)
     # the ArgobytesFactory is deployed and ready for use!
-
-    # let the proxy use our gas token
-    if FREE_GAS_TOKEN:
-        gas_token.approve(argobytes_factory, 2**256-1)
 
     # build an ArgobytesAuthority
     argobytes_authority = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesAuthority)
 
-    # build an ArgobytesProxy to use for cloning
-    argobytes_proxy = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesProxy)
+    # build an ArgobytesFlashBorrower to use for cloning
+    argobytes_proxy = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesFlashBorrower)
     quick_save_contract(argobytes_proxy)
 
-    # clone ArgobytesProxy for accounts[0]
-    # TODO: optionally free gas token
-    deploy_tx = argobytes_factory.createClone(
-        argobytes_proxy.address,
+    # clone ArgobytesFlashBorrower for accounts[0]
+    clone_tx = argobytes_factory.createClone(
+        argobytes_proxy,
         salt,
         accounts[0],
         {
@@ -140,18 +141,18 @@ def main():
         },
     )
 
-    argobytes_proxy_clone = ArgobytesProxy.at(deploy_tx.events['NewClone']['clone'], accounts[0])
+    argobytes_proxy_clone = ArgobytesFlashBorrower.at(clone_tx.return_value, accounts[0])
 
     # TODO: setup auth for the proxy
     # for now, owner-only access works, but we need to allow a bot in to call atomicArbitrage
 
     # deploy the main contracts
-    argobytes_trader = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesTrader)
     argobytes_multicall = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesMulticall)
-    argobytes_liquid_gas_token_user = argobytes_factory_deploy_helper(
-        argobytes_factory, ArgobytesLiquidGasTokenUser)
 
-    # deploy all the actions
+    # deploy base actions
+    argobytes_trader = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesTrader)
+
+    # deploy all the exchange actions
     example_action = argobytes_factory_deploy_helper(argobytes_factory, ExampleAction, gas_price=0)
     # onesplit_offchain_action = argobytes_factory_deploy_helper(argobytes_factory, OneSplitOffchainAction)
     kyber_action = argobytes_factory_deploy_helper(argobytes_factory, KyberAction, constructor_args=[accounts[0]])
@@ -162,33 +163,41 @@ def main():
     # synthetix_depot_action = argobytes_factory_deploy_helper(argobytes_factory, SynthetixDepotAction)
     curve_fi_action = argobytes_factory_deploy_helper(argobytes_factory, CurveFiAction)
 
+    # deploy leverage cyy3crv actions
+    enter_cyy3crv_action = argobytes_factory_deploy_helper(argobytes_factory, EnterCYY3CRVAction)
+    exit_cyy3crv_action = argobytes_factory_deploy_helper(argobytes_factory, ExitCYY3CRVAction)
+
+    # external things
     kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWalletAddress)
 
     bulk_actions = [
         # allow bots to call argobytes_trader.atomicArbitrage
-        # TODO: think about this more. the msg.sendere might not be what we need
+        # TODO: allow bots to flash loan from WETH10 and DyDx and Uniswap and any other wrappers that we trust
+        # TODO: think about this more
         (
-            argobytes_authority.address,
-            0,
+            argobytes_authority,
+            0,  # 0=CALL
+            False,
             argobytes_authority.allow.encode_input(
                 argobytes_proxy_arbitragers,
-                argobytes_trader.address,
+                argobytes_trader,
+                0,  # 0=CALL
                 argobytes_trader.atomicArbitrage.signature,
             ),
         ),
         # register for kyber's fee program
         (
             kyber_register_wallet,
-            0,
+            0,  # 0=CALL
+            False,
             kyber_register_wallet.registerWallet.encode_input(argobytes_proxy_owner),
         ),
         # TODO: gas_token.buyAndFree or gas_token.free depending on off-chain balance/price checks
     ]
 
-    argobytes_proxy_clone.execute(
-        argobytes_multicall,
-        argobytes_multicall.callActions.encode_input(bulk_actions),
-        {"from": accounts[0], "gasPrice": expected_mainnet_gas_price}
+    argobytes_proxy_clone.executeMany(
+        bulk_actions,
+        {"gasPrice": expected_mainnet_gas_price}
     )
 
     print("gas used by accounts[0]:", accounts[0].gas_used)
@@ -254,26 +263,27 @@ def main():
         },
     )
 
-    argobytes_proxy_clone_5 = ArgobytesProxy.at(deploy_tx.events['NewClone']['clone'], accounts[5])
+    argobytes_proxy_clone_5 = ArgobytesFlashBorrower.at(deploy_tx.return_value, accounts[5])
 
     bulk_actions = [
         # allow bots to call argobytes_trader.atomicArbitrage
         # TODO: think about this more. the msg.sendere might not be what we need
         (
-            argobytes_authority.address,
-            0,
+            argobytes_authority,
+            0,  # 0=Call
+            False,
             argobytes_authority.allow.encode_input(
                 argobytes_proxy_arbitragers,
-                argobytes_trader.address,
+                argobytes_trader,
+                1,  # 1=delegatecall
                 argobytes_trader.atomicArbitrage.signature,
             ),
         ),
         # TODO: gas_token.buyAndFree or gas_token.free depending on off-chain balance/price checks
     ]
 
-    argobytes_proxy_clone_5.execute(
-        argobytes_multicall,
-        argobytes_multicall.callActions.encode_input(bulk_actions),
+    argobytes_proxy_clone_5.executeMany(
+        bulk_actions,
         {"gasPrice": expected_mainnet_gas_price}
     )
 
@@ -294,6 +304,8 @@ def main():
             "gas_price": expected_mainnet_gas_price,
         },
     )
+
+    argobytes_proxy_clone_6 = ArgobytesFlashBorrower.at(deploy_tx.return_value, accounts[6])
 
     ending_balance = accounts[6].balance()
 
