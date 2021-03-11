@@ -68,7 +68,7 @@ def main():
     tip_dai = 1
     tip_address = _resolve_address("satoshiandkin.eth")  # TODO: put this on a subdomain and uses an immutable
     # TODO: this should be False in the default case
-    exit_from_account = True
+    exit_from_account = False
     # min_cream_liquidity = 1
 
     if exit_from_account:
@@ -76,6 +76,8 @@ def main():
 
         balances = get_balances(exit_from, tokens)
         print(f"{exit_from} balances")
+
+        raise NotImplementedError("we need an approve so CY_DAI.repayBorrowBehalf is allowed")
     else:
         exit_from = ZERO_ADDRESS
 
