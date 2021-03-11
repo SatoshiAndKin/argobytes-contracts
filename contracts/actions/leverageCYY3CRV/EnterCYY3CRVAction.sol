@@ -15,8 +15,8 @@ contract EnterCYY3CRVAction is Constants {
         uint256 dai_flash_fee;
         uint256 usdc;
         uint256 usdt;
-        uint256 threecrv;
         uint256 min_3crv_mint_amount;
+        uint256 threecrv;
         uint256 tip_3crv;
         uint256 y3crv;
         uint256 min_cream_liquidity;

@@ -13,8 +13,6 @@ import {ICurveFeeDistribution} from "contracts/external/curvefi/ICurveFeeDistrib
 import {ICERC20} from "contracts/external/cream/ICERC20.sol";
 import {IComptroller} from "contracts/external/cream/IComptroller.sol";
 
-import {IDyDxSoloMargin} from "contracts/external/dydx/IDyDxSoloMargin.sol";
-
 import {IYVault} from "contracts/external/yearn/IYVault.sol";
 
 abstract contract Constants {

@@ -14,11 +14,7 @@ contract ExitCYY3CRVAction is Constants {
         // https://compound.finance/docs#protocol-math
         dai_borrow_balance = CY_DAI.exchangeRateCurrent();
 
-        if (exit_account == address(0)) {
-            dai_borrow_balance *= CY_DAI.borrowBalanceCurrent(address(this));
-        } else {
-            dai_borrow_balance *= CY_DAI.borrowBalanceCurrent(exit_account);
-        }
+        dai_borrow_balance *= CY_DAI.borrowBalanceCurrent(exit_account);
 
         dai_borrow_balance /= 10 ** (18 + 18 - 8);
     }
@@ -28,7 +24,7 @@ contract ExitCYY3CRVAction is Constants {
     function exit(
         uint256 min_remove_liquidity_dai,
         uint256 tip_dai,
-        uint256 flash_dai_fee,
+        uint256 dai_flash_fee,
         address tip_address,
         address exit_from,
         address exit_to
@@ -75,9 +71,13 @@ contract ExitCYY3CRVAction is Constants {
         // turn CY_Y_THREE_CRV into Y_THREE_CRV (no approval needed)
         require(CY_Y_THREE_CRV.redeem(temp) == 0, "ExitCYY3CRVAction !CY_Y_THREE_CRV.redeem");
 
+        // TODO: transfer Y_THREE_CRV from exit_from?
+
         // turn Y_THREE_CRV into THREE_CRV (no approval needed)
         temp = Y_THREE_CRV.balanceOf(address(this));
         Y_THREE_CRV.withdraw(temp);
+
+        // TODO: transfer THREE_CRV from exit_from?
 
         // turn all THREE_CRV into DAI
         // TODO: option to just trade enough to pay back the flashloan
@@ -90,7 +90,7 @@ contract ExitCYY3CRVAction is Constants {
         temp = DAI.balanceOf(address(this));
 
         // add the fee
-        flash_dai_amount += flash_dai_fee;
+        flash_dai_amount += dai_flash_fee;
 
         // make sure we have enough DAI
         require(temp + tip_dai >= flash_dai_amount, "ExitCYY3CRVAction !flash_dai_amount");

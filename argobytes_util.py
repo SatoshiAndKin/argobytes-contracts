@@ -2,13 +2,40 @@ import os
 import multiprocessing
 import rlp
 
-from brownie import accounts, Contract
+from brownie import accounts, Contract, web3, ZERO_ADDRESS
 from brownie.exceptions import VirtualMachineError
 from copy import copy
+from collections import namedtuple
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from eth_abi.packed import encode_abi_packed
 from eth_utils import keccak, to_checksum_address, to_bytes, to_hex
 from lazy_load import lazy
+
+
+ActionTuple = namedtuple("Action", [
+    "target",
+    "call_type",
+    "forward_value",
+    "data",
+])
+
+
+class Action():
+
+    def __init__(self, contract, call_type: str, forward_value: bool, function_name: str, *function_args):
+        # TODO: use an enum
+        if call_type == "delegate":
+            call_int = 0
+        elif call_type == "call":
+            call_int = 1
+        elif call_type == "admin":
+            call_int = 2
+        else:
+            raise NotImplementedError         
+
+        data = getattr(contract, function_name).encode_input(*function_args)
+
+        self.tuple = ActionTuple(contract.address, call_int, forward_value, data)
 
 
 def approve(account, balances, extra_balances, spender, amount=2**256-1):
@@ -56,16 +83,26 @@ def get_or_clone(owner, argobytes_factory, deployed_contract, salt=""):
 
 def get_or_create(default_account, contract, salt="", constructor_args=[]):
     """Use eip-2470 to create a contract with deterministic addresses."""
+    assert SingletonFactory.address == "0xce0042B868300000d44A59004Da54A005ffdcf9f", "unexpected singletonfactory address"
+
     contract_initcode = contract.deploy.encode_input(*constructor_args)
 
-    try:
-        SingletonFactory.deploy.call(contract_initcode, salt)
-    except VirtualMachineError:
-        # we got an exception. contract is already deployed
-        # TODO: 
-        contract_address = mk_contract_address2(SingletonFactory, salt, contract_initcode)
-    else:
-        contract_address = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account}).return_value
+    print(f"salt: {salt}")
+    print(f"contract_initcode: {contract_initcode}")
+
+    contract_address = mk_contract_address2(SingletonFactory.address, salt, contract_initcode)
+
+    print(f"checking for {contract_address}...")
+
+    if web3.eth.getCode(contract_address).hex() == "0x":
+        # we got the zero address. contract is not deployed
+        deployed_contract_address = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account}).return_value
+
+        print(f"deployed to {deployed_contract_address}")
+
+        assert contract_address == deployed_contract_address, "something is wrong in the address calculation"
+
+        contract_address = deployed_contract_address
 
     return contract.at(contract_address, default_account)
 
