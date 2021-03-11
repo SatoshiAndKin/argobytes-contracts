@@ -83,24 +83,19 @@ def get_or_clone(owner, argobytes_factory, deployed_contract, salt=""):
 
 def get_or_create(default_account, contract, salt="", constructor_args=[]):
     """Use eip-2470 to create a contract with deterministic addresses."""
-    # contract_initcode = contract.deploy.encode_input(*constructor_args)
-    contract_initcode = contract.bytecode
-
-    print(f"salt: '{salt}'")
-    print(f"contract_initcode: '{contract_initcode}'")
+    contract_initcode = contract.deploy.encode_input(*constructor_args)
 
     contract_address = mk_contract_address2(SingletonFactory.address, salt, contract_initcode)
 
     if web3.eth.getCode(contract_address).hex() == "0x":
-        # tx = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account})
-        # deployed_contract_address = tx.return_value
-        deployed_contract_address = SingletonFactory.deploy.call(contract_initcode, salt, {"from": default_account})
+        tx = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account})
 
-        assert contract_address == deployed_contract_address, f"something is wrong in the address calculation. {contract_address} != {deployed_contract_address}"
+        deployed_contract_address = tx.return_value
+
+        assert contract_address == deployed_contract_address, f"create2 error: {contract_address} != {deployed_contract_address}"
 
         contract_address = deployed_contract_address
 
-    raise NotImplementedError("wip")
     return contract.at(contract_address, default_account)
 
 
@@ -147,12 +142,17 @@ def mk_contract_address2(sender: str, salt: str, initcode: str) -> str:
 
     # TODO: this is not correct
     """
+    if not salt.startswith("0x"):
+        salt = to_hex32(text=salt)
+
     raw = b"".join([
         to_bytes(hexstr="0xff"),
         to_bytes(hexstr=sender),
         to_bytes(hexstr=salt),
         keccak(to_bytes(hexstr=initcode)),
     ])
+
+    assert len(raw) == 85, "incorrect length of inputs!"
 
     address_bytes = keccak(raw)[-20:]
 

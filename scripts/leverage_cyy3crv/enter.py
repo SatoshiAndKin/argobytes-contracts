@@ -140,7 +140,7 @@ def main():
     print("enter success!")
     enter_tx.info()
 
-    num_events = enter_tx.events.len()
+    num_events = len(enter_tx.events)
     print(f"num events: {num_events}")
 
     print("clone balances")

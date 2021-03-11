@@ -84,7 +84,7 @@ def main():
 
     pprint(balances)
 
-    flash_loan_amount = int(exit_cyy3crv_action.calculateExit(exit_from) * (1 + slippage))
+    flash_loan_amount = int(exit_cyy3crv_action.calculateExit.call(exit_from) * (1 + slippage))
 
     print(f"flash_loan_amount: {flash_loan_amount}")
 
@@ -122,6 +122,9 @@ def main():
 
     print("exit success!")
     exit_tx.info()
+
+    num_events = len(enter_tx.events)
+    print(f"num events: {num_events}")
 
     print("clone balances")
     pprint(get_balances(argobytes_clone, tokens))
