@@ -141,7 +141,7 @@ def mk_contract_address(sender: str, nonce: int) -> str:
 def mk_contract_address2(sender: str, salt: str, initcode: str) -> str:
     """Create2 a contract address.
 
-    keccak256 (0xff ++ sender ++ salt ++ keccak256 (init_code)) [12:]
+    keccak256 (0xff ++ sender ++ salt ++ keccak256 (init_code)) [-20:]
 
     # TODO: this is not correct
     """
