@@ -7,7 +7,7 @@ pragma experimental ABIEncoderV2;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
 import {ArgobytesFactory} from "contracts/ArgobytesFactory.sol";
-import {ArgobytesAuth, ArgobytesAuthTypes} from "contracts/abstract/ArgobytesAuth.sol";
+import {ArgobytesAuth, ActionTypes} from "contracts/abstract/ArgobytesAuth.sol";
 import {AddressLib} from "contracts/library/AddressLib.sol";
 import {BytesLib} from "contracts/library/BytesLib.sol";
 
@@ -15,7 +15,7 @@ contract ArgobytesProxy is ArgobytesAuth {
 
     struct Action {
         address target;
-        ArgobytesAuthTypes.Call call_type;
+        ActionTypes.Call call_type;
         bool forward_value;
         bytes target_calldata;
     }
@@ -50,7 +50,7 @@ contract ArgobytesProxy is ArgobytesAuth {
         );
 
         // uncheckedDelegateCall is safe because we just checked that `target` is a contract
-        if (action.call_type == ArgobytesAuthTypes.Call.DELEGATE) {
+        if (action.call_type == ActionTypes.Call.DELEGATE) {
             response = AddressLib.uncheckedDelegateCall(
                 action.target,
                 action.target_calldata,

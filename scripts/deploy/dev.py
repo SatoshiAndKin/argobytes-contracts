@@ -1,5 +1,6 @@
 # deploy all our contracts to a development network
 # rather than call this directly, you probably want to use `./scripts/test-deploy.sh` or `./scripts/staging-deploy.sh`
+# TODO: refactor to use argobytes_utils helpers
 
 import json
 import os
@@ -11,14 +12,8 @@ from argobytes_mainnet import *
 
 
 # TODO: set these inside main instead of using globals
-# TODO: old versions of these contracts were cheaper to deploy with gas token. with less state, they are cheaper without gastoken though
-# TODO: i think some of them might still be. investigate more
-FREE_GAS_TOKEN = os.environ.get("FREE_GAS_TOKEN", "0") == "1"
-MINT_GAS_TOKEN = FREE_GAS_TOKEN or os.environ.get("MINT_GAS_TOKEN", "0") == "1"
 EXPORT_ARTIFACTS = os.environ.get("EXPORT_ARTIFACTS", "0") == "1"
 DEPLOY_DIR = os.path.join(project.main.check_for_project('.'), "build", "deployments", "quick_and_dirty")
-
-REQUIRE_GAS_TOKEN = FREE_GAS_TOKEN or os.environ.get("REQUIRE_GAS_TOKEN", "0") == "1"
 
 
 def quick_save_contract(contract):

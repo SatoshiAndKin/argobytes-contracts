@@ -2,7 +2,7 @@ from eth_utils import keccak, to_checksum_address, to_bytes
 from eth_abi.packed import encode_abi_packed
 from brownie import *
 import pytest
-from argobytes_util import *
+from argobytes_util import load_contract, get_or_clone, get_or_create
 from argobytes_mainnet import *
 
 
@@ -21,111 +21,101 @@ def session_defaults():
 
 @pytest.fixture(scope="function")
 def argobytes_multicall(ArgobytesMulticall):
-    return accounts[0].deploy(ArgobytesMulticall)
+    return get_or_create(accounts[0], ArgobytesMulticall)
 
 
 @pytest.fixture(scope="function")
 def argobytes_authority(ArgobytesAuthority):
-    return accounts[0].deploy(ArgobytesAuthority)
+    return get_or_create(accounts[0], ArgobytesAuthority)
 
 
 @pytest.fixture(scope="function")
 def argobytes_factory(ArgobytesFactory):
-    return accounts[0].deploy(ArgobytesFactory)
+    return get_or_create(accounts[0], ArgobytesFactory)
 
 
 @pytest.fixture(scope="function")
-def argobytes_proxy_clone(argobytes_authority, argobytes_proxy, ArgobytesProxy, argobytes_factory):
+def argobytes_proxy_clone(argobytes_proxy, argobytes_factory):
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
-    salt = ""
-
-    deploy_tx = argobytes_factory.createClone(argobytes_proxy.address, salt, accounts[0])
-
-    return ArgobytesProxy.contract.at(deploy_tx.return_value, accounts[0])
+    return get_or_clone(accounts[0], argobytes_factory, argobytes_proxy)
 
 
 @pytest.fixture(scope="function")
 def argobytes_proxy(ArgobytesProxy):
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests=
-    return accounts[0].deploy(ArgobytesProxy)
+    return get_or_create(accounts[0], ArgobytesProxy)
 
 
 @pytest.fixture(scope="function")
 def argobytes_trader(ArgobytesTrader):
-    return accounts[0].deploy(ArgobytesTrader)
+    return get_or_create(accounts[0], ArgobytesTrader)
 
 
 @pytest.fixture(scope="session")
 def cdai_erc20():
-    return Contract(cDAIAddress)
-
-
-@pytest.fixture(scope="session")
-def chi():
-    # 1inch's CHI (gastoken alternative)
-    return Contract(CHIAddress)
+    return load_contract(cDAIAddress)
 
 
 @pytest.fixture(scope="session")
 def curve_fi_3pool():
-    return Contract(CurveFi3poolAddress)
+    return load_contract(CurveFi3poolAddress)
 
 
 @pytest.fixture(scope="session")
 def curve_fi_compound():
-    return Contract(CurveFiCompoundAddress)
+    return load_contract(CurveFiCompoundAddress)
 
 
 @pytest.fixture(scope="session")
 def cusdc_erc20():
-    return Contract(cUSDCAddress)
+    return load_contract(cUSDCAddress)
 
 
 @pytest.fixture(scope="function")
 def curve_fi_action(CurveFiAction, curve_fi_compound):
-    return accounts[0].deploy(CurveFiAction)
+    return get_or_create(accounts[0], CurveFiAction)
 
 
 @pytest.fixture(scope="session")
 def dai_erc20():
-    return Contract(DAIAddress)
+    return load_contract(DAIAddress)
 
 
 @pytest.fixture(scope="function")
 def example_action(ExampleAction):
-    return accounts[0].deploy(ExampleAction)
+    return get_or_create(accounts[0], ExampleAction)
 
 
 @pytest.fixture(scope="function")
 def example_action_2(ExampleAction):
-    return accounts[0].deploy(ExampleAction)
+    return get_or_create(accounts[0], ExampleAction)
 
 
 @pytest.fixture(scope="function")
 def enter_cyy3crv_action(EnterCYY3CRVAction):
-    return accounts[0].deploy(EnterCYY3CRVAction)
+    return get_or_create(accounts[0], EnterCYY3CRVAction)
 
 
 @pytest.fixture(scope="function")
 def exit_cyy3crv_action(ExitCYY3CRVAction):
-    return accounts[0].deploy(ExitCYY3CRVAction)
+    return get_or_create(accounts[0], ExitCYY3CRVAction)
 
 
 @pytest.fixture(scope="function")
 def kyber_action(KyberAction):
-    return accounts[0].deploy(KyberAction, accounts[0])
+    return get_or_create(accounts[0], KyberAction, accounts[0])
 
 
 @pytest.fixture(scope="session")
 def kyber_network_proxy():
     # TODO: they have an "info" method and that is a reserved keyword
-    # TODO: `return Contract(KyberNetworkProxyAddress)`
+    # TODO: `return load_contract(KyberNetworkProxyAddress)`
     return KyberNetworkProxyAddress
 
 
 @pytest.fixture(scope="session")
 def onesplit():
-    return Contract("1split.eth")
+    return load_contract("1split.eth")
 
 
 @pytest.fixture(scope="session")
@@ -180,33 +170,20 @@ def onesplit_helper(onesplit, interface):
 
 @pytest.fixture(scope="function")
 def onesplit_offchain_action(OneSplitOffchainAction):
-    return accounts[0].deploy(OneSplitOffchainAction)
+    return get_or_create(accounts[0], OneSplitOffchainAction)
 
 
 @pytest.fixture(scope="session")
 def susd_erc20(synthetix_address_resolver):
     # The AddressResolver is not populated with everything right now, only those internal contract addresses that do not change. ProxyERC20 (SNX) and ProxyERC20sUSD (sUSD) are static addresses you can simply hard code in if you need
     # proxy = synthetix_address_resolver.requireAndGetAddress(to_hex32(text="ProxyERC20sUSD"), "No Proxy")
-    proxy = Contract(sUSDAddress)
-
-    assert(proxy != ZERO_ADDRESS)
-
-    target = Contract(proxy.target)
-    target.address = proxy.address
-
-    return target
+    return load_contract(sUSDAddress)
 
 
 @pytest.fixture(scope="session")
 def synthetix_address_resolver(interface):
     # this is actually the ReadProxyAddressResolver
-    proxy = Contract(SynthetixAddressResolverAddress)
-
-    # this is the contract with the actual logic in it
-    target = Contract(proxy.target())
-    target.address = proxy
-
-    return target
+    return load_contract(SynthetixAddressResolverAddress)
 
 
 @pytest.fixture(scope="session")
@@ -215,32 +192,27 @@ def synthetix_exchange_rates(synthetix_address_resolver):
 
     assert(rates != ZERO_ADDRESS)
 
-    return Contract(rates)
-
-
-@pytest.fixture(scope="function")
-def synthetix_depot_action(SynthetixDepotAction):
-    return accounts[0].deploy(SynthetixDepotAction)
+    return load_contract(rates)
 
 
 @pytest.fixture(scope="function")
 def uniswap_v1_action(UniswapV1Action):
-    return accounts[0].deploy(UniswapV1Action)
+    return get_or_create(accounts[0], UniswapV1Action)
 
 
 @pytest.fixture(scope="session")
 def uniswap_v1_factory():
-    return Contract(UniswapV1FactoryAddress)
+    return load_contract(UniswapV1FactoryAddress)
 
 
 @pytest.fixture(scope="function")
 def uniswap_v2_action(UniswapV2Action):
-    return accounts[0].deploy(UniswapV2Action)
+    return get_or_create(accounts[0], UniswapV2Action)
 
 
 @pytest.fixture(scope="session")
 def uniswap_v2_router():
-    return Contract(UniswapV2RouterAddress)
+    return load_contract(UniswapV2RouterAddress)
 
 
 @pytest.fixture(scope="session")
@@ -277,20 +249,14 @@ def uniswap_v1_helper(uniswap_v1_factory, interface):
 
 @pytest.fixture(scope="session")
 def usdc_erc20():
-    # TODO: how did etherscan figure out the proxy address?
-    # https://etherscan.io/address/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48#readProxyContract
-    # TODO: better names for "USDCAddress" and "USDCImplementationAddress"
-    contract = Contract(USDCImplementationAddress)
-    contract.address = USDCAddress
-
-    return contract
+    return load_contract(USDCAddress)
 
 
 @pytest.fixture(scope="function")
 def weth9_action(Weth9Action):
-    return accounts[0].deploy(Weth9Action)
+    return get_or_create(accounts[0], Weth9Action)
 
 
 @pytest.fixture(scope="session")
 def weth9_erc20():
-    return Contract(WETH9Address, owner=accounts[5])
+    return load_contract(WETH9Address)

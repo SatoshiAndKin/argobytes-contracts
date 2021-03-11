@@ -12,6 +12,7 @@ contract EnterCYY3CRVAction is Constants {
     // this isn't as gas efficient, but it compiles without "stack too deep" errors
     struct EnterData {
         uint256 dai;
+        uint256 dai_flash_fee;
         uint256 usdc;
         uint256 usdt;
         uint256 threecrv;
@@ -19,6 +20,8 @@ contract EnterCYY3CRVAction is Constants {
         uint256 tip_3crv;
         uint256 y3crv;
         uint256 min_cream_liquidity;
+        // because of how the flash loans work, we can't use msg.data.sender
+        address sender;
         // TODO: put the tip_address into an immutable and have it be an ENS namehash
         address tip_address;
         bool claim_3crv;
@@ -44,9 +47,10 @@ contract EnterCYY3CRVAction is Constants {
 
         // transfer stablecoins and trade them to 3crv
         {
-            // grab the sender's DAI
+            // grab the data.sender's DAI
             if (data.dai > 0) {
-                require(DAI.transferFrom(msg.sender, address(this), data.dai), "EnterCYY3CRVAction !DAI");
+                // DAI reverts on failure
+                DAI.transferFrom(data.sender, address(this), data.dai);
 
                 // approve the exchange
                 DAI.approve(address(THREE_CRV_POOL), flash_dai_amount + data.dai);
@@ -55,18 +59,18 @@ contract EnterCYY3CRVAction is Constants {
                 DAI.approve(address(THREE_CRV_POOL), flash_dai_amount);
             }
 
-            // grab the sender's USDC
+            // grab the data.sender's USDC
             if (data.usdc > 0) {
-                require(USDC.transferFrom(msg.sender, address(this), data.usdc), "EnterCYY3CRVAction !USDC");
+                require(USDC.transferFrom(data.sender, address(this), data.usdc), "EnterCYY3CRVAction !USDC");
 
                 // approve the exchange
                 USDC.approve(address(THREE_CRV_POOL), data.usdc);
             }
 
-            // grab the sender's USDT
+            // grab the data.sender's USDT
             if (data.usdt > 0) {
                 // Tether does *not* return a bool! it simply reverts
-                USDT.transferFrom(msg.sender, address(this), data.usdt);
+                USDT.transferFrom(data.sender, address(this), data.usdt);
 
                 // approve the exchange
                 USDT.approve(address(THREE_CRV_POOL), data.usdt);    
@@ -86,14 +90,14 @@ contract EnterCYY3CRVAction is Constants {
         // claim any 3crv from being a veCRV holder
         uint256 claimed_3crv = 0;
         if (data.claim_3crv) {
-            claimed_3crv = THREE_CRV_FEE_DISTRIBUTION.claim(msg.sender);
+            claimed_3crv = THREE_CRV_FEE_DISTRIBUTION.claim(data.sender);
             // we add this to principal_amount when handling data.threecrv
         }
 
-        // grab the sender's 3crv
+        // grab the data.sender's 3crv
         temp = data.threecrv + claimed_3crv;
         if (temp > 0) {
-            require(THREE_CRV.transferFrom(msg.sender, address(this), temp), "EnterCYY3CRVAction !THREE_CRV");
+            require(THREE_CRV.transferFrom(data.sender, address(this), temp), "EnterCYY3CRVAction !THREE_CRV");
         }
 
         // optionally tip the developer
@@ -108,9 +112,9 @@ contract EnterCYY3CRVAction is Constants {
         THREE_CRV.approve(address(Y_THREE_CRV), temp);
         Y_THREE_CRV.deposit(temp);
 
-        // grab the sender's y3crv
+        // grab the data.sender's y3crv
         if (data.y3crv > 0) {
-            require(Y_THREE_CRV.transferFrom(msg.sender, address(this), data.y3crv), "EnterCYY3CRVAction !Y_THREE_CRV");
+            require(Y_THREE_CRV.transferFrom(data.sender, address(this), data.y3crv), "EnterCYY3CRVAction !Y_THREE_CRV");
         }
 
         // setup cream
@@ -131,6 +135,8 @@ contract EnterCYY3CRVAction is Constants {
         require(CY_Y_THREE_CRV.mint(temp) == 0, "EnterCYY3CRVAction !CYY3CRV.mint");
 
         // TODO: optionally grab the user's cyy3crv. this will revert if they already have borrows. they should probably just exit first
+
+        flash_dai_amount += data.dai_flash_fee;
 
         // make sure we can borrow enough DAI from cream
         (uint error, uint liquidity, uint shortfall) = CREAM.getHypotheticalAccountLiquidity(address(this), address(CY_DAI), 0, flash_dai_amount);

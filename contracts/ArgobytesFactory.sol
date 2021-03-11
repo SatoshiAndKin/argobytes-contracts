@@ -5,8 +5,7 @@ pragma solidity 0.7.6;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
-contract ArgobytesFactoryEvents {
-    event NewContract(address indexed deployer, bytes32 salt, address deployed);
+contract ArgobytesFactory {
 
     event NewClone(
         address indexed target,
@@ -14,13 +13,7 @@ contract ArgobytesFactoryEvents {
         address indexed immutable_owner,
         address clone
     );
-}
 
-// TODO: do we actually want `bytes memory extradata`? it could be useful, but i don't use it yet
-
-contract ArgobytesFactory is
-    ArgobytesFactoryEvents
-{
     function createClone(
         address target,
         bytes32 salt
@@ -105,7 +98,7 @@ contract ArgobytesFactory is
         address target,
         bytes32 salt,
         address immutableOwner
-    ) public view returns (bool cloneExists, address cloneAddr) {
+    ) public view returns (bool exists, address cloneAddr) {
         bytes32 bytecodeHash;
         assembly {
             // Solidity manages memory in a very simple way: There is a “free memory pointer” at position 0x40 in memory.
@@ -137,7 +130,7 @@ contract ArgobytesFactory is
         // TODO: do this all here in assembly? the compiler should be smart enough to not have any savings doing that
         cloneAddr = Create2.computeAddress(salt, bytecodeHash);
 
-        cloneExists = Address.isContract(cloneAddr);
+        exists = Address.isContract(cloneAddr);
     }
 
     // openzeppelin and optionality do this differently. what is cheaper?
@@ -181,7 +174,9 @@ contract ArgobytesFactory is
 
     /**
      * @dev deploy a contract with CREATE2 and then call a function on it
+     * @dev TODO: do we actually need this? is the singletonfactory sufficient, or do we need extradata?
      */
+    /*
     function createContract(
         bytes32 salt,
         bytes memory bytecode,
@@ -196,6 +191,7 @@ contract ArgobytesFactory is
             require(success, "ArgobytesFactory !extradata");
         }
     }
+    */
 
     /**
      * @dev deploy a contract if it doesn't already exist

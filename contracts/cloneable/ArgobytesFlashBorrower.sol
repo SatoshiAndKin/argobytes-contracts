@@ -6,9 +6,10 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
+import {Strings} from "@OpenZeppelin/utils/Strings.sol";
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
-import {ArgobytesAuthTypes} from "contracts/abstract/ArgobytesAuth.sol";
+import {ActionTypes} from "contracts/abstract/ArgobytesAuth.sol";
 import {AddressLib} from "contracts/library/AddressLib.sol";
 import {BytesLib} from "contracts/library/BytesLib.sol";
 import {IERC3156FlashBorrower} from "contracts/external/erc3156/IERC3156FlashBorrower.sol";
@@ -43,7 +44,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
     }
 
     // TODO: gas golf this
-    function allowLender(IERC3156FlashLender lender) external auth(ArgobytesAuthTypes.Call.ADMIN) {
+    function allowLender(IERC3156FlashLender lender) external auth(ActionTypes.Call.ADMIN) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
         s.allowed_lenders[lender] = true;
@@ -51,7 +52,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         emit Lender(msg.sender, address(lender), true);
     }
 
-    function denyLender(IERC3156FlashLender lender) external auth(ArgobytesAuthTypes.Call.ADMIN) {
+    function denyLender(IERC3156FlashLender lender) external auth(ActionTypes.Call.ADMIN) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
         delete s.allowed_lenders[lender];
@@ -83,6 +84,9 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
 
         s.pending_lender = address(lender);
         s.pending_action = action;
+
+        // uint256 max_loan = lender.maxFlashLoan(token);
+        // revert(Strings.toString(max_loan));
 
         lender.flashLoan(this, token, amount, "");
         // s.pending_loan is now `false`
@@ -131,7 +135,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
 
         // uncheckedDelegateCall is safe because we just checked that `target` is a contract
         bytes memory returned;
-        if (s.pending_action.call_type == ArgobytesAuthTypes.Call.DELEGATE) {
+        if (s.pending_action.call_type == ActionTypes.Call.DELEGATE) {
             returned = AddressLib.uncheckedDelegateCall(
                 s.pending_action.target,
                 s.pending_action.target_calldata,

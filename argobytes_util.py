@@ -1,8 +1,97 @@
-from brownie import *
+import os
+import multiprocessing
+import rlp
+
+from brownie import accounts, Contract
+from brownie.exceptions import VirtualMachineError
+from copy import copy
+from concurrent.futures import as_completed, ThreadPoolExecutor
 from eth_abi.packed import encode_abi_packed
 from eth_utils import keccak, to_checksum_address, to_bytes, to_hex
-import os
-import rlp
+from lazy_load import lazy
+
+
+def approve(account, balances, extra_balances, spender, amount=2**256-1):
+    for token, balance in balances.items():
+        if token.address in extra_balances:
+            balance += extra[token.address]
+
+        if balance == 0:
+            continue
+
+        allowed = token.allowance(account, spender)
+
+        if allowed >= amount:
+            print(f"No approval needed for {token.address}")
+            # TODO: claiming 3crv could increase our balance and mean that we actually do need an approval
+            continue
+        elif allowed == 0:
+            pass
+        else:
+            # TODO: do any of our tokens actually need this stupid check?
+            print(f"Clearing {token.address} approval...")
+            allowed = token.approve(spender, 0, {"from": account})
+
+        if amount is None:
+            print(f"Approving {spender} for {balance} {token.address}...")
+            amount = balance
+        else:
+            print(f"Approving {spender} for unlimited {token.address}...")
+
+        token.approve(spender, amount, {"from": account})
+
+
+def get_balances(account, tokens):
+    return {token: token.balanceOf(account) for token in tokens}
+
+
+def get_or_clone(owner, argobytes_factory, deployed_contract, salt=""):
+    clone_exists, clone_address = argobytes_factory.cloneExists(deployed_contract, salt, owner)
+
+    if not clone_exists:
+        clone_address = argobytes_factory.createClone(deployed_contract, salt).return_value
+
+    return Contract.from_abi(deployed_contract._name, clone_address, deployed_contract.abi, owner)
+
+
+def get_or_create(default_account, contract, salt="", constructor_args=[]):
+    """Use eip-2470 to create a contract with deterministic addresses."""
+    contract_initcode = contract.deploy.encode_input(*constructor_args)
+
+    try:
+        SingletonFactory.deploy.call(contract_initcode, salt)
+    except VirtualMachineError:
+        # we got an exception. contract is already deployed
+        # TODO: 
+        contract_address = mk_contract_address2(SingletonFactory, salt, contract_initcode)
+    else:
+        contract_address = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account}).return_value
+
+    return contract.at(contract_address, default_account)
+
+
+def lazy_contract(address: str):
+    return lazy(lambda: load_contract(address))
+
+
+def load_contract(address):
+    if address.lower() == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
+        # USDC does weird things to get their implementation
+        # TODO: don't hard code this
+        contract = Contract("0xB7277a6e95992041568D9391D09d0122023778A2")
+        contract.address = address
+    else:    
+        contract = Contract(address)
+        
+        if hasattr(contract, 'implementation'):
+            contract = Contract(contract.implementation.call())
+            contract.address = address
+
+        if hasattr(contract, 'target'):
+            contract = Contract(contract.target.call())
+            contract.address = address
+
+    return contract
 
 
 def mk_contract_address(sender: str, nonce: int) -> str:
@@ -36,6 +125,25 @@ def mk_contract_address2(sender: str, salt: str, initcode: str) -> str:
     return to_checksum_address(address_bytes)
 
 
+def poke_contracts(contracts):
+    # we don't want to query etherscan's API too quickly
+    # they limit everyone to 5 requests/second
+    # if the contract hasn't been fetched, getting it will take longer than a second
+    # if the contract has been already fetched, we won't hit their API
+    max_workers = min(multiprocessing.cpu_count(), 5)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        def poke_contract(contract):
+            _ = contract.address
+
+        fs = [executor.submit(poke_contract, contract) for contract in contracts]
+
+        for _f in as_completed(fs):
+            # we could check errors here and log, but the user will see those errors if they actually use a broken contract
+            # and if they aren't using hte contract, there's no reason to bother them with warnings
+            pass
+
+
 def reset_block_time(synthetix_depot_action):
     # synthetix_address_resolver = interface.IAddressResolver(SynthetixAddressResolver)
 
@@ -62,3 +170,20 @@ def reset_block_time(synthetix_depot_action):
 
 def to_hex32(primitive=None, hexstr=None, text=None):
     return to_hex(primitive, hexstr, text).ljust(66, '0')
+
+
+def transfer_token(from_address, to, token, amount):
+    """Transfer tokens from an account that we don't actually control."""
+    decimals = token.decimals()
+
+    amount *= 10 ** decimals
+
+    token.transfer(to, amount, {"from": from_address})
+
+
+# TODO: move this to argobytes_mainnet. then rename it to mainnet_contracts
+# eip-2470
+SingletonFactory = lazy_contract("0xce0042B868300000d44A59004Da54A005ffdcf9f")
+
+# dydx wrapper https://github.com/albertocuestacanada/ERC3156-Wrappers
+DyDxFlashLender = lazy_contract("0x6bdC1FCB2F13d1bA9D26ccEc3983d5D4bf318693")

@@ -11,35 +11,23 @@ import {ArgobytesFactory} from "contracts/ArgobytesFactory.sol";
 import {AddressLib} from "contracts/library/AddressLib.sol";
 import {BytesLib} from "contracts/library/BytesLib.sol";
 
+import {ActionTypes} from "./ActionTypes.sol";
 import {ImmutablyOwnedClone} from "./ImmutablyOwnedClone.sol";
 
-contract ArgobytesAuthEvents {
-    event AuthorityTransferred(
-        address indexed previous_authority,
-        address indexed new_authority
-    );
-}
-
-contract ArgobytesAuthTypes {
-    enum Call {
-        CALL,
-        DELEGATE,
-        ADMIN
-    }
-}
 
 // TODO: should this be able to receive a flash loan?
-abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
-    using Address for address;
-    using AddressLib for address;
-    using BytesLib for bytes;
+abstract contract ArgobytesAuth is ImmutablyOwnedClone {
 
-    // note that this is state!
-    // TODO: how can we be sure that a sneaky delegatecall doesn't change this
+    /// @dev diamond storage
+    bytes32 constant ARGOBYTES_AUTH_POSITION = keccak256("argobytes.storage.ArgobytesAuth");
+
+    /// @dev diamond storage
+    /// TODO: how can we be sure that a sneaky delegatecall doesn't change this.
     struct ArgobytesAuthStorage {
         ArgobytesAuthority authority;
     }
-    bytes32 constant ARGOBYTES_AUTH_POSITION = keccak256("argobytes.storage.ArgobytesAuth");
+
+    /// @dev diamond storage
     function argobytesAuthStorage() internal pure returns (ArgobytesAuthStorage storage s) {
         bytes32 position = ARGOBYTES_AUTH_POSITION;
         assembly {
@@ -47,10 +35,14 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
         }
     }
 
-    modifier auth(ArgobytesAuthTypes.Call call_type) {
+    event AuthorityTransferred(
+        address indexed previous_authority,
+        address indexed new_authority
+    );
+
+    modifier auth(ActionTypes.Call call_type) {
         // do auth first. that is safest
         // theres some cases where it may be possible to do the auth check last, but it is too risky for me
-        // TODO: GSN?
         // TODO: i can see cases where msg.data could be used, but i think thats more complex than we need
         if (msg.sender != owner()) {
             requireAuth(address(this), call_type, msg.sig);
@@ -69,7 +61,7 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
     */
     function isAuthorized(
         address sender,
-        ArgobytesAuthTypes.Call call_type,
+        ActionTypes.Call call_type,
         address target,
         bytes4 sig
     ) internal view returns (bool authorized) {
@@ -80,11 +72,11 @@ abstract contract ArgobytesAuth is ArgobytesAuthEvents, ImmutablyOwnedClone {
         authorized = s.authority.canCall(sender, target, call_type, sig);
     }
 
-    function requireAuth(address target, ArgobytesAuthTypes.Call call_type, bytes4 sig) internal view {
+    function requireAuth(address target, ActionTypes.Call call_type, bytes4 sig) internal view {
         require(isAuthorized(msg.sender, call_type, target, sig), "ArgobytesAuth: 403");
     }
 
-    function setAuthority(ArgobytesAuthority new_authority) public auth(ArgobytesAuthTypes.Call.ADMIN) {
+    function setAuthority(ArgobytesAuthority new_authority) public auth(ActionTypes.Call.ADMIN) {
         ArgobytesAuthStorage storage s = argobytesAuthStorage();
 
         emit AuthorityTransferred(address(s.authority), address(new_authority));

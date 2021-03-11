@@ -1,65 +1,52 @@
-from brownie import accounts, ArgobytesFactory, Contract, EnterCYY3CRVAction
 import os
 import threading
 import multiprocessing
+
+from argobytes_util import approve, get_balances, DyDxFlashLender, get_or_clone, get_or_create, lazy_contract, poke_contracts
+from brownie import accounts, ArgobytesFactory, ArgobytesFlashBorrower, Contract, EnterCYY3CRVAction
+from brownie.network.web3 import _resolve_address
 from collections import namedtuple
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from dotenv import load_dotenv, find_dotenv
-from lazy_load import lazy
 from pprint import pprint
 
-def _load_contract(address):
-    if address.lower() == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
-        # USDC does weird things to get their implementation
-        # TODO: don't hard code this
-        contract = Contract("0xB7277a6e95992041568D9391D09d0122023778A2")
-        contract.address = address
-    else:    
-        contract = Contract(address)
-        
-        if hasattr(contract, 'implementation'):
-            contract = Contract(contract.implementation.call())
-            contract.address = address
+ActionTuple = namedtuple("Action", [
+    "target",
+    "call_type",
+    "forward_value",
+    "data",
+])
 
-    return contract
+class Action():
 
+    def __init__(self, contract, call_type: str, forward_value: bool, function_name: str, *function_args):
+        # TODO: use an enum
+        if call_type == "delegate":
+            call_int = 0
+        elif call_type == "call":
+            call_int = 1
+        elif call_type == "admin":
+            call_int = 2
+        else:
+            raise NotImplementedError         
 
-def _lazy_contract(address):
-    return lazy(lambda: _load_contract(address))
+        data = getattr(contract, function_name).encode_input(*function_args)
 
-
-def poke_contracts(contracts):
-    # we don't want to query etherscan's API too quickly
-    # they limit everyone to 5 requests/second
-    # if the contract hasn't been fetched, getting it will take longer than a second
-    # if the contract has been already fetched, we won't hit their API
-    max_workers = min(multiprocessing.cpu_count(), 5)
-
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        def poke_contract(contract):
-            _ = contract.address
-
-        fs = [executor.submit(poke_contract, contract) for contract in contracts]
-
-        for _f in as_completed(fs):
-            # we could check errors here and log, but the user will see those errors if they actually use a broken contract
-            # and if they aren't using hte contract, there's no reason to bother them with warnings
-            pass
-
+        self.tuple = ActionTuple(contract.address, call_int, forward_value, data)
 
 EnterData = namedtuple("EnterData", [
     "dai",
+    "dai_flash_fee",
     "usdc",
     "usdt",
     "threecrv",
+    "min_3crv_mint_amount",
     "tip_3crv",
     "y3crv",
+    "min_cream_liquidity",
+    "sender",
     "tip_address",
     "claim_3crv",
-])
-
-EnterLoanData = namedtuple("EnterLoanData", [
-    "min_3crv_mint_amount",
 ])
 
 
@@ -72,114 +59,42 @@ def get_claimable_3crv(account, fee_distribution, min_crv=50):
     return claimable
 
 
-def get_balances(account, tokens):
-    return {token: token.balanceOf(account) for token in tokens}
-
-
-def infinite_approvals(account, balances, spender, claimable_3crv):
-    max_approval = 2 ** 256
-
-    for token, balance in balances.items():
-        symbol = token.symbol()
-
-        if symbol == '3Crv':
-            balance += claimable_3crv
-
-        if balance == 0:
-            continue
-
-        allowed = token.allowance(account, spender)
-
-        if allowed >= max_approval:
-            print(f"No approval needed for {token.address}")
-            # TODO: claiming 3crv could increase our balance and mean that we actually do need an approval
-            continue
-        elif allowed == 0:
-            pass
-        else:
-            # TODO: do any of our tokens actually need this stupid check?
-            print(f"Clearing {token.address} approval...")
-            allowed = token.approve(spender, 0, {"from": account})
-
-        # TODO: unlimited approval?
-        print(f"Approving {balance} {token.address}...")
-        token.approve(spender, balance, {"from": account})
-
-
-def unlocked_transfer(to, token, amount=10000, unlocked="0x85b931A32a0725Be14285B66f1a22178c672d69B"):
-    """Transfer tokens from an account that we don't actually control."""
-    decimals = token.decimals()
-
-    amount *= 10 ** decimals
-
-    unlocked = accounts.at(unlocked, force=True)
-
-    token.transfer(to, amount, {"from": unlocked})
-
-
 def main():
     load_dotenv(find_dotenv())
 
-    # TODO: what should this be?
-    min_3crv_to_claim = 50
-
     # TODO: we need an account with private keys
-    # TODO: only force if forking mode
-    # account = os.environ['LEVERAGE_ACCOUNT']
-    # account = accounts[0]
-    account = accounts.at("5668e.eth", force=True)
+    account = accounts.at(os.environ['LEVERAGE_ACCOUNT'])
 
-    # use eip-2470 0xce0042B868300000d44A59004Da54A005ffdcf9f to create these with deterministic addresses
-    # TODO: maybe use it for more of our deploys?
-    SingletonFactory = Contract("0xce0042B868300000d44A59004Da54A005ffdcf9f")
+    min_3crv_to_claim = os.environ.get("MIN_3CRV_TO_CLAIM", 50)
 
+    # TODO: different salts for each contract
     salt = ""
 
-    # TODO: make a helper that only deploys if necessary
-    argobytes_factory_tx = SingletonFactory.deploy(
-        ArgobytesFactory.deploy.encode_input(),
-        salt,
-        {"from": accounts[0]},
-    )
+    # deploy our contracts if necessary
+    argobytes_factory = get_or_create(account, ArgobytesFactory, salt)
+    argobytes_flash_borrower = get_or_create(account, ArgobytesFlashBorrower, salt)
+    enter_cyy3crv_action = get_or_create(account, EnterCYY3CRVAction, salt)
 
-    argobytes_factory = ArgobytesFactory.at(argobytes_factory_tx.return_value, accounts[0])
+    # get the clone for the account
+    argobytes_clone = get_or_clone(account, argobytes_factory, argobytes_flash_borrower, salt)
 
-    # TODO: this is wrong. we don't want a clone of cyy3crv action. we want a flashloanborrower and the action deployed
-    assert False, "wip"
-    cloneAddress, cloneExists = argobytes_factory.cloneExists(EnterCYY3CRVAction, salt, account)
-    if not cloneExists:
-        print("Creating your clone of EnterCYY3CRV...")
-        newCloneAddress = clone_factory.clone(EnterCYY3CRVAction, salt, account, {"from": account}).return_value
-        assert cloneAddress == newCloneAddress, "bad address"
-
-        cloneAddress = newCloneAddress
-
-    EnterCYY3CRV = EnterCYY3CRVAction.at(cloneAddress)
-
-    cloneOwner = EnterCYY3CRV.owner()
-
-    # assert cloneOwner == account, "Wrong owner detected!"
+    assert account == argobytes_clone.owner(), "Wrong owner detected!"
 
     print("Preparing contracts...")
-    dai = _lazy_contract(EnterCYY3CRV.DAI())
-    usdc = _lazy_contract(EnterCYY3CRV.USDC())
-    usdt = _lazy_contract(EnterCYY3CRV.USDT())
-    threecrv = _lazy_contract(EnterCYY3CRV.THREE_CRV())
-    threecrv_pool = _lazy_contract(EnterCYY3CRV.THREE_CRV_POOL())
-    y3crv = _lazy_contract(EnterCYY3CRV.Y_THREE_CRV())
-    cyy3crv = _lazy_contract(EnterCYY3CRV.CY_Y_THREE_CRV())
-    fee_distribution = _lazy_contract(EnterCYY3CRV.THREE_CRV_FEE_DISTRIBUTION())
- 
+    # TODO: use multicall to get all the addresses?
+    dai = lazy_contract(enter_cyy3crv_action.DAI())
+    usdc = lazy_contract(enter_cyy3crv_action.USDC())
+    usdt = lazy_contract(enter_cyy3crv_action.USDT())
+    threecrv = lazy_contract(enter_cyy3crv_action.THREE_CRV())
+    threecrv_pool = lazy_contract(enter_cyy3crv_action.THREE_CRV_POOL())
+    y3crv = lazy_contract(enter_cyy3crv_action.Y_THREE_CRV())
+    cyy3crv = lazy_contract(enter_cyy3crv_action.CY_Y_THREE_CRV())
+    fee_distribution = lazy_contract(enter_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION())
+
     # use multiple workers to fetch the contracts
     # there will still be some to fetch, but this speeds things up some
     # this can take some time since solc/vyper may have to download
-    poke_contracts([dai, usdc, usdt, threecrv, threecrv_pool, y3crv, cyy3crv, fee_distribution])
-
-    print(f"DEBUG MODE! giving some tokens to {account}...")
-    # TODO: only do this in dev mode
-    unlocked_transfer(account, dai)
-    # TODO: why did usdt revert?
-    # unlocked_transfer(account, usdt)
+    poke_contracts([dai, usdc, usdt, threecrv, threecrv_pool, y3crv, cyy3crv, DyDxFlashLender])
 
     tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv]
 
@@ -189,43 +104,65 @@ def main():
 
     claimable_3crv = get_claimable_3crv(account, fee_distribution, min_3crv_to_claim)
 
-    # TODO: calculate these
+    # TODO: calculate/prompt for these
     min_3crv_mint_amount = 1
     tip_3crv = 1
-    tip_address = accounts[1]
+    tip_address = _resolve_address("satoshiandkin.eth")  # TODO: put this on a subdomain
+    min_cream_liquidity = 1
+    dai_flash_fee = 2
 
     enter_data = EnterData(
         dai=balances[dai],
+        dai_flash_fee=dai_flash_fee,
         usdc=balances[usdc],
         usdt=balances[usdt],
         threecrv=balances[threecrv],
+        min_3crv_mint_amount=min_3crv_mint_amount,
         tip_3crv=tip_3crv,
         y3crv=balances[y3crv],
+        min_cream_liquidity=min_cream_liquidity,
+        sender=account,
         tip_address=tip_address,
         claim_3crv=claimable_3crv > min_3crv_to_claim,
     )
 
-    enter_loan_data = EnterLoanData(
-        min_3crv_mint_amount=min_3crv_mint_amount,
-    )
-
     pprint(enter_data)
-    pprint(enter_loan_data)
 
-    # TODO: what min amount? these aren't all the same units, but i think thats okay here since its just a quick check for non-zero
+    # TODO: do this properly. use virtualprice and yearn's price calculation 
+    print("warning! summed_balances is not actually priced in USD")
     summed_balances = enter_data.dai + enter_data.usdc + enter_data.usdt + enter_data.threecrv + enter_data.y3crv + claimable_3crv
 
     assert summed_balances > 100, "no coins"
 
-    infinite_approvals(account, balances, EnterCYY3CRV, claimable_3crv)
+    # TODO: figure out the actual max leverage, then prompt the user for it (though i dont see much reason not to go the full amount here)
+    flash_loan_amount = 0  # int(summed_balances * 8.4)
 
-    enter_tx = EnterCYY3CRV.enter(enter_data, enter_loan_data, {"from": account})
+    extra_balances = {}
+
+    if enter_data.claim_3crv:
+        extra_balances[threecrv.address] = claimable_3crv
+
+    approve(account, balances, extra_balances, argobytes_clone)
+
+    # flashloan through the clone
+    enter_tx = argobytes_clone.flashBorrow(
+        DyDxFlashLender,
+        dai,
+        flash_loan_amount,
+        Action(
+            enter_cyy3crv_action,
+            "delegate",
+            False,
+            "enter",
+            enter_data,
+        ).tuple,
+    )
 
     print("success!")
     enter_tx.info()
 
-    print("EnterCYY3CRV balances")
-    pprint(get_balances(EnterCYY3CRV, tokens))
+    print("clone balances")
+    pprint(get_balances(argobytes_clone, tokens))
 
     print("account balances")
     pprint(get_balances(account, tokens))

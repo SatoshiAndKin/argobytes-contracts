@@ -9,7 +9,7 @@ The key includes msg.sender which should prevent most shinanengans.
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {ArgobytesAuthTypes} from "contracts/abstract/ArgobytesAuth.sol";
+import {ActionTypes} from "contracts/abstract/ActionTypes.sol";
 
 
 contract ArgobytesAuthority{
@@ -20,7 +20,7 @@ contract ArgobytesAuthority{
         address proxy,
         address sender,
         address target,
-        ArgobytesAuthTypes.Call call_type,
+        ActionTypes.Call call_type,
         bytes4 sig
     ) internal pure returns (bytes memory key) {
         // encodePacked should be safe because address and enums and bytes4 are fixed size types
@@ -32,7 +32,7 @@ contract ArgobytesAuthority{
     function canCall(
         address sender,
         address target,
-        ArgobytesAuthTypes.Call call_type,
+        ActionTypes.Call call_type,
         bytes4 sig
     ) external view returns (bool) {
         bytes memory key = createKey(msg.sender, sender, target, call_type, sig);
@@ -44,7 +44,7 @@ contract ArgobytesAuthority{
     function allow(
         address[] calldata senders,
         address target,
-        ArgobytesAuthTypes.Call call_type,
+        ActionTypes.Call call_type,
         bytes4 sig
     ) external {
         bytes memory key;
@@ -59,7 +59,7 @@ contract ArgobytesAuthority{
     function deny(
         address[] calldata senders,
         address target,
-        ArgobytesAuthTypes.Call call_type,
+        ActionTypes.Call call_type,
         bytes4 sig
     ) external {
         bytes memory key;

@@ -1,12 +1,20 @@
 import pytest
 
+from argobytes_util import transfer_token
 from brownie import accounts, project
 
 @pytest.mark.require_network("mainnet-fork")
-def test_scripts(enter_cyy3crv_action, exit_cyy3crv_action, monkeypatch):
+def test_scripts(dai_erc20, monkeypatch, usdc_erc20):
     monkeypatch.setenv("LEVERAGE_ACCOUNT", str(accounts[0]))
 
-    # TODO: borrow some DAI from binance
+    # binance
+    binance = accounts.at("0x85b931A32a0725Be14285B66f1a22178c672d69B", force=True)
+
+    # borrow some tokens from binance
+    transfer_token(binance, accounts[0], dai_erc20, 10000)
+    # transfer_token(binance, accounts[0], usdc_erc20, 10000)
+    # TODO: usdt_erc20
+    # transfer_token(binance, accounts[0], usdt_erc20, 10000)
 
     project.scripts.run("scripts/leverage_cyy3crv/enter")
 

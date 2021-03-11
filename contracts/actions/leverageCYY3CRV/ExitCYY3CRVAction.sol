@@ -28,6 +28,7 @@ contract ExitCYY3CRVAction is Constants {
     function exit(
         uint256 min_remove_liquidity_dai,
         uint256 tip_dai,
+        uint256 flash_dai_fee,
         address tip_address,
         address exit_from,
         address exit_to
@@ -88,6 +89,9 @@ contract ExitCYY3CRVAction is Constants {
         // remove_liquidity_one_coin returns the DAI balance, but we might have some excess from a bigger flash loan
         temp = DAI.balanceOf(address(this));
 
+        // add the fee
+        flash_dai_amount += flash_dai_fee;
+
         // make sure we have enough DAI
         require(temp + tip_dai >= flash_dai_amount, "ExitCYY3CRVAction !flash_dai_amount");
 
@@ -101,7 +105,7 @@ contract ExitCYY3CRVAction is Constants {
             temp -= tip_dai;
         }
 
-        // send the rest of the DAI to the sender
+        // send the rest of the DAI on
         require(DAI.transfer(exit_to, temp), "ExitCYY3CRVAction !DAI sweep");
     }
 }
