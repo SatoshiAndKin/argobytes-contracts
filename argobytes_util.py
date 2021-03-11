@@ -152,7 +152,7 @@ def mk_contract_address2(sender: str, salt: str, initcode: str) -> str:
         keccak(to_bytes(hexstr=initcode)),
     ])
 
-    address_bytes = keccak(raw)[12:]
+    address_bytes = keccak(raw)[-20:]
 
     return to_checksum_address(address_bytes)
 
