@@ -83,24 +83,19 @@ def get_or_clone(owner, argobytes_factory, deployed_contract, salt=""):
 
 def get_or_create(default_account, contract, salt="", constructor_args=[]):
     """Use eip-2470 to create a contract with deterministic addresses."""
-    assert SingletonFactory.address == "0xce0042B868300000d44A59004Da54A005ffdcf9f", "unexpected singletonfactory address"
-
     contract_initcode = contract.deploy.encode_input(*constructor_args)
 
-    print(f"salt: {salt}")
-    print(f"contract_initcode: {contract_initcode}")
+    print(f"salt: '{salt}'")
+    print(f"contract_initcode: '{contract_initcode}'")
 
     contract_address = mk_contract_address2(SingletonFactory.address, salt, contract_initcode)
 
-    print(f"checking for {contract_address}...")
-
     if web3.eth.getCode(contract_address).hex() == "0x":
-        # we got the zero address. contract is not deployed
-        deployed_contract_address = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account}).return_value
+        tx = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account})
 
-        print(f"deployed to {deployed_contract_address}")
+        deployed_contract_address = tx.return_value
 
-        assert contract_address == deployed_contract_address, "something is wrong in the address calculation"
+        assert contract_address == deployed_contract_address, f"something is wrong in the address calculation. {contract_address} != {deployed_contract_address}"
 
         contract_address = deployed_contract_address
 

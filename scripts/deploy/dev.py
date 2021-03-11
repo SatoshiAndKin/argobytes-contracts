@@ -59,30 +59,6 @@ def main():
 
     starting_balance = accounts[0].balance()
 
-    def argobytes_factory_deploy_helper(
-        factory,
-        contract,
-        deployer=accounts[0],
-        gas_price=expected_mainnet_gas_price,
-        constructor_args=[],
-        extra_hexstr="0x",
-        salt="",
-    ):
-        deploy_tx = factory.createContract(
-            salt,
-            contract.deploy.encode_input(*constructor_args),
-            to_bytes(hexstr=extra_hexstr),
-            {
-                "gas_price": expected_mainnet_gas_price,
-                "from": deployer,
-            },
-        )
-
-        deployed = contract.at(deploy_tx.return_value, deployer)
-        quick_save_contract(deployed)
-
-        return deployed
-
     # TODO: docs for using ERADICATE2
     # TODO: openzepplin helper uses bytes32, but gastoken uses uint256.
     salt = ""
@@ -92,86 +68,46 @@ def main():
     ds_proxy_factory = interface.DSProxyFactory(DSProxyFactoryAddress, accounts[5])
     ds_proxy_tx = ds_proxy_factory.build()
 
-    # deploy ArgobytesFactory using LGT's create2 helper
-    # when combined with a salt found by ERADICATE2, we can have an address with lots of 0 bytes
-    # TODO: originally i wanted to use gastoken, but i'm really seeing it now as pollution. their create2 helper is still helpful though
-    """
-    deploy_tx = gas_token.create2(
-        0,
-        deadline,
-        salt_uint,
-        ArgobytesFactory.deploy.encode_input(),
-        {
-            # TODO: i'm getting revert: insufficient ether even when setting gas_token_amount to 0 and value to 0
-            # this ether will get sent back if gas_token_amount is 0
-            # TODO: calculate an actual amount for this
-            "value": "1 ether",
-        }
-    )
-    # TODO: check how much we spent on gas token
-
-    argobytes_factory = ArgobytesFactory.at(deploy_tx.return_value, accounts[0])
-    """
-
-    # use eip-2470 0xce0042B868300000d44A59004Da54A005ffdcf9f to create these with deterministic addresses
-    # TODO: maybe use it for more of our deploys?
-    SingletonFactory = Contract("0xce0042B868300000d44A59004Da54A005ffdcf9f")
-
-    # TODO: make a helper that only deploys if necessary
-    argobytes_factory_tx = SingletonFactory.deploy(
-        ArgobytesFactory.deploy.encode_input(),
-        salt,
-        {"from": accounts[0]},
-    )
-
-    argobytes_factory = ArgobytesFactory.at(argobytes_factory_tx.return_value, accounts[0])
+    # deploy ArgobytesFactory
+    argobytes_factory = get_or_create(accounts[0], ArgobytesFactory)
 
     quick_save_contract(argobytes_factory)
-    # the ArgobytesFactory is deployed and ready for use!
 
-    # build an ArgobytesAuthority
-    argobytes_authority = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesAuthority)
+    # deploy ArgobytesAuthority
+    argobytes_authority = get_or_create(accounts[0], ArgobytesAuthority)
 
-    # build an ArgobytesFlashBorrower to use for cloning
-    argobytes_proxy = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesFlashBorrower)
+    quick_save_contract(argobytes_authority)
+
+    # deploy ArgobytesFlashBorrower for cloning
+    argobytes_proxy = get_or_create(accounts[0], ArgobytesFlashBorrower)
+
     quick_save_contract(argobytes_proxy)
 
     # clone ArgobytesFlashBorrower for accounts[0]
-    clone_tx = argobytes_factory.createClone(
-        argobytes_proxy,
-        salt,
-        accounts[0],
-        {
-            "from": accounts[0],
-            "gas_price": expected_mainnet_gas_price,
-        },
-    )
-
-    argobytes_proxy_clone = ArgobytesFlashBorrower.at(clone_tx.return_value, accounts[0])
+    argobytes_proxy_clone = get_or_clone(accounts[0], argobytes_factory, argobytes_proxy)
 
     # TODO: setup auth for the proxy
     # for now, owner-only access works, but we need to allow a bot in to call atomicArbitrage
 
     # deploy the main contracts
-    argobytes_multicall = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesMulticall)
+    argobytes_multicall = get_or_create(account[0], ArgobytesMulticall)
 
     # deploy base actions
-    argobytes_trader = argobytes_factory_deploy_helper(argobytes_factory, ArgobytesTrader)
+    argobytes_trader = get_or_create(account[0], ArgobytesTrader)
 
     # deploy all the exchange actions
-    # example_action = argobytes_factory_deploy_helper(argobytes_factory, ExampleAction, gas_price=0)
-    # onesplit_offchain_action = argobytes_factory_deploy_helper(argobytes_factory, OneSplitOffchainAction)
-    # kyber_action = argobytes_factory_deploy_helper(argobytes_factory, KyberAction, constructor_args=[accounts[0]])
-    # uniswap_v1_action = argobytes_factory_deploy_helper(argobytes_factory, UniswapV1Action)
-    # uniswap_v2_action = argobytes_factory_deploy_helper(argobytes_factory, UniswapV2Action)
-    # zrx_v3_action = argobytes_factory_deploy_helper(argobytes_factory, ZrxV3Action)
-    # weth9_action = argobytes_factory_deploy_helper(argobytes_factory, Weth9Action)
-    # synthetix_depot_action = argobytes_factory_deploy_helper(argobytes_factory, SynthetixDepotAction)
-    # curve_fi_action = argobytes_factory_deploy_helper(argobytes_factory, CurveFiAction)
+    example_action = get_or_create(account[0], ExampleAction)
+    onesplit_offchain_action = get_or_create(account[0], OneSplitOffchainAction)
+    kyber_action = get_or_create(account[0], KyberAction, constructor_args=[accounts[0]])
+    uniswap_v1_action = get_or_create(account[0], UniswapV1Action)
+    uniswap_v2_action = get_or_create(account[0], UniswapV2Action)
+    zrx_v3_action = get_or_create(account[0], ZrxV3Action)
+    weth9_action = get_or_create(account[0], Weth9Action)
+    curve_fi_action = get_or_create(account[0], CurveFiAction)
 
     # deploy leverage cyy3crv actions
-    enter_cyy3crv_action = argobytes_factory_deploy_helper(argobytes_factory, EnterCYY3CRVAction)
-    exit_cyy3crv_action = argobytes_factory_deploy_helper(argobytes_factory, ExitCYY3CRVAction)
+    enter_cyy3crv_action = get_or_create(account[0], EnterCYY3CRVAction)
+    exit_cyy3crv_action = get_or_create(account[0], ExitCYY3CRVAction)
 
     # external things
     kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWalletAddress)

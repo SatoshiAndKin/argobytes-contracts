@@ -10,7 +10,7 @@ rm -rf build/deployments/
 
 export EXPORT_ARTIFACTS=${EXPORT_ARTIFACTS:-1}
 
-./venv/bin/brownie run dev-deploy --network staging "$@"
+./venv/bin/brownie run deploy/dev --network staging "$@"
 
 if [ "$EXPORT_ARTIFACTS" = "1" ]; then
     ./scripts/export.sh
