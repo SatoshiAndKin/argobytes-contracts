@@ -5,5 +5,8 @@
   },
   "funDependencies": {
     "eth95": "^0.1.2"
+  },
+  "dependencies": {
+    "eth-create2": "^1.0.1"
   }
 }

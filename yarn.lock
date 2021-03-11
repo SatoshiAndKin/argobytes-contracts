@@ -226,6 +226,22 @@ end-of-stream@^1.1.0:
   dependencies:
     once "^1.4.0"
 
+eth-create2@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/eth-create2/-/eth-create2-1.0.1.tgz#449397455619a42ea88927bb1fbb119c646b50e4"
+  integrity sha512-6XV6KRoeQZaCUpL9qtQnDyUicKk/Os4Np6YAD+sCOUkIjDzF/ExWAKHn+y3GjlO/5iBSB7wP4jPKW8BME/Jiyg==
+  dependencies:
+    eth-helpers "^1.3.0"
+    nanoassert "^2.0.0"
+    sha3-wasm "0.0.7"
+
+eth-helpers@^1.3.0:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/eth-helpers/-/eth-helpers-1.3.1.tgz#e41d7a8f04d42f1b887bde2eb8d6de19a901c47c"
+  integrity sha512-iEcqhro1pqnZbnE3te0KDargTadc1J4zAiV0J1dwBDPo5nbHYBMxPDLQFA+0sMKUxe7cjHtMger6/75ukN3P5A==
+  dependencies:
+    nanoassert "^2.0.0"
+
 ethereum-cryptography@^0.1.3:
   version "0.1.3"
   resolved "https://registry.yarnpkg.com/ethereum-cryptography/-/ethereum-cryptography-0.1.3.tgz#8d6143cfc3d74bf79bbd8edecdf29e4ae20dd191"
@@ -513,6 +529,11 @@ minimatch@^3.0.4:
   dependencies:
     brace-expansion "^1.1.7"
 
+nanoassert@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/nanoassert/-/nanoassert-2.0.0.tgz#a05f86de6c7a51618038a620f88878ed1e490c09"
+  integrity sha512-7vO7n28+aYO4J+8w96AzhmU8G+Y/xpPDJz/se19ICsqj/momRbb9mh9ZUtkoJ5X3nTnPdhEJyc0qnM6yAsHBaA==
+
 nice-try@^1.0.4:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
@@ -718,6 +739,13 @@ sha.js@^2.4.0, sha.js@^2.4.8:
   dependencies:
     inherits "^2.0.1"
     safe-buffer "^5.0.1"
+
+sha3-wasm@0.0.7:
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/sha3-wasm/-/sha3-wasm-0.0.7.tgz#ee9d264a7867e495798b6346f5737c339f18b748"
+  integrity sha512-hnYLSnicHYjtCSXugEC8tXDNTpqbhU9NyUj90XJ1lt3S11Y67t6c7Uq29s945bmcyjtgVuqvLm61NysiXJwE/w==
+  dependencies:
+    nanoassert "^2.0.0"
 
 shebang-command@^1.2.0:
   version "1.2.0"
