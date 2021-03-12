@@ -7,11 +7,10 @@ from hypothesis import settings
 
 
 # TODO: test access for all the functions!
-def test_argobytes_arbitrage_access_control(argobytes_multicall, argobytes_proxy_clone, argobytes_trader, example_action):
-    borrows = []
+def test_argobytes_arbitrage_access_control(argobytes_proxy_clone, example_action):
     action = (
         example_action,
-        0,  # 0=Call
+        1,  # 1=Call
         False,  # do not sweep ETH
         example_action.sweep.encode_input(ZERO_ADDRESS, ZERO_ADDRESS, 0),
     )
@@ -41,25 +40,24 @@ def test_argobytes_arbitrage_access_control(argobytes_multicall, argobytes_proxy
     # TODO: check that accounts[1] is allowed
 
 
-def test_simple_execute(argobytes_multicall, argobytes_trader, argobytes_proxy, example_action):
+def test_simple_execute(argobytes_proxy_clone, example_action):
     value = 1e18
 
     # make sure the arbitrage contract has no funds
-    assert argobytes_proxy.balance() == 0
+    assert argobytes_proxy_clone.balance() == 0
     assert example_action.balance() == 0
 
     starting_balance = accounts[0].balance()
 
-    borrows = []
     # call the sweep contract when its empty
     action = (
         example_action,
-        0,  # 0=Call
-        False,  # do not sweep ETH
+        1,  # 1=Call
+        True,  # do sweep ETH
         example_action.sweep.encode_input(accounts[0], ZERO_ADDRESS, 0),
     )
 
-    atomic_arbitrage_tx = argobytes_proxy.execute(
+    atomic_arbitrage_tx = argobytes_proxy_clone.execute(
         action,
         {
             "value": value,
@@ -67,7 +65,10 @@ def test_simple_execute(argobytes_multicall, argobytes_trader, argobytes_proxy, 
         }
     )
 
-    assert argobytes_proxy.balance() == 0
+    atomic_arbitrage_tx.info()
+
+    assert argobytes_proxy_clone.balance() == 0
+    assert example_action.balance() == 0
     assert accounts[0].balance() == starting_balance
 
     # TODO: check event logs to know profits

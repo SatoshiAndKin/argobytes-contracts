@@ -9,17 +9,17 @@ from hypothesis import settings
 def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action, weth9_erc20):
     value = 1e18
 
-    # get some WETH
-    weth9_erc20.deposit({"value": 2 * value})
+    # get some WETH for accounts[1]
+    weth9_erc20.deposit({"value": 2 * value, "from": accounts[1]})
 
     # send some WETH to accounts[0]
-    weth9_erc20.transfer(accounts[0], value)
+    weth9_erc20.transfer(accounts[0], value, {"from": accounts[1]})
 
     # allow the proxy to use account[0]'s WETH
     weth9_erc20.approve(argobytes_trader, value, {"from": accounts[0]})
 
     # send some ETH to the action to simulate arbitrage profits
-    weth9_erc20.transfer(example_action, value)
+    weth9_erc20.transfer(example_action, value, {"from": accounts[1]})
 
     # make sure balances match what we expect
     assert weth9_erc20.balanceOf(accounts[0]) == value

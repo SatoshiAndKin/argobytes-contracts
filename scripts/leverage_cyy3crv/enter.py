@@ -87,7 +87,8 @@ def main():
     # use multiple workers to fetch the contracts
     # there will still be some to fetch, but this speeds things up some
     # this can take some time since solc/vyper may have to download
-    poke_contracts([dai, usdc, usdt, threecrv, threecrv_pool, y3crv, cyy3crv, lender])
+    # TODO: i think doing this in parallel might be confusiing things
+    # poke_contracts([dai, usdc, usdt, threecrv, threecrv_pool, y3crv, cyy3crv, lender])
 
     tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv]
 
@@ -163,13 +164,18 @@ def main():
     num_events = len(enter_tx.events)
     print(f"num events: {num_events}")
 
-    print("clone balances")
+    print(f"return value: {enter_tx.return_value}")
+
+    print(f"clone ({argobytes_clone.address}) balances")
     balances = get_balances(argobytes_clone, tokens)
     pprint_balances(balances)
 
-    assert balances[cyy3crv] > 0, "no cyy3ccrv!"
+    assert enter_tx.return_value > 0, "no cyy3ccrv!"
+
+    # TODO: why is this not working? we return cyy3crv.balanceOf!
+    # assert balances[cyy3crv] == enter_tx.return_value
 
     # TODO: make sure the clone has cyy3crv?
 
-    print("account balances")
+    print(f"account ({acccount}) balances")
     pprint_balances(get_balances(account, tokens))

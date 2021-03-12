@@ -69,6 +69,7 @@ def approve(account, balances, extra_balances, spender, amount=2**256-1):
 
 
 def get_balances(account, tokens):
+    # TODO: multicall
     return {token: token.balanceOf(account) for token in tokens}
 
 
@@ -103,22 +104,33 @@ def lazy_contract(address: str):
     return lazy(lambda: load_contract(address))
 
 
+_contract_cache = {}
+
+
 def load_contract(address):
+    address = to_checksum_address(address)
+
+    if address in _contract_cache:
+        return _contract_cache[address]
+
     if address.lower() == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
         # USDC does weird things to get their implementation
         # TODO: don't hard code this
-        contract = Contract("0xB7277a6e95992041568D9391D09d0122023778A2")
+        contract = Contract.from_explorer("0xB7277a6e95992041568D9391D09d0122023778A2")
         contract.address = address
     else:    
-        contract = Contract(address)
+        # TODO: we shouldn't neede from_explorer, but i'm seeing weird things were DAI loads as IWETH9
+        contract = Contract.from_explorer(address)
         
         if hasattr(contract, 'implementation'):
-            contract = Contract(contract.implementation.call())
+            contract = Contract.from_explorer(contract.implementation.call())
             contract.address = address
 
         if hasattr(contract, 'target'):
-            contract = Contract(contract.target.call())
+            contract = Contract.from_explorer(contract.target.call())
             contract.address = address
+
+    _contract_cache[address] = contract
 
     return contract
 

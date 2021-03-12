@@ -72,6 +72,9 @@ contract ExitCYY3CRVAction is Constants {
             revert("wip");
         }
 
+        // check cyy3crv balance
+        require(temp > 0, "ExitCYY3CRVAction !cyy3crv");
+
         (uint error, uint liquidity, uint shortfall) = CREAM.getHypotheticalAccountLiquidity(address(this), address(CY_Y_THREE_CRV), 0, 0);
         require(error == 0, "ExitCYY3CRVAction CREAM redeem error");
         require(shortfall == 0, "EnterCYY3CRVAction CREAM redeem shortfall");

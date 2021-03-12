@@ -168,10 +168,15 @@ contract EnterCYY3CRVAction is Constants {
         // borrow DAI from cream to pay back the flash loan
         require(CY_DAI.borrow(flash_dai_amount) == 0, "EnterCYY3CRVAction !cydai.borrow");
 
+        // debug logs
         temp = CY_DAI.borrowBalanceStored(address(this));
 
         emit ArgobytesLogUint(address(this), 7, temp);
 
-        return liquidity;
+        temp = CY_Y_THREE_CRV.balanceOf(address(this));
+
+        emit ArgobytesLogUint(address(this), 8, temp);
+
+        return temp;
     }
 }
