@@ -36,24 +36,39 @@ def get_claimable_3crv(account, fee_distribution, min_crv=50):
     return claimable
 
 
+def pprint_balances(balances):
+    # TODO: symbol cache
+    d = dict()
+    
+    for token, amount in balances.items():
+        symbol = token.symbol()
+
+        if symbol:
+            d[symbol] = amount
+        else:
+            d[token.address] = amount 
+    
+    pprint(d)
+
+
 def main():
     load_dotenv(find_dotenv())
 
     # TODO: we need an account with private keys
     account = accounts.at(os.environ['LEVERAGE_ACCOUNT'])
+    print(f"Hello, {account}")
 
     min_3crv_to_claim = os.environ.get("MIN_3CRV_TO_CLAIM", 50)
 
-    # TODO: different salts for each contract
-    salt = ""
-
     # deploy our contracts if necessary
-    argobytes_factory = get_or_create(account, ArgobytesFactory, salt)
-    argobytes_flash_borrower = get_or_create(account, ArgobytesFlashBorrower, salt)
-    enter_cyy3crv_action = get_or_create(account, EnterCYY3CRVAction, salt)
+    argobytes_factory = get_or_create(account, ArgobytesFactory)
+    argobytes_flash_borrower = get_or_create(account, ArgobytesFlashBorrower)
+    enter_cyy3crv_action = get_or_create(account, EnterCYY3CRVAction)
 
     # get the clone for the account
-    argobytes_clone = get_or_clone(account, argobytes_factory, argobytes_flash_borrower, salt)
+    argobytes_clone = get_or_clone(account, argobytes_factory, argobytes_flash_borrower)
+
+    print(f"clone: {argobytes_clone}")
 
     assert account == argobytes_clone.owner(), "Wrong owner detected!"
 
@@ -78,15 +93,15 @@ def main():
 
     balances = get_balances(account, tokens)
     print(f"{account} balances")
-    pprint(balances)
+    pprint_balances(balances)
 
     claimable_3crv = get_claimable_3crv(account, fee_distribution, min_3crv_to_claim)
 
     # TODO: calculate/prompt for these
     min_3crv_mint_amount = 1
-    tip_3crv = 1
+    tip_3crv = 0
     tip_address = _resolve_address("satoshiandkin.eth")  # TODO: put this on a subdomain and uses an immutable
-    min_cream_liquidity = 1
+    min_cream_liquidity = 1000
 
     enter_data = EnterData(
         dai=balances[dai],
@@ -110,7 +125,11 @@ def main():
     assert summed_balances > 100, "no coins"
 
     # TODO: figure out the actual max leverage, then prompt the user for it (though i dont see much reason not to go the full amount here)
-    flash_loan_amount = int(summed_balances * 8.4)
+    flash_loan_amount = int(summed_balances * 7.4)
+
+    print(f"flash_loan_amount: {flash_loan_amount}")
+
+    assert flash_loan_amount > 0, "no flash loan calculated"
 
     enter_data = enter_data._replace(dai_flash_fee=lender.flashFee(dai, flash_loan_amount))
 
@@ -137,15 +156,20 @@ def main():
         ).tuple,
     )
 
-    print("enter success!")
+    print(f"enter success! {enter_tx.return_value}")
+
     enter_tx.info()
 
     num_events = len(enter_tx.events)
     print(f"num events: {num_events}")
 
     print("clone balances")
-    # TODO: print the keys as the token symbols
-    pprint(get_balances(argobytes_clone, tokens))
+    balances = get_balances(argobytes_clone, tokens)
+    pprint_balances(balances)
+
+    assert balances[cyy3crv] > 0, "no cyy3ccrv!"
+
+    # TODO: make sure the clone has cyy3crv?
 
     print("account balances")
-    pprint(get_balances(account, tokens))
+    pprint_balances(get_balances(account, tokens))

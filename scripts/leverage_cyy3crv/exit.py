@@ -28,7 +28,7 @@ def main():
     account = accounts.at(os.environ['LEVERAGE_ACCOUNT'])
 
     # TODO: prompt for slippage amount
-    slippage = .01
+    slippage = .1
 
     # TODO: use salts for the contracts once we figure out a way to store them. maybe 3box?
 
@@ -65,7 +65,7 @@ def main():
 
     # TODO: calculate/prompt for these
     min_remove_liquidity_dai = 1
-    tip_dai = 1
+    tip_dai = 0
     tip_address = _resolve_address("satoshiandkin.eth")  # TODO: put this on a subdomain and uses an immutable
     # TODO: this should be False in the default case
     exit_from_account = False
@@ -73,6 +73,7 @@ def main():
 
     if exit_from_account:
         exit_from = account
+        exit_to = ZERO_ADDRESS
 
         balances = get_balances(exit_from, tokens)
         print(f"{exit_from} balances")
@@ -80,12 +81,14 @@ def main():
         raise NotImplementedError("we need an approve so CY_DAI.repayBorrowBehalf is allowed")
     else:
         exit_from = ZERO_ADDRESS
+        exit_to = account
 
         balances = get_balances(argobytes_clone, tokens)
         print(f"{argobytes_clone} balances")
 
     pprint(balances)
 
+    # TODO: ii think this might not be right
     flash_loan_amount = int(exit_cyy3crv_action.calculateExit.call(exit_from) * (1 + slippage))
 
     print(f"flash_loan_amount: {flash_loan_amount}")
@@ -109,7 +112,7 @@ def main():
     approve(account, balances, extra_balances, argobytes_clone)
 
     # flashloan through the clone
-    enter_tx = argobytes_clone.flashBorrow(
+    exit_tx = argobytes_clone.flashBorrow(
         lender,
         dai,
         flash_loan_amount,

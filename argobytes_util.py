@@ -60,10 +60,10 @@ def approve(account, balances, extra_balances, spender, amount=2**256-1):
             allowed = token.approve(spender, 0, {"from": account})
 
         if amount is None:
-            print(f"Approving {spender} for {balance} {token.address}...")
+            print(f"Approving {spender} for {balance} of {account}'s {token.address}...")
             amount = balance
         else:
-            print(f"Approving {spender} for unlimited {token.address}...")
+            print(f"Approving {spender} for unlimited of {account}'s {token.address}...")
 
         token.approve(spender, amount, {"from": account})
 

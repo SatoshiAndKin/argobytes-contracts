@@ -18,11 +18,15 @@ interface ICERC20 is IERC20 {
      */
     function borrowBalanceCurrent(address account) external returns (uint);
 
+    function borrowBalanceStored(address account) external view returns (uint);
+
     /**
      * @notice Accrue interest then return the up-to-date exchange rate
      * @return Calculated exchange rate scaled by 1e18
      */
     function exchangeRateCurrent() external returns (uint);
+
+    function exchangeRateStored() external view returns (uint);
 
     /**
      * @notice Sender supplies assets into the market and receives cTokens in exchange

@@ -9,7 +9,7 @@ import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
-import {ActionTypes} from "contracts/abstract/ArgobytesAuth.sol";
+import {ActionTypes} from "contracts/abstract/ActionTypes.sol";
 import {AddressLib} from "contracts/library/AddressLib.sol";
 import {BytesLib} from "contracts/library/BytesLib.sol";
 import {IERC3156FlashBorrower} from "contracts/external/erc3156/IERC3156FlashBorrower.sol";

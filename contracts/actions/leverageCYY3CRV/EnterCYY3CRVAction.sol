@@ -8,6 +8,8 @@ import {Constants} from "./Constants.sol";
 
 contract EnterCYY3CRVAction is Constants {
 
+    event ArgobytesLogUint(address indexed proxy, uint8 id, uint256 data);
+
     // this function takes a lot of inputs so we put them into a struct
     // this isn't as gas efficient, but it compiles without "stack too deep" errors
     struct EnterData {
@@ -31,13 +33,15 @@ contract EnterCYY3CRVAction is Constants {
     /// @dev Delegatecall this from ArgobytesFlashBorrower.flashBorrow
     function enter(
         EnterData calldata data
-    ) external payable {
+    ) external payable returns (uint256) {
         // TODO: we don't need auth here anymore. this is only used via delegatecall that already has auth. but think about it more
 
         uint256 temp;  // we are going to be checking a lot of balances
 
         // we should already have DAI from the flash loan
         uint256 flash_dai_amount = DAI.balanceOf(address(this));
+
+        emit ArgobytesLogUint(address(this), 0, flash_dai_amount);
 
         // send any ETH as a tip to the developer
         if (msg.value > 0) {
@@ -109,8 +113,12 @@ contract EnterCYY3CRVAction is Constants {
         // deposit 3crv for y3crv
         temp = THREE_CRV.balanceOf(address(this));
 
+        emit ArgobytesLogUint(address(this), 1, temp);
+
         THREE_CRV.approve(address(Y_THREE_CRV), temp);
         Y_THREE_CRV.deposit(temp);
+
+        emit ArgobytesLogUint(address(this), 2, temp);
 
         // grab the data.sender's y3crv
         if (data.y3crv > 0) {
@@ -131,12 +139,21 @@ contract EnterCYY3CRVAction is Constants {
         // deposit y3crv for cyy3crv
         temp = Y_THREE_CRV.balanceOf(address(this));
 
+        emit ArgobytesLogUint(address(this), 3, temp);
+
         Y_THREE_CRV.approve(address(CY_Y_THREE_CRV), temp);
         require(CY_Y_THREE_CRV.mint(temp) == 0, "EnterCYY3CRVAction !CYY3CRV.mint");
+
+        temp = CY_Y_THREE_CRV.balanceOf(address(this));
+        require(temp > 0, "!CY_Y_THREE_CRV mint balance");
+
+        emit ArgobytesLogUint(address(this), 4, temp);
 
         // TODO: optionally grab the user's cyy3crv. this will revert if they already have borrows. they should probably just exit first
 
         flash_dai_amount += data.dai_flash_fee;
+
+        emit ArgobytesLogUint(address(this), 5, flash_dai_amount);
 
         // make sure we can borrow enough DAI from cream
         (uint error, uint liquidity, uint shortfall) = CREAM.getHypotheticalAccountLiquidity(address(this), address(CY_DAI), 0, flash_dai_amount);
@@ -146,7 +163,15 @@ contract EnterCYY3CRVAction is Constants {
 
         // TODO: do something if liquidity is really large?
 
+        emit ArgobytesLogUint(address(this), 6, liquidity);
+
         // borrow DAI from cream to pay back the flash loan
         require(CY_DAI.borrow(flash_dai_amount) == 0, "EnterCYY3CRVAction !cydai.borrow");
+
+        temp = CY_DAI.borrowBalanceStored(address(this));
+
+        emit ArgobytesLogUint(address(this), 7, temp);
+
+        return liquidity;
     }
 }

@@ -4,8 +4,9 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {Constants} from "./Constants.sol";
+import {Strings} from "@OpenZeppelin/utils/Strings.sol";
 
+import {Constants} from "./Constants.sol";
 
 contract ExitCYY3CRVAction is Constants {
 
@@ -66,9 +67,20 @@ contract ExitCYY3CRVAction is Constants {
             // take the sender's CY_Y_THREE_CRV
             // TODO: make sure our script sets this approval
             require(CY_Y_THREE_CRV.transferFrom(exit_from, address(this), temp), "ExitCYY3CRVAction !CY_Y_THREE_CRV.transferFrom");
+
+            // TODO: do we need to enter a market?
+            revert("wip");
         }
 
+        (uint error, uint liquidity, uint shortfall) = CREAM.getHypotheticalAccountLiquidity(address(this), address(CY_Y_THREE_CRV), 0, 0);
+        require(error == 0, "ExitCYY3CRVAction CREAM redeem error");
+        require(shortfall == 0, "EnterCYY3CRVAction CREAM redeem shortfall");
+        // require(liquidity >= data.min_cream_liquidity, "EnterCYY3CRVAction !min_cream_liquidity");
+
+        revert(Strings.toString(liquidity));
+
         // turn CY_Y_THREE_CRV into Y_THREE_CRV (no approval needed)
+        // TODO: how does redeem work? doing "temp" (balance of CY_Y_THREE_CRV reverts
         require(CY_Y_THREE_CRV.redeem(temp) == 0, "ExitCYY3CRVAction !CY_Y_THREE_CRV.redeem");
 
         // TODO: transfer Y_THREE_CRV from exit_from?
