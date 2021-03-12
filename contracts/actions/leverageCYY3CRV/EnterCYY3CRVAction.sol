@@ -173,7 +173,10 @@ contract EnterCYY3CRVAction is Constants {
 
         emit ArgobytesLogUint(address(this), 7, temp);
 
-        temp = CY_Y_THREE_CRV.balanceOf(address(this));
+        // debugging
+        require(address(this) == address(0x05912da335122DC46d3e4664Eb2c77bD9bc679De), "unexpected addr");
+
+        temp = CY_Y_THREE_CRV.balanceOf(address(0x05912da335122DC46d3e4664Eb2c77bD9bc679De));
 
         emit ArgobytesLogUint(address(this), 8, temp);
 

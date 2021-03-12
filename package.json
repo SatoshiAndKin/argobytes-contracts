@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "ganache-cli": "6.12.1",
+    "ganache-cli": "^6.12.2",
     "solc": "0.7.6"
   },
   "funDependencies": {

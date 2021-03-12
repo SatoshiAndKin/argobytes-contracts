@@ -58,7 +58,7 @@ def main():
     # use multiple workers to fetch the contracts
     # there will still be some to fetch, but this speeds things up some
     # this can take some time since solc/vyper may have to download
-    poke_contracts([dai, usdc, usdt, threecrv, threecrv_pool, y3crv, cyy3crv, lender])
+    # poke_contracts([dai, usdc, usdt, threecrv, threecrv_pool, y3crv, cyy3crv, lender])
 
     # TODO: fetch other tokens?
     tokens = [cyy3crv]

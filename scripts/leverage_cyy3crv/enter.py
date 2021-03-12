@@ -8,6 +8,7 @@ from brownie.network.web3 import _resolve_address
 from collections import namedtuple
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from dotenv import load_dotenv, find_dotenv
+from eth_utils import to_int
 from pprint import pprint
 
 
@@ -164,18 +165,20 @@ def main():
     num_events = len(enter_tx.events)
     print(f"num events: {num_events}")
 
-    print(f"return value: {enter_tx.return_value}")
+    enter_return = to_int(enter_tx.return_value)
+
+    print(f"return value: {enter_return}")
+
+    assert enter_return > 0, "no cyy3ccrv returned!"
 
     print(f"clone ({argobytes_clone.address}) balances")
     balances = get_balances(argobytes_clone, tokens)
     pprint_balances(balances)
-
-    assert enter_tx.return_value > 0, "no cyy3ccrv!"
 
     # TODO: why is this not working? we return cyy3crv.balanceOf!
     # assert balances[cyy3crv] == enter_tx.return_value
 
     # TODO: make sure the clone has cyy3crv?
 
-    print(f"account ({acccount}) balances")
+    print(f"account ({account}) balances")
     pprint_balances(get_balances(account, tokens))

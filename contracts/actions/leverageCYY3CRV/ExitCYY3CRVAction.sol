@@ -80,7 +80,7 @@ contract ExitCYY3CRVAction is Constants {
         require(shortfall == 0, "EnterCYY3CRVAction CREAM redeem shortfall");
         // require(liquidity >= data.min_cream_liquidity, "EnterCYY3CRVAction !min_cream_liquidity");
 
-        revert(Strings.toString(liquidity));
+        // revert(Strings.toString(liquidity));
 
         // turn CY_Y_THREE_CRV into Y_THREE_CRV (no approval needed)
         // TODO: how does redeem work? doing "temp" (balance of CY_Y_THREE_CRV reverts
