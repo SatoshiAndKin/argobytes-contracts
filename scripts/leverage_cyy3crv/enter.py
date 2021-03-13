@@ -2,7 +2,7 @@ import os
 import threading
 import multiprocessing
 
-from argobytes_util import Action, approve, get_balances, DyDxFlashLender, get_or_clone, get_or_create, lazy_contract, poke_contracts
+from argobytes_util import Action, approve, CallType, get_balances, DyDxFlashLender, get_claimable_3crv, get_or_clone, get_or_create, lazy_contract, poke_contracts, pprint_balances
 from brownie import accounts, ArgobytesFactory, ArgobytesFlashBorrower, Contract, EnterCYY3CRVAction
 from brownie.network.web3 import _resolve_address
 from collections import namedtuple
@@ -26,30 +26,6 @@ EnterData = namedtuple("EnterData", [
     "tip_address",
     "claim_3crv",
 ])
-
-
-def get_claimable_3crv(account, fee_distribution, min_crv=50):
-    claimable = fee_distribution.claim.call(account)
-
-    if claimable < min_crv:
-        return 0
-    
-    return claimable
-
-
-def pprint_balances(balances):
-    # TODO: symbol cache
-    d = dict()
-    
-    for token, amount in balances.items():
-        symbol = token.symbol()
-
-        if symbol:
-            d[symbol] = amount
-        else:
-            d[token.address] = amount 
-    
-    pprint(d)
 
 
 def main():
@@ -151,7 +127,7 @@ def main():
         flash_loan_amount,
         Action(
             enter_cyy3crv_action,
-            "delegate",
+            CallType.DELEGATE,
             False,
             "enter",
             enter_data,

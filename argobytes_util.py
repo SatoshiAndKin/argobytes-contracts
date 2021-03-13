@@ -7,9 +7,11 @@ from brownie.exceptions import VirtualMachineError
 from copy import copy
 from collections import namedtuple
 from concurrent.futures import as_completed, ThreadPoolExecutor
+from enum import IntFlag
 from eth_abi.packed import encode_abi_packed
 from eth_utils import keccak, to_checksum_address, to_bytes, to_hex
 from lazy_load import lazy
+from pprint import pprint
 
 
 ActionTuple = namedtuple("Action", [
@@ -20,22 +22,18 @@ ActionTuple = namedtuple("Action", [
 ])
 
 
+class CallType(IntFlag):
+    DELEGATE = 0
+    CALL = 1
+    ADMIN = 2
+
+
 class Action():
 
-    def __init__(self, contract, call_type: str, forward_value: bool, function_name: str, *function_args):
-        # TODO: use an enum
-        if call_type == "delegate":
-            call_int = 0
-        elif call_type == "call":
-            call_int = 1
-        elif call_type == "admin":
-            call_int = 2
-        else:
-            raise NotImplementedError         
-
+    def __init__(self, contract, call_type: CallType, forward_value: bool, function_name: str, *function_args):
         data = getattr(contract, function_name).encode_input(*function_args)
 
-        self.tuple = ActionTuple(contract.address, call_int, forward_value, data)
+        self.tuple = ActionTuple(contract.address, call_type, forward_value, data)
 
 
 def approve(account, balances, extra_balances, spender, amount=2**256-1):
@@ -66,6 +64,16 @@ def approve(account, balances, extra_balances, spender, amount=2**256-1):
             print(f"Approving {spender} for unlimited of {account}'s {token.address}...")
 
         token.approve(spender, amount, {"from": account})
+
+
+
+def get_claimable_3crv(account, fee_distribution, min_crv=50):
+    claimable = fee_distribution.claim.call(account)
+
+    if claimable < min_crv:
+        return 0
+    
+    return claimable
 
 
 def get_balances(account, tokens):
@@ -172,6 +180,7 @@ def mk_contract_address2(sender: str, salt: str, initcode: str) -> str:
 
 
 def poke_contracts(contracts):
+    # TODO: this might be causing things to load wrong. investigate more
     # we don't want to query etherscan's API too quickly
     # they limit everyone to 5 requests/second
     # if the contract hasn't been fetched, getting it will take longer than a second
@@ -188,6 +197,21 @@ def poke_contracts(contracts):
             # we could check errors here and log, but the user will see those errors if they actually use a broken contract
             # and if they aren't using hte contract, there's no reason to bother them with warnings
             pass
+
+
+def pprint_balances(balances):
+    # TODO: symbol cache
+    d = dict()
+    
+    for token, amount in balances.items():
+        symbol = token.symbol()
+
+        if symbol:
+            d[symbol] = amount
+        else:
+            d[token.address] = amount 
+    
+    pprint(d)
 
 
 def reset_block_time(synthetix_depot_action):
