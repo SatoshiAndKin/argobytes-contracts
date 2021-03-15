@@ -16,16 +16,15 @@ import click
 import sys
 import os
 
-from brownie import accounts
+from brownie import accounts, project
 from argobytes import pprint_balances
 
 
-@click.command(
-    auto_envvar_prefix='ARGOBYTES'
-)
+@click.command()
 @click.option('--debug/--no-debug', default=False)
-@click.option('--etherscan-token', required=True)
+@click.password_option('--etherscan-token', envvar="ETHERSCAN_TOKEN")
 @click.pass_context
+@click.version_option()
 def cli(ctx, debug, etherscan_token):
     ctx.ensure_object(dict)
 
@@ -40,6 +39,10 @@ def cli(ctx, debug, etherscan_token):
     project.load("../argobytes-contracts")
 
     click.echo("Hello, world!", color="blue")
+
+
+def main():
+    cli(obj={}, auto_envvar_prefix='ARGOBYTES')
 
 
 def common_main(do_it):

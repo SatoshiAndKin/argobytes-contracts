@@ -5,9 +5,9 @@ include LICENSE.txt
 include NOTES.md
 include requirements.in
 include requirements.txt
-recursive-include build *
-recursive-include contracts *
-recursive-include contracts *
-recursive-include docs *
-recursive-include interfaces *
-recursive-include scripts *
+graft build
+graft contracts
+graft contracts
+graft docs
+graft interfaces
+graft scripts
