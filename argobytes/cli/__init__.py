@@ -16,37 +16,51 @@ import click
 import sys
 import os
 
-from brownie import accounts, project
-from argobytes import pprint_balances
+from brownie import accounts, project, network as brownie_network
+from brownie._cli.console import Console
+from brownie.network import gas_price
+from brownie.network.gas.strategies import GasNowScalingStrategy
+# from brownie.utils import fork
+from argobytes import print_start_and_end_balance, print_token_balances
+from argobytes.contracts import get_or_create, get_or_clone
+from pathlib import Path
 
 
-@click.command()
+@click.group()
 @click.option('--debug/--no-debug', default=False)
-@click.password_option('--etherscan-token', envvar="ETHERSCAN_TOKEN")
+@click.password_option('--etherscan-token', envvar = "ETHERSCAN_TOKEN")
+@click.option('--network', default='mainnet-fork')
 @click.pass_context
 @click.version_option()
-def cli(ctx, debug, etherscan_token):
+def cli(ctx, debug, etherscan_token, network):
     ctx.ensure_object(dict)
 
     ctx.obj['DEBUG'] = debug
 
+    # TODO: configure logging based on debug flag
+
     # put this into the environment so that brownie sees it
     os.environ['ETHERSCAN_TOKEN'] = etherscan_token
 
-    # TODO: configure logging based on debug flag
+    brownie_project = project.load(get_project_root())
+    brownie_project.load_config()
 
-    # TODO: load brownie project
-    project.load("../argobytes-contracts")
+    brownie_network.connect(network)
 
-    click.echo("Hello, world!", color="blue")
+    print(f"{brownie_project._name} is the active project.")
 
-
-def main():
-    cli(obj={}, auto_envvar_prefix='ARGOBYTES')
+    ctx.obj['brownie_project'] = brownie_project
 
 
-def common_main(do_it):
+@cli.command()
+@click.pass_context
+def console(ctx):
+    shell = Console(project=ctx.obj['brownie_project'])
+    shell.interact(banner="Argobytes environment is ready.", exitmsg="Goodbye!")
 
+
+# TODO: name this better
+def with_dry_run(do_it):
     account = prompt_for_account()
 
     starting_balance = account.balance()
@@ -56,17 +70,22 @@ def common_main(do_it):
     # https://eth-brownie.readthedocs.io/en/stable/core-gas.html#building-your-own-gas-strategy
     gas_strategy = GasNowScalingStrategy("fast", increment=1.2)
 
+    print("Using 0 gwei gas price in dev!")
+    gas_strategy = 0
+
+    """
     # TODO: fork should check if we are already connected to a forked network and just use snapshots
-    with brownie.utils.fork(unlock=str(account)) as fork_settings:
+    with fork(unlock=str(account)) as fork_settings:
         gas_price(gas_strategy)
 
-        with print_balances(account):
+        with print_start_and_end_balance(account):
             do_it(account)
 
     prompt_for_confirmation(account)
 
     print("\nI hope it worked inside our test net, because we are doing it for real in 6 seconds... [Ctrl C] to cancel")
     time.sleep(6)
+    """
 
     """
     for some scripts, it will be fine to replay exactly the same txs with something like this:
@@ -77,7 +96,7 @@ def common_main(do_it):
     for other scripts, i can see wanting to run `do_it` again. running do_it seems the safest since state changes fast
     i also don't have complete faith in our forked testnet being 100% accurate
     """
-    with print_balances(account):
+    with print_start_and_end_balance(account):
         gas_price(gas_strategy)
 
         do_it(account)
@@ -85,6 +104,15 @@ def common_main(do_it):
     print("transactions complete!")
 
 
+def get_project_root() -> Path:
+    return Path(__file__).parent.parent.parent
+
+
+def main():
+    cli(obj={}, auto_envvar_prefix='ARGOBYTES')
+
+
+# TODO: refactor this to use click helpers
 def prompt_for_account(default="satoshiandkin.eth"):
     """Prompt the user for an eth account."""
     # TODO: use click helper for this?
@@ -99,6 +127,7 @@ def prompt_for_account(default="satoshiandkin.eth"):
     return account
 
 
+# TODO: refactor this to use click helpers
 def prompt_for_confirmation(account):
     print()
     print("*" * 80)

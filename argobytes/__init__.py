@@ -1,9 +1,10 @@
 """
 Python scripts to make working with Argobytes smart contracts easy.
 """
-import os
-import multiprocessing
+import contextlib
 import functools
+import multiprocessing
+import os
 import rlp
 import tokenlists
 from brownie import accounts, Contract, ETH_ADDRESS, ZERO_ADDRESS
@@ -21,6 +22,7 @@ from pprint import pprint
 # TODO: circular imports
 # from .contracts import get_or_clone, get_or_create, load_contract
 # from .tokens import transfer_token, token_decimals
+
 
 
 ActionTuple = namedtuple("Action", ["target", "call_type", "forward_value", "data",])
@@ -78,6 +80,11 @@ def approve(account, balances, extra_balances, spender, amount=2 ** 256 - 1):
             )
 
         token.approve(spender, amount, {"from": account})
+
+
+def debug_shell(extra_locals, **kwargs):
+    # TODO: this should be in brownie, not curve
+    curve.utils.debug_shell(extra_locals, project=project.ArgobytesExtraProject, **kwargs)
 
 
 def get_average_block_time(span=1000):
@@ -158,7 +165,24 @@ def find_block_at(search_timestamp):
     return needle
 
 
-def pprint_balances(balances):
+
+@contextlib.contextmanager
+def print_start_and_end_balance(account):
+    starting_balance = account.balance()
+
+    print("\nbalance of", account, ":", starting_balance / 1e18)
+    print()
+
+    yield
+
+    ending_balance = account.balance()
+
+    # TODO: print gas_used
+    print("\nspent balance of", account, ":", (starting_balance - ending_balance) / 1e18)
+    print()
+
+
+def print_token_balances(balances):
     # TODO: symbol cache
     dict_for_printing = dict()
 

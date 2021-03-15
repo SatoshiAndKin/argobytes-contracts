@@ -2,7 +2,7 @@ import os
 import threading
 import multiprocessing
 
-from argobytes import Action, approve, CallType, get_balances, get_claimable_3crv, pprint_balances
+from argobytes import Action, approve, CallType, get_balances, get_claimable_3crv, print_token_balances
 from argobytes.contracts import DyDxFlashLender, get_or_clone, get_or_create, lazy_contract, poke_contracts
 from brownie import accounts, ArgobytesFactory, ArgobytesFlashBorrower, Contract, EnterCYY3CRVAction
 from brownie.network.web3 import _resolve_address
@@ -43,7 +43,7 @@ def main():
 
     balances = get_balances(account, tokens)
     print(f"{account} balances")
-    pprint_balances(balances)
+    print_token_balances(balances)
 
     claimable_3crv = get_claimable_3crv(account, fee_distribution, min_3crv_to_claim)
 
@@ -128,7 +128,7 @@ def main():
 
     print(f"clone ({argobytes_clone.address}) balances")
     balances = get_balances(argobytes_clone, tokens)
-    pprint_balances(balances)
+    print_token_balances(balances)
 
     # TODO: why is this not working? we return cyy3crv.balanceOf!
     # assert balances[cyy3crv] == enter_tx.return_value
@@ -136,5 +136,5 @@ def main():
     # TODO: make sure the clone has cyy3crv?
 
     print(f"account ({account}) balances")
-    pprint_balances(get_balances(account, tokens))
+    print_token_balances(get_balances(account, tokens))
     """

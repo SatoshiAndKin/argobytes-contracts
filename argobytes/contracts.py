@@ -3,9 +3,8 @@ import multiprocessing
 import functools
 import rlp
 import tokenlists
-from brownie import accounts, Contract, ETH_ADDRESS, ZERO_ADDRESS, web3
+from brownie import accounts, Contract, ETH_ADDRESS, project, web3, ZERO_ADDRESS
 from brownie.exceptions import VirtualMachineError
-from brownie.network.web3 import _resolve_address
 from collections import namedtuple
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from enum import IntFlag
@@ -14,6 +13,23 @@ from eth_utils import keccak, to_checksum_address, to_bytes, to_hex
 from lazy_load import lazy
 from pprint import pprint
 from argobytes import to_hex32
+
+
+def get_deterministic_contract(default_account, contract, salt="", constructor_args=None):
+    """Use eip-2470 to create a contract with deterministic addresses."""
+    if constructor_args is None:
+        constructor_args = []
+
+    contract_initcode = contract.deploy.encode_input(*constructor_args)
+
+    contract_address = mk_contract_address2(
+        SingletonFactory.address, salt, contract_initcode
+    )
+
+    if web3.eth.getCode(contract_address).hex() == "0x":
+        raise ValueError(f"Contract {contract.name} not deployed!")
+
+    return contract.at(contract_address, default_account)
 
 
 def get_or_clone(owner, argobytes_factory, deployed_contract, salt=""):
@@ -31,7 +47,46 @@ def get_or_clone(owner, argobytes_factory, deployed_contract, salt=""):
     )
 
 
-# TODO: rename to get_or_deterministic_create
+def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
+    needed_salts = []
+    my_proxys_proxies = []
+
+    for salt in salts:
+        (proxy_exists, proxy_address) = argobytes_factory.cloneExists(deployed_contract, salt, owner)
+
+        my_proxys_proxies.append(proxy_address)
+
+        if not proxy_exists:
+            # print("Salt", salt, "will deploy at", proxy_address)
+            needed_salts.append(salt)
+
+    if needed_salts:
+        # deploy more proxies that are all owned by the first
+        if len(needed_salts) == 1:
+            sybil_tx = argobytes_factory.createClone(
+                deployed_contract,
+                needed_salts[0],
+                owner,
+            )
+        else:
+            sybil_tx = argobytes_factory.createClones(
+                deployed_contract,
+                needed_salts,
+                owner,
+            )
+
+        # we already calculated the address above. just use that
+        # my_proxys_proxies.extend([event['clone'] for event in sybil_tx.events["NewClone"]])
+
+    _contract = lambda address: Contract.from_abi(
+        deployed_contract._name, address, deployed_contract.abi, owner
+    )
+
+    return [_contract(address) for address in my_proxys_proxies]
+
+
+# TODO: rename to get_or_deterministic_create?
+@functools.lru_cache(maxsize=None)
 def get_or_create(default_account, contract, salt="", constructor_args=None):
     """Use eip-2470 to create a contract with deterministic addresses."""
     if constructor_args is None:
@@ -54,24 +109,36 @@ def get_or_create(default_account, contract, salt="", constructor_args=None):
 
         contract_address = deployed_contract_address
 
+    print(f"Created {contract._name} at {contract_address}\n")
+
     return contract.at(contract_address, default_account)
 
 
-def get_deterministic_contract(default_account, contract, salt="", constructor_args=None):
-    """Use eip-2470 to create a contract with deterministic addresses."""
-    if constructor_args is None:
-        constructor_args = []
-
-    contract_initcode = contract.deploy.encode_input(*constructor_args)
-
-    contract_address = mk_contract_address2(
-        SingletonFactory.address, salt, contract_initcode
+def get_or_create_factory(default_account, salt):
+    return get_or_create(
+        default_account,
+        project.ArgobytesContractsProject.ArgobytesFactory,
+        salt,
+        None
     )
 
-    if web3.eth.getCode(contract_address).hex() == "0x":
-        raise ValueError(f"Contract {contract.name} not deployed!")
 
-    return contract.at(contract_address, default_account)
+def get_or_create_proxy(default_account, salt):
+    return get_or_create(
+        default_account,
+        project.ArgobytesContractsProject.ArgobytesProxy,
+        salt,
+        None
+    )
+
+
+def get_or_create_flash_borrower(default_account, salt):
+    return get_or_create(
+        default_account,
+        project.ArgobytesContractsProject.ArgobytesFlashBorrower,
+        salt,
+        None
+    )
 
 
 def lazy_contract(address: str):
@@ -101,8 +168,11 @@ def load_contract(token_name_or_address: str):
         # TODO: find a tokenlist with this on it
         token_name_or_address = "0x8064d9Ae6cDf087b1bcd5BDf3531bD5d8C537a68"
 
+    # TODO: i think we have to import this late because it is created by `connect` or something
+    from brownie.network.web3 import _resolve_address
+
     try:
-        address = web3._resolve_address(token_name_or_address)
+        address = _resolve_address(token_name_or_address)
     except ValueError:
         pass
     else:
