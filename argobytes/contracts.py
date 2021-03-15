@@ -1,6 +1,6 @@
 import os
 import multiprocessing
-import functools
+# import functools
 import rlp
 import tokenlists
 from brownie import accounts, Contract, ETH_ADDRESS, project, web3, ZERO_ADDRESS
@@ -86,7 +86,7 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
 
 
 # TODO: rename to get_or_deterministic_create?
-@functools.lru_cache(maxsize=None)
+# @functools.lru_cache(maxsize=None)
 def get_or_create(default_account, contract, salt="", constructor_args=None):
     """Use eip-2470 to create a contract with deterministic addresses."""
     if constructor_args is None:
@@ -145,7 +145,7 @@ def lazy_contract(address: str):
     return lazy(lambda: load_contract(address))
 
 
-@functools.lru_cache(maxsize=None)
+# @functools.lru_cache(maxsize=None)
 def load_contract(token_name_or_address: str):
     if token_name_or_address.lower() == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
         # USDC does weird things to get their implementation

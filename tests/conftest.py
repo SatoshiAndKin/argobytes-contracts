@@ -105,7 +105,7 @@ def exit_cyy3crv_action(ExitCYY3CRVAction):
 
 @pytest.fixture(scope="function")
 def kyber_action(KyberAction):
-    return get_or_create(accounts[0], KyberAction, accounts[0])
+    return get_or_create(accounts[0], KyberAction, constructor_args=[accounts[0]])
 
 
 @pytest.fixture(scope="session")

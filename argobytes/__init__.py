@@ -2,7 +2,7 @@
 Python scripts to make working with Argobytes smart contracts easy.
 """
 import contextlib
-import functools
+# import functools
 import multiprocessing
 import os
 import rlp

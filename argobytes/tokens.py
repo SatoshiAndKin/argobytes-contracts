@@ -5,7 +5,7 @@ from decimal import Decimal
 from lazy_load import lazy
 from json import JSONDecodeError
 import brownie
-import functools
+# import functools
 import itertools
 import tokenlists
 
