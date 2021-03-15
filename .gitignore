@@ -11,3 +11,4 @@ reports/
 node_modules/
 venv/
 yarn-error.log
+*.egg-info/

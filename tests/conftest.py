@@ -2,8 +2,10 @@ from eth_utils import keccak, to_checksum_address, to_bytes
 from eth_abi.packed import encode_abi_packed
 from brownie import *
 import pytest
-from argobytes_util import load_contract, get_or_clone, get_or_create
-from argobytes_mainnet import *
+
+from argobytes import to_hex32
+from argobytes.addresses import *
+from argobytes.contracts import load_contract, get_or_clone, get_or_create
 
 
 @pytest.fixture(autouse=True, scope="function")

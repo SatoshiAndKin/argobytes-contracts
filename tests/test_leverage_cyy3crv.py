@@ -1,6 +1,6 @@
 import pytest
 
-from argobytes_util import transfer_token
+from argobytes.tokens import transfer_token
 from brownie import accounts, project
 
 

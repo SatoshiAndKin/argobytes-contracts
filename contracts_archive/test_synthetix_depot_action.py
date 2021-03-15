@@ -1,9 +1,10 @@
 from hypothesis import settings
 from brownie.test import given, strategy
 from brownie import accounts
-from argobytes_util import *
 import pytest
 import brownie
+
+from argobytes import to_hex32
 
 
 def test_byte_strs(synthetix_depot_action, web3):

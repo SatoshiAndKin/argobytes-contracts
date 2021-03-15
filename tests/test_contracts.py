@@ -1,5 +1,5 @@
 import pytest
-from argobytes_util import get_or_create, mk_contract_address2, SingletonFactory
+from argobytes.contracts import get_or_create, mk_contract_address2, SingletonFactory
 from brownie import accounts, ZERO_ADDRESS
 
 
@@ -83,3 +83,5 @@ def test_get_or_create(ArgobytesFactory):
     contract_a = get_or_create(accounts[0], ArgobytesFactory)
 
     contract_b = get_or_create(accounts[0], ArgobytesFactory)
+
+    assert contract_a == contract_b

@@ -1,3 +1,8 @@
+from brownie import ZERO_ADDRESS
+
+from .contracts import lazy_contract
+
+# TODO: use lazy_contract for all of these annd move them to contracts.py?
 CurveFi3poolAddress = "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7"
 CurveFiBUSDAddress = "0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"
 CurveFiCompoundAddress = "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56"
@@ -23,7 +28,7 @@ UniswapV2RouterAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
 
 # tokens
 # TODO: use a tokenlist instead
-ZeroAddress = "0x0000000000000000000000000000000000000000"
+ZeroAddress = ZERO_ADDRESS
 CHIAddress = "0x0000000000004946c0e9F43F4Dee607b0eF1fA1c"  # 1inch's CHI
 DAIAddress = "0x6b175474e89094c44da98b954eedeac495271d0f"
 cDAIAddress = "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643"

@@ -1,0 +1,13 @@
+include brownie-*.yaml
+include ethpm-*.yaml
+include FAQ.md
+include LICENSE.txt
+include NOTES.md
+include requirements.in
+include requirements.txt
+recursive-include build *
+recursive-include contracts *
+recursive-include contracts *
+recursive-include docs *
+recursive-include interfaces *
+recursive-include scripts *

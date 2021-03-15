@@ -5,5 +5,6 @@ bandit
 autopep8
 lazy_load
 pylint
-pytest-random-order
+# pytest-random-order
 pytest-timeout
+tokenlists

@@ -2,7 +2,8 @@ import os
 import threading
 import multiprocessing
 
-from argobytes_util import Action, approve, CallType, get_balances, DyDxFlashLender, get_claimable_3crv, get_or_clone, get_or_create, lazy_contract, poke_contracts, pprint_balances
+from argobytes import Action, approve, CallType, get_balances, get_claimable_3crv, pprint_balances
+from argobytes.contracts import DyDxFlashLender, get_or_clone, get_or_create, lazy_contract, poke_contracts
 from brownie import accounts, ArgobytesFactory, ArgobytesFlashBorrower, Contract, EnterCYY3CRVAction
 from brownie.network.web3 import _resolve_address
 from collections import namedtuple
