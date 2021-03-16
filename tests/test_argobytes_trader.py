@@ -28,24 +28,24 @@ def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action,
     borrows = [
         # 1 WETH from accounts[0] to example_action
         (
-            weth9_erc20,
             value,
+            weth9_erc20,
             example_action,
         ),
     ]
 
+    # NOTE! Multicall actions do not have CallType! That is just our proxy actions! maybe need different names?
     actions = [
         # sweep WETH
         (
             example_action,
-            0,
             False,
             example_action.sweep.encode_input(accounts[0], weth9_erc20, 0),
         ),
     ]
 
     arbitrage_tx = argobytes_trader.atomicArbitrage(
-        False, False, accounts[0], borrows, argobytes_multicall, actions
+        accounts[0], borrows, argobytes_multicall, actions
     )
 
     assert weth9_erc20.balanceOf(example_action) == 0

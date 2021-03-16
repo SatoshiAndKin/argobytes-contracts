@@ -171,42 +171,24 @@ def load_contract(token_name_or_address: str):
     # TODO: i think we have to import this late because it is created by `connect` or something
     from brownie.network.web3 import _resolve_address
 
-    try:
-        address = _resolve_address(token_name_or_address)
-    except ValueError:
-        pass
-    else:
-        # TODO: we shouldn't need from_explorer, but i'm seeing weird things were DAI loads as IWETH9
-        contract = Contract(address)
+    # this raises a ValueError if this is not an address or ENS name
+    address = _resolve_address(token_name_or_address)
 
-        # check if this is a proxy contract
-        # TODO: theres other ways to have an impl too. usdc has one that uses storage
-        impl = None
-        if hasattr(contract, "implementation"):
-            impl = Contract(contract.implementation.call())
-        elif hasattr(contract, "target"):
-            impl = Contract(contract.target.call())
+    # TODO: we shouldn't need from_explorer, but i'm seeing weird things were DAI loads as IWETH9
+    contract = Contract.from_explorer(address)
 
-        if impl:
-            contract = Contract.from_abi(contract._name, address, impl.abi)
+    # check if this is a proxy contract
+    # TODO: theres other ways to have an impl too. usdc has one that uses storage
+    impl = None
+    if hasattr(contract, "implementation"):
+        impl = Contract(contract.implementation.call())
+    elif hasattr(contract, "target"):
+        impl = Contract(contract.target.call())
 
-        return contract
+    if impl:
+        contract = Contract.from_abi(contract._name, address, impl.abi)
 
-    # we didn't have an address or ens name. we probably have a token symbol
-    known_lists = tokenlists.get_available_token_lists()
-
-    for tokenlist in known_lists:
-        try:
-            return tokenlists.get_token(token_name_or_address, tokenlist)
-        except ValueError:
-            continue
-        except KeyError:
-            print(known_lists)
-            raise
-
-    raise ValueError(
-        f"Symbol '{token_name_or_address}' is not in any of our tokenlists."
-    )
+    return contract
 
 
 def mk_contract_address(sender: str, nonce: int) -> str:

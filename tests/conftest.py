@@ -6,6 +6,7 @@ import pytest
 from argobytes import to_hex32
 from argobytes.addresses import *
 from argobytes.contracts import load_contract, get_or_clone, get_or_create
+from argobytes.tokens import load_token_or_contract
 
 
 @pytest.fixture(autouse=True, scope="function")
@@ -53,22 +54,22 @@ def argobytes_trader(ArgobytesTrader):
     return get_or_create(accounts[0], ArgobytesTrader)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def cdai_erc20():
     return load_contract(cDAIAddress)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def curve_fi_3pool():
     return load_contract(CurveFi3poolAddress)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def curve_fi_compound():
     return load_contract(CurveFiCompoundAddress)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def cusdc_erc20():
     return load_contract(cUSDCAddress)
 
@@ -78,9 +79,9 @@ def curve_fi_action(CurveFiAction, curve_fi_compound):
     return get_or_create(accounts[0], CurveFiAction)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def dai_erc20():
-    return load_contract(DAIAddress)
+    return load_token_or_contract("DAI")
 
 
 @pytest.fixture(scope="function")
@@ -108,19 +109,19 @@ def kyber_action(KyberAction):
     return get_or_create(accounts[0], KyberAction, constructor_args=[accounts[0]])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def kyber_network_proxy():
     # TODO: they have an "info" method and that is a reserved keyword
     # TODO: `return load_contract(KyberNetworkProxyAddress)`
     return KyberNetworkProxyAddress
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def onesplit():
     return load_contract("1split.eth")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def onesplit_helper(onesplit, interface):
 
     def inner_onesplit_helper(eth_amount, dest_token, to):
@@ -175,20 +176,20 @@ def onesplit_offchain_action(OneSplitOffchainAction):
     return get_or_create(accounts[0], OneSplitOffchainAction)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def susd_erc20(synthetix_address_resolver):
     # The AddressResolver is not populated with everything right now, only those internal contract addresses that do not change. ProxyERC20 (SNX) and ProxyERC20sUSD (sUSD) are static addresses you can simply hard code in if you need
     # proxy = synthetix_address_resolver.requireAndGetAddress(to_hex32(text="ProxyERC20sUSD"), "No Proxy")
     return load_contract(sUSDAddress)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def synthetix_address_resolver(interface):
     # this is actually the ReadProxyAddressResolver
     return load_contract(SynthetixAddressResolverAddress)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def synthetix_exchange_rates(synthetix_address_resolver):
     rates = synthetix_address_resolver.getAddress(to_hex32(text="ExchangeRates"))
 
@@ -202,7 +203,7 @@ def uniswap_v1_action(UniswapV1Action):
     return get_or_create(accounts[0], UniswapV1Action)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def uniswap_v1_factory():
     return load_contract(UniswapV1FactoryAddress)
 
@@ -212,12 +213,12 @@ def uniswap_v2_action(UniswapV2Action):
     return get_or_create(accounts[0], UniswapV2Action)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def uniswap_v2_router():
     return load_contract(UniswapV2RouterAddress)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def uniswap_v1_helper(uniswap_v1_factory, interface):
 
     # TODO: this is reverting with an unhelpful error about JUMP
@@ -249,7 +250,12 @@ def uniswap_v1_helper(uniswap_v1_factory, interface):
     return inner_uniswap_v1_helper
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
+def unlocked_binance():
+    return accounts.at("0x85b931A32a0725Be14285B66f1a22178c672d69B", force=True)
+
+
+@pytest.fixture(scope="function")
 def usdc_erc20():
     return load_contract(USDCAddress)
 
@@ -259,6 +265,6 @@ def weth9_action(Weth9Action):
     return get_or_create(accounts[0], Weth9Action)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def weth9_erc20():
     return load_contract(WETH9Address)

@@ -57,12 +57,13 @@ def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy, argobytes_trade
     proxy_actions = [
         (
             argobytes_trader,
-            1,  # delegatecall
+            0,  # delegatecall
             True,  # pass ETH
             argobytes_trader.atomicArbitrage.encode_input(
                 accounts[0],
                 borrows,
-                actions,
+                argobytes_multicall,
+                trade_actions,
             ),
         )
     ]

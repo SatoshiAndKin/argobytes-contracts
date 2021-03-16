@@ -37,13 +37,11 @@ def main():
     cydai = lazy_contract(enter_cyy3crv_action.CY_DAI())
     fee_distribution = lazy_contract(enter_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION())
     cream = lazy_contract(enter_cyy3crv_action.CREAM())
-    lender = DyDxFlashLender
 
     tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv]
 
     balances = get_balances(account, tokens)
-    print(f"{account} balances")
-    print_token_balances(balances)
+    print_token_balances(balances, f"{account} balances")
 
     claimable_3crv = get_claimable_3crv(account, fee_distribution, min_3crv_to_claim)
 
@@ -66,7 +64,7 @@ def main():
 
     approve(account, balances_for_3crv_pool, {}, threecrv_pool)
 
-    threecrv_pool.add_liquidity(
+    threecrv_add_liquidity_tx = threecrv_pool.add_liquidity(
         [
             balances_for_3crv_pool[dai],
             balances_for_3crv_pool[usdc],
@@ -75,66 +73,77 @@ def main():
         min_3crv_mint_amount,
         {"from": account},
     )
+    threecrv_add_liquidity_tx.info()
 
     if claimable_3crv >= min_3crv_to_claim:
-        fee_distribution.claim({"from": account})
+        claim_tx = fee_distribution.claim({"from": account})
+        claim_tx.info()
 
-    # TODO: tip the developer in 3crv/ETH
+    # TODO: tip the developer in 3crv or ETH
 
     # deposit 3crv for y3crv
     balances_for_y3crv = get_balances(account, [threecrv])
+    print_token_balances(balances, f"{account} balances_for_y3crv:")
 
     approve(account, balances_for_y3crv, {}, y3crv)
 
-    y3crv.deposit(balances_for_y3crv[threecrv], {"from": account})
+    y3crv_deposit_tx = y3crv.deposit(balances_for_y3crv[threecrv], {"from": account})
+    y3crv_deposit_tx.info()
 
     # setup cream
-    cream_cyy3crv_member = cream.checkMembership(account, cyy3crv)
-    cream_cydai_member = cream.checkMembership(account, cydai)
-
     markets = []
-    if cream_cyy3crv_member:
+    if cream.checkMembership(account, cyy3crv):
         markets.append(cyy3crv)
-    if cream_cydai_member:
+    if cream.checkMembership(account, cydai):
         markets.append(cydai)
 
     if markets:
-        cream.enterMarkets(markets, {"from": account})
+        enter_markets_tx = cream.enterMarkets(markets, {"from": account})
+        enter_markets_tx.info()
 
     # deposit y3crv for cyy3crv
     balances_for_cyy3crv = get_balances(account, [y3crv])
+    print_token_balances(balances_for_cyy3crv, f"{account} balances for cyy3crv:")
 
     approve(account, balances_for_cyy3crv, {}, cyy3crv)
 
-    cyy3crv.mint(balances_for_cyy3crv[y3crv], {"from": account})
+    mint_tx = cyy3crv.mint(balances_for_cyy3crv[y3crv], {"from": account})
+    mint_tx.info()
 
-    raise NotImplementedError("wip")
+    borrow_amount = int(balances_for_y3crv[threecrv] * 0.8)
+    print(f"borrow_amount: {borrow_amount}")
 
-    print(f"enter simple success! {enter_tx.return_value}")
+    assert borrow_amount > 0
 
-    """
-    if not cream.
+    # TODO: this could be better, figute out how to properly calculate the maximum safe borrow
+    balances_before_borrow = get_balances(account, [cyy3crv, y3crv])
+    print_token_balances(balances_before_borrow, f"{account} balances before borrow:")
 
-    enter_tx.info()
+    # TODO: we could use `borrow_amount` here
+    (cream_error, cream_liquidity, cream_shortfall) = cream.getHypotheticalAccountLiquidity(account, cydai, 0, 0);
 
-    num_events = len(enter_tx.events)
+    print(f"cream_error: {cream_error}")
+    print(f"cream_liquidity: {cream_liquidity}")
+    print(f"cream_shortfall: {cream_shortfall}")
+
+    assert cream_error == 0, "cream error"
+    assert cream_error == 0, "cream shortfall"
+    assert cream_liquidity > borrow_amount, "no cream liquidity available for borrowing"
+
+    borrow_tx = cydai.borrow(borrow_amount, {"from": account})
+
+    print(f"enter simple success! {borrow_tx.return_value}")
+
+    borrow_tx.info()
+
+    num_events = len(borrow_tx.events)
     print(f"num events: {num_events}")
 
-    enter_return = to_int(enter_tx.return_value)
+    balances = get_balances(account, tokens)
+    print_token_balances(balances, f"{account} balances")
 
-    print(f"return value: {enter_return}")
+    assert borrow_tx.return_value == 0, "error borrowing DAI!"
 
-    assert enter_return > 0, "no cyy3ccrv returned!"
-
-    print(f"clone ({argobytes_clone.address}) balances")
-    balances = get_balances(argobytes_clone, tokens)
-    print_token_balances(balances)
-
-    # TODO: why is this not working? we return cyy3crv.balanceOf!
-    # assert balances[cyy3crv] == enter_tx.return_value
-
-    # TODO: make sure the clone has cyy3crv?
-
-    print(f"account ({account}) balances")
-    print_token_balances(get_balances(account, tokens))
-    """
+    # TODO: where should these balances be?
+    assert balances[cyy3crv] > 0
+    assert balances[dai] == borrow_tx_return

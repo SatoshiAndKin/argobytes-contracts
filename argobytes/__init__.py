@@ -67,7 +67,9 @@ def approve(account, balances, extra_balances, spender, amount=2 ** 256 - 1):
         else:
             # TODO: do any of our tokens actually need this stupid check?
             print(f"Clearing {token.address} approval...")
-            allowed = token.approve(spender, 0, {"from": account})
+            approve_tx = token.approve(spender, 0, {"from": account})
+
+            approve_tx.info()
 
         if amount is None:
             print(
@@ -79,7 +81,9 @@ def approve(account, balances, extra_balances, spender, amount=2 ** 256 - 1):
                 f"Approving {spender} for unlimited of {account}'s {token.address}..."
             )
 
-        token.approve(spender, amount, {"from": account})
+        approve_tx = token.approve(spender, amount, {"from": account})
+
+        approve_tx.info()
 
 
 def debug_shell(extra_locals, **kwargs):
@@ -182,7 +186,7 @@ def print_start_and_end_balance(account):
     print()
 
 
-def print_token_balances(balances):
+def print_token_balances(balances, label=None):
     # TODO: symbol cache
     dict_for_printing = dict()
 
@@ -193,6 +197,9 @@ def print_token_balances(balances):
             dict_for_printing[symbol] = amount
         else:
             dict_for_printing[token.address] = amount
+
+    if label:
+        print(label)
 
     pprint(dict_for_printing)
 
