@@ -66,7 +66,7 @@ def main():
     # TODO: calculate/prompt for these
     min_remove_liquidity_dai = 1
     tip_dai = 0
-    tip_address = _resolve_address("satoshiandkin.eth")  # TODO: put this on a subdomain and uses an immutable
+    tip_address = _resolve_address("tip.satoshiandkin.eth")  # TODO: put this on a subdomain and uses an immutable
     # TODO: this should be False in the default case
     exit_from_account = False
     # min_cream_liquidity = 1

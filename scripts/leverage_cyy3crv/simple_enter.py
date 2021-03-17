@@ -48,7 +48,7 @@ def main():
     # TODO: calculate/prompt for these
     min_3crv_mint_amount = 1
     tip_3crv = 0
-    tip_address = _resolve_address("satoshiandkin.eth")  # TODO: put this on a subdomain and uses an immutable
+    tip_address = _resolve_address("tip.satoshiandkin.eth")  # TODO: put this on a subdomain and uses an immutable
     min_cream_liquidity = 1000
 
     # TODO: do this properly. use virtualprice and yearn's price calculation 
