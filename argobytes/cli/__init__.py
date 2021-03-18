@@ -66,6 +66,19 @@ def console(ctx):
     shell.interact(banner="Argobytes environment is ready.", exitmsg="Goodbye!")
 
 
+@cli.command()
+def donate():
+    """Donate ETH or tokens to the developers.
+
+    This project uses code written by an almost uncountable number of people. Donations are welcome.
+
+    <https://gitcoin.co/eth-brownie>
+    <https://donate.pypi.org/>
+    """
+    who = "tip.satoshiandkin.eth"
+    raise NotImplementedError
+
+
 # TODO: name this better
 def with_dry_run(do_it):
     account = prompt_for_account()
