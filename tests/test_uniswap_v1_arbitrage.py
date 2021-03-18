@@ -6,8 +6,8 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy, argobytes_trader, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, dai_erc20):
-    assert argobytes_proxy.balance() == 0
+def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy_clone, argobytes_trader, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, dai_erc20):
+    assert argobytes_proxy_clone.balance() == 0
     assert argobytes_trader.balance() == 0
     assert argobytes_multicall.balance() == 0
     assert uniswap_v1_action.balance() == 0
@@ -20,7 +20,7 @@ def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy, argobytes_trade
     # make sure balances match what we expect
     assert accounts[0].balance() > value
     assert uniswap_v1_action.balance() == value
-    assert argobytes_proxy.balance() == 0
+    assert argobytes_proxy_clone.balance() == 0
 
     usdc_exchange = uniswap_v1_factory.getExchange(usdc_erc20)
     dai_exchange = uniswap_v1_factory.getExchange(dai_erc20)
@@ -50,7 +50,7 @@ def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy, argobytes_trade
             uniswap_v1_action,
             0,
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens)
-            uniswap_v1_action.tradeTokenToEther.encode_input(argobytes_proxy, dai_exchange, dai_erc20, 1),
+            uniswap_v1_action.tradeTokenToEther.encode_input(argobytes_proxy_clone, dai_exchange, dai_erc20, 1),
         ),
     ]
 
@@ -68,7 +68,11 @@ def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy, argobytes_trade
         )
     ]
 
-    arbitrage_tx = argobytes_proxy.executeMany(
+    owner = argobytes_proxy_clone.owner()
+
+    assert owner == brownie.accounts[0]
+
+    arbitrage_tx = argobytes_proxy_clone.executeMany(
         proxy_actions,
         {
             "value": value,
@@ -79,7 +83,7 @@ def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy, argobytes_trade
     # TODO: should we compare this to running with burning gas token?
     print("gas used: ", arbitrage_tx.gas_used)
 
-    assert argobytes_proxy.balance() > value
+    assert argobytes_proxy_clone.balance() > value
 
     # make sure the transaction succeeded
     assert arbitrage_tx.status == 1

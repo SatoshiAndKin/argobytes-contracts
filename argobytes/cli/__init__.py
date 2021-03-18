@@ -42,19 +42,21 @@ def cli(ctx, debug, etherscan_token, network):
     # put this into the environment so that brownie sees it
     os.environ['ETHERSCAN_TOKEN'] = etherscan_token
 
+    # setup the project and network the same way brownie's run helper does
     brownie_project = project.load(get_project_root())
     brownie_project.load_config()
-
     brownie_network.connect(network)
 
-    print(f"{brownie_project._name} is the active project.")
+    print(f"{brownie_project._name} is the active {network} project.")
 
+    # pass the project on to the other functions
     ctx.obj['brownie_project'] = brownie_project
 
 
 @cli.command()
 @click.pass_context
 def console(ctx):
+    """Interactive shell."""
     shell = Console(project=ctx.obj['brownie_project'])
     shell.interact(banner="Argobytes environment is ready.", exitmsg="Goodbye!")
 

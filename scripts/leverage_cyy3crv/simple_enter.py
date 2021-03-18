@@ -92,14 +92,17 @@ def main():
 
     # setup cream
     markets = []
-    if cream.checkMembership(account, cyy3crv):
+    if not cream.checkMembership(account, cyy3crv):
         markets.append(cyy3crv)
-    if cream.checkMembership(account, cydai):
-        markets.append(cydai)
+    # TODO: do we need this? is this just for borrows?
+    # if not cream.checkMembership(account, cydai):
+    #     markets.append(cydai)
 
     if markets:
         enter_markets_tx = cream.enterMarkets(markets, {"from": account})
         enter_markets_tx.info()
+    else:
+        print("CREAM markets already entered")
 
     # deposit y3crv for cyy3crv
     balances_for_cyy3crv = get_balances(account, [y3crv])
@@ -142,8 +145,9 @@ def main():
     balances = get_balances(account, tokens)
     print_token_balances(balances, f"{account} balances")
 
+    # borrow returns non-zero on error
     assert borrow_tx.return_value == 0, "error borrowing DAI!"
 
     # TODO: where should these balances be?
     assert balances[cyy3crv] > 0
-    assert balances[dai] == borrow_tx_return
+    assert balances[dai] == borrow_amount

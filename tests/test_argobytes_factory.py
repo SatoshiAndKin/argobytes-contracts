@@ -27,7 +27,8 @@ def test_deploy_clones(argobytes_factory, argobytes_proxy):
     ]
 
     tx = argobytes_factory.createClones(
-        argobytes_proxy, salts,
+        argobytes_proxy,
+        salts,
         accounts[0]
     )
 
@@ -43,4 +44,3 @@ def test_deploy_clones(argobytes_factory, argobytes_proxy):
     # assert event_0['clone'] == tx.return_value
 
     assert tx.gas_used < 70000 * len(salts)
-

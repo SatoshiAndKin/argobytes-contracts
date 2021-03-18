@@ -13,6 +13,7 @@ from eth_utils import keccak, to_checksum_address, to_bytes, to_hex
 from lazy_load import lazy
 from pprint import pprint
 from argobytes import to_hex32
+from warnings import warn
 
 
 def get_deterministic_contract(default_account, contract, salt="", constructor_args=None):
@@ -174,8 +175,12 @@ def load_contract(token_name_or_address: str):
     # this raises a ValueError if this is not an address or ENS name
     address = _resolve_address(token_name_or_address)
 
+    contract = Contract(address)
+
     # TODO: we shouldn't need from_explorer, but i'm seeing weird things were DAI loads as IWETH9
-    contract = Contract.from_explorer(address)
+    if contract._name == "IWETH9" and address != "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2":
+        warn(f"Reloading contract supposedly named IWETH9: {address}")
+        contract = Contract.from_explorer(address)
 
     # check if this is a proxy contract
     # TODO: theres other ways to have an impl too. usdc has one that uses storage

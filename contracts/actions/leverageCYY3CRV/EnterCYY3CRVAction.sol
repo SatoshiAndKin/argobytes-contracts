@@ -126,15 +126,12 @@ contract EnterCYY3CRVAction is Constants {
         }
 
         // setup cream
-        if (!CREAM.checkMembership(address(this), address(CY_Y_THREE_CRV))) {
-            // if we aren't in the cyy3crv market, then we aren't in cydai either
-            address[] memory markets = new address[](2);
-            markets[0] = address(CY_Y_THREE_CRV);
-            markets[1] = address(CY_DAI);
+        address[] memory markets = new address[](1);
+        markets[0] = address(CY_Y_THREE_CRV);
+        // TODO: do we need cydai?
+        // markets[1] = address(CY_DAI);
 
-            CREAM.enterMarkets(markets);
-            // TODO: check the return?
-        }
+        CREAM.enterMarkets(markets);
 
         // deposit y3crv for cyy3crv
         temp = Y_THREE_CRV.balanceOf(address(this));
