@@ -1,6 +1,6 @@
-import os
+import brownie
 import multiprocessing
-# import functools
+import os
 import rlp
 import tokenlists
 from brownie import accounts, Contract, ETH_ADDRESS, project, web3, ZERO_ADDRESS
@@ -264,3 +264,26 @@ DyDxFlashLender = lazy_contract("0x6bdC1FCB2F13d1bA9D26ccEc3983d5D4bf318693")
 OneSplit = lazy_contract("1proto.eth")
 # USDC may not be decentralized, but Coinbase can trade to USD in my bank account at 1:1 and no fee
 USDC = lazy_contract("usdc")
+
+# lazy load these because they aren't available at import time here
+# TODO: use long project path in case multiple projects are loaded?
+ArgobytesAuthority = lazy(lambda: brownie.ArgobytesAuthority)
+ArgobytesFactory = lazy(lambda: brownie.ArgobytesFactory)
+ArgobytesMulticall = lazy(lambda: brownie.ArgobytesMulticall)
+
+# clonable
+ArgobytesFlashBorrower = lazy(lambda: brownie.ArgobytesFlashBorrower)
+ArgobytesProxy = lazy(lambda: brownie.ArgobytesProxy)
+
+# actions
+ArgobytesTrader = lazy(lambda: brownie.ArgobytesTrader)
+EnterCYY3CRVAction = lazy(lambda: brownie.EnterCYY3CRVAction)
+ExitCYY3CRVAction = lazy(lambda: brownie.ExitCYY3CRVAction)
+
+# exchanges
+CurveFiAction = lazy(lambda: brownie.CurveFiAction)
+ExampleAction = lazy(lambda: brownie.ExampleAction)
+KyberAction = lazy(lambda: brownie.KyberAction)
+UniswapV1Action = lazy(lambda: brownie.UniswapV1Action)
+UniswapV2Action = lazy(lambda: brownie.UniswapV2Action)
+Weth9Action = lazy(lambda: brownie.Weth9Action)

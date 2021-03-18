@@ -25,6 +25,8 @@ from argobytes import print_start_and_end_balance, print_token_balances
 from argobytes.contracts import get_or_create, get_or_clone
 from pathlib import Path
 
+from .leverage_cyy3crv import leverage_cyy3crv
+
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
@@ -51,6 +53,9 @@ def cli(ctx, debug, etherscan_token, network):
 
     # pass the project on to the other functions
     ctx.obj['brownie_project'] = brownie_project
+
+
+cli.add_command(leverage_cyy3crv)
 
 
 @cli.command()

@@ -1,9 +1,12 @@
+import brownie
+import click
 import os
 import threading
 import multiprocessing
 
-from argobytes_util import Action, approve, CallType, get_balances, get_claimable_3crv, DyDxFlashLender, get_or_clone, get_or_create, lazy_contract, poke_contracts, print_token_balances
-from brownie import accounts, ArgobytesFactory, ArgobytesFlashBorrower, Contract, ExitCYY3CRVAction, ZERO_ADDRESS
+from argobytes import Action, approve, CallType, get_balances, get_claimable_3crv, print_token_balances
+from argobytes.contracts import ArgobytesFactory, ArgobytesFlashBorrower, DyDxFlashLender, ExitCYY3CRVAction, get_or_clone, get_or_create, lazy_contract, poke_contracts
+from brownie import accounts, Contract, ZERO_ADDRESS
 from brownie.network.web3 import _resolve_address
 from collections import namedtuple
 from concurrent.futures import as_completed, ThreadPoolExecutor
@@ -21,7 +24,9 @@ ExitData = namedtuple("ExitData", [
 ])
 
 
-def main():
+@click.command()
+def atomic_exit():
+    """Use a flash loan to withdraw from a leveraged cyy3crv position."""
     load_dotenv(find_dotenv())
 
     # TODO: we need an account with private keys

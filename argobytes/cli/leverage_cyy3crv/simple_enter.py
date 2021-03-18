@@ -1,10 +1,11 @@
+import click
 import os
 import threading
 import multiprocessing
 
 from argobytes import Action, approve, CallType, get_balances, get_claimable_3crv, print_token_balances
-from argobytes.contracts import DyDxFlashLender, get_or_clone, get_or_create, lazy_contract, poke_contracts
-from brownie import accounts, ArgobytesFactory, ArgobytesFlashBorrower, Contract, EnterCYY3CRVAction
+from argobytes.contracts import ArgobytesFactory, DyDxFlashLender, get_or_clone, get_or_create, lazy_contract, poke_contracts, ArgobytesFlashBorrower, EnterCYY3CRVAction
+from brownie import accounts, Contract
 from brownie.network.web3 import _resolve_address
 from collections import namedtuple
 from concurrent.futures import as_completed, ThreadPoolExecutor
@@ -13,9 +14,9 @@ from eth_utils import to_int
 from pprint import pprint
 
 
-def main():
-    load_dotenv(find_dotenv())
-
+@click.command()
+def simple_enter():
+    """Make a bunch of transactions to deposit into leveraged cyy3crv position."""
     # TODO: we need an account with private keys
     account = accounts.at(os.environ['LEVERAGE_ACCOUNT'])
     print(f"Hello, {account}")

@@ -3,11 +3,11 @@ autofetch_sources: true
 compiler:
   solc:
     optimizer:
-      # TODO: optimizer has broken revert trace line number reporting in the past. make sure that is fixed before setting to truee
+      # TODO: optimizer has broken revert trace line number reporting in the past. make sure that is fixed before setting to true
       enabled: false
       runs: 1000000
     remappings:
-      - "@OpenZeppelin=OpenZeppelin/openzeppelin-contracts@3.3.0-solc-0.7/contracts"
+      - "@OpenZeppelin=OpenZeppelin/openzeppelin-contracts@3.4.0-solc-0.7/contracts"
 
 dependencies:
-  - OpenZeppelin/openzeppelin-contracts@3.3.0-solc-0.7
+  - OpenZeppelin/openzeppelin-contracts@3.4.0-solc-0.7
