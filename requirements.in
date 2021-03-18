@@ -1,10 +1,13 @@
-python-dotenv
+autopep8
+bandit
+click-log
+click-plugins
+click-spinner
 eth-abi
 eth-brownie
-bandit
-autopep8
 lazy_load
 pylint
 # pytest-random-order
 pytest-timeout
+python-dotenv
 tokenlists
