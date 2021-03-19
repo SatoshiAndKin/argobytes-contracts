@@ -7,7 +7,7 @@ import multiprocessing
 import os
 import rlp
 import tokenlists
-from brownie import accounts, Contract, ETH_ADDRESS, ZERO_ADDRESS
+from brownie import _cli, accounts, Contract, ETH_ADDRESS, project, ZERO_ADDRESS
 from brownie.exceptions import VirtualMachineError
 from brownie.network import web3
 from collections import namedtuple
@@ -86,9 +86,11 @@ def approve(account, balances, extra_balances, spender, amount=2 ** 256 - 1):
         approve_tx.info()
 
 
-def debug_shell(extra_locals, **kwargs):
-    # TODO: this should be in brownie, not curve
-    curve.utils.debug_shell(extra_locals, project=project.ArgobytesExtraProject, **kwargs)
+# TODO: this should be in brownie
+def debug_shell(extra_locals, banner="Argobytes debug time.", exitmsg=""):
+    """You probably want to use this with 'debug_shell(locals())'."""
+    shell = _cli.console.Console(project.ArgobytesContractsProject, extra_locals)
+    shell.interact(banner=banner, exitmsg=exitmsg)
 
 
 def get_average_block_time(span=1000):
@@ -124,7 +126,7 @@ def find_block_at(search_timestamp):
     TODO: this isn't perfect, but it works well enough
     """
     average_block_time = get_average_block_time()
-    print("Average block time:", average_block_time)
+    # print("Average block time:", average_block_time)
 
     latest_block = web3.eth.getBlock("latest")
 
@@ -167,7 +169,6 @@ def find_block_at(search_timestamp):
     # print("found after", num_queries, "queries")
 
     return needle
-
 
 
 @contextlib.contextmanager
