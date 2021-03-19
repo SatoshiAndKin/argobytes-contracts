@@ -1,19 +1,15 @@
-import brownie
+"""Handle Ethereum smart Contracts."""
 import multiprocessing
-import os
-import rlp
-import tokenlists
-from brownie import accounts, Contract, ETH_ADDRESS, project, web3, ZERO_ADDRESS
-from brownie.exceptions import VirtualMachineError
-from collections import namedtuple
 from concurrent.futures import as_completed, ThreadPoolExecutor
-from enum import IntFlag
-from eth_abi.packed import encode_abi_packed
-from eth_utils import keccak, to_checksum_address, to_bytes, to_hex
-from lazy_load import lazy
-from pprint import pprint
-from argobytes import to_hex32
 from warnings import warn
+
+import brownie
+import rlp
+from brownie import Contract, ETH_ADDRESS, project, web3, ZERO_ADDRESS
+from lazy_load import lazy
+from eth_utils import to_bytes, keccak, to_checksum_address
+
+from argobytes import to_hex32
 
 
 def get_deterministic_contract(default_account, contract, salt="", constructor_args=None):
@@ -75,6 +71,8 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
                 needed_salts,
                 owner,
             )
+
+        sybil_tx.info()
 
         # we already calculated the address above. just use that
         # my_proxys_proxies.extend([event['clone'] for event in sybil_tx.events["NewClone"]])

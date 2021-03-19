@@ -118,7 +118,6 @@ def get_claimable_3crv(account, fee_distribution, min_crv=50):
     return claimable
 
 
-
 def find_block_at(search_timestamp):
     """
     Finds a block with a timestamp close to the `search_timestamp`.
