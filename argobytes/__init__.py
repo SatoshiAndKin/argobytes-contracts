@@ -142,6 +142,7 @@ def find_block_at(search_timestamp):
 
     num_queries = 0
     needle = None
+    mid_block = None
     while (first_block_num <= last_block_num) and (needle is None):
         mid_block_num = int((first_block_num + last_block_num) / 2)
 
@@ -160,7 +161,10 @@ def find_block_at(search_timestamp):
     if needle is None:
         # return the closest block
         # print("hopefully this is close enough!")
-        needle = mid_block
+        if mid_block is None:
+            needle = latest_block
+        else:
+            needle = mid_block
 
     # print("goal timestamp:", search_timestamp)
     # print("needle timestamp:", needle.timestamp)
