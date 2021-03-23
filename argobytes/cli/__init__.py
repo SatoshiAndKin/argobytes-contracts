@@ -19,8 +19,9 @@ import os
 from argobytes import print_start_and_end_balance, print_token_balances
 from argobytes.contracts import get_or_create, get_or_clone
 from brownie import accounts, project, network as brownie_network
-from brownie._cli.console import Console
+from brownie.network.gas.strategies import GethMempoolStrategy
 from brownie.network import gas_price
+from brownie._cli.console import Console
 from brownie.network.gas.strategies import GasNowScalingStrategy
 # from brownie.utils import fork
 from click_plugins import with_plugins
@@ -50,18 +51,33 @@ def cli(ctx, debug, etherscan_token, network):
     # setup the project and network the same way brownie's run helper does
     brownie_project = project.load(get_project_root())
     brownie_project.load_config()
-    brownie_network.connect(network)
 
-    print(f"{brownie_project._name} is the active {network} project.")
+    if network != "none":
+        brownie_network.connect(network)
+
+        print(f"{brownie_project._name} is the active {network} project.")
+    else:
+        print(f"{brownie_project._name} is the active project. It is not conencted to any networks")
 
     # pass the project on to the other functions
     ctx.obj['brownie_project'] = brownie_project
 
 
 @cli.command()
+@click.option("--gas-position", default=200)
 @click.pass_context
-def console(ctx):
-    """Interactive shell."""
+def console(ctx, gas_position):
+    """Interactive shell.
+    
+    A gas position of 200 or less usually places a transaction within the mining block.
+    A gas position of 500 usually places a transaction within the 2nd pending block.
+    
+    TODO: i have my own slight modification to this strategy, but need to move it into argobytes
+    """
+    gas_strategy = GethMempoolStrategy(gas_position)
+    gas_price(gas_strategy)
+    print(f"Default gas strategy: {gas_strategy}")
+
     shell = Console(project=ctx.obj['brownie_project'])
     shell.interact(banner="Argobytes environment is ready.", exitmsg="Goodbye!")
 

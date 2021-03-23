@@ -4,7 +4,7 @@
 
 What's an Argobytes? It's a non-sense word that makes searching easy. I'll probably rename it.
 
-The initial use of these contracts is atomic arbitrage, but they can be used for combining all sorts of ethereum smart contract functions.
+The initial use of these contracts was atomic arbitrage, but they can be used for combining all sorts of ethereum smart contract functions.
 
 There are many components: ArgobytesProxy, ArgobytesMulticall, ArgobytesTrader, ArgobytesAuthority, ArgobytesFactory, and a bunch Actions.
 
@@ -95,9 +95,9 @@ When combined with the ArgobytesFlashBorrower, this will allow atomic arbitrage 
 Reverse of EnterCYY3CRVAction.
 
 
-# Developing
+## Developing
 
-## Initial setup
+### Initial setup
 
 1. Get an account with <https://rivet.cloud> or <https://infura.io> or install `geth` (or another node that is compatible with `ganache-cli --fork`). [For geth, read this](https://gist.github.com/WyseNynja/89179917d209d10e6ea27c5f2f8f88f1).
 2. Install `python3-dev` and `python3-venv`
@@ -122,7 +122,7 @@ Reverse of EnterCYY3CRVAction.
 8. If you run your own Ethereum node, edit the `mainnet` section of `~/.brownie/network-config.yaml` 
 
 
-## Development scripts
+### Development scripts
 
 Run:
 
@@ -153,7 +153,7 @@ Run:
     ./scripts/eth95.sh
 
 
-## Upgrading dependencies
+### Upgrading dependencies
 
 Run:
 

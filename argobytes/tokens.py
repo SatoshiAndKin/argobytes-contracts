@@ -42,8 +42,6 @@ def load_token(token_symbol: str):
     
     token_address = to_checksum_address(token_info.address)
 
-    # TODO: special handling for USDC?
-
     _cache_decimals[token_address] = token_info.decimals
     _cache_symbols[token_address] = token_info.symbol
 
