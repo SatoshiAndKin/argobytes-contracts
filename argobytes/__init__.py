@@ -139,6 +139,9 @@ def find_block_at(search_timestamp):
     # we don't want to go too far back in time. so lets make an educated guess at the the first block to bother checking
     first_block_num = latest_block.number - blocks_to_search
 
+    if first_block_num < 0:
+        first_block_num = 0
+
     last_block_num = latest_block.number
 
     num_queries = 0
