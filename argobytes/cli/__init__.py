@@ -19,9 +19,8 @@ import os
 from argobytes import print_start_and_end_balance, print_token_balances
 from argobytes.contracts import get_or_create, get_or_clone
 from brownie import accounts, project, network as brownie_network
-from brownie.network.gas.strategies import GethMempoolStrategy
-from brownie.network import gas_price
 from brownie._cli.console import Console
+from brownie.network import gas_price
 from brownie.network.gas.strategies import GasNowScalingStrategy
 # from brownie.utils import fork
 from click_plugins import with_plugins
@@ -35,7 +34,7 @@ from argobytes.cli_helpers import *
 @click.group()
 @click.option('--debug/--no-debug', default=False)
 @click.password_option('--etherscan-token', envvar = "ETHERSCAN_TOKEN")
-@click.option('--network', default='mainnet-fork')
+@click.option('--network', default='mainnet-fork', show_default=True)
 @click.pass_context
 @click.version_option()
 def cli(ctx, debug, etherscan_token, network):
@@ -63,18 +62,23 @@ def cli(ctx, debug, etherscan_token, network):
     ctx.obj['brownie_project'] = brownie_project
 
 
+gas_choices = click.Choice(['slow', 'standard', 'fast', 'rapid'])
+
 @cli.command()
-@click.option("--gas-position", default=200)
+@click.option("--gas-speed", default="standard", type=gas_choices, show_default=True)
+@click.option("--gas-max-speed", default="rapid", type=gas_choices, show_default=True)
+@click.option("--gas-increment", default=1.125, show_default=True)
+@click.option("--gas-block-duration", default=2, show_default=True)
 @click.pass_context
-def console(ctx, gas_position):
-    """Interactive shell.
-    
-    A gas position of 200 or less usually places a transaction within the mining block.
-    A gas position of 500 usually places a transaction within the 2nd pending block.
-    
-    TODO: i have my own slight modification to this strategy, but need to move it into argobytes
-    """
-    gas_strategy = GethMempoolStrategy(gas_position)
+def console(ctx, gas_speed, gas_max_speed, gas_increment, gas_block_duration):
+    """Interactive shell."""
+    # TODO: write my own strategy
+    gas_strategy = GasNowScalingStrategy(
+        initial_speed=gas_speed,
+        max_speed=gas_max_speed,
+        increment=gas_increment,
+        block_duration=gas_block_duration,
+    )
     gas_price(gas_strategy)
     print(f"Default gas strategy: {gas_strategy}")
 
