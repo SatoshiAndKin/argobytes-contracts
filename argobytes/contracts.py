@@ -98,9 +98,9 @@ def get_or_create(default_account, contract, salt="", constructor_args=None):
     )
 
     if web3.eth.getCode(contract_address).hex() == "0x":
-        tx = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account})
+        deploy_tx = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account})
 
-        deployed_contract_address = tx.return_value
+        deployed_contract_address = deploy_tx.return_value
 
         assert (
             contract_address == deployed_contract_address
@@ -167,7 +167,7 @@ def load_contract(token_name_or_address: str):
         # TODO: find a tokenlist with this on it
         token_name_or_address = "0x8064d9Ae6cDf087b1bcd5BDf3531bD5d8C537a68"
 
-    # TODO: i think we have to import this late because it is created by `connect` or something
+    # TODO: why was this erroring at the top level imports?
     from brownie.network.web3 import _resolve_address
 
     # this raises a ValueError if this is not an address or ENS name
@@ -201,8 +201,8 @@ def mk_contract_address(sender: str, nonce: int) -> str:
     """
     sender_bytes = to_bytes(hexstr=sender)
     raw = rlp.encode([sender_bytes, nonce])
-    h = keccak(raw)
-    address_bytes = h[-20:]
+    hashed = keccak(raw)
+    address_bytes = hashed[-20:]
     return to_checksum_address(address_bytes)
 
 
