@@ -19,7 +19,7 @@ import os
 from argobytes import print_start_and_end_balance, print_token_balances
 from argobytes.contracts import get_or_create, get_or_clone
 from argobytes.tokens import load_token_or_contract
-from brownie import accounts, project, network as brownie_network
+from brownie import accounts, project, network as brownie_network, web3
 from brownie._cli.console import Console
 from brownie.network import gas_price
 from brownie.network.gas.strategies import GasNowScalingStrategy
@@ -102,7 +102,7 @@ def donate():
     <https://gitcoin.co/eth-brownie>
     <https://donate.pypi.org/>
     """
-    who = "tip.satoshiandkin.eth"
+    who = web3.ens.resolve("tip.satoshiandkin.eth")
     raise NotImplementedError
 
 
