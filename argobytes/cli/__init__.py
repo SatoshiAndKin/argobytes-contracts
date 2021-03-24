@@ -18,6 +18,7 @@ import os
 
 from argobytes import print_start_and_end_balance, print_token_balances
 from argobytes.contracts import get_or_create, get_or_clone
+from argobytes.tokens import load_token_or_contract
 from brownie import accounts, project, network as brownie_network
 from brownie._cli.console import Console
 from brownie.network import gas_price
@@ -82,7 +83,13 @@ def console(ctx, gas_speed, gas_max_speed, gas_increment, gas_block_duration):
     gas_price(gas_strategy)
     print(f"Default gas strategy: {gas_strategy}")
 
-    shell = Console(project=ctx.obj['brownie_project'])
+    extra_locals = {
+        'default_gas_strategy': gas_strategy,
+        'gas_price': gas_price,
+        'load_token_or_contract': load_token_or_contract,
+    }
+
+    shell = Console(project=ctx.obj['brownie_project'], extra_locals=extra_locals)
     shell.interact(banner="Argobytes environment is ready.", exitmsg="Goodbye!")
 
 
