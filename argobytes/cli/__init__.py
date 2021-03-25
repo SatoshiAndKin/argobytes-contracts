@@ -31,14 +31,21 @@ from pkg_resources import iter_entry_points
 from argobytes.cli_helpers import *
 
 
+gas_choices = click.Choice(['slow', 'standard', 'fast', 'rapid'])
+
+
 @with_plugins(iter_entry_points('argobytes.plugins'))
 @click.group()
 @click.option('--debug/--no-debug', default=False)
 @click.password_option('--etherscan-token', envvar = "ETHERSCAN_TOKEN")
+@click.option("--gas-speed", default="standard", type=gas_choices, show_default=True)
+@click.option("--gas-max-speed", default="rapid", type=gas_choices, show_default=True)
+@click.option("--gas-increment", default=1.125, show_default=True)
+@click.option("--gas-block-duration", default=2, show_default=True)
 @click.option('--network', default='mainnet-fork', show_default=True)
 @click.pass_context
 @click.version_option()
-def cli(ctx, debug, etherscan_token, network):
+def cli(ctx, debug, etherscan_token, gas_speed, gas_max_speed, gas_increment, gas_block_duration, network):
     ctx.ensure_object(dict)
 
     ctx.obj['DEBUG'] = debug
@@ -56,6 +63,27 @@ def cli(ctx, debug, etherscan_token, network):
         brownie_network.connect(network)
 
         print(f"{brownie_project._name} is the active {network} project.")
+
+        if network in ['mainnet', 'mainnet-fork']:
+            # TODO: write my own strategy
+            gas_strategy = GasNowScalingStrategy(
+                initial_speed=gas_speed,
+                max_speed=gas_max_speed,
+                increment=gas_increment,
+                block_duration=gas_block_duration,
+            )
+            gas_price(gas_strategy)
+            print(f"Default gas strategy: {gas_strategy}")
+        elif network in ['bsc', 'bsc-fork']:
+            gas_strategy = "10 gwei"
+            gas_price(gas_strategy)
+            print(f"Default gas price: {gas_strategy}")
+        elif network in ['matic', 'matic-fork']:
+            gas_strategy = "1 gwei"
+            gas_price(gas_strategy)
+            print(f"Default gas price: {gas_strategy}")
+        else:
+            print("WARNING! No default gas price or gas strategy has been set!")
     else:
         print(f"{brownie_project._name} is the active project. It is not conencted to any networks")
 
@@ -63,33 +91,11 @@ def cli(ctx, debug, etherscan_token, network):
     ctx.obj['brownie_project'] = brownie_project
 
 
-gas_choices = click.Choice(['slow', 'standard', 'fast', 'rapid'])
-
 @cli.command()
-@click.option("--gas-speed", default="standard", type=gas_choices, show_default=True)
-@click.option("--gas-max-speed", default="rapid", type=gas_choices, show_default=True)
-@click.option("--gas-increment", default=1.125, show_default=True)
-@click.option("--gas-block-duration", default=2, show_default=True)
 @click.pass_context
-def console(ctx, gas_speed, gas_max_speed, gas_increment, gas_block_duration):
+def console(ctx):
     """Interactive shell."""
-    # TODO: write my own strategy
-    gas_strategy = GasNowScalingStrategy(
-        initial_speed=gas_speed,
-        max_speed=gas_max_speed,
-        increment=gas_increment,
-        block_duration=gas_block_duration,
-    )
-    gas_price(gas_strategy)
-    print(f"Default gas strategy: {gas_strategy}")
-
-    extra_locals = {
-        'default_gas_strategy': gas_strategy,
-        'gas_price': gas_price,
-        'load_token_or_contract': load_token_or_contract,
-    }
-
-    shell = Console(project=ctx.obj['brownie_project'], extra_locals=extra_locals)
+    shell = Console(project=ctx.obj['brownie_project'])
     shell.interact(banner="Argobytes environment is ready.", exitmsg="Goodbye!")
 
 
