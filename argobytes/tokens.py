@@ -21,6 +21,12 @@ def load_token(token_symbol: str):
     if token_symbol in _cache_token:
         return _cache_token[token_symbol]
 
+    if token_symbol == 'eth':
+        # TODO: think about this more. this isn't a contract
+        _cache_token[token_symbol] = EthContract()
+
+        return _cache_token[token_symbol]
+
     known_lists = tokenlists.available_token_lists()
 
     if not known_lists:
@@ -33,7 +39,7 @@ def load_token(token_symbol: str):
             token_info = tokenlists.get_token_info(token_symbol, tokenlist)
             break
         except ValueError:
-            continue
+            pass
 
     if token_info is None:
         raise ValueError(
@@ -50,6 +56,18 @@ def load_token(token_symbol: str):
     _cache_token[token_symbol] = contract
 
     return contract
+
+
+class EthContract:
+
+    def __init__(self):
+        self.address = brownie.ETH_ADDRESS
+    
+    def decimals(self):
+        return 18
+    
+    def symbol(self):
+        return 'ETH'
 
 
 def load_token_or_contract(token_symbol_or_address: str):
