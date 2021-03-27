@@ -8,6 +8,7 @@ from brownie import accounts, project, network as brownie_network
 from brownie._cli.console import Console
 from brownie.network import gas_price
 from brownie.network.gas.strategies import GasNowScalingStrategy
+
 # from brownie.utils import fork
 from pathlib import Path
 

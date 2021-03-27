@@ -4,8 +4,21 @@ import os
 import threading
 import multiprocessing
 
-from argobytes import Action, approve, CallType, get_balances, get_claimable_3crv, print_token_balances
-from argobytes.contracts import DyDxFlashLender, get_or_clone, get_or_create, lazy_contract, poke_contracts
+from argobytes import (
+    Action,
+    approve,
+    CallType,
+    get_balances,
+    get_claimable_3crv,
+    print_token_balances,
+)
+from argobytes.contracts import (
+    DyDxFlashLender,
+    get_or_clone,
+    get_or_create,
+    lazy_contract,
+    poke_contracts,
+)
 from brownie import accounts, Contract
 from brownie.network.web3 import _resolve_address
 from collections import namedtuple
@@ -15,28 +28,30 @@ from eth_utils import to_int
 from pprint import pprint
 
 
-
-EnterData = namedtuple("EnterData", [
-    "dai",
-    "dai_flash_fee",
-    "usdc",
-    "usdt",
-    "min_3crv_mint_amount",
-    "threecrv",
-    "tip_3crv",
-    "y3crv",
-    "min_cream_liquidity",
-    "sender",
-    "tip_address",
-    "claim_3crv",
-])
+EnterData = namedtuple(
+    "EnterData",
+    [
+        "dai",
+        "dai_flash_fee",
+        "usdc",
+        "usdt",
+        "min_3crv_mint_amount",
+        "threecrv",
+        "tip_3crv",
+        "y3crv",
+        "min_cream_liquidity",
+        "sender",
+        "tip_address",
+        "claim_3crv",
+    ],
+)
 
 
 @click.command()
 def atomic_enter():
     """Use a flash loan to deposit into leveraged cyy3crv position."""
     # TODO: we need an account with private keys
-    account = accounts.at(os.environ['LEVERAGE_ACCOUNT'])
+    account = accounts.at(os.environ["LEVERAGE_ACCOUNT"])
     print(f"Hello, {account}")
 
     min_3crv_to_claim = os.environ.get("MIN_3CRV_TO_CLAIM", 50)
@@ -82,7 +97,9 @@ def atomic_enter():
     # TODO: calculate/prompt for these
     min_3crv_mint_amount = 1
     tip_3crv = 0
-    tip_address = _resolve_address("tip.satoshiandkin.eth")  # TODO: put this on a subdomain and uses an immutable
+    tip_address = _resolve_address(
+        "tip.satoshiandkin.eth"
+    )  # TODO: put this on a subdomain and uses an immutable
     min_cream_liquidity = 1000
 
     enter_data = EnterData(
@@ -100,9 +117,16 @@ def atomic_enter():
         claim_3crv=claimable_3crv > min_3crv_to_claim,
     )
 
-    # TODO: do this properly. use virtualprice and yearn's price calculation 
+    # TODO: do this properly. use virtualprice and yearn's price calculation
     print("warning! summed_balances is not actually priced in USD")
-    summed_balances = enter_data.dai + enter_data.usdc + enter_data.usdt + enter_data.threecrv + enter_data.y3crv + claimable_3crv
+    summed_balances = (
+        enter_data.dai
+        + enter_data.usdc
+        + enter_data.usdt
+        + enter_data.threecrv
+        + enter_data.y3crv
+        + claimable_3crv
+    )
 
     assert summed_balances > 100, "no coins"
 
@@ -113,7 +137,9 @@ def atomic_enter():
 
     assert flash_loan_amount > 0, "no flash loan calculated"
 
-    enter_data = enter_data._replace(dai_flash_fee=lender.flashFee(dai, flash_loan_amount))
+    enter_data = enter_data._replace(
+        dai_flash_fee=lender.flashFee(dai, flash_loan_amount)
+    )
 
     pprint(enter_data)
 
@@ -130,11 +156,7 @@ def atomic_enter():
         dai,
         flash_loan_amount,
         Action(
-            enter_cyy3crv_action,
-            CallType.DELEGATE,
-            False,
-            "enter",
-            enter_data,
+            enter_cyy3crv_action, CallType.DELEGATE, False, "enter", enter_data,
         ).tuple,
     )
 

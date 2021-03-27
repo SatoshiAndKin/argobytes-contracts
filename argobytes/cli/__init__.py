@@ -20,6 +20,7 @@ from brownie import accounts, project, network as brownie_network, web3
 from brownie._cli.console import Console
 from brownie.network import gas_price
 from brownie.network.gas.strategies import GasNowScalingStrategy
+
 # from brownie.utils import fork
 from click_plugins import with_plugins
 from pathlib import Path
@@ -31,29 +32,38 @@ from argobytes.contracts import get_or_create, get_or_clone
 from argobytes.tokens import load_token_or_contract
 
 
-gas_choices = click.Choice(['slow', 'standard', 'fast', 'rapid'])
+gas_choices = click.Choice(["slow", "standard", "fast", "rapid"])
 
 
-@with_plugins(iter_entry_points('argobytes.plugins'))
+@with_plugins(iter_entry_points("argobytes.plugins"))
 @click.group()
-@click.option('--debug/--no-debug', default=False)
-@click.password_option('--etherscan-token', envvar = "ETHERSCAN_TOKEN")
+@click.option("--debug/--no-debug", default=False)
+@click.password_option("--etherscan-token", envvar="ETHERSCAN_TOKEN")
 @click.option("--gas-speed", default="standard", type=gas_choices, show_default=True)
 @click.option("--gas-max-speed", default="rapid", type=gas_choices, show_default=True)
 @click.option("--gas-increment", default=1.125, show_default=True)
 @click.option("--gas-block-duration", default=2, show_default=True)
-@click.option('--network', default='mainnet-fork', show_default=True)
+@click.option("--network", default="mainnet-fork", show_default=True)
 @click.pass_context
 @click.version_option()
-def cli(ctx, debug, etherscan_token, gas_speed, gas_max_speed, gas_increment, gas_block_duration, network):
+def cli(
+    ctx,
+    debug,
+    etherscan_token,
+    gas_speed,
+    gas_max_speed,
+    gas_increment,
+    gas_block_duration,
+    network,
+):
     ctx.ensure_object(dict)
 
-    ctx.obj['DEBUG'] = debug
+    ctx.obj["DEBUG"] = debug
 
     # TODO: configure logging based on debug flag
 
     # put this into the environment so that brownie sees it
-    os.environ['ETHERSCAN_TOKEN'] = etherscan_token
+    os.environ["ETHERSCAN_TOKEN"] = etherscan_token
 
     # setup the project and network the same way brownie's run helper does
     brownie_project = project.load(get_project_root())
@@ -64,7 +74,7 @@ def cli(ctx, debug, etherscan_token, gas_speed, gas_max_speed, gas_increment, ga
 
         print(f"{brownie_project._name} is the active {network} project.")
 
-        if network in ['mainnet', 'mainnet-fork']:
+        if network in ["mainnet", "mainnet-fork"]:
             # TODO: write my own strategy
             gas_strategy = GasNowScalingStrategy(
                 initial_speed=gas_speed,
@@ -74,28 +84,30 @@ def cli(ctx, debug, etherscan_token, gas_speed, gas_max_speed, gas_increment, ga
             )
             gas_price(gas_strategy)
             print(f"Default gas strategy: {gas_strategy}")
-        elif network in ['bsc', 'bsc-fork']:
+        elif network in ["bsc", "bsc-fork"]:
             gas_strategy = "10 gwei"
             gas_price(gas_strategy)
             print(f"Default gas price: {gas_strategy}")
-        elif network in ['matic', 'matic-fork']:
+        elif network in ["matic", "matic-fork"]:
             gas_strategy = "1 gwei"
             gas_price(gas_strategy)
             print(f"Default gas price: {gas_strategy}")
         else:
             print("WARNING! No default gas price or gas strategy has been set!")
     else:
-        print(f"{brownie_project._name} is the active project. It is not conencted to any networks")
+        print(
+            f"{brownie_project._name} is the active project. It is not conencted to any networks"
+        )
 
     # pass the project on to the other functions
-    ctx.obj['brownie_project'] = brownie_project
+    ctx.obj["brownie_project"] = brownie_project
 
 
 @cli.command()
 @click.pass_context
 def console(ctx):
     """Interactive shell."""
-    shell = Console(project=ctx.obj['brownie_project'])
+    shell = Console(project=ctx.obj["brownie_project"])
     shell.interact(banner="Argobytes environment is ready.", exitmsg="Goodbye!")
 
 
@@ -113,4 +125,4 @@ def donate():
 
 
 def main():
-    cli(obj={}, auto_envvar_prefix='ARGOBYTES')
+    cli(obj={}, auto_envvar_prefix="ARGOBYTES")

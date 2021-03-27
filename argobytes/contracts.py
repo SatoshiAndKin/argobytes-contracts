@@ -12,7 +12,9 @@ from eth_utils import to_bytes, keccak, to_checksum_address
 from argobytes import to_hex32
 
 
-def get_deterministic_contract(default_account, contract, salt="", constructor_args=None):
+def get_deterministic_contract(
+    default_account, contract, salt="", constructor_args=None
+):
     """Use eip-2470 to create a contract with deterministic addresses."""
     if constructor_args is None:
         constructor_args = []
@@ -49,7 +51,9 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
     my_proxys_proxies = []
 
     for salt in salts:
-        (proxy_exists, proxy_address) = argobytes_factory.cloneExists(deployed_contract, salt, owner)
+        (proxy_exists, proxy_address) = argobytes_factory.cloneExists(
+            deployed_contract, salt, owner
+        )
 
         my_proxys_proxies.append(proxy_address)
 
@@ -61,15 +65,11 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
         # deploy more proxies that are all owned by the first
         if len(needed_salts) == 1:
             sybil_tx = argobytes_factory.createClone(
-                deployed_contract,
-                needed_salts[0],
-                owner,
+                deployed_contract, needed_salts[0], owner,
             )
         else:
             sybil_tx = argobytes_factory.createClones(
-                deployed_contract,
-                needed_salts,
-                owner,
+                deployed_contract, needed_salts, owner,
             )
 
         sybil_tx.info()
@@ -98,7 +98,9 @@ def get_or_create(default_account, contract, salt="", constructor_args=None):
     )
 
     if web3.eth.getCode(contract_address).hex() == "0x":
-        deploy_tx = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account})
+        deploy_tx = SingletonFactory.deploy(
+            contract_initcode, salt, {"from": default_account}
+        )
 
         deployed_contract_address = deploy_tx.return_value
 
@@ -114,30 +116,15 @@ def get_or_create(default_account, contract, salt="", constructor_args=None):
 
 
 def get_or_create_factory(default_account, salt):
-    return get_or_create(
-        default_account,
-        ArgobytesFactory,
-        salt,
-        None
-    )
+    return get_or_create(default_account, ArgobytesFactory, salt, None)
 
 
 def get_or_create_proxy(default_account, salt):
-    return get_or_create(
-        default_account,
-        ArgobytesProxy,
-        salt,
-        None
-    )
+    return get_or_create(default_account, ArgobytesProxy, salt, None)
 
 
 def get_or_create_flash_borrower(default_account, salt):
-    return get_or_create(
-        default_account,
-        ArgobytesFlashBorrower,
-        salt,
-        None
-    )
+    return get_or_create(default_account, ArgobytesFlashBorrower, salt, None)
 
 
 def lazy_contract(address: str):
@@ -176,7 +163,10 @@ def load_contract(token_name_or_address: str):
     contract = Contract(address)
 
     # TODO: we shouldn't need from_explorer, but i'm seeing weird things were DAI loads as IWETH9
-    if contract._name == "IWETH9" and address != "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2":
+    if (
+        contract._name == "IWETH9"
+        and address != "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+    ):
         warn(f"Reloading contract supposedly named IWETH9: {address}")
         contract = Contract.from_explorer(address)
 

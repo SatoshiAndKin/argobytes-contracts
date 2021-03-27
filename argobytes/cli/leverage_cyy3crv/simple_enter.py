@@ -3,8 +3,24 @@ import os
 import threading
 import multiprocessing
 
-from argobytes import Action, approve, CallType, get_balances, get_claimable_3crv, print_token_balances
-from argobytes.contracts import ArgobytesFactory, DyDxFlashLender, get_or_clone, get_or_create, lazy_contract, poke_contracts, ArgobytesFlashBorrower, EnterCYY3CRVAction
+from argobytes import (
+    Action,
+    approve,
+    CallType,
+    get_balances,
+    get_claimable_3crv,
+    print_token_balances,
+)
+from argobytes.contracts import (
+    ArgobytesFactory,
+    DyDxFlashLender,
+    get_or_clone,
+    get_or_create,
+    lazy_contract,
+    poke_contracts,
+    ArgobytesFlashBorrower,
+    EnterCYY3CRVAction,
+)
 from brownie import accounts, Contract
 from brownie.network.web3 import _resolve_address
 from collections import namedtuple
@@ -18,7 +34,7 @@ from pprint import pprint
 def simple_enter():
     """Make a bunch of transactions to deposit into leveraged cyy3crv position."""
     # TODO: we need an account with private keys
-    account = accounts.at(os.environ['LEVERAGE_ACCOUNT'])
+    account = accounts.at(os.environ["LEVERAGE_ACCOUNT"])
     print(f"Hello, {account}")
 
     min_3crv_to_claim = os.environ.get("MIN_3CRV_TO_CLAIM", 50)
@@ -49,10 +65,12 @@ def simple_enter():
     # TODO: calculate/prompt for these
     min_3crv_mint_amount = 1
     tip_3crv = 0
-    tip_address = _resolve_address("tip.satoshiandkin.eth")  # TODO: put this on a subdomain and uses an immutable
+    tip_address = _resolve_address(
+        "tip.satoshiandkin.eth"
+    )  # TODO: put this on a subdomain and uses an immutable
     min_cream_liquidity = 1000
 
-    # TODO: do this properly. use virtualprice and yearn's price calculation 
+    # TODO: do this properly. use virtualprice and yearn's price calculation
     # print("warning! summed_balances is not actually priced in USD")
     # summed_balances = enter_data.dai + enter_data.usdc + enter_data.usdt + enter_data.threecrv + enter_data.y3crv + claimable_3crv
     # assert summed_balances > 100, "no coins"
@@ -124,7 +142,11 @@ def simple_enter():
     print_token_balances(balances_before_borrow, f"{account} balances before borrow:")
 
     # TODO: we could use `borrow_amount` here
-    (cream_error, cream_liquidity, cream_shortfall) = cream.getHypotheticalAccountLiquidity(account, cydai, 0, 0);
+    (
+        cream_error,
+        cream_liquidity,
+        cream_shortfall,
+    ) = cream.getHypotheticalAccountLiquidity(account, cydai, 0, 0)
 
     print(f"cream_error: {cream_error}")
     print(f"cream_liquidity: {cream_liquidity}")

@@ -2,6 +2,7 @@
 Python scripts to make working with Argobytes smart contracts easy.
 """
 import contextlib
+
 # import functools
 import multiprocessing
 import os
@@ -22,7 +23,6 @@ from pprint import pprint
 # TODO: circular imports
 # from .contracts import get_or_clone, get_or_create, load_contract
 # from .tokens import transfer_token, token_decimals
-
 
 
 ActionTuple = namedtuple("Action", ["target", "call_type", "forward_value", "data",])
@@ -191,7 +191,9 @@ def print_start_and_end_balance(account):
     ending_balance = account.balance()
 
     # TODO: print gas_used
-    print("\nspent balance of", account, ":", (starting_balance - ending_balance) / 1e18)
+    print(
+        "\nspent balance of", account, ":", (starting_balance - ending_balance) / 1e18
+    )
     print()
 
 

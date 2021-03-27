@@ -4,8 +4,24 @@ import os
 import threading
 import multiprocessing
 
-from argobytes import Action, approve, CallType, get_balances, get_claimable_3crv, print_token_balances
-from argobytes.contracts import ArgobytesFactory, ArgobytesFlashBorrower, DyDxFlashLender, ExitCYY3CRVAction, get_or_clone, get_or_create, lazy_contract, poke_contracts
+from argobytes import (
+    Action,
+    approve,
+    CallType,
+    get_balances,
+    get_claimable_3crv,
+    print_token_balances,
+)
+from argobytes.contracts import (
+    ArgobytesFactory,
+    ArgobytesFlashBorrower,
+    DyDxFlashLender,
+    ExitCYY3CRVAction,
+    get_or_clone,
+    get_or_create,
+    lazy_contract,
+    poke_contracts,
+)
 from brownie import accounts, Contract, ZERO_ADDRESS
 from brownie.network.web3 import _resolve_address
 from collections import namedtuple
@@ -14,14 +30,17 @@ from dotenv import load_dotenv, find_dotenv
 from pprint import pprint
 
 
-ExitData = namedtuple("ExitData", [
-    "min_remove_liquidity_dai",
-    "tip_dai",
-    "dai_flash_fee",
-    "tip_address",
-    "exit_from",
-    "exit_to",
-])
+ExitData = namedtuple(
+    "ExitData",
+    [
+        "min_remove_liquidity_dai",
+        "tip_dai",
+        "dai_flash_fee",
+        "tip_address",
+        "exit_from",
+        "exit_to",
+    ],
+)
 
 
 @click.command()
@@ -30,10 +49,10 @@ def atomic_exit():
     load_dotenv(find_dotenv())
 
     # TODO: we need an account with private keys
-    account = accounts.at(os.environ['LEVERAGE_ACCOUNT'])
+    account = accounts.at(os.environ["LEVERAGE_ACCOUNT"])
 
     # TODO: prompt for slippage amount
-    slippage = .1
+    slippage = 0.1
 
     # TODO: use salts for the contracts once we figure out a way to store them. maybe 3box?
 
@@ -71,7 +90,9 @@ def atomic_exit():
     # TODO: calculate/prompt for these
     min_remove_liquidity_dai = 1
     tip_dai = 0
-    tip_address = _resolve_address("tip.satoshiandkin.eth")  # TODO: put this on a subdomain and uses an immutable
+    tip_address = _resolve_address(
+        "tip.satoshiandkin.eth"
+    )  # TODO: put this on a subdomain and uses an immutable
     # TODO: this should be False in the default case
     exit_from_account = False
     # min_cream_liquidity = 1
@@ -83,7 +104,9 @@ def atomic_exit():
         balances = get_balances(exit_from, tokens)
         print(f"{exit_from} balances")
 
-        raise NotImplementedError("we need an approve so CY_DAI.repayBorrowBehalf is allowed")
+        raise NotImplementedError(
+            "we need an approve so CY_DAI.repayBorrowBehalf is allowed"
+        )
     else:
         exit_from = ZERO_ADDRESS
         exit_to = account
@@ -94,11 +117,13 @@ def atomic_exit():
     pprint(balances)
 
     # TODO: ii think this might not be right
-    flash_loan_amount = int(exit_cyy3crv_action.calculateExit.call(exit_from) * (1 + slippage))
+    flash_loan_amount = int(
+        exit_cyy3crv_action.calculateExit.call(exit_from) * (1 + slippage)
+    )
 
     print(f"flash_loan_amount: {flash_loan_amount}")
 
-    dai_flash_fee=lender.flashFee(dai, flash_loan_amount)
+    dai_flash_fee = lender.flashFee(dai, flash_loan_amount)
 
     exit_data = ExitData(
         min_remove_liquidity_dai=min_remove_liquidity_dai,
@@ -122,11 +147,7 @@ def atomic_exit():
         dai,
         flash_loan_amount,
         Action(
-            exit_cyy3crv_action,
-            CallType.DELEGATE,
-            False,
-            "exit",
-            *exit_data,
+            exit_cyy3crv_action, CallType.DELEGATE, False, "exit", *exit_data,
         ).tuple,
     )
 
