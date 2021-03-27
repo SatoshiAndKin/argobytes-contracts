@@ -116,7 +116,7 @@ def get_or_create(default_account, contract, salt="", constructor_args=None):
 def get_or_create_factory(default_account, salt):
     return get_or_create(
         default_account,
-        project.ArgobytesContractsProject.ArgobytesFactory,
+        ArgobytesFactory,
         salt,
         None
     )
@@ -125,7 +125,7 @@ def get_or_create_factory(default_account, salt):
 def get_or_create_proxy(default_account, salt):
     return get_or_create(
         default_account,
-        project.ArgobytesContractsProject.ArgobytesProxy,
+        ArgobytesProxy,
         salt,
         None
     )
@@ -134,7 +134,7 @@ def get_or_create_proxy(default_account, salt):
 def get_or_create_flash_borrower(default_account, salt):
     return get_or_create(
         default_account,
-        project.ArgobytesContractsProject.ArgobytesFlashBorrower,
+        ArgobytesFlashBorrower,
         salt,
         None
     )

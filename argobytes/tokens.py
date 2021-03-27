@@ -6,6 +6,7 @@ from lazy_load import lazy
 from eth_utils import to_checksum_address
 from json import JSONDecodeError
 import brownie
+
 # import functools
 import itertools
 import tokenlists
@@ -21,7 +22,7 @@ def load_token(token_symbol: str):
     if token_symbol in _cache_token:
         return _cache_token[token_symbol]
 
-    if token_symbol == 'eth':
+    if token_symbol == "eth":
         # TODO: think about this more. this isn't a contract
         _cache_token[token_symbol] = EthContract()
 
@@ -45,7 +46,7 @@ def load_token(token_symbol: str):
         raise ValueError(
             f"Symbol '{token_symbol}' is not in any of our tokenlists: {known_lists}"
         )
-    
+
     token_address = to_checksum_address(token_info.address)
 
     _cache_decimals[token_address] = token_info.decimals
@@ -59,15 +60,18 @@ def load_token(token_symbol: str):
 
 
 class EthContract:
-
     def __init__(self):
+        """Handle ETH like an ERC20."""
         self.address = brownie.ETH_ADDRESS
-    
+
     def decimals(self):
         return 18
-    
+
     def symbol(self):
-        return 'ETH'
+        return "ETH"
+
+    def balanceOf(self, account):
+        return brownie.web3.eth.getBalance(str(account))
 
 
 def load_token_or_contract(token_symbol_or_address: str):
@@ -92,9 +96,9 @@ def token_decimals(token_contract):
 
     if token_contract in [brownie.ETH_ADDRESS, brownie.ZERO_ADDRESS]:
         decimals = 18
-    elif hasattr(token_contract, 'decimals'):
+    elif hasattr(token_contract, "decimals"):
         decimals = token_contract.decimals()
-    elif hasattr(token_contract, 'DECIMALS'):
+    elif hasattr(token_contract, "DECIMALS"):
         decimals = token_contract.DECIMALS()
     else:
         raise ValueError
@@ -112,9 +116,9 @@ def token_symbol(token_contract):
 
     if token_contract in [brownie.ETH_ADDRESS, brownie.ZERO_ADDRESS]:
         symbol = "ETH"
-    elif hasattr(token_contract, 'symbol'):
+    elif hasattr(token_contract, "symbol"):
         symbol = token_contract.symbol()
-    elif hasattr(token_contract, 'SYMBOL'):
+    elif hasattr(token_contract, "SYMBOL"):
         symbol = token_contract.SYMBOL()
     else:
         raise ValueError
