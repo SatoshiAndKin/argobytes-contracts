@@ -16,9 +16,6 @@ import click
 import sys
 import os
 
-from argobytes import print_start_and_end_balance, print_token_balances
-from argobytes.contracts import get_or_create, get_or_clone
-from argobytes.tokens import load_token_or_contract
 from brownie import accounts, project, network as brownie_network, web3
 from brownie._cli.console import Console
 from brownie.network import gas_price
@@ -28,7 +25,10 @@ from click_plugins import with_plugins
 from pathlib import Path
 from pkg_resources import iter_entry_points
 
+from argobytes import print_start_and_end_balance, print_token_balances
 from argobytes.cli_helpers import *
+from argobytes.contracts import get_or_create, get_or_clone
+from argobytes.tokens import load_token_or_contract
 
 
 gas_choices = click.Choice(['slow', 'standard', 'fast', 'rapid'])
