@@ -1,4 +1,5 @@
 import click
+import logging
 import sys
 import os
 
@@ -13,19 +14,7 @@ from brownie.network.gas.strategies import GasNowScalingStrategy
 from pathlib import Path
 
 
-# TODO: refactor this to use click helpers
-def prompt_for_account(default="satoshiandkin.eth"):
-    """Prompt the user for an eth account."""
-    # TODO: use click helper for this?
-    # TODO: create it if it doesn't exist?
-    # account = accounts.load('argobytes-extra')
-
-    # TODO: just hard code to my hardware wallet for now
-    account = accounts.at(default, force=True)
-
-    print("hello,", account)
-
-    return account
+logger = logging.getLogger("argobytes")
 
 
 # TODO: refactor this to use click helpers
@@ -34,33 +23,20 @@ def prompt_for_confirmation(account):
     print("*" * 80)
 
     if account is None:
-        print(f"\nWARNING! Continuing past this will spend ETH!\n")
+        log.warn(f"\nWARNING! Continuing past this will spend ETH!\n")
     else:
-        print(f"\nWARNING! Continuing past this will spend ETH from {account}!\n")
+        log.warn(f"\nWARNING! Continuing past this will spend ETH from {account}!\n")
 
     # TODO: print the active network/chain id
-    input("\nPress [Enter] to continue.\n")
+    click.confirm("\nDo you want to continue?\n", abort=True)
 
 
-# TODO: name this better
-def with_dry_run(do_it):
-    account = prompt_for_account()
-
+def with_dry_run(do_it, account):
     starting_balance = account.balance()
-
-    # TODO: write my own strategy based on GethMempoolStrategy
-    # TODO: have rapid and fast? some scripts might even want slow
-    # https://eth-brownie.readthedocs.io/en/stable/core-gas.html#building-your-own-gas-strategy
-    gas_strategy = GasNowScalingStrategy("fast", increment=1.2)
-
-    print("Using 0 gwei gas price in dev!")
-    gas_strategy = 0
 
     """
     # TODO: fork should check if we are already connected to a forked network and just use snapshots
     with fork(unlock=str(account)) as fork_settings:
-        gas_price(gas_strategy)
-
         with print_start_and_end_balance(account):
             do_it(account)
 
@@ -70,18 +46,8 @@ def with_dry_run(do_it):
     time.sleep(6)
     """
 
-    """
-    for some scripts, it will be fine to replay exactly the same txs with something like this:
-
-        # for tx in checked_transactions:
-        #     debug_shell(locals())
-
-    for other scripts, i can see wanting to run `do_it` again. running do_it seems the safest since state changes fast
-    i also don't have complete faith in our forked testnet being 100% accurate
-    """
+    # TODO: also print start and end token balances
     with print_start_and_end_balance(account):
-        gas_price(gas_strategy)
-
         do_it(account)
 
     print("transactions complete!")

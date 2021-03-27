@@ -12,22 +12,24 @@ Our scripts will usually want two addresses:
 
 This entrypoint will handle setting these accounts up and then starting brownie.
 """
-import click
+import logging
 import sys
 import os
 
+import click
+import click_log
 from brownie import accounts, project, network as brownie_network, web3
 from brownie._cli.console import Console
 from brownie.network import gas_price
 from brownie.network.gas.strategies import GasNowScalingStrategy
-
-# from brownie.utils import fork
 from click_plugins import with_plugins
 from pathlib import Path
 from pkg_resources import iter_entry_points
 
+# from brownie.utils import fork
+
 from argobytes import print_start_and_end_balance, print_token_balances
-from argobytes.cli_helpers import *
+from argobytes.cli_helpers import get_project_root, logger
 from argobytes.contracts import get_or_create, get_or_clone
 from argobytes.tokens import load_token_or_contract
 
@@ -37,7 +39,7 @@ gas_choices = click.Choice(["slow", "standard", "fast", "rapid"])
 
 @with_plugins(iter_entry_points("argobytes.plugins"))
 @click.group()
-@click.option("--debug/--no-debug", default=False)
+@click_log.simple_verbosity_option(logger)
 @click.password_option("--etherscan-token", envvar="ETHERSCAN_TOKEN")
 @click.option("--gas-speed", default="standard", type=gas_choices, show_default=True)
 @click.option("--gas-max-speed", default="rapid", type=gas_choices, show_default=True)
@@ -48,7 +50,6 @@ gas_choices = click.Choice(["slow", "standard", "fast", "rapid"])
 @click.version_option()
 def cli(
     ctx,
-    debug,
     etherscan_token,
     gas_speed,
     gas_max_speed,
@@ -57,10 +58,6 @@ def cli(
     network,
 ):
     ctx.ensure_object(dict)
-
-    ctx.obj["DEBUG"] = debug
-
-    # TODO: configure logging based on debug flag
 
     # put this into the environment so that brownie sees it
     os.environ["ETHERSCAN_TOKEN"] = etherscan_token
@@ -72,7 +69,7 @@ def cli(
     if network != "none":
         brownie_network.connect(network)
 
-        print(f"{brownie_project._name} is the active {network} project.")
+        logger.info(f"{brownie_project._name} is the active {network} project.")
 
         if network in ["mainnet", "mainnet-fork"]:
             # TODO: write my own strategy
@@ -83,19 +80,19 @@ def cli(
                 block_duration=gas_block_duration,
             )
             gas_price(gas_strategy)
-            print(f"Default gas strategy: {gas_strategy}")
+            logger.info(f"Default gas strategy: {gas_strategy}")
         elif network in ["bsc", "bsc-fork"]:
             gas_strategy = "10 gwei"
             gas_price(gas_strategy)
-            print(f"Default gas price: {gas_strategy}")
+            logger.info(f"Default gas price: {gas_strategy}")
         elif network in ["matic", "matic-fork"]:
             gas_strategy = "1 gwei"
             gas_price(gas_strategy)
-            print(f"Default gas price: {gas_strategy}")
+            logger.info(f"Default gas price: {gas_strategy}")
         else:
-            print("WARNING! No default gas price or gas strategy has been set!")
+            logger.warning("No default gas price or gas strategy has been set!")
     else:
-        print(
+        logger.warning(
             f"{brownie_project._name} is the active project. It is not conencted to any networks"
         )
 
@@ -125,4 +122,6 @@ def donate():
 
 
 def main():
+    click_log.basic_config(logger)
+
     cli(obj={}, auto_envvar_prefix="ARGOBYTES")
