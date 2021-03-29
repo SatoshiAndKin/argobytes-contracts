@@ -23,9 +23,9 @@ def prompt_for_confirmation(account):
     print("*" * 80)
 
     if account is None:
-        log.warn(f"\nWARNING! Continuing past this will spend ETH!\n")
+        logger.warn(f"\nWARNING! Continuing past this will spend ETH!\n")
     else:
-        log.warn(f"\nWARNING! Continuing past this will spend ETH from {account}!\n")
+        logger.warn(f"\nWARNING! Continuing past this will spend ETH from {account}!\n")
 
     # TODO: print the active network/chain id
     click.confirm("\nDo you want to continue?\n", abort=True)

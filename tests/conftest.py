@@ -10,16 +10,19 @@ from argobytes.tokens import load_token_or_contract
 
 
 @pytest.fixture(autouse=True, scope="function")
-def isolation(fn_isolation):
+def isolation(fn_isolation, monkeypatch):
     # test isolation, always use!
     # be careful though! you can still leak state in other fixtures use scope="module" or scope="session"
-    pass
+
+    # standalone mode means exceptions bubble up
+    monkeypatch.setenv("ARGOBYTES_CLICK_STANDALONE", "0")
 
 
 @pytest.fixture(autouse=True, scope="session")
 def session_defaults():
     # strict bytes to protect us from ourselves
     web3.enable_strict_bytes_type_checking()
+
 
 
 @pytest.fixture(scope="function")

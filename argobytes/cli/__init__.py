@@ -33,8 +33,12 @@ from argobytes.cli_helpers import get_project_root, logger
 from argobytes.contracts import get_or_create, get_or_clone
 from argobytes.tokens import load_token_or_contract
 
+from .tx_info import tx_info
+
 
 gas_choices = click.Choice(["slow", "standard", "fast", "rapid"])
+
+# TODO: pre-emptive click flag to set network to "none"
 
 
 @with_plugins(iter_entry_points("argobytes.plugins"))
@@ -57,6 +61,7 @@ def cli(
     gas_block_duration,
     network,
 ):
+    """Ethereum helpers."""
     ctx.ensure_object(dict)
 
     # put this into the environment so that brownie sees it
@@ -66,7 +71,11 @@ def cli(
     brownie_project = project.load(get_project_root())
     brownie_project.load_config()
 
-    if network != "none":
+    if network == "none":
+        logger.warning(
+            f"{brownie_project._name} is the active project. It is not conencted to any networks"
+        )
+    else:
         brownie_network.connect(network)
 
         logger.info(f"{brownie_project._name} is the active {network} project.")
@@ -91,10 +100,6 @@ def cli(
             logger.info(f"Default gas price: {gas_strategy}")
         else:
             logger.warning("No default gas price or gas strategy has been set!")
-    else:
-        logger.warning(
-            f"{brownie_project._name} is the active project. It is not conencted to any networks"
-        )
 
     # pass the project on to the other functions
     ctx.obj["brownie_project"] = brownie_project
@@ -121,7 +126,15 @@ def donate():
     raise NotImplementedError
 
 
+cli.add_command(tx_info)
+
+
 def main():
+    """Run the click app."""
     click_log.basic_config(logger)
 
-    cli(obj={}, auto_envvar_prefix="ARGOBYTES")
+    # https://click.palletsprojects.com/en/7.x/exceptions/#what-if-i-don-t-want-that
+    # TODO: do we need this for easier testing? or is invoke catch_exceptions=False enough?
+    standalone_mode = os.get("ARGOBYTES_CLICK_STANDALONE", "1") == "1"
+
+    cli(obj={}, auto_envvar_prefix="ARGOBYTES", standalone_mode=False)

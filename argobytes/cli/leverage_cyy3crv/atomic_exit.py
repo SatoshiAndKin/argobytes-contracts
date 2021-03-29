@@ -46,10 +46,9 @@ ExitData = namedtuple(
 @click.command()
 def atomic_exit():
     """Use a flash loan to withdraw from a leveraged cyy3crv position."""
-    load_dotenv(find_dotenv())
-
     # TODO: we need an account with private keys
-    account = accounts.at(os.environ["LEVERAGE_ACCOUNT"])
+    account = accounts.at(os.environ["LEVERAGE_ACCOUNT"], force=True)
+    print(f"Hello, {account}")
 
     # TODO: prompt for slippage amount
     slippage = 0.1
@@ -104,6 +103,8 @@ def atomic_exit():
         balances = get_balances(exit_from, tokens)
         print(f"{exit_from} balances")
 
+        calculated_exit = exit_cyy3crv_action.calculateExit.call(account)
+
         raise NotImplementedError(
             "we need an approve so CY_DAI.repayBorrowBehalf is allowed"
         )
@@ -114,12 +115,12 @@ def atomic_exit():
         balances = get_balances(argobytes_clone, tokens)
         print(f"{argobytes_clone} balances")
 
+        calculated_exit = exit_cyy3crv_action.calculateExit.call(argobytes_clone)
+
     pprint(balances)
 
-    # TODO: ii think this might not be right
-    flash_loan_amount = int(
-        exit_cyy3crv_action.calculateExit.call(exit_from) * (1 + slippage)
-    )
+    # TODO: i think this might not be right
+    flash_loan_amount = int(calculated_exit * (1 + slippage))
 
     print(f"flash_loan_amount: {flash_loan_amount}")
 

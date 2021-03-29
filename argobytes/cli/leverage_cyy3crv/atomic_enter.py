@@ -1,3 +1,4 @@
+from decimal import Decimal
 import brownie
 import click
 import os
@@ -13,7 +14,10 @@ from argobytes import (
     print_token_balances,
 )
 from argobytes.contracts import (
+    ArgobytesFactory,
+    ArgobytesFlashBorrower,
     DyDxFlashLender,
+    EnterCYY3CRVAction,
     get_or_clone,
     get_or_create,
     lazy_contract,
@@ -51,9 +55,12 @@ EnterData = namedtuple(
 def atomic_enter():
     """Use a flash loan to deposit into leveraged cyy3crv position."""
     # TODO: we need an account with private keys
-    account = accounts.at(os.environ["LEVERAGE_ACCOUNT"])
+    # TODO: only force if development network?
+    # TODO: use click type for this
+    account = accounts.at(os.environ["LEVERAGE_ACCOUNT"], force=True)
     print(f"Hello, {account}")
 
+    # TODO: get this from click
     min_3crv_to_claim = os.environ.get("MIN_3CRV_TO_CLAIM", 50)
 
     # deploy our contracts if necessary
@@ -128,10 +135,13 @@ def atomic_enter():
         + claimable_3crv
     )
 
+    print(f"summed_balances: {summed_balances}")
+
     assert summed_balances > 100, "no coins"
 
     # TODO: figure out the actual max leverage, then prompt the user for it (though i dont see much reason not to go the full amount here)
-    flash_loan_amount = int(summed_balances * 7.4)
+    # TODO: if they have already done a flash loan once, we might be able to do a larger amount
+    flash_loan_amount = int(summed_balances * Decimal(7.4))
 
     print(f"flash_loan_amount: {flash_loan_amount}")
 
@@ -141,8 +151,6 @@ def atomic_enter():
         dai_flash_fee=lender.flashFee(dai, flash_loan_amount)
     )
 
-    pprint(enter_data)
-
     extra_balances = {}
 
     if enter_data.claim_3crv:
@@ -151,6 +159,7 @@ def atomic_enter():
     approve(account, balances, extra_balances, argobytes_clone)
 
     # flashloan through the clone
+    pprint(enter_data)
     enter_tx = argobytes_clone.flashBorrow(
         lender,
         dai,
@@ -160,6 +169,8 @@ def atomic_enter():
         ).tuple,
     )
 
+    # TODO: these queries crash ganache-cli
+    """
     print(f"enter success! {enter_tx.return_value}")
 
     enter_tx.info()
@@ -172,6 +183,7 @@ def atomic_enter():
     print(f"return value: {enter_return}")
 
     assert enter_return > 0, "no cyy3ccrv returned!"
+    """
 
     print(f"clone ({argobytes_clone.address}) balances")
     balances = get_balances(argobytes_clone, tokens)

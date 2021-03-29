@@ -21,15 +21,18 @@ def test_simple_scripts(dai_erc20, monkeypatch, unlocked_binance, usdc_erc20):
     # TODO: usdt_erc20
     # transfer_token(unlocked_binance, account, usdt_erc20, 10000)
 
+    print("running simple_enter...")
     result = runner.invoke(simple_enter)
+    print(result.stdout)
     assert result.exit_code == 0
 
     # TODO: make sure we can't get liquidated
 
     # TODO: make some trades so that 3pool increases in value
 
+    print("running simple_exit...")
     result = runner.invoke(simple_exit)
+    print(result.stdout)
     assert result.exit_code == 0
 
     # TODO: make sure we made a profit
-    raise NotImplementedError("wip")

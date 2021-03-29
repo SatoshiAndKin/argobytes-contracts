@@ -107,7 +107,7 @@ contract ArgobytesFactory {
 
             // start of the contract (+20 bytes)
             // 10 of these bytes are for setup. the contract bytecode is 10 bytes shorter
-            // the "0x41" below is the actual contract length
+            // the "41" in the hex below is the actual contract length
             mstore(
                 code,
                 0x3d604180600a3d3981f3363d3d373d3d3d363d73000000000000000000000000
@@ -173,28 +173,8 @@ contract ArgobytesFactory {
     }
 
     /**
-     * @dev deploy a contract with CREATE2 and then call a function on it
-     * @dev TODO: do we actually need this? is the singletonfactory sufficient, or do we need extradata?
-     */
-    /*
-    function createContract(
-        bytes32 salt,
-        bytes memory bytecode,
-        bytes memory extradata
-    ) public payable returns (address deployed) {
-        deployed = Create2.deploy(msg.value, salt, bytecode);
-
-        emit NewContract(msg.sender, salt, deployed);
-
-        if (extradata.length > 0) {
-            (bool success, ) = deployed.call(extradata);
-            require(success, "ArgobytesFactory !extradata");
-        }
-    }
-    */
-
-    /**
      * @dev deploy a contract if it doesn't already exist
+     * @dev if you want to simply deploy a contract, use the SingletonFactory (eip-2470)
      */
     function checkedCreateContract(bytes32 salt, bytes memory bytecode)
         external
@@ -207,7 +187,7 @@ contract ArgobytesFactory {
             // deployed doesn't exist. create it
             require(
                 Create2.deploy(msg.value, salt, bytecode) == deployed,
-                "ArgobytesFactory !create2"
+                "ArgobytesFactory !checkedCreateContract"
             );
         }
     }
