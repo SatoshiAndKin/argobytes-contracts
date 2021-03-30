@@ -15,8 +15,8 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
     /// @notice leveraged cyy3crv -> y3crv -> 3crv -> stablecoins
     /// @dev Delegatecall this from ArgobytesFlashBorrower.flashBorrow
     function exit(
-        uint256 min_remove_liquidity_dai,
         uint256 dai_flash_fee,
+        uint256 max_3crv_burned,
         uint256 tip_3crv,
         address exit_from,
         address exit_to
@@ -109,35 +109,34 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
         // turn enough THREE_CRV into DAI to pay back the flash loan
         temp = THREE_CRV.balanceOf(address(this));
 
-        require(temp > 0, "ExitCYY3CRVAction debug !3crv");
-        require(min_remove_liquidity_dai > 0, "ExitCYY3CRVAction debug !min_remove_liquidity_dai");
+        require(temp >= max_3crv_burned, "ExitCYY3CRVAction debug !3crv");
+        require(max_3crv_burned > 0, "ExitCYY3CRVAction debug !max_3crv_burned");
 
-        THREE_CRV.approve(address(THREE_CRV_POOL), temp);
+        THREE_CRV.approve(address(THREE_CRV_POOL), max_3crv_burned);
 
         // add the fee
+        // flash loaning max DAI is likely impossible, but even if this rolls over, things revert
         unchecked {
             flash_dai_amount += dai_flash_fee;
         }
 
-        // make sure our trade will get enough DAI back
-        require(min_remove_liquidity_dai >= flash_dai_amount, "ExitCYY3CRVAction !flash_dai_amount");
-
-        // TODO: DEBUGGING!
-        // min_remove_liquidity_dai = 1;
-
+        // burn enough 3crv to get back enough DAI to pay back the flash loan
+        // we could allow exiting to DAI, USDC, or USDT here, but i think exiting with 3crv makes the most sense
         // TODO: allow withdraw to USDC and USDT, too?
         uint256[3] memory amounts;
-        amounts[0] = flash_dai_amount;
+        amounts[0] = flash_dai_amount - DAI.balanceOf(address(this));
         amounts[1] = 0;
         amounts[2] = 0;
 
-        THREE_CRV_POOL.remove_liquidity_imbalance(amounts, temp);
-        // remove_liquidity_one_coin returns the DAI balance, but we might have some excess from a bigger flash loan than we needed
+        // TODO: check that amounts[0] > 0? that shouldn't be possible
 
+        THREE_CRV_POOL.remove_liquidity_imbalance(amounts, max_3crv_burned);
+
+        // hopefully we didn't use all our 3crv paying back the flash loan
         temp = THREE_CRV.balanceOf(address(this));
 
         if (temp > 0) {
-            // TODO: is clearing the approval worthwhile?
+            // TODO: is clearing the approval worthwhile? does it save us gas?
             THREE_CRV.approve(address(THREE_CRV_POOL), 0);
         }
 
@@ -145,6 +144,7 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
         if (tip_3crv > 0) {
             if (tip_3crv > temp) {
                 // reverting just because we couldn't tip would be sad. reduce the tip instead
+                // TODO: cut the tip in half so they get something back, too?
                 tip_3crv = temp;
             }
 
@@ -154,6 +154,7 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
                 // a revert here should be impossible
                 require(THREE_CRV.transfer(tip_address, tip_3crv), "ExitCYY3CRVAction !tip_3crv");
 
+                // no need for checked math since we do a comparison just before this
                 unchecked {
                     temp -= tip_3crv;
                 }

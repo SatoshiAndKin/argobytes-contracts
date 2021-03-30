@@ -66,7 +66,7 @@ def test_atomic_scripts(
 
     # make sure balances are what we expect
     assert dai.balanceOf(argobytes_flash_clone) == 0
-    assert dai.balanceOf(account) > 0
+    assert dai.balanceOf(account) == 0
     assert usdc.balanceOf(argobytes_flash_clone) == 0
     assert usdc.balanceOf(account) == 0
     assert usdt.balanceOf(argobytes_flash_clone) == 0

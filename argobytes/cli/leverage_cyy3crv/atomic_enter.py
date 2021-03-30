@@ -94,13 +94,13 @@ def atomic_enter():
     assert threecrv_pool.coins(2) == usdt.address
     # TODO: assert threecrv_pool.coins(3) == revert
 
+    tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv]
+
     # use multiple workers to fetch the contracts
     # there will still be some to fetch, but this speeds things up some
     # this can take some time since solc/vyper may have to download
     # TODO: i think doing this in parallel might be confusiing things
-    # poke_contracts([dai, usdc, usdt, threecrv, threecrv_pool, y3crv, cyy3crv, lender])
-
-    tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv]
+    poke_contracts(tokens + [threecrv_pool, lender])
 
     balances = get_balances(account, tokens)
     print(f"{account} balances")

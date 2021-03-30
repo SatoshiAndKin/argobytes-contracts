@@ -12,6 +12,8 @@ interface ICurvePool {
 
     function balances(uint256 arg0) external view returns (uint256 out);
 
+    function calc_token_amount(uint256[3] memory amounts, bool is_deposit) external view returns (uint256 lp_tokens);
+
     // this is int128 in vyper
     function coins(uint256 arg0) external view returns (address out);
 

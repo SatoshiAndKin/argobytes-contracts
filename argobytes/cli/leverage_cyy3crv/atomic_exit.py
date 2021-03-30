@@ -8,6 +8,7 @@ from argobytes import (
     Action,
     approve,
     CallType,
+    get_average_block_time,
     get_balances,
     get_claimable_3crv,
     print_token_balances,
@@ -32,18 +33,21 @@ from pprint import pprint
 
 ExitData = namedtuple(
     "ExitData",
-    ["min_remove_liquidity_dai", "dai_flash_fee", "tip_dai", "exit_from", "exit_to",],
+    ["dai_flash_fee", "max_3crv_burned", "tip_3crv", "exit_from", "exit_to",],
 )
 
 
 @click.command()
-def atomic_exit():
+@click.option("--tip-eth", default=0)
+@click.option("--tip-3crv", default=0)
+def atomic_exit(tip_eth, tip_3crv):
     """Use a flash loan to withdraw from a leveraged cyy3crv position."""
     # TODO: we need an account with private keys
     account = accounts.at(os.environ["LEVERAGE_ACCOUNT"], force=True)
     print(f"Hello, {account}")
 
-    slippage = 0.1  # TODO: this should be a click arg
+    # 0.5 == 0.5%
+    slippage_pct = 0.5  # TODO: this should be a click arg
     exit_from_account = False  # TODO: this should be a click arg (or maybe automatic based on balances?)
 
     # TODO: use salts for the contracts once we figure out a way to store them. maybe 3box?
@@ -69,18 +73,14 @@ def atomic_exit():
     y3crv = lazy_contract(exit_cyy3crv_action.Y_THREE_CRV(), account)
     cyy3crv = lazy_contract(exit_cyy3crv_action.CY_Y_THREE_CRV(), account)
     cydai = lazy_contract(exit_cyy3crv_action.CY_DAI(), account)
-    fee_distribution = lazy_contract(exit_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION(), account)
     lender = DyDxFlashLender
 
-    lender._owner = account
+    tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv, cydai]
 
     # use multiple workers to fetch the contracts
     # there will still be some to fetch, but this speeds things up some
     # this can take some time since solc/vyper may have to download
-    # poke_contracts([dai, usdc, usdt, threecrv, threecrv_pool, y3crv, cyy3crv, lender])
-
-    # TODO: fetch other tokens?
-    tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv, cydai]
+    poke_contracts(tokens + [threecrv_pool, lender])
 
     if exit_from_account:
         exit_from = account
@@ -107,25 +107,43 @@ def atomic_exit():
 
     assert dai_borrowed > 0, "No DAI position to exit from"
 
-    # TODO: i think this might not be right
-    flash_loan_amount = int(dai_borrowed * (1 + slippage))
+    print(f"dai_borrowed:      {dai_borrowed}")
+
+    borrow_rate_per_block = cydai.borrowRatePerBlock.call()
+
+    # TODO: how many blocks of interest should we add on? base this on gas speed?
+    # TODO: is this right? i think it might be overshooting. i don't think it matters that much though
+    interest_slippage_blocks = int((5 * 60) / get_average_block_time())
+    # https://www.geeksforgeeks.org/python-program-for-compound-interest/
+    flash_loan_amount = int(dai_borrowed * (pow((1 + borrow_rate_per_block / 1e18), interest_slippage_blocks)))
 
     print(f"flash_loan_amount: {flash_loan_amount}")
 
-    dai_flash_fee = lender.flashFee(dai, flash_loan_amount)
+    # safety check. make sure our interest doesn't add a giant amount
+    assert flash_loan_amount <= dai_borrowed * (1 + slippage_pct / 100)
 
-    # TODO: calculate/prompt for these
-    #  StableSwap.calc_withdraw_one_coin(_token_amount: uint256, i: int128) → uint256
-    min_remove_liquidity_dai = (
-        flash_loan_amount + dai_flash_fee
-    )  # TODO: this is wrong. this would allow a front runner to take all our profits!
-    tip_dai = 0
-    # min_cream_liquidity = 1
+    flash_loan_fee = lender.flashFee(dai, flash_loan_amount)
+
+    print(f"flash_loan_fee: {flash_loan_fee}")
+
+    # TODO: safety check on the flash loan fee?
+
+    # TODO: this is slightly high because we add 5 minutes of interest. we could spend gas subtracting out the unused slack, but i doubt its worthwhile
+    max_3crv_burned = threecrv_pool.calc_token_amount(
+        # dai, usdc, usdt
+        [
+            flash_loan_amount + flash_loan_fee,
+            0,
+            0,
+        ],
+        # is_deposit
+        False,
+    ) * (1 + slippage_pct / 100)
 
     exit_data = ExitData(
-        min_remove_liquidity_dai=min_remove_liquidity_dai,
-        dai_flash_fee=dai_flash_fee,
-        tip_dai=tip_dai,
+        dai_flash_fee=flash_loan_fee,
+        max_3crv_burned=max_3crv_burned,
+        tip_3crv=tip_3crv,
         exit_from=exit_from,
         exit_to=account,
     )
@@ -144,6 +162,9 @@ def atomic_exit():
         Action(
             exit_cyy3crv_action, CallType.DELEGATE, False, "exit", *exit_data,
         ).tuple,
+        {
+            "value": tip_eth,
+        }
     )
 
     print("exit success!")

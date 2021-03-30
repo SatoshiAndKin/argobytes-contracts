@@ -1,5 +1,7 @@
 """
 Python scripts to make working with Argobytes smart contracts easy.
+
+TODO: move the functions in this to proper modules
 """
 import contextlib
 
