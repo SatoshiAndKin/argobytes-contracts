@@ -101,7 +101,7 @@ def atomic_exit():
 
         dai_borrowed = cydai.borrowBalanceCurrent.call(argobytes_clone)
 
-    pprint(balances)
+    print_token_balances(balances)
 
     assert dai_borrowed > 0, "No DAI position to exit from"
 
@@ -151,7 +151,7 @@ def atomic_exit():
     print(f"num events: {num_events}")
 
     print("clone balances")
-    pprint(get_balances(argobytes_clone, tokens))
+    print_token_balances(get_balances(argobytes_clone, tokens))
 
     print("account balances")
-    pprint(get_balances(account, tokens))
+    print_token_balances(get_balances(account, tokens))

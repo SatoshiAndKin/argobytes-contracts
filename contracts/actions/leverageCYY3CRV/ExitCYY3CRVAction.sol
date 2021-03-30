@@ -98,8 +98,6 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
         // check cyy3crv balance
         require(temp > 0, "ExitCYY3CRVAction debug !cyy3crv");
 
-        temp = 100;
-
         (uint error, uint liquidity, uint shortfall) = CREAM.getHypotheticalAccountLiquidity(address(this), address(CY_Y_THREE_CRV), temp, 0);
         require(error == 0, "ExitCYY3CRVAction CREAM redeem error");
 
@@ -139,9 +137,14 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
         // make sure our trade will get enough DAI back
         require(min_remove_liquidity_dai >= flash_dai_amount, "ExitCYY3CRVAction !flash_dai_amount");
 
+        // TODO: DEBUGGING!
+        // min_remove_liquidity_dai = 1;
+
         THREE_CRV_POOL.remove_liquidity_one_coin(temp, int128(0), min_remove_liquidity_dai);
-        // remove_liquidity_one_coin returns the DAI balance, but we might have some excess from a bigger flash loan
+        // remove_liquidity_one_coin returns the DAI balance, but we might have some excess from a bigger flash loan than we needed
         temp = DAI.balanceOf(address(this));
+
+        revert("we almost got to the end");
 
         // set aside the DAI needed to pay back the flash loan
         temp -= flash_dai_amount;
@@ -165,5 +168,7 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
         if (temp > 0) {
             require(DAI.transfer(exit_to, temp), "ExitCYY3CRVAction !DAI sweep");
         }
+
+        revert("we got to the end");
     }
 }
