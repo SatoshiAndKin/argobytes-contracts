@@ -137,4 +137,9 @@ def main():
     # TODO: do we need this for easier testing? or is invoke catch_exceptions=False enough?
     standalone_mode = os.get("ARGOBYTES_CLICK_STANDALONE", "1") == "1"
 
-    cli(obj={}, auto_envvar_prefix="ARGOBYTES", standalone_mode=False)
+    cli(
+        obj={},
+        auto_envvar_prefix="ARGOBYTES",
+        prog_name="argobytes",
+        standalone_mode=False,
+    )

@@ -15,6 +15,8 @@ import {IComptroller} from "contracts/external/cream/IComptroller.sol";
 
 import {IYVault} from "contracts/external/yearn/IYVault.sol";
 
+import {IENS, IResolver} from "contracts/external/ens/ENS.sol";
+
 abstract contract Constants {
     // stablecoins
     IERC20 public constant DAI = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);

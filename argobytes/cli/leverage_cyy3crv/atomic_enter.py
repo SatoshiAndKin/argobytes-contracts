@@ -14,6 +14,7 @@ from argobytes import (
     print_token_balances,
 )
 from argobytes.contracts import (
+    ArgobytesInterfaces,
     ArgobytesFactory,
     ArgobytesFlashBorrower,
     DyDxFlashLender,
@@ -45,7 +46,6 @@ EnterData = namedtuple(
         "y3crv",
         "min_cream_liquidity",
         "sender",
-        "tip_address",
         "claim_3crv",
     ],
 )
@@ -81,11 +81,18 @@ def atomic_enter():
     usdc = lazy_contract(enter_cyy3crv_action.USDC())
     usdt = lazy_contract(enter_cyy3crv_action.USDT())
     threecrv = lazy_contract(enter_cyy3crv_action.THREE_CRV())
-    threecrv_pool = lazy_contract(enter_cyy3crv_action.THREE_CRV_POOL())
+    threecrv_pool = ArgobytesInterfaces.ICurvePool(
+        enter_cyy3crv_action.THREE_CRV_POOL()
+    )
     y3crv = lazy_contract(enter_cyy3crv_action.Y_THREE_CRV())
     cyy3crv = lazy_contract(enter_cyy3crv_action.CY_Y_THREE_CRV())
     fee_distribution = lazy_contract(enter_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION())
     lender = DyDxFlashLender
+
+    assert threecrv_pool.coins(0) == dai.address
+    assert threecrv_pool.coins(1) == usdc.address
+    assert threecrv_pool.coins(2) == usdt.address
+    # TODO: assert threecrv_pool.coins(3) == revert
 
     # use multiple workers to fetch the contracts
     # there will still be some to fetch, but this speeds things up some
@@ -104,9 +111,6 @@ def atomic_enter():
     # TODO: calculate/prompt for these
     min_3crv_mint_amount = 1
     tip_3crv = 0
-    tip_address = _resolve_address(
-        "tip.satoshiandkin.eth"
-    )  # TODO: put this on a subdomain and uses an immutable
     min_cream_liquidity = 1000
 
     enter_data = EnterData(
@@ -120,13 +124,12 @@ def atomic_enter():
         y3crv=balances[y3crv],
         min_cream_liquidity=min_cream_liquidity,
         sender=account,
-        tip_address=tip_address,
         claim_3crv=claimable_3crv > min_3crv_to_claim,
     )
 
     # TODO: do this properly. use virtualprice and yearn's price calculation
     print("warning! summed_balances is not actually priced in USD")
-    summed_balances = (
+    summed_balances = Decimal(
         enter_data.dai
         + enter_data.usdc
         + enter_data.usdt
@@ -135,7 +138,7 @@ def atomic_enter():
         + claimable_3crv
     )
 
-    print(f"summed_balances: {summed_balances}")
+    print(f"summed_balances:   {summed_balances}")
 
     assert summed_balances > 100, "no coins"
 

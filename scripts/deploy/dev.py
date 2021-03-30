@@ -47,7 +47,7 @@ def main():
     deadline = 90000000000000000000
 
     # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
-    argobytes_tip_address = accounts[0]
+    argobytes_tip_address = web3.ens.resolve("tip.satoshiandkin.eth")
 
     argobytes_proxy_arbitragers = [
         accounts[0],

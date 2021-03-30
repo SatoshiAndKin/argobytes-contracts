@@ -4,9 +4,11 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import {ArgobytesTips} from "contracts/ArgobytesTips.sol";
+
 import {Constants} from "./Constants.sol";
 
-contract EnterCYY3CRVAction is Constants {
+contract EnterCYY3CRVAction is ArgobytesTips, Constants {
 
     event ArgobytesLogUint(address indexed proxy, uint8 id, uint256 data);
 
@@ -22,10 +24,8 @@ contract EnterCYY3CRVAction is Constants {
         uint256 tip_3crv;
         uint256 y3crv;
         uint256 min_cream_liquidity;
-        // because of how the flash loans work, we can't use msg.data.sender
+        // because of how the flash loans work, we can't use msg.sender
         address sender;
-        // TODO: put the tip_address into an immutable and have it be an ENS namehash
-        address tip_address;
         bool claim_3crv;
     }
 
@@ -45,7 +45,9 @@ contract EnterCYY3CRVAction is Constants {
 
         // send any ETH as a tip to the developer
         if (msg.value > 0) {
-            (bool success, ) = data.tip_address.call{value: msg.value}("");
+            address payable tip_address = resolve_tip_address();
+
+            (bool success, ) = tip_address.call{value: msg.value}("");
             require(success, "!tip");
         }
 
@@ -106,8 +108,9 @@ contract EnterCYY3CRVAction is Constants {
 
         // optionally tip the developer
         if (data.tip_3crv > 0) {
-            // TODO: do we want to approve tip_address to pull funds instead and then call some function?
-            require(THREE_CRV.transfer(data.tip_address, data.tip_3crv), "EnterCYY3CRVAction !tip_3crv");
+            address payable tip_address = resolve_tip_address();
+
+            require(THREE_CRV.transfer(tip_address, data.tip_3crv), "EnterCYY3CRVAction !tip_3crv");
         }
 
         // deposit 3crv for y3crv

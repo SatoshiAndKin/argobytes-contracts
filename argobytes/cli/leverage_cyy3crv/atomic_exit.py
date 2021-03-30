@@ -32,14 +32,7 @@ from pprint import pprint
 
 ExitData = namedtuple(
     "ExitData",
-    [
-        "min_remove_liquidity_dai",
-        "tip_dai",
-        "dai_flash_fee",
-        "tip_address",
-        "exit_from",
-        "exit_to",
-    ],
+    ["min_remove_liquidity_dai", "tip_dai", "dai_flash_fee", "exit_from", "exit_to",],
 )
 
 
@@ -50,8 +43,8 @@ def atomic_exit():
     account = accounts.at(os.environ["LEVERAGE_ACCOUNT"], force=True)
     print(f"Hello, {account}")
 
-    # TODO: prompt for slippage amount
-    slippage = 0.1
+    slippage = 0.1  # TODO: this should be a click arg
+    exit_from_account = False  # TODO: this should be a click arg (or maybe automatic based on balances?)
 
     # TODO: use salts for the contracts once we figure out a way to store them. maybe 3box?
 
@@ -75,6 +68,7 @@ def atomic_exit():
     threecrv_pool = lazy_contract(exit_cyy3crv_action.THREE_CRV_POOL())
     y3crv = lazy_contract(exit_cyy3crv_action.Y_THREE_CRV())
     cyy3crv = lazy_contract(exit_cyy3crv_action.CY_Y_THREE_CRV())
+    cydai = lazy_contract(exit_cyy3crv_action.CY_DAI())
     fee_distribution = lazy_contract(exit_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION())
     lender = DyDxFlashLender
 
@@ -86,16 +80,6 @@ def atomic_exit():
     # TODO: fetch other tokens?
     tokens = [cyy3crv]
 
-    # TODO: calculate/prompt for these
-    min_remove_liquidity_dai = 1
-    tip_dai = 0
-    tip_address = _resolve_address(
-        "tip.satoshiandkin.eth"
-    )  # TODO: put this on a subdomain and uses an immutable
-    # TODO: this should be False in the default case
-    exit_from_account = False
-    # min_cream_liquidity = 1
-
     if exit_from_account:
         exit_from = account
         exit_to = ZERO_ADDRESS
@@ -103,7 +87,7 @@ def atomic_exit():
         balances = get_balances(exit_from, tokens)
         print(f"{exit_from} balances")
 
-        calculated_exit = exit_cyy3crv_action.calculateExit.call(account)
+        dai_borrowed = cy_dai.borrowBalanceCurrent.call(account)
 
         raise NotImplementedError(
             "we need an approve so CY_DAI.repayBorrowBehalf is allowed"
@@ -115,24 +99,32 @@ def atomic_exit():
         balances = get_balances(argobytes_clone, tokens)
         print(f"{argobytes_clone} balances")
 
-        calculated_exit = exit_cyy3crv_action.calculateExit.call(argobytes_clone)
+        dai_borrowed = cydai.borrowBalanceCurrent.call(argobytes_clone)
 
     pprint(balances)
 
+    assert dai_borrowed > 0, "No DAI position to exit from"
+
     # TODO: i think this might not be right
-    flash_loan_amount = int(calculated_exit * (1 + slippage))
+    flash_loan_amount = int(dai_borrowed * (1 + slippage))
 
     print(f"flash_loan_amount: {flash_loan_amount}")
 
     dai_flash_fee = lender.flashFee(dai, flash_loan_amount)
 
+    # TODO: calculate/prompt for these
+    #  StableSwap.calc_withdraw_one_coin(_token_amount: uint256, i: int128) → uint256
+    min_remove_liquidity_dai = (
+        flash_loan_amount + dai_flash_fee
+    )  # TODO: this is wrong. this would allow a front runner to take all our profits!
+    tip_dai = 0
+    # min_cream_liquidity = 1
+
     exit_data = ExitData(
         min_remove_liquidity_dai=min_remove_liquidity_dai,
         tip_dai=tip_dai,
         dai_flash_fee=dai_flash_fee,
-        tip_address=tip_address,
         exit_from=exit_from,
-        # TODO: allow exiting to an arbitrary account
         exit_to=account,
     )
 

@@ -1,7 +1,8 @@
+import pytest
+from brownie import *
 from eth_utils import keccak, to_checksum_address, to_bytes
 from eth_abi.packed import encode_abi_packed
-from brownie import *
-import pytest
+from click.testing import CliRunner
 
 from argobytes import to_hex32
 from argobytes.addresses import *
@@ -24,7 +25,6 @@ def session_defaults():
     web3.enable_strict_bytes_type_checking()
 
 
-
 @pytest.fixture(scope="function")
 def argobytes_multicall(ArgobytesMulticall):
     return get_or_create(accounts[0], ArgobytesMulticall)
@@ -35,7 +35,7 @@ def argobytes_authority(ArgobytesAuthority):
     return get_or_create(accounts[0], ArgobytesAuthority)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def argobytes_factory(ArgobytesFactory):
     return get_or_create(accounts[0], ArgobytesFactory)
 
@@ -52,27 +52,45 @@ def argobytes_proxy(ArgobytesProxy):
     return get_or_create(accounts[0], ArgobytesProxy)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def argobytes_trader(ArgobytesTrader):
     return get_or_create(accounts[0], ArgobytesTrader)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def cdai_erc20():
     return load_contract(cDAIAddress)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
+def click_test_runner():
+    runner = CliRunner()
+
+    def _click_test_runner(fn, *args, **kwargs):
+        print(f"running {fn.name}...")
+
+        result = runner.invoke(fn, *args, **kwargs)
+        print(result.stdout)
+        
+        if result.exception:
+            raise result.exception
+
+        return result
+
+    return _click_test_runner
+
+
+@pytest.fixture(scope="session")
 def curve_fi_3pool():
     return load_contract(CurveFi3poolAddress)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def curve_fi_compound():
     return load_contract(CurveFiCompoundAddress)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def cusdc_erc20():
     return load_contract(cUSDCAddress)
 
@@ -82,7 +100,7 @@ def curve_fi_action(CurveFiAction, curve_fi_compound):
     return get_or_create(accounts[0], CurveFiAction)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def dai_erc20():
     return load_token_or_contract("DAI")
 
@@ -112,19 +130,19 @@ def kyber_action(KyberAction):
     return get_or_create(accounts[0], KyberAction, constructor_args=[accounts[0]])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def kyber_network_proxy():
     # TODO: they have an "info" method and that is a reserved keyword
     # TODO: `return load_contract(KyberNetworkProxyAddress)`
     return KyberNetworkProxyAddress
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def onesplit():
     return load_contract("1split.eth")
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def onesplit_helper(onesplit, interface):
 
     def inner_onesplit_helper(eth_amount, dest_token, to):
@@ -179,20 +197,20 @@ def onesplit_offchain_action(OneSplitOffchainAction):
     return get_or_create(accounts[0], OneSplitOffchainAction)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def susd_erc20(synthetix_address_resolver):
     # The AddressResolver is not populated with everything right now, only those internal contract addresses that do not change. ProxyERC20 (SNX) and ProxyERC20sUSD (sUSD) are static addresses you can simply hard code in if you need
     # proxy = synthetix_address_resolver.requireAndGetAddress(to_hex32(text="ProxyERC20sUSD"), "No Proxy")
     return load_contract(sUSDAddress)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def synthetix_address_resolver(interface):
     # this is actually the ReadProxyAddressResolver
     return load_contract(SynthetixAddressResolverAddress)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def synthetix_exchange_rates(synthetix_address_resolver):
     rates = synthetix_address_resolver.getAddress(to_hex32(text="ExchangeRates"))
 
@@ -206,7 +224,7 @@ def uniswap_v1_action(UniswapV1Action):
     return get_or_create(accounts[0], UniswapV1Action)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def uniswap_v1_factory():
     return load_contract(UniswapV1FactoryAddress)
 
@@ -216,12 +234,12 @@ def uniswap_v2_action(UniswapV2Action):
     return get_or_create(accounts[0], UniswapV2Action)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def uniswap_v2_router():
     return load_contract(UniswapV2RouterAddress)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def uniswap_v1_helper(uniswap_v1_factory, interface):
 
     # TODO: this is reverting with an unhelpful error about JUMP
@@ -258,9 +276,9 @@ def unlocked_binance():
     return accounts.at("0x85b931A32a0725Be14285B66f1a22178c672d69B", force=True)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def usdc_erc20():
-    return load_contract(USDCAddress)
+    return load_token_or_contract("USDC")
 
 
 @pytest.fixture(scope="function")
