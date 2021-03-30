@@ -16,8 +16,8 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
     /// @dev Delegatecall this from ArgobytesFlashBorrower.flashBorrow
     function exit(
         uint256 min_remove_liquidity_dai,
-        uint256 tip_dai,
         uint256 dai_flash_fee,
+        uint256 tip_3crv,
         address exit_from,
         address exit_to
     ) external payable {
@@ -31,11 +31,18 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
         if (msg.value > 0) {
             address payable tip_address = resolve_tip_address();
 
-            (bool success, ) = tip_address.call{value: msg.value}("");
-            require(success, "ExitCYY3CRVAction !tip");
+            if (tip_address == address(0)) {
+                // no tip address. send the tip to exit_to instead
+                (bool success, ) = payable(exit_to).call{value: msg.value}("");
+                require(success, "ExitCYY3CRVAction !tip");
+            } else {
+                (bool success, ) = tip_address.call{value: msg.value}("");
+                require(success, "ExitCYY3CRVAction !tip");
+            }
         }
 
         if (exit_from == address(0)) {
+            // TODO: check CY_USDC and CY_USDT (and maybe other things, too)
             uint256 dai_borrow_balance = CY_DAI.borrowBalanceCurrent(address(this));
 
             require(dai_borrow_balance > 0, "ExitCYY3CRVAction !dai_borrow_balance");
@@ -96,12 +103,10 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
 
         require(temp > 0, "ExitCYY3CRVAction debug !y3crv");
 
+        // TODO: allow exiting with y3crv?
         Y_THREE_CRV.withdraw(temp);
 
-        // TODO: transfer THREE_CRV from exit_from?
-
-        // turn all THREE_CRV into DAI
-        // TODO: option to just trade enough to pay back the flashloan
+        // turn enough THREE_CRV into DAI to pay back the flash loan
         temp = THREE_CRV.balanceOf(address(this));
 
         require(temp > 0, "ExitCYY3CRVAction debug !3crv");
@@ -110,7 +115,9 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
         THREE_CRV.approve(address(THREE_CRV_POOL), temp);
 
         // add the fee
-        flash_dai_amount += dai_flash_fee;
+        unchecked {
+            flash_dai_amount += dai_flash_fee;
+        }
 
         // make sure our trade will get enough DAI back
         require(min_remove_liquidity_dai >= flash_dai_amount, "ExitCYY3CRVAction !flash_dai_amount");
@@ -118,31 +125,44 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
         // TODO: DEBUGGING!
         // min_remove_liquidity_dai = 1;
 
-        THREE_CRV_POOL.remove_liquidity_one_coin(temp, int128(0), min_remove_liquidity_dai);
-        // remove_liquidity_one_coin returns the DAI balance, but we might have some excess from a bigger flash loan than we needed
-        temp = DAI.balanceOf(address(this));
+        // TODO: allow withdraw to USDC and USDT, too?
+        uint256[3] memory amounts;
+        amounts[0] = flash_dai_amount;
+        amounts[1] = 0;
+        amounts[2] = 0;
 
-        // set aside the DAI needed to pay back the flash loan
-        temp -= flash_dai_amount;
+        THREE_CRV_POOL.remove_liquidity_imbalance(amounts, temp);
+        // remove_liquidity_one_coin returns the DAI balance, but we might have some excess from a bigger flash loan than we needed
+
+        temp = THREE_CRV.balanceOf(address(this));
+
+        if (temp > 0) {
+            // TODO: is clearing the approval worthwhile?
+            THREE_CRV.approve(address(THREE_CRV_POOL), 0);
+        }
 
         // tip the developers
-        if (tip_dai > 0) {
-            if (tip_dai > temp) {
+        if (tip_3crv > 0) {
+            if (tip_3crv > temp) {
                 // reverting just because we couldn't tip would be sad. reduce the tip instead
-                tip_dai = temp;
+                tip_3crv = temp;
             }
 
             address payable tip_address = resolve_tip_address();
 
-            // a revert here should be impossible
-            require(DAI.transfer(tip_address, tip_dai), "ExitCYY3CRVAction !DAI.transfer tip");
+            if (tip_address != address(0)) {
+                // a revert here should be impossible
+                require(THREE_CRV.transfer(tip_address, tip_3crv), "ExitCYY3CRVAction !tip_3crv");
 
-            temp -= tip_dai;
+                unchecked {
+                    temp -= tip_3crv;
+                }
+            }
         }
 
-        // send the rest of the DAI on
+        // send the rest of the 3crv on
         if (temp > 0) {
-            require(DAI.transfer(exit_to, temp), "ExitCYY3CRVAction !DAI sweep");
+            require(THREE_CRV.transfer(exit_to, temp), "ExitCYY3CRVAction !DAI sweep");
         }
     }
 }

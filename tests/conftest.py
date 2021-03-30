@@ -41,15 +41,27 @@ def argobytes_factory(ArgobytesFactory):
 
 
 @pytest.fixture(scope="function")
-def argobytes_proxy_clone(argobytes_proxy, argobytes_factory):
+def argobytes_proxy(ArgobytesProxy):
+    # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
+    return get_or_create(accounts[0], ArgobytesProxy)
+
+
+@pytest.fixture(scope="function")
+def argobytes_proxy_clone(argobytes_factory, argobytes_proxy):
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
     return get_or_clone(accounts[0], argobytes_factory, argobytes_proxy)
 
 
 @pytest.fixture(scope="function")
-def argobytes_proxy(ArgobytesProxy):
+def argobytes_flash_borrower(ArgobytesFlashBorrower):
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests=
-    return get_or_create(accounts[0], ArgobytesProxy)
+    return get_or_create(accounts[0], ArgobytesFlashBorrower)
+
+
+@pytest.fixture(scope="function")
+def argobytes_flash_clone(argobytes_factory, argobytes_flash_borrower):
+    # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
+    return get_or_clone(accounts[0], argobytes_factory, argobytes_flash_borrower)
 
 
 @pytest.fixture(scope="function")

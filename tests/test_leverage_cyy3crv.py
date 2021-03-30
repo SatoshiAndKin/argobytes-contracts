@@ -9,38 +9,71 @@ from argobytes.contracts import load_contract
 
 # @pytest.mark.skip(reason="crashes ganache")
 @pytest.mark.require_network("mainnet-fork")
-@pytest.mark.no_call_coverage
 def test_atomic_scripts(
+    argobytes_flash_clone,
     click_test_runner,
-    dai_erc20,
     exit_cyy3crv_action,
     monkeypatch,
     unlocked_binance,
-    usdc_erc20,
 ):
-    monkeypatch.setenv("LEVERAGE_ACCOUNT", str(accounts[0]))
+    account = accounts[0]
+
+    # TODO: use click args
+    monkeypatch.setenv("LEVERAGE_ACCOUNT", str(account))
+
+    dai = load_contract(exit_cyy3crv_action.DAI())
+    usdc = load_contract(exit_cyy3crv_action.USDC())
+    usdt = load_contract(exit_cyy3crv_action.USDT())
+    threecrv = load_contract(exit_cyy3crv_action.THREE_CRV())
+    y3crv = load_contract(exit_cyy3crv_action.Y_THREE_CRV())
+    cyy3crv = load_contract(exit_cyy3crv_action.CY_Y_THREE_CRV())
 
     # borrow some tokens from binance
-    transfer_token(unlocked_binance, accounts[0], dai_erc20, 10000)
-    # transfer_token(unlocked_binance, accounts[0], usdc_erc20, 10000)
-    # TODO: usdt_erc20
-    # transfer_token(unlocked_binance, accounts[0], usdt_erc20, 10000)
+    transfer_token(unlocked_binance, accounts[0], dai, 10000)
+    # transfer_token(unlocked_binance, accounts[0], usdc, 10000)
+    # transfer_token(unlocked_binance, accounts[0], usdt, 10000)
 
-    result = click_test_runner(atomic_enter)
+    enter_result = click_test_runner(atomic_enter)
 
-    assert result.exit_code == 0
+    assert enter_result.exit_code == 0
 
-    # TODO: make sure we can't get liquidated
+    # make sure balances are what we expect
+    assert dai.balanceOf(argobytes_flash_clone) == 0
+    assert dai.balanceOf(account) == 0
+    assert usdc.balanceOf(argobytes_flash_clone) == 0
+    assert usdc.balanceOf(account) == 0
+    assert usdt.balanceOf(argobytes_flash_clone) == 0
+    assert usdt.balanceOf(account) == 0
+    assert threecrv.balanceOf(argobytes_flash_clone) == 0
+    assert threecrv.balanceOf(account) == 0
+    assert y3crv.balanceOf(argobytes_flash_clone) == 0
+    assert y3crv.balanceOf(account) == 0
+    assert cyy3crv.balanceOf(argobytes_flash_clone) > 0
+    assert cyy3crv.balanceOf(account) == 0
+
+    # TODO: make sure we can't get liquidated (though i think the borrow would have reverted)
 
     # simulate some trades so that 3pool increases in value
     # TODO: make some actual trades?
     # TODO: how much DAI actually needs to be added to the pool
     transfer_token(
-        unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai_erc20, 1000000
+        unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai, 1000000
     )
 
-    result = click_test_runner(atomic_exit)
+    exit_result = click_test_runner(atomic_exit)
 
-    assert result.exit_code == 0
+    assert exit_result.exit_code == 0
 
-    # TODO: make sure we made a profit
+    # make sure balances are what we expect
+    assert dai.balanceOf(argobytes_flash_clone) == 0
+    assert dai.balanceOf(account) > 0
+    assert usdc.balanceOf(argobytes_flash_clone) == 0
+    assert usdc.balanceOf(account) == 0
+    assert usdt.balanceOf(argobytes_flash_clone) == 0
+    assert usdt.balanceOf(account) == 0
+    assert threecrv.balanceOf(argobytes_flash_clone) == 0
+    assert threecrv.balanceOf(account) > 0
+    assert y3crv.balanceOf(argobytes_flash_clone) == 0
+    assert y3crv.balanceOf(account) == 0
+    assert cyy3crv.balanceOf(argobytes_flash_clone) == 0
+    assert cyy3crv.balanceOf(account) == 0

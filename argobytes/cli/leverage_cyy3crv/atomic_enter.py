@@ -172,21 +172,31 @@ def atomic_enter():
         ).tuple,
     )
 
+    print("enter success!")
+
     # TODO: these queries crash ganache-cli
+    # print(f"enter success! {enter_tx.return_value}")
+
+    # TODO: check gas_used is less than some limit
+
+    # TODO: this crashes ganache
+    # enter_tx.info()
+
+    # num_events = len(enter_tx.events)
+    # print(f"num events: {num_events}")
+
     """
-    print(f"enter success! {enter_tx.return_value}")
-
-    enter_tx.info()
-
-    num_events = len(enter_tx.events)
-    print(f"num events: {num_events}")
-
+    # TODO: this crashes ganache
     enter_return = to_int(enter_tx.return_value)
 
     print(f"return value: {enter_return}")
 
     assert enter_return > 0, "no cyy3ccrv returned!"
     """
+
+    # TODO: what should we set this to?
+    print(f"enter_tx.gas_used: {enter_tx.gas_used}")
+    assert enter_tx.gas_used < 1200000
 
     print(f"clone ({argobytes_clone.address}) balances")
     balances = get_balances(argobytes_clone, tokens)

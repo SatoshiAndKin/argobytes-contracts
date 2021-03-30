@@ -32,7 +32,7 @@ from pprint import pprint
 
 ExitData = namedtuple(
     "ExitData",
-    ["min_remove_liquidity_dai", "tip_dai", "dai_flash_fee", "exit_from", "exit_to",],
+    ["min_remove_liquidity_dai", "dai_flash_fee", "tip_dai", "exit_from", "exit_to",],
 )
 
 
@@ -61,16 +61,18 @@ def atomic_exit():
     print("Preparing contracts...")
     # TODO: use multicall to get all the addresses?
     # TODO: do we need all these for exit? or just enter?
-    dai = lazy_contract(exit_cyy3crv_action.DAI())
-    usdc = lazy_contract(exit_cyy3crv_action.USDC())
-    usdt = lazy_contract(exit_cyy3crv_action.USDT())
-    threecrv = lazy_contract(exit_cyy3crv_action.THREE_CRV())
-    threecrv_pool = lazy_contract(exit_cyy3crv_action.THREE_CRV_POOL())
-    y3crv = lazy_contract(exit_cyy3crv_action.Y_THREE_CRV())
-    cyy3crv = lazy_contract(exit_cyy3crv_action.CY_Y_THREE_CRV())
-    cydai = lazy_contract(exit_cyy3crv_action.CY_DAI())
-    fee_distribution = lazy_contract(exit_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION())
+    dai = lazy_contract(exit_cyy3crv_action.DAI(), account)
+    usdc = lazy_contract(exit_cyy3crv_action.USDC(), account)
+    usdt = lazy_contract(exit_cyy3crv_action.USDT(), account)
+    threecrv = lazy_contract(exit_cyy3crv_action.THREE_CRV(), account)
+    threecrv_pool = lazy_contract(exit_cyy3crv_action.THREE_CRV_POOL(), account)
+    y3crv = lazy_contract(exit_cyy3crv_action.Y_THREE_CRV(), account)
+    cyy3crv = lazy_contract(exit_cyy3crv_action.CY_Y_THREE_CRV(), account)
+    cydai = lazy_contract(exit_cyy3crv_action.CY_DAI(), account)
+    fee_distribution = lazy_contract(exit_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION(), account)
     lender = DyDxFlashLender
+
+    lender._owner = account
 
     # use multiple workers to fetch the contracts
     # there will still be some to fetch, but this speeds things up some
@@ -78,7 +80,7 @@ def atomic_exit():
     # poke_contracts([dai, usdc, usdt, threecrv, threecrv_pool, y3crv, cyy3crv, lender])
 
     # TODO: fetch other tokens?
-    tokens = [cyy3crv]
+    tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv, cydai]
 
     if exit_from_account:
         exit_from = account
@@ -122,8 +124,8 @@ def atomic_exit():
 
     exit_data = ExitData(
         min_remove_liquidity_dai=min_remove_liquidity_dai,
-        tip_dai=tip_dai,
         dai_flash_fee=dai_flash_fee,
+        tip_dai=tip_dai,
         exit_from=exit_from,
         exit_to=account,
     )
@@ -147,7 +149,7 @@ def atomic_exit():
     print("exit success!")
     exit_tx.info()
 
-    num_events = len(enter_tx.events)
+    num_events = len(exit_tx.events)
     print(f"num events: {num_events}")
 
     print("clone balances")

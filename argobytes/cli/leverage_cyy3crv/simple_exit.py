@@ -82,9 +82,9 @@ def simple_exit(exit_from_account):
         start_balances[dai] >= borrow_balance
     ), f"not enough DAI: {start_balances[dai]} < {borrow_balance}"
 
-    dai.approve(cydai, borrow_balance)
+    dai.approve(cydai, borrow_balance, {"from": account})
 
-    cydai.repayBorrow(account)
+    cydai.repayBorrow(borrow_balance)
 
     cyy3crv_balance = cyy3crv.balanceOf(account)
 

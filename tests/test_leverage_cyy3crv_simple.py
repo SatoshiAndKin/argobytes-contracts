@@ -41,10 +41,11 @@ def test_simple_scripts(
     )
 
     # pretend like we made money somewhere else and can close our loan
-    transfer_token(unlocked_binance, accountsa, dai_erc20, 100000)
+    transfer_token(unlocked_binance, account, dai_erc20, 100000)
 
     result = click_test_runner(simple_exit)
 
     assert result.exit_code == 0
 
     # TODO: make sure we made a profit
+    raise NotImplementedError("wip");

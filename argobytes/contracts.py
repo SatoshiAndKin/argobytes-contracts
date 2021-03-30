@@ -110,7 +110,9 @@ def get_or_create(default_account, contract, salt="", constructor_args=None):
 
         contract_address = deployed_contract_address
 
-    print(f"Created {contract._name} at {contract_address}\n")
+        print(f"Created {contract._name} at {contract_address}\n")
+    else:
+        print(f"Found {contract._name} at {contract_address}\n")
 
     return contract.at(contract_address, default_account)
 
@@ -127,28 +129,29 @@ def get_or_create_flash_borrower(default_account, salt):
     return get_or_create(default_account, ArgobytesFlashBorrower, salt, None)
 
 
-def lazy_contract(address: str):
-    return lazy(lambda: load_contract(address))
+def lazy_contract(address: str, owner=None):
+    return lazy(lambda: load_contract(address, owner))
 
 
 # @functools.lru_cache(maxsize=None)
-def load_contract(token_name_or_address: str, from_explorer=False):
-    # this seems gross, but i think it works
-    if from_explorer:
-        _contract = Contract.from_explorer
-    else:
-        _contract = Contract
-
+def load_contract(token_name_or_address: str, owner=None):
+    """
     if token_name_or_address.lower() == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
+        # this is gross, but i think it works
         # USDC does weird things to get their implementation
         # TODO: don't hard code this!!!
-        impl = _contract("0xB7277a6e95992041568D9391D09d0122023778A2")
+        impl = Contract("0xB7277a6e95992041568D9391D09d0122023778A2")
 
-        proxy = _contract("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
+        proxy = Contract("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 
-        contract = Contract.from_abi(proxy._name, proxy.address, impl.abi)
+        contract = Contract.from_abi(proxy._name, proxy.address, impl.abi, owner=owner)
 
         return contract
+    """
+    if isinstance(token_name_or_address, Contract):
+        if owner:
+            token_name_or_address._owner = owner
+        return token_name_or_address
 
     if token_name_or_address.lower() in ["eth", ZERO_ADDRESS, ETH_ADDRESS.lower()]:
         # just use weth for eth
@@ -160,24 +163,24 @@ def load_contract(token_name_or_address: str, from_explorer=False):
         # TODO: find a tokenlist with this on it
         token_name_or_address = "0x8064d9Ae6cDf087b1bcd5BDf3531bD5d8C537a68"
 
-    # TODO: why was this erroring at the top level imports?
-    from brownie.network.web3 import _resolve_address
-
     # this raises a ValueError if this is not an address or ENS name
-    address = _resolve_address(token_name_or_address)
+    if "." in token_name_or_address:
+        address = web3.ens.resolve(token_name_or_address)
+    else:
+        address = to_checksum_address(token_name_or_address)
 
-    contract = _contract(address)
+    contract = Contract(address, owner=owner)
 
     # check if this is a proxy contract
     # TODO: theres other ways to have an impl too. usdc has one that uses storage
     impl = None
     if hasattr(contract, "implementation"):
-        impl = _contract(contract.implementation.call())
+        impl = Contract(contract.implementation.call(), owner=owner)
     elif hasattr(contract, "target"):
-        impl = _contract(contract.target.call())
+        impl = Contract(contract.target.call(), owner=owner)
 
     if impl:
-        contract = Contract.from_abi(contract._name, address, impl.abi)
+        contract = Contract.from_abi(contract._name, address, impl.abi, owner=owner)
 
     return contract
 
