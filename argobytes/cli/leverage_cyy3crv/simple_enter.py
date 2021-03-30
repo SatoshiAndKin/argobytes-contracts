@@ -133,13 +133,20 @@ def simple_enter():
     mint_tx = cyy3crv.mint(balances_for_cyy3crv[y3crv], {"from": account})
     mint_tx.info()
 
-    borrow_amount = int(balances_for_y3crv[threecrv] * 0.8)
+    # TODO: need to use actual prices of 3crv and dai
+    borrow_amount = int(
+        balances_for_y3crv[threecrv]
+        * threecrv_pool.get_virtual_price()
+        / 1e18
+        * 0.9
+        * 0.9
+    )
     print(f"borrow_amount: {borrow_amount}")
 
     assert borrow_amount > 0
 
     # TODO: this could be better, figute out how to properly calculate the maximum safe borrow
-    balances_before_borrow = get_balances(account, [cyy3crv, y3crv])
+    balances_before_borrow = get_balances(account, tokens)
     print_token_balances(balances_before_borrow, f"{account} balances before borrow:")
 
     # TODO: we could use `borrow_amount` here
@@ -150,11 +157,11 @@ def simple_enter():
     ) = cream.getHypotheticalAccountLiquidity(account, cydai, 0, 0)
 
     print(f"cream_error: {cream_error}")
-    print(f"cream_liquidity: {cream_liquidity}")
+    print(f"cream_liquidity (before borrow): {cream_liquidity}")
     print(f"cream_shortfall: {cream_shortfall}")
 
     assert cream_error == 0, "cream error"
-    assert cream_error == 0, "cream shortfall"
+    assert cream_shortfall == 0, "cream shortfall"
     assert cream_liquidity > borrow_amount, "no cream liquidity available for borrowing"
 
     borrow_tx = cydai.borrow(borrow_amount, {"from": account})

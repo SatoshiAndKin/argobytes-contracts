@@ -72,17 +72,15 @@ def simple_exit(exit_from_account):
     start_balances = get_balances(account, tokens)
     print_token_balances(start_balances, f"{account} start balances")
 
-    # TODO: calculate/prompt for these
-    # StableSwap.calc_withdraw_one_coin(_token_amount: uint256, i: int128) → uint256
-    # TODO: this is wrong. we need to have a proper amount to protect us from slippage
+    # approve 100%. if we approve borrowBalance, then we leave some dust behind since the approve transaction adds a block of interest
+    # also, since this is a simple exit, we will probably have to run this again
+    approve(account, {dai: start_balances[dai]}, {}, cydai)
+
     borrow_balance = cydai.borrowBalanceCurrent.call(account)
-    # min_cream_liquidity = 1
 
     assert (
         start_balances[dai] >= borrow_balance
     ), f"not enough DAI: {start_balances[dai]} < {borrow_balance}"
-
-    dai.approve(cydai, borrow_balance, {"from": account})
 
     cydai.repayBorrow(borrow_balance)
 
@@ -98,6 +96,7 @@ def simple_exit(exit_from_account):
 
     threecrv.approve(threecrv_pool, threecrv_balance)
 
+    # TODO: change this to exit to 3crv
     threecrv_pool.remove_liquidity_one_coin(threecrv_balance, 0, borrow_balance)
 
     end_balances = get_balances(account, tokens)

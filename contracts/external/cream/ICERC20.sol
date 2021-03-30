@@ -52,12 +52,4 @@ interface ICERC20 is IERC20 {
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
     function repayBorrow(uint repayAmount) external returns (uint);
-
-    /**
-     * @notice Sender repays a borrow belonging to borrower
-     * @param borrower the account with the debt being payed off
-     * @param repayAmount The amount to repay
-     * @return (uint, uint) An error code (0=success, otherwise a failure, see ErrorReporter.sol), and the actual repayment amount.
-     */
-    function repayBorrowBehalf(address borrower, uint repayAmount) external returns (uint, uint);
 }

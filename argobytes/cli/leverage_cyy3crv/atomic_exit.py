@@ -40,15 +40,16 @@ ExitData = namedtuple(
 @click.command()
 @click.option("--tip-eth", default=0)
 @click.option("--tip-3crv", default=0)
-def atomic_exit(tip_eth, tip_3crv):
+@click.option("--exit-from-account/--exit-from-clone", default=False)
+def atomic_exit(exit_from_account, tip_eth, tip_3crv):
     """Use a flash loan to withdraw from a leveraged cyy3crv position."""
     # TODO: we need an account with private keys
     account = accounts.at(os.environ["LEVERAGE_ACCOUNT"], force=True)
     print(f"Hello, {account}")
 
     # 0.5 == 0.5%
+    # slippage = ['small', 'medium', 'high', 'bad idea']
     slippage_pct = 0.5  # TODO: this should be a click arg
-    exit_from_account = False  # TODO: this should be a click arg (or maybe automatic based on balances?)
 
     # TODO: use salts for the contracts once we figure out a way to store them. maybe 3box?
 
@@ -87,19 +88,15 @@ def atomic_exit(tip_eth, tip_3crv):
         exit_to = ZERO_ADDRESS
 
         balances = get_balances(exit_from, tokens)
-        print(f"{exit_from} balances")
+        print(f"account {exit_from} balances")
 
-        dai_borrowed = cy_dai.borrowBalanceCurrent.call(account)
-
-        raise NotImplementedError(
-            "we need an approve so CY_DAI.repayBorrowBehalf is allowed"
-        )
+        dai_borrowed = cydai.borrowBalanceCurrent.call(account)
     else:
         exit_from = ZERO_ADDRESS
         exit_to = account
 
         balances = get_balances(argobytes_clone, tokens)
-        print(f"{argobytes_clone} balances")
+        print(f"clone {argobytes_clone} balances")
 
         dai_borrowed = cydai.borrowBalanceCurrent.call(argobytes_clone)
 
@@ -115,9 +112,19 @@ def atomic_exit(tip_eth, tip_3crv):
     # TODO: is this right? i think it might be overshooting. i don't think it matters that much though
     interest_slippage_blocks = int((5 * 60) / get_average_block_time())
     # https://www.geeksforgeeks.org/python-program-for-compound-interest/
-    flash_loan_amount = int(dai_borrowed * (pow((1 + borrow_rate_per_block / 1e18), interest_slippage_blocks)))
+    flash_loan_amount = int(
+        dai_borrowed
+        * (pow((1 + borrow_rate_per_block / 1e18), interest_slippage_blocks))
+    )
 
     print(f"flash_loan_amount: {flash_loan_amount}")
+
+    # TODO: do we need this? can anyone pay off anyone else's loan without approval? that would be nice
+    """
+    if exit_from_account:
+        # TODO: is this the right approval?
+        approve(account, {cydai: flash_loan_amount}, {}, argobytes_clone)
+    """
 
     # safety check. make sure our interest doesn't add a giant amount
     assert flash_loan_amount <= dai_borrowed * (1 + slippage_pct / 100)
@@ -131,11 +138,7 @@ def atomic_exit(tip_eth, tip_3crv):
     # TODO: this is slightly high because we add 5 minutes of interest. we could spend gas subtracting out the unused slack, but i doubt its worthwhile
     max_3crv_burned = threecrv_pool.calc_token_amount(
         # dai, usdc, usdt
-        [
-            flash_loan_amount + flash_loan_fee,
-            0,
-            0,
-        ],
+        [flash_loan_amount + flash_loan_fee, 0, 0,],
         # is_deposit
         False,
     ) * (1 + slippage_pct / 100)
@@ -162,9 +165,7 @@ def atomic_exit(tip_eth, tip_3crv):
         Action(
             exit_cyy3crv_action, CallType.DELEGATE, False, "exit", *exit_data,
         ).tuple,
-        {
-            "value": tip_eth,
-        }
+        {"value": tip_eth,},
     )
 
     print("exit success!")

@@ -1,13 +1,14 @@
 import pytest
+from decimal import Decimal
 
 from argobytes.tokens import transfer_token
 from brownie import accounts, project
 
-from argobytes.cli.leverage_cyy3crv import atomic_enter, atomic_exit
+from argobytes.cli.leverage_cyy3crv import atomic_enter, atomic_exit, simple_enter
 from argobytes.contracts import load_contract
 
 
-# @pytest.mark.skip(reason="crashes ganache")
+@pytest.mark.skip("wip")
 @pytest.mark.require_network("mainnet-fork")
 def test_atomic_scripts(
     argobytes_flash_clone,
@@ -25,11 +26,14 @@ def test_atomic_scripts(
     usdc = load_contract(exit_cyy3crv_action.USDC())
     usdt = load_contract(exit_cyy3crv_action.USDT())
     threecrv = load_contract(exit_cyy3crv_action.THREE_CRV())
+    threecrv_pool = load_contract(exit_cyy3crv_action.THREE_CRV_POOL())
     y3crv = load_contract(exit_cyy3crv_action.Y_THREE_CRV())
     cyy3crv = load_contract(exit_cyy3crv_action.CY_Y_THREE_CRV())
 
+    initial_dai = Decimal(10000)
+
     # borrow some tokens from binance
-    transfer_token(unlocked_binance, accounts[0], dai, 10000)
+    transfer_token(unlocked_binance, accounts[0], dai, initial_dai)
     # transfer_token(unlocked_binance, accounts[0], usdc, 10000)
     # transfer_token(unlocked_binance, accounts[0], usdt, 10000)
 
@@ -56,13 +60,19 @@ def test_atomic_scripts(
     # simulate some trades so that 3pool increases in value
     # TODO: make some actual trades?
     # TODO: how much DAI actually needs to be added to the pool
-    transfer_token(
-        unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai, 1000000
-    )
+    transfer_token(unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai, 1000000)
 
     exit_result = click_test_runner(atomic_exit)
 
     assert exit_result.exit_code == 0
+
+    threecrv_balance = threecrv.balanceOf(account)
+
+    threecrv_balance_as_dai = (
+        Decimal(threecrv_balance)
+        * Decimal(threecrv_pool.get_virtual_price())
+        / Decimal(1e18)
+    )
 
     # make sure balances are what we expect
     assert dai.balanceOf(argobytes_flash_clone) == 0
@@ -72,7 +82,101 @@ def test_atomic_scripts(
     assert usdt.balanceOf(argobytes_flash_clone) == 0
     assert usdt.balanceOf(account) == 0
     assert threecrv.balanceOf(argobytes_flash_clone) == 0
-    assert threecrv.balanceOf(account) > 0
+    assert threecrv_balance > 0
+    assert threecrv_balance_as_dai > initial_dai
+    assert y3crv.balanceOf(argobytes_flash_clone) == 0
+    assert y3crv.balanceOf(account) == 0
+    assert cyy3crv.balanceOf(argobytes_flash_clone) == 0
+    assert cyy3crv.balanceOf(account) == 0
+
+
+@pytest.mark.require_network("mainnet-fork")
+def test_exit_from(
+    argobytes_flash_clone,
+    click_test_runner,
+    exit_cyy3crv_action,
+    monkeypatch,
+    unlocked_binance,
+):
+    account = accounts[0]
+
+    # TODO: use click args
+    monkeypatch.setenv("LEVERAGE_ACCOUNT", str(account))
+
+    initial_dai = 10000
+
+    dai = load_contract(exit_cyy3crv_action.DAI())
+    usdc = load_contract(exit_cyy3crv_action.USDC())
+    usdt = load_contract(exit_cyy3crv_action.USDT())
+    threecrv = load_contract(exit_cyy3crv_action.THREE_CRV())
+    threecrv_pool = load_contract(exit_cyy3crv_action.THREE_CRV_POOL())
+    y3crv = load_contract(exit_cyy3crv_action.Y_THREE_CRV())
+    cyy3crv = load_contract(exit_cyy3crv_action.CY_Y_THREE_CRV())
+    cydai = load_contract(exit_cyy3crv_action.CY_DAI())
+
+    # borrow some tokens from binance
+    transfer_token(unlocked_binance, accounts[0], dai, initial_dai)
+    # transfer_token(unlocked_binance, accounts[0], usdc, 10000)
+    # transfer_token(unlocked_binance, accounts[0], usdt, 10000)
+
+    # call the enter script twice
+    for _ in range(2):
+        enter_result = click_test_runner(simple_enter)
+        # simple enter leaves us with the DAI. it does NOT put it back into cream for us
+
+        assert enter_result.exit_code == 0
+
+        # make sure balances are what we expect
+        dai_balance = dai.balanceOf(account)
+        print(f"dai_balance: {dai_balance}")
+
+        assert dai_balance > 0
+        assert usdc.balanceOf(account) == 0
+        assert usdt.balanceOf(account) == 0
+        assert threecrv.balanceOf(account) == 0
+        assert y3crv.balanceOf(account) == 0
+        assert cyy3crv.balanceOf(account) > 0
+
+    # TODO: make sure we can't get liquidated (though i think the borrow would have reverted)
+
+    # simulate some trades so that 3crv increases in value
+    # TODO: make some actual trades? how much DAI actually needs to be added to the pool
+    transfer_token(unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai, 200000)
+
+    borrow_balance = cydai.borrowBalanceCurrent.call(account)
+    print(f"borrow_balance: {borrow_balance}")
+
+    # TODO: we might need a little bit more DAI to pay back our loan
+    # dai_needed = max(0, borrow_balance - dai.balanceOf(account))
+    # if dai_needed:
+    #     print(f"adding {dai_needed} extra DAI")
+    #     # pretend like we made money somewhere else and can close our loan in a single transaction
+    #     transfer_token(unlocked_binance, account, dai, dai_needed)
+
+    # run the atomic exit script. this is the point of this test.
+    exit_result = click_test_runner(atomic_exit, ["--exit-from-account"])
+
+    # it exited successfully!
+    assert exit_result.exit_code == 0
+
+    # make sure balances are what we expect
+    threecrv_balance = threecrv.balanceOf(account)
+
+    threecrv_balance_as_dai = (
+        Decimal(threecrv_balance)
+        * Decimal(threecrv_pool.get_virtual_price())
+        / Decimal(1e18)
+    )
+
+    assert dai.balanceOf(argobytes_flash_clone) == 0
+    assert dai.balanceOf(account) == 0
+    assert usdc.balanceOf(argobytes_flash_clone) == 0
+    assert usdc.balanceOf(account) == 0
+    assert usdt.balanceOf(argobytes_flash_clone) == 0
+    assert usdt.balanceOf(account) == 0
+    assert threecrv.balanceOf(argobytes_flash_clone) == 0
+    assert threecrv_balance > 0
+    assert threecrv_balance_as_dai > initial_dai
     assert y3crv.balanceOf(argobytes_flash_clone) == 0
     assert y3crv.balanceOf(account) == 0
     assert cyy3crv.balanceOf(argobytes_flash_clone) == 0

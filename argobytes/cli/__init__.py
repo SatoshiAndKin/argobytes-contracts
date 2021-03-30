@@ -135,11 +135,11 @@ def main():
 
     # https://click.palletsprojects.com/en/7.x/exceptions/#what-if-i-don-t-want-that
     # TODO: do we need this for easier testing? or is invoke catch_exceptions=False enough?
-    standalone_mode = os.get("ARGOBYTES_CLICK_STANDALONE", "1") == "1"
+    standalone_mode = os.environ.get("ARGOBYTES_CLICK_STANDALONE", "1") == "1"
 
     cli(
         obj={},
         auto_envvar_prefix="ARGOBYTES",
         prog_name="argobytes",
-        standalone_mode=False,
+        standalone_mode=standalone_mode,
     )
