@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity 0.7.6;
+pragma solidity 0.8.3;
 
 library StringLib {
     function toString(address x) internal pure returns (string memory) {
-        bytes32 value = bytes32(uint256(x));
+        bytes32 value = bytes32(uint256(uint160(x)));
         bytes memory alphabet = "0123456789abcdef";
 
         bytes memory str = new bytes(42);

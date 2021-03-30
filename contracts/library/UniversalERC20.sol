@@ -13,16 +13,13 @@
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-pragma solidity 0.7.6;
+pragma solidity 0.8.3;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
-import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
+import {SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
 
 library UniversalERC20 {
-    // using Address for address;
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     IERC20 private constant ADDRESS_ZERO = IERC20(
@@ -84,7 +81,7 @@ library UniversalERC20 {
                 // https://diligence.consensys.net/blog/2019/09/stop-using-soliditys-transfer-now/
                 // TODO: use OpenZepplin's sendValue
                 (bool success, ) = msg.sender.call{
-                    value: msg.value.sub(amount)
+                    value: msg.value - amount
                 }("");
                 require(
                     success,
@@ -110,7 +107,7 @@ library UniversalERC20 {
                 // send back any extra msg.value
                 // TODO: use OpenZepplin's sendValue
                 (bool success, ) = msg.sender.call{
-                    value: msg.value.sub(amount)
+                    value: msg.value - amount
                 }("");
                 require(
                     success,

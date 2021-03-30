@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.7.6;
+pragma solidity 0.8.3;
 
 import './IUniswapV2Router01.sol';
 

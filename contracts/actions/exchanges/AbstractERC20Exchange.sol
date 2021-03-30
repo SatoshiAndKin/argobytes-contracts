@@ -6,11 +6,9 @@
  *
  * Rewrite this to use UniversalERC20? I'm not sure its worth it. this is pretty easy to follow.
  */
-pragma solidity 0.7.6;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.3;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
-import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
 
 import {
     IERC20,
@@ -45,7 +43,7 @@ contract AbstractERC20Exchange {
         uint256 balance = address(this).balance;
 
         if (balance > 0) {
-            Address.sendValue(msg.sender, balance);
+            Address.sendValue(payable(msg.sender), balance);
         }
     }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // TODO: rewrite this to be a target for ArgobytesFlashBorrower
 // TODO: consistent revert strings
-pragma solidity 0.7.6;
+pragma solidity 0.8.3;
 pragma abicoder v2;
 
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";

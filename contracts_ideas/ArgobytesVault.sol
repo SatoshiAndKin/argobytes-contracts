@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // Store profits and provide them for flash lending
 // Burns GasToken (or compatible contracts)
-pragma solidity 0.7.6;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.3;
 
 import {AccessControl} from "@OpenZeppelin/access/AccessControl.sol";
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
-import {SafeMath} from "@OpenZeppelin/math/SafeMath.sol";
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";
 import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
@@ -24,7 +22,6 @@ contract ArgobytesProxy is
     LiquidGasTokenUser,
     ArgobytesOwnedVault
 {
-    using SafeMath for uint256;
     // using Address for address payable;
     // using Strings for uint256;
     // using UniversalERC20 for IERC20;

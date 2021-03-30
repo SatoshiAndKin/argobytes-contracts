@@ -35,7 +35,7 @@ def argobytes_authority(ArgobytesAuthority):
     return get_or_create(accounts[0], ArgobytesAuthority)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def argobytes_factory(ArgobytesFactory):
     return get_or_create(accounts[0], ArgobytesFactory)
 
@@ -52,7 +52,7 @@ def argobytes_proxy(ArgobytesProxy):
     return get_or_create(accounts[0], ArgobytesProxy)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def argobytes_trader(ArgobytesTrader):
     return get_or_create(accounts[0], ArgobytesTrader)
 

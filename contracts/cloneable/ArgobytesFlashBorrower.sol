@@ -2,8 +2,7 @@
 /**
  * ArgobytesFlashBorrower is an extension to ArgobytesProxy that is also an IERC3156 Flash Loan Borrower.
  */
-pragma solidity 0.7.6;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.3;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 // import {Strings} from "@OpenZeppelin/utils/Strings.sol";

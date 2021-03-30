@@ -2,7 +2,7 @@
 // don't call this contract directly! use a proxy like DSProxy or ArgobytesProxy!
 // TODO: use a generic flash loan contract instead of hard coding dydx?
 // TODO: consistent revert strings
-pragma solidity 0.7.6;
+pragma solidity 0.8.3;
 pragma abicoder v2;
 
 import {IENS, IResolver} from "contracts/external/ens/ENS.sol";

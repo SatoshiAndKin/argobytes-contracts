@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.7.6;
+pragma solidity 0.8.3;
 
 interface IComptroller {
     function checkMembership(address account, address cToken) external view returns (bool);

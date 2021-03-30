@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity 0.7.6;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.3;
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 import {
@@ -12,9 +11,7 @@ contract KyberAction is AbstractERC20Exchange {
     // TODO: document MAX_QTY
     uint256 internal constant MAX_QTY = 10**28;
 
-    IERC20 internal constant ETH_ON_KYBER = IERC20(
-        0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-    );
+    IERC20 internal constant ETH_ON_KYBER = IERC20(address(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee));
 
     // TODO: do we really want this in state?
     // generally i prefer not to have any state, but if someone uses my contract, i'd like some credit
