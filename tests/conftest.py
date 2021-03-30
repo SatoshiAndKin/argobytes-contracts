@@ -146,7 +146,7 @@ def onesplit():
 def onesplit_helper(onesplit, interface):
     def inner_onesplit_helper(eth_amount, dest_token, to):
         # TODO: actual ERC20 interface
-        dest_token = interface.IWETH9(dest_token)
+        dest_token = load_contract(dest_token)
         parts = 1
         # TODO: enable multipaths
         flags = 0
@@ -257,7 +257,7 @@ def uniswap_v1_helper(uniswap_v1_factory, interface):
         # get the uniswap exchange
         exchange = uniswap_v1_factory.getExchange(dest_token)
 
-        exchange = interface.IUniswapExchange(exchange)
+        exchange = load_contract(exchange)
 
         # # put some ETH into the uniswap action so we can buy some DAI
         # accounts[0].transfer(uniswap_v1_action, 1e18)

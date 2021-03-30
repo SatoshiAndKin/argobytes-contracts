@@ -12,12 +12,12 @@ from argobytes import (
     print_token_balances,
 )
 from argobytes.contracts import (
+    ArgobytesInterfaces,
     ArgobytesFactory,
     DyDxFlashLender,
     get_or_clone,
     get_or_create,
-    lazy_contract,
-    poke_contracts,
+    load_contract,
     ArgobytesFlashBorrower,
     EnterCYY3CRVAction,
 )
@@ -44,16 +44,20 @@ def simple_enter():
 
     print("Preparing contracts...")
     # TODO: use multicall to get all the addresses?
-    dai = lazy_contract(enter_cyy3crv_action.DAI())
-    usdc = lazy_contract(enter_cyy3crv_action.USDC())
-    usdt = lazy_contract(enter_cyy3crv_action.USDT())
-    threecrv = lazy_contract(enter_cyy3crv_action.THREE_CRV())
-    threecrv_pool = lazy_contract(enter_cyy3crv_action.THREE_CRV_POOL())
-    y3crv = lazy_contract(enter_cyy3crv_action.Y_THREE_CRV())
-    cyy3crv = lazy_contract(enter_cyy3crv_action.CY_Y_THREE_CRV())
-    cydai = lazy_contract(enter_cyy3crv_action.CY_DAI())
-    fee_distribution = lazy_contract(enter_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION())
-    cream = lazy_contract(enter_cyy3crv_action.CREAM())
+    dai = load_contract(enter_cyy3crv_action.DAI())
+    usdc = load_contract(enter_cyy3crv_action.USDC())
+    usdt = load_contract(enter_cyy3crv_action.USDT())
+    threecrv = load_contract(enter_cyy3crv_action.THREE_CRV())
+    threecrv_pool = ArgobytesInterfaces.ICurvePool(
+        enter_cyy3crv_action.THREE_CRV_POOL()
+    )
+    y3crv = ArgobytesInterfaces.IYVault(enter_cyy3crv_action.Y_THREE_CRV())
+    cyy3crv = ArgobytesInterfaces.ICERC20(enter_cyy3crv_action.CY_Y_THREE_CRV())
+    cydai = ArgobytesInterfaces.ICERC20(enter_cyy3crv_action.CY_DAI())
+    fee_distribution = ArgobytesInterfaces.ICurveFeeDistribution(
+        enter_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION()
+    )
+    cream = ArgobytesInterfaces.IComptroller(enter_cyy3crv_action.CREAM())
 
     tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv]
 

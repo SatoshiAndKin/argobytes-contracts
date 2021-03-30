@@ -7,7 +7,7 @@ import {AccessControl} from "@OpenZeppelin/access/AccessControl.sol";
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";
-import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
+import {IERC20} from "contracts/external/erc20/IERC20.sol";
 
 import {LiquidGasTokenUser} from "contracts/LiquidGasTokenUser.sol";
 import {UniversalERC20} from "contracts/library/UniversalERC20.sol";

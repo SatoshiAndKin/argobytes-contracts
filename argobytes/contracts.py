@@ -132,13 +132,19 @@ def lazy_contract(address: str):
 
 
 # @functools.lru_cache(maxsize=None)
-def load_contract(token_name_or_address: str):
+def load_contract(token_name_or_address: str, from_explorer=False):
+    # this seems gross, but i think it works
+    if from_explorer:
+        _contract = Contract.from_explorer
+    else:
+        _contract = Contract
+
     if token_name_or_address.lower() == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
         # USDC does weird things to get their implementation
         # TODO: don't hard code this!!!
-        impl = Contract("0xB7277a6e95992041568D9391D09d0122023778A2")
+        impl = _contract("0xB7277a6e95992041568D9391D09d0122023778A2")
 
-        proxy = Contract("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
+        proxy = _contract("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 
         contract = Contract.from_abi(proxy._name, proxy.address, impl.abi)
 
@@ -160,23 +166,15 @@ def load_contract(token_name_or_address: str):
     # this raises a ValueError if this is not an address or ENS name
     address = _resolve_address(token_name_or_address)
 
-    contract = Contract(address)
-
-    # TODO: we shouldn't need from_explorer, but i'm seeing weird things were DAI loads as IWETH9
-    if (
-        contract._name == "IWETH9"
-        and address != "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
-    ):
-        warn(f"Reloading contract supposedly named IWETH9: {address}")
-        contract = Contract.from_explorer(address)
+    contract = _contract(address)
 
     # check if this is a proxy contract
     # TODO: theres other ways to have an impl too. usdc has one that uses storage
     impl = None
     if hasattr(contract, "implementation"):
-        impl = Contract(contract.implementation.call())
+        impl = _contract(contract.implementation.call())
     elif hasattr(contract, "target"):
-        impl = Contract(contract.target.call())
+        impl = _contract(contract.target.call())
 
     if impl:
         contract = Contract.from_abi(contract._name, address, impl.abi)

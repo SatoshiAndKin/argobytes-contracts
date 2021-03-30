@@ -5,16 +5,14 @@
 // TODO: rewrite this to use the FlashLoan EIP instead of dydx. this allows lots more tokens
 pragma solidity 0.8.3;
 
-import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
 
 import {ArgobytesAuth} from "contracts/abstract/ArgobytesAuth.sol";
 import {ArgobytesMulticall} from "contracts/ArgobytesMulticall.sol";
+import {IERC20} from "contracts/external/erc20/IERC20.sol";
 
 contract ArgobytesTrader {
-    // TODO: immutable set in the constructor
-    address constant WETH9 = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
-
+    // TODO: use this event
     event SetArgobytesMulticall(address indexed old_addr, address indexed new_addr);
 
     struct Borrow {
@@ -24,6 +22,7 @@ contract ArgobytesTrader {
     }
 
     // diamond storage
+    // TODO: use this
     struct ArgobytesTraderStorage {
         mapping(ArgobytesMulticall => bool) approved_argobytes_multicalls;
     }

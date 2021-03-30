@@ -45,27 +45,7 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
             // TODO: allow partially repaying?
             DAI.approve(address(CY_DAI), dai_borrow_balance);
 
-            // debug check
-            // require(CY_DAI.balanceOf(address(this)) > 0, "ExitCYY3CRVAction debug !CY_DAI.balance 1");
-            uint256 borrow_before_repay = CY_DAI.borrowBalanceCurrent(address(this));
-            require(borrow_before_repay > 0, "ExitCYY3CRVAction debug !CY_DAI.borrowBalanceCurrent");
-
-            uint256 dai_before_repay = DAI.balanceOf(address(this));
-            require(dai_before_repay >= dai_borrow_balance, "ExitCYY3CRVAction debug !DAI.balance before repay");
-
             require(CY_DAI.repayBorrow(dai_borrow_balance) == 0, "ExitCYY3CRVAction !CY_DAI.repayBorrow");
-
-            require(DAI.balanceOf(address(this)) < dai_before_repay, "ExitCYY3CRVAction !DAI.balance after repay");
-
-            // debug check
-            uint256 borrow_after_repay = CY_DAI.borrowBalanceCurrent(address(this));
-
-            if (borrow_after_repay > 0) {
-                // TODO: why are we reverting here? why can't we withdraw 100%?
-                revert(string(abi.encodePacked("CY_DAI.borrowBalance after repayBorrow: ", Strings.toString(borrow_before_repay), " -> ", Strings.toString(borrow_after_repay))));
-            }
-
-            require(borrow_after_repay == 0, "ExitCYY3CRVAction debug !CY_DAI.balance 3");
 
             // we have CY_Y_THREE_CRV free now
             // TODO: don't assume we can move it all. we might want to have other borrows on this same proxy
@@ -98,15 +78,13 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
         // check cyy3crv balance
         require(temp > 0, "ExitCYY3CRVAction debug !cyy3crv");
 
-        (uint error, uint liquidity, uint shortfall) = CREAM.getHypotheticalAccountLiquidity(address(this), address(CY_Y_THREE_CRV), temp, 0);
-        require(error == 0, "ExitCYY3CRVAction CREAM redeem error");
-
-        if (shortfall > 0) {
-            // TODO: why are we reverting here? why can't we withdraw 100%?
-            revert(string(abi.encodePacked("shortfall: ", Strings.toString(shortfall))));
-        }
-
-        require(shortfall == 0, "EnterCYY3CRVAction CREAM redeem shortfall");
+        // (uint error, uint liquidity, uint shortfall) = CREAM.getHypotheticalAccountLiquidity(address(this), address(CY_Y_THREE_CRV), temp, 0);
+        // require(error == 0, "ExitCYY3CRVAction CREAM redeem error");
+        // if (shortfall > 0) {
+        //     // TODO: why are we reverting here? why can't we withdraw 100%?
+        //     revert(string(abi.encodePacked("shortfall: ", Strings.toString(shortfall))));
+        // }
+        // require(shortfall == 0, "EnterCYY3CRVAction CREAM redeem shortfall");
 
         // turn CY_Y_THREE_CRV into Y_THREE_CRV (no approval needed)
         require(CY_Y_THREE_CRV.redeem(temp) == 0, "ExitCYY3CRVAction !CY_Y_THREE_CRV.redeem");
@@ -144,8 +122,6 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
         // remove_liquidity_one_coin returns the DAI balance, but we might have some excess from a bigger flash loan than we needed
         temp = DAI.balanceOf(address(this));
 
-        revert("we almost got to the end");
-
         // set aside the DAI needed to pay back the flash loan
         temp -= flash_dai_amount;
 
@@ -168,7 +144,5 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
         if (temp > 0) {
             require(DAI.transfer(exit_to, temp), "ExitCYY3CRVAction !DAI sweep");
         }
-
-        revert("we got to the end");
     }
 }

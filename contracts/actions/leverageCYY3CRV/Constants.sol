@@ -5,7 +5,7 @@
 pragma solidity 0.8.3;
 pragma abicoder v2;
 
-import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
+import {IERC20} from "contracts/external/erc20/IERC20.sol";
 
 import {ICurvePool} from "contracts/external/curvefi/ICurvePool.sol";
 import {ICurveFeeDistribution} from "contracts/external/curvefi/ICurveFeeDistribution.sol";

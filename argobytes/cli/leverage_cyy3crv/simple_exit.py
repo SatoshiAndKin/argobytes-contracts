@@ -13,14 +13,14 @@ from argobytes import (
     print_token_balances,
 )
 from argobytes.contracts import (
+    ArgobytesInterfaces,
     ArgobytesFactory,
     ArgobytesFlashBorrower,
     DyDxFlashLender,
     ExitCYY3CRVAction,
     get_or_clone,
     get_or_create,
-    lazy_contract,
-    poke_contracts,
+    load_contract,
 )
 from brownie import accounts, Contract, ZERO_ADDRESS
 from brownie.network.web3 import _resolve_address
@@ -31,7 +31,8 @@ from pprint import pprint
 
 
 @click.command()
-def simple_exit():
+@click.option("--exit-from-account/--exit-from-clone", default=False)
+def simple_exit(exit_from_account):
     """Make a bunch of transactions to withdraw from a leveraged cyy3crv position."""
     account = accounts.at(os.environ["LEVERAGE_ACCOUNT"])
     print(f"Hello, {account}")
@@ -48,33 +49,58 @@ def simple_exit():
     # TODO: we only use this for the constants. don't waste gas deploying this on mainnet if it isn't needed
     exit_cyy3crv_action = get_or_create(account, ExitCYY3CRVAction)
 
-    # get the clone for the account
-    argobytes_clone = get_or_clone(account, argobytes_factory, argobytes_flash_borrower)
-
-    assert account == argobytes_clone.owner(), "Wrong owner detected!"
-
     print("Preparing contracts...")
     # TODO: use multicall to get all the addresses?
-    dai = lazy_contract(exit_cyy3crv_action.DAI())
-    usdc = lazy_contract(exit_cyy3crv_action.USDC())
-    usdt = lazy_contract(exit_cyy3crv_action.USDT())
-    threecrv = lazy_contract(exit_cyy3crv_action.THREE_CRV())
-    threecrv_pool = lazy_contract(exit_cyy3crv_action.THREE_CRV_POOL())
-    y3crv = lazy_contract(exit_cyy3crv_action.Y_THREE_CRV())
-    cyy3crv = lazy_contract(exit_cyy3crv_action.CY_Y_THREE_CRV())
-    cydai = lazy_contract(exit_cyy3crv_action.CY_DAI())
-    fee_distribution = lazy_contract(exit_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION())
-    cream = lazy_contract(exit_cyy3crv_action.CREAM())
+    # TODO: i want to use IERC20, but it lacks getters for the state variables
+    dai = load_contract(exit_cyy3crv_action.DAI(), account)
+    usdc = load_contract(exit_cyy3crv_action.USDC(), account)
+    usdt = load_contract(exit_cyy3crv_action.USDT(), account)
+    threecrv = load_contract(exit_cyy3crv_action.THREE_CRV(), account)
+    threecrv_pool = ArgobytesInterfaces.ICurvePool(
+        exit_cyy3crv_action.THREE_CRV_POOL(), account
+    )
+    y3crv = ArgobytesInterfaces.IYVault(exit_cyy3crv_action.Y_THREE_CRV(), account)
+    cyy3crv = ArgobytesInterfaces.ICERC20(exit_cyy3crv_action.CY_Y_THREE_CRV(), account)
+    cydai = ArgobytesInterfaces.ICERC20(exit_cyy3crv_action.CY_DAI(), account)
+    fee_distribution = ArgobytesInterfaces.ICurveFeeDistribution(
+        exit_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION(), account
+    )
+    cream = ArgobytesInterfaces.IComptroller(exit_cyy3crv_action.CREAM(), account)
 
     tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv, cydai]
 
-    balances = get_balances(account, tokens)
-    print_token_balances(balances, f"{account} balances")
+    start_balances = get_balances(account, tokens)
+    print_token_balances(start_balances, f"{account} start balances")
 
     # TODO: calculate/prompt for these
-    #  StableSwap.calc_withdraw_one_coin(_token_amount: uint256, i: int128) → uint256
-    min_remove_liquidity_dai = 1
-    tip_dai = 0
-    # TODO: this should be False in the default case
-    exit_from_account = False
+    # StableSwap.calc_withdraw_one_coin(_token_amount: uint256, i: int128) → uint256
+    # TODO: this is wrong. we need to have a proper amount to protect us from slippage
+    borrow_balance = cydai.borrowBalanceCurrent.call(account)
     # min_cream_liquidity = 1
+
+    assert (
+        start_balances[dai] >= borrow_balance
+    ), f"not enough DAI: {start_balances[dai]} < {borrow_balance}"
+
+    dai.approve(cydai, borrow_balance)
+
+    cydai.repayBorrow(account)
+
+    cyy3crv_balance = cyy3crv.balanceOf(account)
+
+    assert cyy3crv.redeem(cyy3crv_balance).return_value == 0
+
+    y3crv_balance = y3crv.balanceOf(account)
+
+    y3crv.withdraw(y3crv_balance)
+
+    threecrv_balance = threecrv.balanceOf(account)
+
+    threecrv.approve(threecrv_pool, threecrv_balance)
+
+    threecrv_pool.remove_liquidity_one_coin(threecrv_balance, 0, borrow_balance)
+
+    end_balances = get_balances(account, tokens)
+    print_token_balances(end_balances, f"{account} end balances")
+
+    assert end_balances[dai] > start_balances[dai]

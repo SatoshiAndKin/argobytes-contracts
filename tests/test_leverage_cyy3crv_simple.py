@@ -16,8 +16,6 @@ def test_simple_scripts(
     unlocked_binance,
     usdc_erc20,
 ):
-    runner = CliRunner()
-
     account = accounts[0]
 
     # TODO: use flags instead of env?
@@ -39,8 +37,11 @@ def test_simple_scripts(
     # TODO: make some actual trades?
     # TODO: how much DAI actually needs to be added to the pool
     transfer_token(
-        unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai_erc20, 1000000
+        unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai_erc20, 500000
     )
+
+    # pretend like we made money somewhere else and can close our loan
+    transfer_token(unlocked_binance, accountsa, dai_erc20, 100000)
 
     result = click_test_runner(simple_exit)
 

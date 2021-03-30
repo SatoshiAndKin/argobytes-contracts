@@ -16,7 +16,7 @@
 pragma solidity 0.8.3;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
-import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
+import {IERC20} from "contracts/external/erc20/IERC20.sol";
 import {SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
 
 library UniversalERC20 {

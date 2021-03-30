@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 pragma solidity 0.8.3;
 
-import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
 
 import {ICurvePool} from "contracts/external/curvefi/ICurvePool.sol";
+import {IERC20} from "contracts/external/erc20/IERC20.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
