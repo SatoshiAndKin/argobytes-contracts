@@ -6,8 +6,16 @@ from click.testing import CliRunner
 
 from argobytes.cli.leverage_cyy3crv import simple_enter, simple_exit
 
+
 @pytest.mark.require_network("mainnet-fork")
-def test_simple_scripts(dai_erc20, monkeypatch, unlocked_binance, usdc_erc20):
+def test_simple_scripts(
+    click_test_runner,
+    dai_erc20,
+    exit_cyy3crv_action,
+    monkeypatch,
+    unlocked_binance,
+    usdc_erc20,
+):
     runner = CliRunner()
 
     account = accounts[0]
@@ -21,18 +29,21 @@ def test_simple_scripts(dai_erc20, monkeypatch, unlocked_binance, usdc_erc20):
     # TODO: usdt_erc20
     # transfer_token(unlocked_binance, account, usdt_erc20, 10000)
 
-    print("running simple_enter...")
-    result = runner.invoke(simple_enter)
-    print(result.stdout)
+    result = click_test_runner(simple_enter)
+
     assert result.exit_code == 0
 
     # TODO: make sure we can't get liquidated
 
-    # TODO: make some trades so that 3pool increases in value
+    # simulate some trades so that 3pool increases in value
+    # TODO: make some actual trades?
+    # TODO: how much DAI actually needs to be added to the pool
+    transfer_token(
+        unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai_erc20, 1000000
+    )
 
-    print("running simple_exit...")
-    result = runner.invoke(simple_exit)
-    print(result.stdout)
+    result = click_test_runner(simple_exit)
+
     assert result.exit_code == 0
 
     # TODO: make sure we made a profit

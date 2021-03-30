@@ -71,7 +71,7 @@ def click_test_runner():
 
         result = runner.invoke(fn, *args, **kwargs)
         print(result.stdout)
-        
+
         if result.exception:
             raise result.exception
 
@@ -144,7 +144,6 @@ def onesplit():
 
 @pytest.fixture(scope="session")
 def onesplit_helper(onesplit, interface):
-
     def inner_onesplit_helper(eth_amount, dest_token, to):
         # TODO: actual ERC20 interface
         dest_token = interface.IWETH9(dest_token)
@@ -155,15 +154,24 @@ def onesplit_helper(onesplit, interface):
         # not sure why, but uniswap v2 is not working well. i think its a ganache-core bug
         # flags += 0x1E000000  # FLAG_DISABLE_UNISWAP_V2_ALL
 
-        expected_return = onesplit.getExpectedReturn.call(ZERO_ADDRESS, dest_token, eth_amount, parts, flags)
+        expected_return = onesplit.getExpectedReturn.call(
+            ZERO_ADDRESS, dest_token, eth_amount, parts, flags
+        )
 
         expected_return_amount = expected_return[0]
         distribution = expected_return[1]
 
-        assert(expected_return_amount > 1)
+        assert expected_return_amount > 1
 
-        onesplit.swap(ZERO_ADDRESS, dest_token, eth_amount, 1,
-                      distribution, flags, {"from": accounts[0], "value": eth_amount})
+        onesplit.swap(
+            ZERO_ADDRESS,
+            dest_token,
+            eth_amount,
+            1,
+            distribution,
+            flags,
+            {"from": accounts[0], "value": eth_amount},
+        )
 
         actual_return_amount = dest_token.balanceOf.call(accounts[0])
 
@@ -171,9 +179,10 @@ def onesplit_helper(onesplit, interface):
             # TODO: actual warning?
             # TODO: why is this happening?
             print(
-                f"WARNING! expected_return_amount ({expected_return_amount}) != actual_return_amount ({actual_return_amount})")
+                f"WARNING! expected_return_amount ({expected_return_amount}) != actual_return_amount ({actual_return_amount})"
+            )
 
-            assert(actual_return_amount > 0)
+            assert actual_return_amount > 0
 
         dest_token.transfer(to, actual_return_amount, {"from": accounts[0]})
 
@@ -183,9 +192,10 @@ def onesplit_helper(onesplit, interface):
         if actual_return_amount != actual_transfer_amount:
             # TODO: actual warning?
             print(
-                f"WARNING! actual_return_amount ({actual_return_amount}) != actual_transfer_amount ({actual_transfer_amount})")
+                f"WARNING! actual_return_amount ({actual_return_amount}) != actual_transfer_amount ({actual_transfer_amount})"
+            )
 
-            assert(actual_transfer_amount > 0)
+            assert actual_transfer_amount > 0
 
         return actual_transfer_amount
 
@@ -214,7 +224,7 @@ def synthetix_address_resolver(interface):
 def synthetix_exchange_rates(synthetix_address_resolver):
     rates = synthetix_address_resolver.getAddress(to_hex32(text="ExchangeRates"))
 
-    assert(rates != ZERO_ADDRESS)
+    assert rates != ZERO_ADDRESS
 
     return load_contract(rates)
 
@@ -257,13 +267,7 @@ def uniswap_v1_helper(uniswap_v1_factory, interface):
         deadline = 9000000000
 
         tx = exchange.ethToTokenTransferInput(
-            src_amount,
-            deadline,
-            to,
-            {
-                "value": src_amount,
-                "from": accounts[0],
-            }
+            src_amount, deadline, to, {"value": src_amount, "from": accounts[0],}
         )
 
         return tx.return_value

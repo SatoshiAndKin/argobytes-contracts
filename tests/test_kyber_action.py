@@ -7,7 +7,9 @@ from hypothesis import settings
 
 
 # TODO: this test crashes ganache when we try to collect coverage
-def test_action(kyber_action, kyber_network_proxy, dai_erc20, skip_coverage, usdc_erc20):
+def test_action(
+    kyber_action, kyber_network_proxy, dai_erc20, skip_coverage, usdc_erc20
+):
     value = 1e17
 
     # TODO: build proper hints for the different trades
@@ -21,7 +23,9 @@ def test_action(kyber_action, kyber_network_proxy, dai_erc20, skip_coverage, usd
 
     # trade ETH to USDC
     # tradeEtherToToken()
-    kyber_action.tradeEtherToToken(kyber_network_proxy, kyber_action, usdc_erc20, 1, hint)
+    kyber_action.tradeEtherToToken(
+        kyber_network_proxy, kyber_action, usdc_erc20, 1, hint
+    )
 
     # TODO: check gas cost to make sure there are no regressions! (do this for all our tests!)
     # TODO: make sure ETH balance is zero (i think it will be swept back to accounts[0])
@@ -29,7 +33,9 @@ def test_action(kyber_action, kyber_network_proxy, dai_erc20, skip_coverage, usd
 
     # trade USDC to DAI
     # tradeTokenToToken()
-    kyber_action.tradeTokenToToken(kyber_network_proxy, kyber_action, usdc_erc20, dai_erc20, 1, hint)
+    kyber_action.tradeTokenToToken(
+        kyber_network_proxy, kyber_action, usdc_erc20, dai_erc20, 1, hint
+    )
 
     # TODO: make sure USDC balance is zero (i think it will be swept back to accounts[0])
     # TODO: make sure DAI balance is non-zero

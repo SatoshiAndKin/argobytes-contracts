@@ -10,7 +10,14 @@ from argobytes.contracts import load_contract
 # @pytest.mark.skip(reason="crashes ganache")
 @pytest.mark.require_network("mainnet-fork")
 @pytest.mark.no_call_coverage
-def test_atomic_scripts(click_test_runner, dai_erc20, monkeypatch, unlocked_binance, usdc_erc20, exit_cyy3crv_action):
+def test_atomic_scripts(
+    click_test_runner,
+    dai_erc20,
+    exit_cyy3crv_action,
+    monkeypatch,
+    unlocked_binance,
+    usdc_erc20,
+):
     monkeypatch.setenv("LEVERAGE_ACCOUNT", str(accounts[0]))
 
     # borrow some tokens from binance
@@ -26,13 +33,14 @@ def test_atomic_scripts(click_test_runner, dai_erc20, monkeypatch, unlocked_bina
     # TODO: make sure we can't get liquidated
 
     # simulate some trades so that 3pool increases in value
-    # TODO: make some actual trades? 
+    # TODO: make some actual trades?
     # TODO: how much DAI actually needs to be added to the pool
-    transfer_token(unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai_erc20, 1000000)
+    transfer_token(
+        unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai_erc20, 1000000
+    )
 
     result = click_test_runner(atomic_exit)
-    
+
     assert result.exit_code == 0
 
     # TODO: make sure we made a profit
-

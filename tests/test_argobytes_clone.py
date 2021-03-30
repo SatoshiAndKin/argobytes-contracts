@@ -15,21 +15,15 @@ def test_argobytes_arbitrage_access_control(argobytes_proxy_clone, example_actio
         example_action.sweep.encode_input(ZERO_ADDRESS, ZERO_ADDRESS, 0),
     )
 
-    assert(argobytes_proxy_clone.owner() == accounts[0])
+    assert argobytes_proxy_clone.owner() == accounts[0]
 
     # check that accounts[0] is allowed
-    argobytes_proxy_clone.execute(
-        action,
-        {"from": accounts[0]}
-    )
+    argobytes_proxy_clone.execute(action, {"from": accounts[0]})
 
     # check that accounts[1] is NOT allowed
     # TODO: this used to revert with "ArgobytesProxy: 403" but we don't bother checking authority before calling anymore to save gas
     with brownie.reverts(""):
-        argobytes_proxy_clone.execute(
-            action,
-            {"from": accounts[1]}
-        )
+        argobytes_proxy_clone.execute(action, {"from": accounts[1]})
 
     # TODO: set authority
 
@@ -58,11 +52,7 @@ def test_simple_execute(argobytes_proxy_clone, example_action):
     )
 
     atomic_arbitrage_tx = argobytes_proxy_clone.execute(
-        action,
-        {
-            "value": value,
-            "gasPrice": 0,
-        }
+        action, {"value": value, "gasPrice": 0,}
     )
 
     atomic_arbitrage_tx.info()

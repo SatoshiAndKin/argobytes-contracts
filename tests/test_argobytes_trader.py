@@ -6,7 +6,9 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action, weth9_erc20):
+def test_simple_arbitrage(
+    argobytes_multicall, argobytes_trader, example_action, weth9_erc20
+):
     value = 1e18
 
     # get some WETH for accounts[1]
@@ -27,11 +29,7 @@ def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action,
 
     borrows = [
         # 1 WETH from accounts[0] to example_action
-        (
-            value,
-            weth9_erc20,
-            example_action,
-        ),
+        (value, weth9_erc20, example_action,),
     ]
 
     # NOTE! Multicall actions do not have CallType! That is just our proxy actions! maybe need different names?

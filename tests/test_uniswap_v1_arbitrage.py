@@ -6,7 +6,15 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy_clone, argobytes_trader, uniswap_v1_factory, uniswap_v1_action, usdc_erc20, dai_erc20):
+def test_uniswap_arbitrage(
+    argobytes_multicall,
+    argobytes_proxy_clone,
+    argobytes_trader,
+    uniswap_v1_factory,
+    uniswap_v1_action,
+    usdc_erc20,
+    dai_erc20,
+):
     assert argobytes_proxy_clone.balance() == 0
     assert argobytes_trader.balance() == 0
     assert argobytes_multicall.balance() == 0
@@ -35,7 +43,9 @@ def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy_clone, argobytes
             uniswap_v1_action,
             1,
             # uniswap_v1_action.tradeEtherToToken(address to, address exchange, address dest_token, uint dest_min_tokens)
-            uniswap_v1_action.tradeEtherToToken.encode_input(uniswap_v1_action, usdc_exchange, usdc_erc20, 1),
+            uniswap_v1_action.tradeEtherToToken.encode_input(
+                uniswap_v1_action, usdc_exchange, usdc_erc20, 1
+            ),
         ),
         # trade USDC to DAI
         (
@@ -43,14 +53,17 @@ def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy_clone, argobytes
             0,
             # uniswap_v1_action.tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint dest_min_tokens)
             uniswap_v1_action.tradeTokenToToken.encode_input(
-                uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1),
+                uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1
+            ),
         ),
         # trade DAI to ETH
         (
             uniswap_v1_action,
             0,
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens)
-            uniswap_v1_action.tradeTokenToEther.encode_input(argobytes_proxy_clone, dai_exchange, dai_erc20, 1),
+            uniswap_v1_action.tradeTokenToEther.encode_input(
+                argobytes_proxy_clone, dai_exchange, dai_erc20, 1
+            ),
         ),
     ]
 
@@ -60,10 +73,7 @@ def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy_clone, argobytes
             0,  # delegatecall
             True,  # pass ETH
             argobytes_trader.atomicArbitrage.encode_input(
-                accounts[0],
-                borrows,
-                argobytes_multicall,
-                trade_actions,
+                accounts[0], borrows, argobytes_multicall, trade_actions,
             ),
         )
     ]
@@ -73,11 +83,7 @@ def test_uniswap_arbitrage(argobytes_multicall, argobytes_proxy_clone, argobytes
     assert owner == brownie.accounts[0]
 
     arbitrage_tx = argobytes_proxy_clone.executeMany(
-        proxy_actions,
-        {
-            "value": value,
-            "gasPrice": 0,
-        }
+        proxy_actions, {"value": value, "gasPrice": 0,}
     )
 
     # TODO: should we compare this to running with burning gas token?
