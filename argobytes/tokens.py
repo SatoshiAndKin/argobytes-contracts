@@ -2,12 +2,10 @@
 
 # TODO: move curve stuff back to argobytes_extra
 from decimal import Decimal
-from lazy_load import lazy
 from eth_utils import to_checksum_address
 from json import JSONDecodeError
+from pprint import pprint
 import brownie
-
-# import functools
 import itertools
 import tokenlists
 
@@ -79,6 +77,25 @@ def load_token_or_contract(token_symbol_or_address: str):
         return load_contract(token_symbol_or_address)
     except ValueError:
         return load_token(token_symbol_or_address)
+
+
+def print_token_balances(balances, label=None):
+    # TODO: symbol cache
+
+    if label:
+        print(label)
+
+    dict_for_printing = dict()
+
+    for token, amount in balances.items():
+        symbol = token_symbol(token)
+
+        if symbol:
+            dict_for_printing[symbol] = amount
+        else:
+            dict_for_printing[token.address] = amount
+
+    pprint(dict_for_printing)
 
 
 def transfer_token(from_address, to, token, amount):

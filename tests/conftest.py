@@ -82,9 +82,10 @@ def click_test_runner():
         print(f"running {fn.name}...")
 
         result = runner.invoke(fn, *args, **kwargs)
-        print(result.stdout)
 
         if result.exception:
+            # TODO: option to print on success? its just getting really verbose
+            print(result.stdout)
             raise result.exception
 
         return result

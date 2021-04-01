@@ -6,12 +6,11 @@ import threading
 import multiprocessing
 
 from argobytes import (
-    Action,
+    ArgobytesAction,
     approve,
-    CallType,
+    ArgobytesActionCallType,
     get_balances,
     get_claimable_3crv,
-    print_token_balances,
 )
 from argobytes.contracts import (
     ArgobytesInterfaces,
@@ -24,6 +23,7 @@ from argobytes.contracts import (
     lazy_contract,
     poke_contracts,
 )
+from argobytes.tokens import print_token_balances
 from brownie import accounts, Contract
 from brownie.network.web3 import _resolve_address
 from collections import namedtuple
@@ -167,8 +167,12 @@ def atomic_enter():
         lender,
         dai,
         flash_loan_amount,
-        Action(
-            enter_cyy3crv_action, CallType.DELEGATE, False, "enter", enter_data,
+        ArgobytesAction(
+            enter_cyy3crv_action,
+            ArgobytesActionCallType.DELEGATE,
+            False,
+            "enter",
+            enter_data,
         ).tuple,
     )
 

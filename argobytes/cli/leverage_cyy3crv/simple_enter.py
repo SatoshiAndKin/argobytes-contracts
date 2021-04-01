@@ -4,12 +4,11 @@ import threading
 import multiprocessing
 
 from argobytes import (
-    Action,
+    ArgobytesAction,
     approve,
-    CallType,
+    ArgobytesActionCallType,
     get_balances,
     get_claimable_3crv,
-    print_token_balances,
 )
 from argobytes.contracts import (
     ArgobytesInterfaces,
@@ -21,6 +20,7 @@ from argobytes.contracts import (
     ArgobytesFlashBorrower,
     EnterCYY3CRVAction,
 )
+from argobytes.tokens import print_token_balances
 from brownie import accounts, Contract
 from brownie.network.web3 import _resolve_address
 from collections import namedtuple
@@ -93,11 +93,11 @@ def simple_enter():
         min_3crv_mint_amount,
         {"from": account},
     )
-    threecrv_add_liquidity_tx.info()
+    # threecrv_add_liquidity_tx.info()
 
     if claimable_3crv >= min_3crv_to_claim:
         claim_tx = fee_distribution.claim({"from": account})
-        claim_tx.info()
+        # claim_tx.info()
 
     # TODO: tip the developer in 3crv or ETH
 
@@ -108,7 +108,7 @@ def simple_enter():
     approve(account, balances_for_y3crv, {}, y3crv)
 
     y3crv_deposit_tx = y3crv.deposit(balances_for_y3crv[threecrv], {"from": account})
-    y3crv_deposit_tx.info()
+    # y3crv_deposit_tx.info()
 
     # setup cream
     markets = []
@@ -120,7 +120,7 @@ def simple_enter():
 
     if markets:
         enter_markets_tx = cream.enterMarkets(markets, {"from": account})
-        enter_markets_tx.info()
+        # enter_markets_tx.info()
     else:
         print("CREAM markets already entered")
 
@@ -131,7 +131,7 @@ def simple_enter():
     approve(account, balances_for_cyy3crv, {}, cyy3crv)
 
     mint_tx = cyy3crv.mint(balances_for_cyy3crv[y3crv], {"from": account})
-    mint_tx.info()
+    # mint_tx.info()
 
     # TODO: need to use actual prices of 3crv and dai
     borrow_amount = int(
@@ -168,7 +168,7 @@ def simple_enter():
 
     print(f"enter simple success! {borrow_tx.return_value}")
 
-    borrow_tx.info()
+    # borrow_tx.info()
 
     num_events = len(borrow_tx.events)
     print(f"num events: {num_events}")

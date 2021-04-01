@@ -4,7 +4,7 @@ from brownie import accounts
 def test_deploy_clone(argobytes_factory, argobytes_proxy):
     tx = argobytes_factory.createClone(argobytes_proxy, "")
 
-    tx.info()
+    # tx.info()
 
     assert len(tx.events["NewClone"]) == 1
 
@@ -29,7 +29,7 @@ def test_deploy_clones(argobytes_factory, argobytes_proxy):
 
     tx = argobytes_factory.createClones(argobytes_proxy, salts)
 
-    tx.info()
+    # tx.info()
 
     assert len(tx.events["NewClone"]) == len(salts)
 

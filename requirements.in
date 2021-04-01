@@ -1,6 +1,7 @@
 autopep8
 bandit
 click-log
+click-option-group
 click-plugins
 click-spinner
 eth-abi

@@ -9,7 +9,30 @@ from brownie import Contract, ETH_ADDRESS, project, web3, ZERO_ADDRESS
 from lazy_load import lazy
 from eth_utils import to_bytes, keccak, to_checksum_address
 
-from argobytes import to_hex32
+from argobytes.web3_helpers import to_hex32
+
+
+ActionTuple = namedtuple("Action", ["target", "call_type", "forward_value", "data",])
+
+
+class ArgobytesActionCallType(IntFlag):
+    DELEGATE = 0
+    CALL = 1
+    ADMIN = 2
+
+
+class ArgobytesAction:
+    def __init__(
+        self,
+        contract,
+        call_type: ArgobytesActionCallType,
+        forward_value: bool,
+        function_name: str,
+        *function_args,
+    ):
+        data = getattr(contract, function_name).encode_input(*function_args)
+
+        self.tuple = ActionTuple(contract.address, call_type, forward_value, data)
 
 
 def get_deterministic_contract(
@@ -72,7 +95,7 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
                 deployed_contract, needed_salts, owner,
             )
 
-        sybil_tx.info()
+        # sybil_tx.info()
 
         # we already calculated the address above. just use that
         # my_proxys_proxies.extend([event['clone'] for event in sybil_tx.events["NewClone"]])

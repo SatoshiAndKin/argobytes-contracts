@@ -15,6 +15,8 @@ This entrypoint will handle setting these accounts up and then starting brownie.
 import logging
 import sys
 import os
+from pathlib import Path
+from pkg_resources import iter_entry_points
 
 import click
 import click_log
@@ -23,16 +25,13 @@ from brownie._cli.console import Console
 from brownie.network import gas_price
 from brownie.network.gas.strategies import GasNowScalingStrategy
 from click_plugins import with_plugins
-from pathlib import Path
-from pkg_resources import iter_entry_points
 
 # from brownie.utils import fork
 
-from argobytes import print_start_and_end_balance, print_token_balances
+from argobytes import print_start_and_end_balance
 from argobytes.cli_helpers import get_project_root, logger
 from argobytes.contracts import get_or_create, get_or_clone
-from argobytes.tokens import load_token_or_contract
-
+from argobytes.tokens import load_token_or_contract, print_token_balances
 from .tx_info import tx_info
 
 

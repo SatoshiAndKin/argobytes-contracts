@@ -18,8 +18,7 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
         uint256 dai_flash_fee,
         uint256 max_3crv_burned,
         uint256 tip_3crv,
-        address exit_from,
-        address exit_to
+        address sender
     ) external payable {
         // TODO: does this need auth? not if delegatecall is used. enforce that?
 
@@ -32,8 +31,8 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
             address payable tip_address = resolve_tip_address();
 
             if (tip_address == address(0)) {
-                // no tip address. send the tip to exit_to instead
-                (bool success, ) = payable(exit_to).call{value: msg.value}("");
+                // no tip address. send the tip to sender instead
+                (bool success, ) = payable(sender).call{value: msg.value}("");
                 require(success, "ExitCYY3CRVAction !tip");
             } else {
                 (bool success, ) = tip_address.call{value: msg.value}("");
@@ -41,40 +40,21 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
             }
         }
 
-        if (exit_from == address(0)) {
-            // TODO: check CY_USDC and CY_USDT (and maybe other things, too)
-            uint256 dai_borrow_balance = CY_DAI.borrowBalanceCurrent(address(this));
+        // TODO: check CY_USDC and CY_USDT (and maybe other things, too)
+        uint256 dai_borrow_balance = CY_DAI.borrowBalanceCurrent(address(this));
 
-            require(dai_borrow_balance > 0, "ExitCYY3CRVAction !dai_borrow_balance");
-            require(flash_dai_amount >= dai_borrow_balance, "ExitCYY3CRVAction !flash_dai_amount");
+        require(dai_borrow_balance > 0, "ExitCYY3CRVAction !dai_borrow_balance");
+        require(flash_dai_amount >= dai_borrow_balance, "ExitCYY3CRVAction !flash_dai_amount");
 
-            // approve the full borrow amount to unlock all our CY_Y_THREE_CRV
-            // TODO: allow partially repaying?
-            DAI.approve(address(CY_DAI), dai_borrow_balance);
+        // approve the full borrow amount to unlock all our CY_Y_THREE_CRV
+        // TODO: allow partially repaying?
+        DAI.approve(address(CY_DAI), dai_borrow_balance);
 
-            require(CY_DAI.repayBorrow(dai_borrow_balance) == 0, "ExitCYY3CRVAction !CY_DAI.repayBorrow");
+        require(CY_DAI.repayBorrow(dai_borrow_balance) == 0, "ExitCYY3CRVAction !CY_DAI.repayBorrow");
 
-            // we have CY_Y_THREE_CRV free now
-            // TODO: don't assume we can move it all. we might want to have other borrows on this same proxy
-            temp = CY_Y_THREE_CRV.balanceOf(address(this));
-        } else {
-            // TODO: check CY_USDC and CY_USDT (and maybe other things, too)
-            uint256 dai_borrow_balance = CY_DAI.borrowBalanceCurrent(exit_from);
-
-            require(dai_borrow_balance > 0, "ExitCYY3CRVAction !dai_borrow_balance");
-            require(flash_dai_amount >= dai_borrow_balance, "ExitCYY3CRVAction !flash_dai_amount");
-
-            // approve the full borrow amount to unlock all our CY_Y_THREE_CRV
-            // TODO: allow partially repaying?
-            DAI.approve(address(CY_DAI), dai_borrow_balance);
-
-            revert("TODO: Cream got rid of repayBorrowBehalf");
-            // require(CY_DAI.repayBorrowBehalf(exit_from, dai_borrow_balance) == 0, "ExitCYY3CRVAction !CY_DAI.repayBorrow");
-
-            // we have CY_Y_THREE_CRV free now
-            // TODO: don't assume we can move it all. we might want to have other borrows on this same proxy
-            temp = CY_Y_THREE_CRV.balanceOf(address(this));
-        }
+        // we have CY_Y_THREE_CRV free now
+        // TODO: don't assume we can move it all. we might want to have other borrows on this same proxy
+        temp = CY_Y_THREE_CRV.balanceOf(address(this));
 
         // check cyy3crv balance
         require(temp > 0, "ExitCYY3CRVAction debug !cyy3crv");
@@ -157,7 +137,7 @@ contract ExitCYY3CRVAction is ArgobytesTips, Constants {
 
         // send the rest of the 3crv on
         if (temp > 0) {
-            require(THREE_CRV.transfer(exit_to, temp), "ExitCYY3CRVAction !DAI sweep");
+            require(THREE_CRV.transfer(sender, temp), "ExitCYY3CRVAction !DAI sweep");
         }
     }
 }

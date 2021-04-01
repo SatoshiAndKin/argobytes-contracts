@@ -1,6 +1,7 @@
 import pytest
 from decimal import Decimal
 
+from argobytes.contracts import load_contract
 from argobytes.tokens import transfer_token
 from brownie import accounts, project
 from click.testing import CliRunner
@@ -24,6 +25,7 @@ def test_simple_scripts(
     threecrv_pool = load_contract(exit_cyy3crv_action.THREE_CRV_POOL())
     y3crv = load_contract(exit_cyy3crv_action.Y_THREE_CRV())
     cyy3crv = load_contract(exit_cyy3crv_action.CY_Y_THREE_CRV())
+    cydai = load_contract(exit_cyy3crv_action.CY_DAI())
 
     initial_dai = Decimal(10000)
 
@@ -32,7 +34,12 @@ def test_simple_scripts(
     # transfer_token(unlocked_binance, account, usdc, 10000)
     # transfer_token(unlocked_binance, account, usdt, 10000)
 
-    enter_result = click_test_runner(simple_enter)
+    # TODO: call enter multiple times
+    for x in range(3):
+        print(f"enter loop {x}")
+        enter_result = click_test_runner(simple_enter)
+
+        # TODO: if we didn't get very much, stop looping
 
     assert enter_result.exit_code == 0
 
@@ -50,33 +57,25 @@ def test_simple_scripts(
     # TODO: make some actual trades? how much DAI actually needs to be added to the pool
     transfer_token(unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai, 200000)
 
-    dai_needed = max(
-        0, cydai.borrowBalanceCurrent.call(account) - dai.balanceOf(account)
-    )
+    cyy3crv_balance = cyy3crv.balanceOf(account)
 
-    if dai_needed:
-        # pretend like we made money somewhere else and can close our loan
-        transfer_token(unlocked_binance, account, dai, dai_needed)
+    # TODO: we will likely leave some dust behind. what is a reasonable amount? > 0 is probably too strict
+    x = 0
+    while cyy3crv_balance > 0 and x < 20:
+        print(f"exit loop {x}")
+        exit_result = click_test_runner(simple_exit)
 
-    initial_dai = dai.balanceOf(account)
+        assert exit_result.exit_code == 0
 
-    exit_result = click_test_runner(simple_exit)
+        # TODO: save how much we print each time
 
-    assert exit_result.exit_code == 0
-
-    # make sure we made a profit
-    threecrv_balance = threecrv.balanceOf(account)
-
-    threecrv_balance_as_dai = (
-        Decimal(threecrv_balance)
-        * Decimal(threecrv_pool.get_virtual_price())
-        / Decimal(1e18)
-    )
+        cyy3crv_balance = cyy3crv.balanceOf(account)
+        x += 1
 
     assert dai.balanceOf(account) >= 0  # TODO: what should this amount be?
     assert usdc.balanceOf(account) == 0
     assert usdt.balanceOf(account) == 0
-    assert threecrv_balance > 0
-    assert threecrv_balance_as_dai > initial_dai
+    assert threecrv.balanceOf(account) >= 0  # TODO: what should this amount be?
     assert y3crv.balanceOf(account) == 0
     assert cyy3crv.balanceOf(account) == 0
+    assert x != 20, "too many loops"

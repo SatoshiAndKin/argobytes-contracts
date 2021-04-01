@@ -49,6 +49,8 @@ chardet==4.0.0
     #   requests
 click-log==0.3.2
     # via -r requirements.in
+click-option-group==0.5.2
+    # via -r requirements.in
 click-plugins==1.1.1
     # via -r requirements.in
 click-spinner==0.1.10
@@ -57,6 +59,7 @@ click==7.1.2
     # via
     #   black
     #   click-log
+    #   click-option-group
     #   click-plugins
     #   eth-brownie
 cytoolz==0.11.0

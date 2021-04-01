@@ -55,7 +55,7 @@ def test_simple_execute(argobytes_proxy_clone, example_action):
         action, {"value": value, "gasPrice": 0,}
     )
 
-    atomic_arbitrage_tx.info()
+    # atomic_arbitrage_tx.info()
 
     assert argobytes_proxy_clone.balance() == 0
     assert example_action.balance() == 0

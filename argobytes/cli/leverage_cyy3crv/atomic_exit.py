@@ -5,13 +5,12 @@ import threading
 import multiprocessing
 
 from argobytes import (
-    Action,
+    ArgobytesAction,
     approve,
-    CallType,
+    ArgobytesActionCallType,
     get_average_block_time,
     get_balances,
     get_claimable_3crv,
-    print_token_balances,
 )
 from argobytes.contracts import (
     ArgobytesFactory,
@@ -23,6 +22,7 @@ from argobytes.contracts import (
     lazy_contract,
     poke_contracts,
 )
+from argobytes.tokens import print_token_balances
 from brownie import accounts, Contract, ZERO_ADDRESS
 from brownie.network.web3 import _resolve_address
 from collections import namedtuple
@@ -32,16 +32,14 @@ from pprint import pprint
 
 
 ExitData = namedtuple(
-    "ExitData",
-    ["dai_flash_fee", "max_3crv_burned", "tip_3crv", "exit_from", "exit_to",],
+    "ExitData", ["dai_flash_fee", "max_3crv_burned", "tip_3crv", "sender",],
 )
 
 
 @click.command()
 @click.option("--tip-eth", default=0)
 @click.option("--tip-3crv", default=0)
-@click.option("--exit-from-account/--exit-from-clone", default=False)
-def atomic_exit(exit_from_account, tip_eth, tip_3crv):
+def atomic_exit(tip_eth, tip_3crv):
     """Use a flash loan to withdraw from a leveraged cyy3crv position."""
     # TODO: we need an account with private keys
     account = accounts.at(os.environ["LEVERAGE_ACCOUNT"], force=True)
@@ -83,25 +81,12 @@ def atomic_exit(exit_from_account, tip_eth, tip_3crv):
     # this can take some time since solc/vyper may have to download
     poke_contracts(tokens + [threecrv_pool, lender])
 
-    if exit_from_account:
-        exit_from = account
-        exit_to = ZERO_ADDRESS
-
-        balances = get_balances(exit_from, tokens)
-        print(f"account {exit_from} balances")
-
-        dai_borrowed = cydai.borrowBalanceCurrent.call(account)
-    else:
-        exit_from = ZERO_ADDRESS
-        exit_to = account
-
-        balances = get_balances(argobytes_clone, tokens)
-        print(f"clone {argobytes_clone} balances")
-
-        dai_borrowed = cydai.borrowBalanceCurrent.call(argobytes_clone)
+    balances = get_balances(argobytes_clone, tokens)
+    print(f"clone {argobytes_clone} balances")
 
     print_token_balances(balances)
 
+    dai_borrowed = cydai.borrowBalanceCurrent.call(argobytes_clone)
     assert dai_borrowed > 0, "No DAI position to exit from"
 
     print(f"dai_borrowed:      {dai_borrowed}")
@@ -118,13 +103,6 @@ def atomic_exit(exit_from_account, tip_eth, tip_3crv):
     )
 
     print(f"flash_loan_amount: {flash_loan_amount}")
-
-    # TODO: do we need this? can anyone pay off anyone else's loan without approval? that would be nice
-    """
-    if exit_from_account:
-        # TODO: is this the right approval?
-        approve(account, {cydai: flash_loan_amount}, {}, argobytes_clone)
-    """
 
     # safety check. make sure our interest doesn't add a giant amount
     assert flash_loan_amount <= dai_borrowed * (1 + slippage_pct / 100)
@@ -147,8 +125,7 @@ def atomic_exit(exit_from_account, tip_eth, tip_3crv):
         dai_flash_fee=flash_loan_fee,
         max_3crv_burned=max_3crv_burned,
         tip_3crv=tip_3crv,
-        exit_from=exit_from,
-        exit_to=account,
+        sender=account,
     )
 
     pprint(exit_data)
@@ -162,17 +139,23 @@ def atomic_exit(exit_from_account, tip_eth, tip_3crv):
         lender,
         dai,
         flash_loan_amount,
-        Action(
-            exit_cyy3crv_action, CallType.DELEGATE, False, "exit", *exit_data,
+        ArgobytesAction(
+            exit_cyy3crv_action,
+            ArgobytesActionCallType.DELEGATE,
+            False,
+            "exit",
+            *exit_data,
         ).tuple,
         {"value": tip_eth,},
     )
 
     print("exit success!")
-    exit_tx.info()
+    # exit_tx.info()
 
-    num_events = len(exit_tx.events)
-    print(f"num events: {num_events}")
+    # num_events = len(exit_tx.events)
+    # print(f"num events: {num_events}")
+
+    print(f"gas used: {exit_tx.gas_used}")
 
     print("clone balances")
     print_token_balances(get_balances(argobytes_clone, tokens))

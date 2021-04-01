@@ -5,12 +5,11 @@ import threading
 import multiprocessing
 
 from argobytes import (
-    Action,
+    ArgobytesAction,
     approve,
-    CallType,
+    ArgobytesActionCallType,
     get_balances,
     get_claimable_3crv,
-    print_token_balances,
 )
 from argobytes.contracts import (
     ArgobytesInterfaces,
@@ -22,6 +21,7 @@ from argobytes.contracts import (
     get_or_create,
     load_contract,
 )
+from argobytes.tokens import print_token_balances, token_decimals
 from brownie import accounts, Contract, ZERO_ADDRESS
 from brownie.network.web3 import _resolve_address
 from collections import namedtuple
@@ -31,8 +31,7 @@ from pprint import pprint
 
 
 @click.command()
-@click.option("--exit-from-account/--exit-from-clone", default=False)
-def simple_exit(exit_from_account):
+def simple_exit():
     """Make a bunch of transactions to withdraw from a leveraged cyy3crv position."""
     account = accounts.at(os.environ["LEVERAGE_ACCOUNT"])
     print(f"Hello, {account}")
@@ -41,10 +40,6 @@ def simple_exit(exit_from_account):
     slippage = 0.1
 
     # TODO: use salts for the contracts once we figure out a way to store them. maybe 3box?
-
-    # deploy our contracts if necessary
-    argobytes_factory = get_or_create(account, ArgobytesFactory)
-    argobytes_flash_borrower = get_or_create(account, ArgobytesFlashBorrower)
 
     # TODO: we only use this for the constants. don't waste gas deploying this on mainnet if it isn't needed
     exit_cyy3crv_action = get_or_create(account, ExitCYY3CRVAction)
@@ -62,14 +57,14 @@ def simple_exit(exit_from_account):
     y3crv = ArgobytesInterfaces.IYVault(exit_cyy3crv_action.Y_THREE_CRV(), account)
     cyy3crv = ArgobytesInterfaces.ICERC20(exit_cyy3crv_action.CY_Y_THREE_CRV(), account)
     cydai = ArgobytesInterfaces.ICERC20(exit_cyy3crv_action.CY_DAI(), account)
-    fee_distribution = ArgobytesInterfaces.ICurveFeeDistribution(
-        exit_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION(), account
-    )
     cream = ArgobytesInterfaces.IComptroller(exit_cyy3crv_action.CREAM(), account)
 
     tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv, cydai]
 
     start_balances = get_balances(account, tokens)
+
+    print("start_balances:", start_balances)
+
     print_token_balances(start_balances, f"{account} start balances")
 
     # approve 100%. if we approve borrowBalance, then we leave some dust behind since the approve transaction adds a block of interest
@@ -77,16 +72,54 @@ def simple_exit(exit_from_account):
     approve(account, {dai: start_balances[dai]}, {}, cydai)
 
     borrow_balance = cydai.borrowBalanceCurrent.call(account)
+    print(f"cyDAI borrow_balance: {borrow_balance}")
 
-    assert (
-        start_balances[dai] >= borrow_balance
-    ), f"not enough DAI: {start_balances[dai]} < {borrow_balance}"
+    # TODO: add a few blocks worth of interest just in case?
 
-    cydai.repayBorrow(borrow_balance)
+    # repay as much DAI as we can
+    if start_balances[dai] == 0:
+        # we do not have any DAI to repay. hopefully there is some headroom, or might take a lot of loops
+        # TODO: click.confirm this?
+        pass
+    elif start_balances[dai] > borrow_balance:
+        # we have more DAI than we need. repay the full balance
+        cydai.repayBorrow(repay_balance)
+    else:
+        # we do not have enough DAI. repay what we can
+        # TODO: skip this if its a small amount?
+        cydai.repayBorrow(start_balances[dai])
 
-    cyy3crv_balance = cyy3crv.balanceOf(account)
+    # we need more DAI!
+    # calculate how much cyy3crv we can safely withdraw
+    (error, liquidity, shortfall) = cream.getHypotheticalAccountLiquidity(
+        account, cydai, 0, repay_balance
+    )
+    assert error == 0
+    assert shortfall == 0
 
-    assert cyy3crv.redeem(cyy3crv_balance).return_value == 0
+    # TODO: convert liquidity into cyy3crv. then leave some headroom
+    # TODO: get 0.9 out of state
+    y3crv_decimals = token_decimals(y3crv)
+    cyy3crv_decimals = token_decimals(cyy3crv)
+
+    # TODO: i think we should be able to use cream's price oracle for this
+    # TODO: how do we get the 90% out of the contract?
+    # TODO: does leaving headroom make sense? how much? add it in only if this isn't the last repayment?
+    available_cyy3crv_in_usd = liquidity / Decimal(0.90)
+    available_cyy3crv_in_3crv = available_cyy3crv_in_usd / (
+        Decimal(threecrv_pool.get_virtual_price()) / Decimal(1e18)
+    )
+    available_cyy3crv_in_y3crv = available_cyy3crv_in_3crv / (
+        Decimal(y3crv.getPricePerFullShare()) / Decimal(1e18)
+    )
+
+    one_cyy3crv_in_y3crv = Decimal(cyy3crv.exchangeRateCurrent.call()) / Decimal(
+        10 ** (18 + y3crv_decimals - cyy3crv_decimals)
+    )
+
+    available_cyy3crv = available_cyy3crv_in_y3crv / one_cyy3crv_in_y3crv
+
+    assert cyy3crv.redeem(available_cyy3crv).return_value == 0
 
     y3crv_balance = y3crv.balanceOf(account)
 
@@ -94,12 +127,7 @@ def simple_exit(exit_from_account):
 
     threecrv_balance = threecrv.balanceOf(account)
 
-    threecrv.approve(threecrv_pool, threecrv_balance)
-
-    # TODO: change this to exit to 3crv
-    threecrv_pool.remove_liquidity_one_coin(threecrv_balance, 0, borrow_balance)
-
     end_balances = get_balances(account, tokens)
     print_token_balances(end_balances, f"{account} end balances")
 
-    assert end_balances[dai] > start_balances[dai]
+    assert end_balances[threecrv] > start_balances[threecrv]
