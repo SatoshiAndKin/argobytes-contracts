@@ -1,16 +1,20 @@
 """Handle Ethereum smart Contracts."""
 import multiprocessing
-from concurrent.futures import as_completed, ThreadPoolExecutor
-from warnings import warn
+from collections import namedtuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from enum import IntFlag
 
 import brownie
 import rlp
-from brownie import Contract, ETH_ADDRESS, project, web3, ZERO_ADDRESS
+import tokenlists
+from brownie import ETH_ADDRESS, ZERO_ADDRESS, Contract, _cli, accounts, project, web3
+from brownie.exceptions import VirtualMachineError
+from brownie.network import web3
+from eth_abi.packed import encode_abi_packed
+from eth_utils import keccak, to_bytes, to_checksum_address, to_hex
 from lazy_load import lazy
-from eth_utils import to_bytes, keccak, to_checksum_address
 
 from argobytes.web3_helpers import to_hex32
-
 
 ActionTuple = namedtuple("Action", ["target", "call_type", "forward_value", "data",])
 
@@ -35,6 +39,21 @@ class ArgobytesAction:
         self.tuple = ActionTuple(contract.address, call_type, forward_value, data)
 
 
+class EthContract:
+    def __init__(self):
+        """Handle ETH like an ERC20."""
+        self.address = brownie.ETH_ADDRESS
+
+    def decimals(self):
+        return 18
+
+    def symbol(self):
+        return "ETH"
+
+    def balanceOf(self, account):
+        return brownie.web3.eth.getBalance(str(account))
+
+
 def get_deterministic_contract(
     default_account, contract, salt="", constructor_args=None
 ):
@@ -55,6 +74,7 @@ def get_deterministic_contract(
 
 
 def get_or_clone(owner, argobytes_factory, deployed_contract, salt=""):
+    """Fetches an existing clone or creates a new clone."""
     clone_exists, clone_address = argobytes_factory.cloneExists(
         deployed_contract, salt, owner
     )
@@ -107,9 +127,30 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
     return [_contract(address) for address in my_proxys_proxies]
 
 
+def get_or_clone_flash_borrower(
+    account, borrower_salt="", clone_salt="", factory_salt=""
+):
+    raise NotImplementedError(
+        "only get_factory and get_flash_borrower. if we create, users might be surprised by a deploy. deploy should always be done via deploy script"
+    )
+    factory = get_or_create_factory(account, factory_salt)
+
+    # we don't actually want the proxy. flash_borrower does more
+    # proxy = get_or_create_proxy(account, salt)
+    flash_borrower = get_or_create_flash_borrower(account, borrower_salt)
+
+    clone = get_or_clone(account, factory, flash_borrower, clone_salt)
+
+    print(f"clone owned by {account}:", clone)
+
+    return (factory, flash_borrower, clone)
+
+
 # TODO: rename to get_or_deterministic_create?
 # @functools.lru_cache(maxsize=None)
-def get_or_create(default_account, contract, salt="", constructor_args=None):
+def get_or_create(
+    default_account, contract, no_create=False, salt="", constructor_args=None
+):
     """Use eip-2470 to create a contract with deterministic addresses."""
     if constructor_args is None:
         constructor_args = []
@@ -121,6 +162,10 @@ def get_or_create(default_account, contract, salt="", constructor_args=None):
     )
 
     if web3.eth.getCode(contract_address).hex() == "0x":
+        if no_create:
+            raise Exception(
+                f"{contract} is not yet deployed. This is likely an issue with configuration."
+            )
         deploy_tx = SingletonFactory.deploy(
             contract_initcode, salt, {"from": default_account}
         )
@@ -177,12 +222,12 @@ def load_contract(token_name_or_address: str, owner=None):
         return token_name_or_address
 
     if token_name_or_address.lower() in ["eth", ZERO_ADDRESS, ETH_ADDRESS.lower()]:
-        # just use weth for eth
-        token_name_or_address = "weth"
+        # TODO: just use weth for eth?
+        return EthContract()
     elif token_name_or_address.lower() == "ankreth":
         # TODO: find a tokenlist with this on it
         token_name_or_address = "0xe95a203b1a91a908f9b9ce46459d101078c2c3cb"
-    elif token_name_or_address.lower() == "obtc":  # boring DAO btc
+    elif token_name_or_address.lower() == "obtc":  # boring DAO BTC
         # TODO: find a tokenlist with this on it
         token_name_or_address = "0x8064d9Ae6cDf087b1bcd5BDf3531bD5d8C537a68"
 

@@ -5,12 +5,13 @@
 # This can be used to create addresses with lots of zeros which are slightly cheaper to call.
 # This can also be used for creating vanity addresses with fun patterns.
 # TODO: rewrite this now that we aren't using diamonds
-import rlp
 import os
-from eth_utils import keccak, to_checksum_address, to_bytes
-from brownie import *
+
+import rlp
 from argobytes_mainnet import *
 from argobytes_util import *
+from brownie import *
+from eth_utils import keccak, to_bytes, to_checksum_address
 
 
 def main():
@@ -30,7 +31,13 @@ def main():
     # lots of people using different terms here, but i think calling this "initcode" makes the most sense
     proxy_factory_initcode = ArgobytesFactory.deploy.encode_input()
 
-    print("Cutter: ERADICATE2 -A", LiquidGasTokenAddress, "-I", proxy_factory_initcode, "--zero-bytes")
+    print(
+        "Cutter: ERADICATE2 -A",
+        LiquidGasTokenAddress,
+        "-I",
+        proxy_factory_initcode,
+        "--zero-bytes",
+    )
 
     input("\nPress [enter] to continue")
 
@@ -39,11 +46,13 @@ def main():
 
     # TODO: count the zero bytes?
 
-    proxy_factory_address = mk_contract_address2(LiquidGasTokenAddress, proxy_factory_salt, proxy_factory_initcode)
+    proxy_factory_address = mk_contract_address2(
+        LiquidGasTokenAddress, proxy_factory_salt, proxy_factory_initcode
+    )
 
     print("Calculated ArgobytesFactory address:", proxy_factory_address, "\n")
 
-    assert(proxy_factory_expected_address == proxy_factory_address.lower())
+    assert proxy_factory_expected_address == proxy_factory_address.lower()
 
     # TODO: deploy the rest
 
@@ -62,4 +71,4 @@ def calculate_one_salt():
     # then we use ERADICATE2 to find a salt that gives all the other contract addresses lots of zeros when deployed from ArgobytesOwnedVault
     assert False
 
-    loupe_address = mk_contract_address2(argobytes_factory, loupe_salt, loupe_initcode)
+    mk_contract_address2(argobytes_factory, loupe_salt, loupe_initcode)

@@ -1,11 +1,11 @@
-import pytest
 from decimal import Decimal
 
-from argobytes.tokens import transfer_token
+import pytest
 from brownie import accounts, project
 
 from argobytes.cli.leverage_cyy3crv import atomic_enter, atomic_exit, simple_enter
 from argobytes.contracts import load_contract
+from argobytes.tokens import transfer_token
 
 
 @pytest.mark.require_network("mainnet-fork")

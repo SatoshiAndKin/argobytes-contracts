@@ -1,93 +1,138 @@
-import click
 import logging
-import sys
-import os
-import contextlib
-from collections import namedtuple
-from concurrent.futures import as_completed, ThreadPoolExecutor
-from enum import IntFlag
-from pprint import pprint
-import multiprocessing
-import os
-import rlp
-import tokenlists
-from brownie import _cli, accounts, Contract, ETH_ADDRESS, project, ZERO_ADDRESS
-from brownie.exceptions import VirtualMachineError
-from brownie.network import web3
-from eth_abi.packed import encode_abi_packed
-from eth_utils import keccak, to_checksum_address, to_bytes, to_hex
-from lazy_load import lazy
-from argobytes.contracts import get_or_create, get_or_clone
-from argobytes.tokens import print_token_balances
-from brownie import accounts, project, network as brownie_network
-from brownie._cli.console import Console
-from brownie.network import gas_price
-from brownie.network.gas.strategies import GasNowScalingStrategy
 from pathlib import Path
 
+import click
+import rlp
+import tokenlists
+from brownie import ETH_ADDRESS, ZERO_ADDRESS, Contract, _cli, accounts
+from brownie import network as brownie_network
+from brownie import project
+from brownie._cli.console import Console
+from brownie.exceptions import VirtualMachineError
+from brownie.network import gas_price, web3
+from brownie.network.gas.strategies import GasNowScalingStrategy
+from decorator import decorator
+from eth_abi.packed import encode_abi_packed
+from eth_utils import keccak, to_bytes, to_checksum_address, to_hex
+from lazy_load import lazy
+
+from argobytes.contracts import get_or_clone, get_or_create
+from argobytes.tokens import print_token_balances
 
 logger = logging.getLogger("argobytes")
 
 
 class BrownieAccount(click.ParamType):
-    name = "brownie account"
+    name = "account"
 
     def convert(self, value, param, ctx):
-        # TODO: if value.endswith(".json"): accounts.load(value)
-
         try:
             if value.endswith(".json"):
                 return accounts.load(value)
-            else:
-                return accounts.at(value, force=True)
         except Exception as e:
             # TODO: what type of exception should we catch?
             self.fail(
                 f"Brownie could not load named account {value!r}: {e}", param, ctx,
+            )
+        try:
+            if "." in value:
+                # TODO: i thought brownie would do this for us, but i got an exception
+                value = web3.ens.resolve(value)
+
+            return accounts.at(value, force=True)
+        except Exception as e:
+            # TODO: what type of exception should we catch?
+            self.fail(
+                f"Brownie could not get account {value!r}: {e}", param, ctx,
             )
 
 
 BROWNIE_ACCOUNT = BrownieAccount()
 
 
-def approve(account, balances, extra_balances, spender, amount=2 ** 256 - 1):
-    """For every token that we have a balance of, Approve unlimited (or a specified amount) for the spender."""
-    for token, balance in balances.items():
-        if token.address in extra_balances:
-            balance += extra_balances[token.address]
+class Salt(click.ParamType):
+    name = "salt"
 
-        if balance == 0:
-            continue
-
-        allowed = token.allowance(account, spender)
-
-        if allowed >= amount:
-            print(f"No approval needed for {token.address}")
-            # TODO: claiming 3crv could increase our balance and mean that we actually do need an approval
-            continue
-        elif allowed == 0:
-            pass
-        else:
-            # TODO: do any of our tokens actually need this stupid check?
-            print(f"Clearing {token.address} approval...")
-            approve_tx = token.approve(spender, 0, {"from": account})
-
-            # approve_tx.info()
-
-        if amount is None:
-            print(
-                f"Approving {spender} for {balance} of {account}'s {token.address}..."
-            )
-            amount = balance
-        else:
-            print(
-                f"Approving {spender} for unlimited of {account}'s {token.address}..."
+    def convert(self, value, param, ctx):
+        try:
+            # TODO: what should we do with this value?
+            return value
+        except Exception as e:
+            # TODO: what type of exception should we catch?
+            self.fail(
+                f"Could not parse '{value!r}' as a salt: {e}", param, ctx,
             )
 
-        approve_tx = token.approve(spender, amount, {"from": account})
 
-        # TODO: if debug, print this
-        # approve_tx.info()
+SALT = Salt()
+
+# TODO: is this the best way to have a common options? sometimes we want this as an argument and not an option
+class CommandWithAccount(click.Command):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.params.insert(
+            0,
+            click.core.Option(
+                ("--account",),
+                type=BROWNIE_ACCOUNT,
+                help="Ethereum account, ENS name, brownie account",
+                default="argobytes.json",
+                show_default=True,
+            ),
+        )
+
+
+# TODO: is this the best way to have a common options?
+class CommandWithProxySalts(CommandWithAccount):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # TODO: insert at position 0? does it matter?
+        self.params.insert(
+            0,
+            click.core.Option(
+                ("--borrower-salt",),
+                type=SALT,
+                help="ArgobytesFlashBorrower deploy salt",
+                default="",
+                show_default=True,
+            ),
+        )
+        self.params.insert(
+            0,
+            click.core.Option(
+                ("--factory-salt",),
+                type=SALT,
+                help="ArgobytesFactory deploy salt",
+                default="",
+                show_default=True,
+            ),
+        )
+        self.params.insert(
+            0,
+            click.core.Option(
+                ("--clone-salt",),
+                type=SALT,
+                help="Account's clone's deploy salt",
+                default="",
+                show_default=True,
+            ),
+        )
+
+
+@decorator
+def brownie_connect(func, *args, **kwargs):
+    ctx = click.get_current_context()
+
+    connect_fn = ctx.obj["brownie_connect_fn"]
+
+    connect_fn()
+
+    # TODO: curve info script doesn't appear to be connected
+    print("connected")
+
+    return func(*args, **kwargs)
 
 
 # TODO: this should be in brownie
@@ -100,27 +145,6 @@ def debug_shell(extra_locals, banner="Argobytes debug time.", exitmsg=""):
 def get_project_root() -> Path:
     """Root directory of the brownie project."""
     return Path(__file__).parent.parent
-
-
-@contextlib.contextmanager
-def print_start_and_end_balance(account):
-    initial_gas = account.gas_used
-    starting_balance = account.balance()
-
-    print("\nbalance of", account, ":", starting_balance / 1e18)
-    print()
-
-    yield
-
-    gas_used = account.gas_used - initial_gas
-    ending_balance = account.balance()
-
-    # TODO: print the number of transactions done?
-    print(f"\n{account} used {gas_used} gas.")
-    print(
-        "\nspent balance of", account, ":", (starting_balance - ending_balance) / 1e18
-    )
-    print()
 
 
 def prompt_loud_confirmation(account):
@@ -136,23 +160,30 @@ def prompt_loud_confirmation(account):
     click.confirm("\nDo you want to continue?\n", abort=True)
 
 
-def with_dry_run(do_it, account):
-    starting_balance = account.balance()
+@decorator
+@brownie_connect
+def with_dry_run(func, account, tokens, *args, confirm_delay=6, **kwargs):
+    """Run a function against a fork network and then confirm before doing it for real."""
+
+    def do_func():
+        with print_start_and_end_balance(account, tokens):
+            func(account, *args, **kwargs)
 
     """
     # TODO: fork should check if we are already connected to a forked network and just use snapshots
-    with fork(unlock=str(account)) as fork_settings:
-        with print_start_and_end_balance(account):
-            do_it(account)
+    with fork(unlock=str(account)):
+        do_func()
+    """
 
     prompt_for_confirmation(account)
 
-    print("\nI hope it worked inside our test net, because we are doing it for real in 6 seconds... [Ctrl C] to cancel")
-    time.sleep(6)
-    """
+    click.secho(
+        f"\nI hope it did what you wanted on our forked net, because we are doing it for real in {confirm_delay} seconds.\n\n",
+        fg=red,
+    )
+    click.secho("[Ctrl C] to cancel", blink=True, bold=True, fg=red)
+    time.sleep(confirm_delay)
 
-    # TODO: also print start and end token balances
-    with print_start_and_end_balance(account):
-        do_it(account)
+    do_func()
 
     print("transactions complete!")

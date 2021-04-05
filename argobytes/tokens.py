@@ -2,18 +2,28 @@
 
 # TODO: move curve stuff back to argobytes_extra
 from decimal import Decimal
-from eth_utils import to_checksum_address
 from json import JSONDecodeError
 from pprint import pprint
-import brownie
-import itertools
-import tokenlists
+import contextlib
 
-from .contracts import load_contract
+import brownie
+import tokenlists
+from eth_utils import to_checksum_address
+
+from .contracts import EthContract, load_contract
 
 _cache_symbols = {}
 _cache_decimals = {}
 _cache_token = {}
+
+
+def get_claimable_3crv(account, fee_distribution, min_crv=50):
+    claimable = fee_distribution.claim.call(account)
+
+    if claimable < min_crv:
+        return 0
+
+    return claimable
 
 
 def load_token(token_symbol: str):
@@ -57,21 +67,6 @@ def load_token(token_symbol: str):
     return contract
 
 
-class EthContract:
-    def __init__(self):
-        """Handle ETH like an ERC20."""
-        self.address = brownie.ETH_ADDRESS
-
-    def decimals(self):
-        return 18
-
-    def symbol(self):
-        return "ETH"
-
-    def balanceOf(self, account):
-        return brownie.web3.eth.getBalance(str(account))
-
-
 def load_token_or_contract(token_symbol_or_address: str):
     try:
         return load_contract(token_symbol_or_address)
@@ -79,35 +74,13 @@ def load_token_or_contract(token_symbol_or_address: str):
         return load_token(token_symbol_or_address)
 
 
-def print_token_balances(balances, label=None):
-    # TODO: symbol cache
-
-    if label:
-        print(label)
-
-    dict_for_printing = dict()
-
-    for token, amount in balances.items():
-        symbol = token_symbol(token)
-
-        if symbol:
-            dict_for_printing[symbol] = amount
-        else:
-            dict_for_printing[token.address] = amount
-
-    pprint(dict_for_printing)
+def get_balances(account, tokens):
+    # TODO: multicall
+    # if you need ETH, use an EthContract() for the token
+    return {token: token.balanceOf(account) for token in tokens}
 
 
-def transfer_token(from_address, to, token, amount):
-    """Transfer tokens from an account that we don't actually control."""
-    decimals = token.decimals()
-
-    amount *= 10 ** decimals
-
-    token.transfer(to, amount, {"from": from_address})
-
-
-def token_decimals(token_contract):
+def get_token_decimals(token_contract):
     if token_contract.address in _cache_decimals:
         return _cache_decimals[token_contract.address]
 
@@ -127,7 +100,7 @@ def token_decimals(token_contract):
     return decimals
 
 
-def token_symbol(token_contract):
+def get_token_symbol(token_contract):
     if token_contract.address in _cache_symbols:
         return _cache_symbols[token_contract.address]
 
@@ -143,6 +116,102 @@ def token_symbol(token_contract):
     _cache_symbols[token_contract.address] = symbol
 
     return symbol
+
+
+def print_token_balances(balances, label=None):
+    # TODO: symbol cache
+
+    if label:
+        print(label)
+
+    dict_for_printing = dict()
+
+    for token, amount in balances.items():
+        symbol = get_token_symbol(token)
+
+        if symbol:
+            dict_for_printing[symbol] = amount
+        else:
+            dict_for_printing[token.address] = amount
+
+    pprint(dict_for_printing)
+
+
+def token_approve(account, balances, extra_balances, spender, amount=2 ** 256 - 1):
+    """For every token that we have a balance of, Approve unlimited (or a specified amount) for the spender."""
+    for token, balance in balances.items():
+        if token.address in extra_balances:
+            balance += extra_balances[token.address]
+
+        if balance == 0:
+            continue
+
+        allowed = token.allowance(account, spender)
+
+        if allowed >= amount:
+            print(f"No approval needed for {token.address}")
+            # TODO: claiming 3crv could increase our balance and mean that we actually do need an approval
+            continue
+        elif allowed == 0:
+            pass
+        else:
+            # TODO: do any of our tokens actually need this stupid check?
+            print(f"Clearing {token.address} approval...")
+            _approve_tx = token.approve(spender, 0, {"from": account})
+
+            # approve_tx.info()
+
+        if amount is None:
+            print(
+                f"Approving {spender} for {balance} of {account}'s {token.address}..."
+            )
+            amount = balance
+        else:
+            print(
+                f"Approving {spender} for unlimited of {account}'s {token.address}..."
+            )
+
+        approve_tx = token.approve(spender, amount, {"from": account})
+
+        # TODO: if debug, print this
+        # approve_tx.info()
+
+
+def transfer_token(from_address, to, token, decimal_amount):
+    """Transfer tokens from an account that we don't actually control."""
+    decimals = token.decimals()
+
+    amount = int(decimal_amount * 10 ** decimals)
+
+    token.transfer(to, amount, {"from": from_address})
+
+
+@contextlib.contextmanager
+def print_start_and_end_balance(account, tokens=None):
+    initial_gas = account.gas_used
+    starting_balance = account.balance()
+
+    print("\nbalance of", account, ":", starting_balance / 1e18)
+    print()
+
+    if tokens:
+        raise NotImplementedError("TODO: print starting token balances")
+
+    yield
+
+    gas_used = account.gas_used - initial_gas
+    ending_balance = account.balance()
+
+    # TODO: print the number of transactions done?
+    print(f"\n{account} used {gas_used} gas.")
+    print(
+        f"\nspent balance of {account}:",
+        (starting_balance - ending_balance) / 1e18,
+        "\n",
+    )
+
+    if tokens:
+        raise NotImplementedError("TODO: print ending token balances")
 
 
 def retry_fetch_token_list(url, tries=3):

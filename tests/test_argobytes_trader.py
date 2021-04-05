@@ -1,7 +1,6 @@
 import brownie
 import pytest
-import warnings
-from brownie import accounts, ZERO_ADDRESS
+from brownie import ZERO_ADDRESS, accounts
 from brownie.test import given, strategy
 from hypothesis import settings
 

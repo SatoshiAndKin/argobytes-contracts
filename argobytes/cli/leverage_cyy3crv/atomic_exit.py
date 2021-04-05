@@ -1,18 +1,17 @@
+import os
+from collections import namedtuple
+from pprint import pprint
+
 import brownie
 import click
-import os
-import threading
-import multiprocessing
+from brownie import ZERO_ADDRESS, Contract, accounts
+from brownie.network.web3 import _resolve_address
+from dotenv import find_dotenv, load_dotenv
 
-from argobytes import (
-    ArgobytesAction,
-    approve,
-    ArgobytesActionCallType,
-    get_average_block_time,
-    get_balances,
-    get_claimable_3crv,
-)
+from argobytes.cli_helpers import CommandWithAccount, brownie_connect
 from argobytes.contracts import (
+    ArgobytesAction,
+    ArgobytesActionCallType,
     ArgobytesFactory,
     ArgobytesFlashBorrower,
     DyDxFlashLender,
@@ -22,24 +21,24 @@ from argobytes.contracts import (
     lazy_contract,
     poke_contracts,
 )
-from argobytes.tokens import print_token_balances
-from brownie import accounts, Contract, ZERO_ADDRESS
-from brownie.network.web3 import _resolve_address
-from collections import namedtuple
-from concurrent.futures import as_completed, ThreadPoolExecutor
-from dotenv import load_dotenv, find_dotenv
-from pprint import pprint
-
+from argobytes.tokens import (
+    token_approve,
+    print_token_balances,
+    get_balances,
+    get_claimable_3crv,
+)
+from argobytes.web3_helpers import get_average_block_time
 
 ExitData = namedtuple(
     "ExitData", ["dai_flash_fee", "max_3crv_burned", "tip_3crv", "sender",],
 )
 
 
-@click.command()
+@click.command(cls=CommandWithAccount)
 @click.option("--tip-eth", default=0)
 @click.option("--tip-3crv", default=0)
-def atomic_exit(tip_eth, tip_3crv):
+@brownie_connect
+def atomic_exit(account, tip_eth, tip_3crv):
     """Use a flash loan to withdraw from a leveraged cyy3crv position."""
     # TODO: we need an account with private keys
     account = accounts.at(os.environ["LEVERAGE_ACCOUNT"], force=True)
@@ -132,7 +131,7 @@ def atomic_exit(tip_eth, tip_3crv):
 
     extra_balances = {}
 
-    approve(account, balances, extra_balances, argobytes_clone)
+    token_approve(account, balances, extra_balances, argobytes_clone)
 
     # flashloan through the clone
     exit_tx = argobytes_clone.flashBorrow(

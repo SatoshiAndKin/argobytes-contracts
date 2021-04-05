@@ -1,43 +1,39 @@
 import brownie
 import click
-import os
-import threading
-import multiprocessing
+from brownie import ZERO_ADDRESS, Contract, accounts
+from brownie.network.web3 import _resolve_address
+from dotenv import find_dotenv, load_dotenv
 
-from argobytes import (
-    ArgobytesAction,
-    approve,
-    ArgobytesActionCallType,
-    get_balances,
-    get_claimable_3crv,
-)
+from argobytes.cli_helpers import CommandWithAccount, brownie_connect
 from argobytes.contracts import (
-    ArgobytesInterfaces,
+    ArgobytesAction,
+    ArgobytesActionCallType,
     ArgobytesFactory,
     ArgobytesFlashBorrower,
+    ArgobytesInterfaces,
     DyDxFlashLender,
     ExitCYY3CRVAction,
     get_or_clone,
     get_or_create,
     load_contract,
+    poke_contracts,
 )
-from argobytes.tokens import print_token_balances, token_decimals
-from brownie import accounts, Contract, ZERO_ADDRESS
-from brownie.network.web3 import _resolve_address
-from collections import namedtuple
-from concurrent.futures import as_completed, ThreadPoolExecutor
-from dotenv import load_dotenv, find_dotenv
-from pprint import pprint
+from argobytes.tokens import (
+    print_token_balances,
+    get_token_decimals,
+    token_approve,
+    get_balances,
+    get_claimable_3crv,
+)
 
 
-@click.command()
-def simple_exit():
+@click.command(cls=CommandWithAccount)
+@brownie_connect
+def simple_exit(account):
     """Make a bunch of transactions to withdraw from a leveraged cyy3crv position."""
-    account = accounts.at(os.environ["LEVERAGE_ACCOUNT"])
     print(f"Hello, {account}")
 
-    # TODO: prompt for slippage amount
-    slippage = 0.1
+    # TODO: flag for slippage amount. default 0.5%
 
     # TODO: use salts for the contracts once we figure out a way to store them. maybe 3box?
 
@@ -60,6 +56,8 @@ def simple_exit():
     cream = ArgobytesInterfaces.IComptroller(exit_cyy3crv_action.CREAM(), account)
 
     tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv, cydai]
+
+    poke_contracts(tokens + [threecrv_pool, cream])
 
     start_balances = get_balances(account, tokens)
 
@@ -99,8 +97,8 @@ def simple_exit():
 
     # TODO: convert liquidity into cyy3crv. then leave some headroom
     # TODO: get 0.9 out of state
-    y3crv_decimals = token_decimals(y3crv)
-    cyy3crv_decimals = token_decimals(cyy3crv)
+    y3crv_decimals = get_token_decimals(y3crv)
+    cyy3crv_decimals = get_token_decimals(cyy3crv)
 
     # TODO: i think we should be able to use cream's price oracle for this
     # TODO: how do we get the 90% out of the contract?
@@ -125,7 +123,7 @@ def simple_exit():
 
     y3crv.withdraw(y3crv_balance)
 
-    threecrv_balance = threecrv.balanceOf(account)
+    threecrv.balanceOf(account)
 
     end_balances = get_balances(account, tokens)
     print_token_balances(end_balances, f"{account} end balances")

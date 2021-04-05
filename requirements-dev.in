@@ -1,0 +1,8 @@
+-r requirements.in
+
+autoflake
+autopep8
+bandit
+black
+pyupgrade
+isort

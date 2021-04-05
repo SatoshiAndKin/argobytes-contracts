@@ -1,21 +1,21 @@
+from collections import namedtuple
 from decimal import Decimal
+from pprint import pprint
+
 import brownie
 import click
-import os
-import threading
-import multiprocessing
+from brownie import Contract, accounts
+from brownie.network.web3 import _resolve_address
+from eth_utils import to_int
+from lazy_load import lazy
 
-from argobytes import (
-    ArgobytesAction,
-    approve,
-    ArgobytesActionCallType,
-    get_balances,
-    get_claimable_3crv,
-)
+from argobytes.cli_helpers import CommandWithAccount, brownie_connect, logger
 from argobytes.contracts import (
-    ArgobytesInterfaces,
+    ArgobytesAction,
+    ArgobytesActionCallType,
     ArgobytesFactory,
     ArgobytesFlashBorrower,
+    ArgobytesInterfaces,
     DyDxFlashLender,
     EnterCYY3CRVAction,
     get_or_clone,
@@ -23,15 +23,12 @@ from argobytes.contracts import (
     lazy_contract,
     poke_contracts,
 )
-from argobytes.tokens import print_token_balances
-from brownie import accounts, Contract
-from brownie.network.web3 import _resolve_address
-from collections import namedtuple
-from concurrent.futures import as_completed, ThreadPoolExecutor
-from lazy_load import lazy
-from eth_utils import to_int
-from pprint import pprint
-
+from argobytes.tokens import (
+    token_approve,
+    get_balances,
+    get_claimable_3crv,
+    print_token_balances,
+)
 
 EnterData = namedtuple(
     "EnterData",
@@ -51,17 +48,12 @@ EnterData = namedtuple(
 )
 
 
-@click.command()
-def atomic_enter():
+@click.command(cls=CommandWithAccount)
+@click.option("--min-3crv-to-claim", default=50, show_default=True)
+@brownie_connect
+def atomic_enter(account, min_3crv_to_claim):
     """Use a flash loan to deposit into leveraged cyy3crv position."""
-    # TODO: we need an account with private keys
-    # TODO: only force if development network?
-    # TODO: use click type for this
-    account = accounts.at(os.environ["LEVERAGE_ACCOUNT"], force=True)
-    print(f"Hello, {account}")
-
-    # TODO: get this from click
-    min_3crv_to_claim = os.environ.get("MIN_3CRV_TO_CLAIM", 50)
+    logger.info(f"Hello, {account}")
 
     # deploy our contracts if necessary
     argobytes_factory = get_or_create(account, ArgobytesFactory)
@@ -71,7 +63,7 @@ def atomic_enter():
     # get the clone for the account
     argobytes_clone = get_or_clone(account, argobytes_factory, argobytes_flash_borrower)
 
-    print(f"clone: {argobytes_clone}")
+    logger.info(f"clone: {argobytes_clone}")
 
     assert account == argobytes_clone.owner(), "Wrong owner detected!"
 
@@ -159,7 +151,7 @@ def atomic_enter():
     if enter_data.claim_3crv:
         extra_balances[threecrv.address] = claimable_3crv
 
-    approve(account, balances, extra_balances, argobytes_clone)
+    token_approve(account, balances, extra_balances, argobytes_clone)
 
     # flashloan through the clone
     pprint(enter_data)

@@ -1,6 +1,6 @@
 import brownie
 import pytest
-from brownie import accounts, ZERO_ADDRESS
+from brownie import ZERO_ADDRESS, accounts
 from brownie.test import given, strategy
 from eth_utils import to_bytes
 from hypothesis import settings

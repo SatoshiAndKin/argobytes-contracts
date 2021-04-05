@@ -1,6 +1,7 @@
 import pytest
-from argobytes.contracts import get_or_create, mk_contract_address2, SingletonFactory
-from brownie import accounts, ZERO_ADDRESS
+from brownie import ZERO_ADDRESS, accounts
+
+from argobytes.contracts import SingletonFactory, get_or_create, mk_contract_address2
 
 
 @pytest.mark.parametrize(

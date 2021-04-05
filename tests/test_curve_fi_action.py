@@ -1,6 +1,6 @@
 import brownie
 import pytest
-from brownie import accounts, Contract
+from brownie import Contract, accounts
 from brownie.test import given, strategy
 from hypothesis import settings
 
@@ -56,7 +56,7 @@ def test_compound_trade(curve_fi_action, curve_fi_compound, onesplit_helper):
         token_b = Contract(token_b, as_proxy_of=token_b.target())
 
     # buy some DAI for the curve_fi_action
-    balance_a = onesplit_helper(1e18, token_a, curve_fi_action)
+    onesplit_helper(1e18, token_a, curve_fi_action)
 
     # TODO: check balances
 
@@ -89,7 +89,7 @@ def test_compound_trade_underlying(curve_fi_action, curve_fi_compound, onesplit_
         token_b = Contract(token_b, as_proxy_of=token_b.target())
 
     # buy some DAI for the curve_fi_action
-    balance_a = onesplit_helper(1e18, token_a, curve_fi_action)
+    onesplit_helper(1e18, token_a, curve_fi_action)
 
     # TODO: check balances
 

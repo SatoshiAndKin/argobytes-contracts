@@ -1,12 +1,12 @@
-import pytest
 from decimal import Decimal
 
-from argobytes.contracts import load_contract
-from argobytes.tokens import transfer_token
+import pytest
 from brownie import accounts, project
 from click.testing import CliRunner
 
 from argobytes.cli.leverage_cyy3crv import simple_enter, simple_exit
+from argobytes.contracts import load_contract
+from argobytes.tokens import transfer_token
 
 
 @pytest.mark.require_network("mainnet-fork")
@@ -22,10 +22,10 @@ def test_simple_scripts(
     usdc = load_contract(exit_cyy3crv_action.USDC())
     usdt = load_contract(exit_cyy3crv_action.USDT())
     threecrv = load_contract(exit_cyy3crv_action.THREE_CRV())
-    threecrv_pool = load_contract(exit_cyy3crv_action.THREE_CRV_POOL())
+    load_contract(exit_cyy3crv_action.THREE_CRV_POOL())
     y3crv = load_contract(exit_cyy3crv_action.Y_THREE_CRV())
     cyy3crv = load_contract(exit_cyy3crv_action.CY_Y_THREE_CRV())
-    cydai = load_contract(exit_cyy3crv_action.CY_DAI())
+    load_contract(exit_cyy3crv_action.CY_DAI())
 
     initial_dai = Decimal(10000)
 

@@ -1,36 +1,34 @@
-import click
 import os
-import threading
-import multiprocessing
 
-from argobytes import (
-    ArgobytesAction,
-    approve,
-    ArgobytesActionCallType,
-    get_balances,
-    get_claimable_3crv,
-)
+import click
+from brownie import Contract, accounts
+from brownie.network.web3 import _resolve_address
+from dotenv import find_dotenv, load_dotenv
+from eth_utils import to_int
+
+from argobytes.cli_helpers import CommandWithAccount, brownie_connect
 from argobytes.contracts import (
-    ArgobytesInterfaces,
+    ArgobytesAction,
+    ArgobytesActionCallType,
     ArgobytesFactory,
+    ArgobytesFlashBorrower,
+    ArgobytesInterfaces,
     DyDxFlashLender,
+    EnterCYY3CRVAction,
     get_or_clone,
     get_or_create,
     load_contract,
-    ArgobytesFlashBorrower,
-    EnterCYY3CRVAction,
 )
-from argobytes.tokens import print_token_balances
-from brownie import accounts, Contract
-from brownie.network.web3 import _resolve_address
-from collections import namedtuple
-from concurrent.futures import as_completed, ThreadPoolExecutor
-from dotenv import load_dotenv, find_dotenv
-from eth_utils import to_int
-from pprint import pprint
+from argobytes.tokens import (
+    print_token_balances,
+    token_approve,
+    get_balances,
+    get_claimable_3crv,
+)
 
 
-@click.command()
+@click.command(cls=CommandWithAccount)
+@brownie_connect
 def simple_enter():
     """Make a bunch of transactions to deposit into leveraged cyy3crv position."""
     # TODO: we need an account with private keys
@@ -59,7 +57,9 @@ def simple_enter():
     )
     cream = ArgobytesInterfaces.IComptroller(enter_cyy3crv_action.CREAM())
 
-    tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv]
+    tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv, cydai]
+
+    poke_contracts(tokens + [threecrv_pool, fee_distribution, cream])
 
     balances = get_balances(account, tokens)
     print_token_balances(balances, f"{account} balances")
@@ -68,8 +68,6 @@ def simple_enter():
 
     # TODO: calculate/prompt for these
     min_3crv_mint_amount = 1
-    tip_3crv = 0
-    min_cream_liquidity = 1000
 
     # TODO: do this properly. use virtualprice and yearn's price calculation
     # print("warning! summed_balances is not actually priced in USD")

@@ -9,7 +9,6 @@ from .simple_exit import simple_exit
 @click.group()
 def leverage_cyy3crv():
     """DAI <-> 3crv <-> y3crv <-> cyy3crv <-> DAI."""
-    pass
 
 
 leverage_cyy3crv.add_command(atomic_enter)

@@ -1,12 +1,12 @@
 import pytest
 from brownie import *
-from eth_utils import keccak, to_checksum_address, to_bytes
-from eth_abi.packed import encode_abi_packed
 from click.testing import CliRunner
+from eth_abi.packed import encode_abi_packed
+from eth_utils import keccak, to_bytes, to_checksum_address
 
 from argobytes import to_hex32
 from argobytes.addresses import *
-from argobytes.contracts import load_contract, get_or_clone, get_or_create
+from argobytes.contracts import get_or_clone, get_or_create, load_contract
 from argobytes.tokens import load_token_or_contract
 
 

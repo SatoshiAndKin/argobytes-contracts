@@ -164,6 +164,16 @@ Run:
     yarn upgrade
 
 
+### Linting
+
+Run:
+
+    isort .
+    autoflake -r --in-place --remove-unused-variables argobytes scripts setup.py tests
+    black argobytes scripts setup.py tests
+
+TODO: automate this
+
 # Thanks
 
 This project wouldn't be possible without so many other projects.

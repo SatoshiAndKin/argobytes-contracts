@@ -1,9 +1,8 @@
-autopep8
-bandit
 click-log
 click-option-group
 click-plugins
 click-spinner
+decorator
 eth-abi
 eth-brownie
 lazy_load

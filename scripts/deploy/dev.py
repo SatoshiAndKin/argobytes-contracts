@@ -4,16 +4,18 @@
 
 import json
 import os
-from eth_utils import to_bytes
-from eth_abi import encode_single, encode_abi
-from brownie import *
-from argobytes_util import *
-from argobytes_mainnet import *
 
+from argobytes_mainnet import *
+from argobytes_util import *
+from brownie import *
+from eth_abi import encode_abi, encode_single
+from eth_utils import to_bytes
 
 # TODO: set these inside main instead of using globals
 EXPORT_ARTIFACTS = os.environ.get("EXPORT_ARTIFACTS", "0") == "1"
-DEPLOY_DIR = os.path.join(project.main.check_for_project('.'), "build", "deployments", "quick_and_dirty")
+DEPLOY_DIR = os.path.join(
+    project.main.check_for_project("."), "build", "deployments", "quick_and_dirty"
+)
 
 
 def quick_save_contract(contract):
@@ -32,7 +34,7 @@ def quick_save(contract_name, address):
 
     print(f"Saving deployed address to {quick_path}")
 
-    with open(quick_path, 'w') as opened_file:
+    with open(quick_path, "w") as opened_file:
         opened_file.write(json.dumps(address))
 
 
@@ -43,8 +45,6 @@ def main():
 
     # unless you are in a rush, it is better to not use gas token and just deploy at expected_mainnet_mint_price
     expected_mainnet_gas_price = "120 gwei"
-
-    deadline = 90000000000000000000
 
     # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
     argobytes_tip_address = web3.ens.resolve("tip.satoshiandkin.eth")
@@ -66,7 +66,7 @@ def main():
     # deploy a dsproxy just to compare gas costs
     # TODO: whats the deploy cost of DSProxyFactory?
     ds_proxy_factory = interface.DSProxyFactory(DSProxyFactoryAddress, accounts[5])
-    ds_proxy_tx = ds_proxy_factory.build()
+    ds_proxy_factory.build()
 
     # deploy ArgobytesFactory
     argobytes_factory = get_or_create(accounts[0], ArgobytesFactory)
@@ -84,30 +84,34 @@ def main():
     quick_save_contract(argobytes_proxy)
 
     # clone ArgobytesFlashBorrower for accounts[0]
-    argobytes_proxy_clone = get_or_clone(accounts[0], argobytes_factory, argobytes_proxy)
+    argobytes_proxy_clone = get_or_clone(
+        accounts[0], argobytes_factory, argobytes_proxy
+    )
 
     # TODO: setup auth for the proxy
     # for now, owner-only access works, but we need to allow a bot in to call atomicArbitrage
 
     # deploy the main contracts
-    argobytes_multicall = get_or_create(account[0], ArgobytesMulticall)
+    get_or_create(account[0], ArgobytesMulticall)
 
     # deploy base actions
     argobytes_trader = get_or_create(account[0], ArgobytesTrader)
 
     # deploy all the exchange actions
-    example_action = get_or_create(account[0], ExampleAction)
-    onesplit_offchain_action = get_or_create(account[0], OneSplitOffchainAction)
-    kyber_action = get_or_create(account[0], KyberAction, constructor_args=[accounts[0]])
-    uniswap_v1_action = get_or_create(account[0], UniswapV1Action)
-    uniswap_v2_action = get_or_create(account[0], UniswapV2Action)
-    zrx_v3_action = get_or_create(account[0], ZrxV3Action)
-    weth9_action = get_or_create(account[0], Weth9Action)
-    curve_fi_action = get_or_create(account[0], CurveFiAction)
+    get_or_create(account[0], ExampleAction)
+    get_or_create(account[0], OneSplitOffchainAction)
+    kyber_action = get_or_create(
+        account[0], KyberAction, constructor_args=[accounts[0]]
+    )
+    get_or_create(account[0], UniswapV1Action)
+    get_or_create(account[0], UniswapV2Action)
+    get_or_create(account[0], ZrxV3Action)
+    get_or_create(account[0], Weth9Action)
+    get_or_create(account[0], CurveFiAction)
 
     # deploy leverage cyy3crv actions
-    enter_cyy3crv_action = get_or_create(account[0], EnterCYY3CRVAction)
-    exit_cyy3crv_action = get_or_create(account[0], ExitCYY3CRVAction)
+    get_or_create(account[0], EnterCYY3CRVAction)
+    get_or_create(account[0], ExitCYY3CRVAction)
 
     # external things
     kyber_register_wallet = interface.KyberRegisterWallet(KyberRegisterWalletAddress)
@@ -138,8 +142,7 @@ def main():
     ]
 
     argobytes_proxy_clone.executeMany(
-        bulk_actions,
-        {"gasPrice": expected_mainnet_gas_price}
+        bulk_actions, {"gasPrice": expected_mainnet_gas_price}
     )
 
     print("gas used by accounts[0]:", accounts[0].gas_used)
@@ -199,13 +202,12 @@ def main():
         argobytes_proxy.address,
         salt,
         accounts[5],
-        {
-            "from": accounts[5],
-            "gas_price": expected_mainnet_gas_price,
-        },
+        {"from": accounts[5], "gas_price": expected_mainnet_gas_price,},
     )
 
-    argobytes_proxy_clone_5 = ArgobytesFlashBorrower.at(deploy_tx.return_value, accounts[5])
+    argobytes_proxy_clone_5 = ArgobytesFlashBorrower.at(
+        deploy_tx.return_value, accounts[5]
+    )
 
     bulk_actions = [
         # allow bots to call argobytes_trader.atomicArbitrage
@@ -225,13 +227,15 @@ def main():
     ]
 
     argobytes_proxy_clone_5.executeMany(
-        bulk_actions,
-        {"gasPrice": expected_mainnet_gas_price}
+        bulk_actions, {"gasPrice": expected_mainnet_gas_price}
     )
 
     ending_balance = accounts[5].balance()
 
-    print("ETH used by accounts[5] to deploy a proxy with auth:", (starting_balance - ending_balance) / 1e18)
+    print(
+        "ETH used by accounts[5] to deploy a proxy with auth:",
+        (starting_balance - ending_balance) / 1e18,
+    )
 
     # make a clone for accounts[6]. then print total gas
     starting_balance = accounts[6].balance()
@@ -241,16 +245,16 @@ def main():
         argobytes_proxy.address,
         salt,
         accounts[6],
-        {
-            "from": accounts[6],
-            "gas_price": expected_mainnet_gas_price,
-        },
+        {"from": accounts[6], "gas_price": expected_mainnet_gas_price,},
     )
 
-    argobytes_proxy_clone_6 = ArgobytesFlashBorrower.at(deploy_tx.return_value, accounts[6])
+    ArgobytesFlashBorrower.at(deploy_tx.return_value, accounts[6])
 
     ending_balance = accounts[6].balance()
 
-    print("ETH used by accounts[6] to deploy a proxy:", (starting_balance - ending_balance) / 1e18)
+    print(
+        "ETH used by accounts[6] to deploy a proxy:",
+        (starting_balance - ending_balance) / 1e18,
+    )
 
     # reset_block_time(synthetix_depot_action)
