@@ -12,8 +12,6 @@ appdirs==1.4.4
     # via
     #   black
     #   eth-brownie
-astroid==2.5.2
-    # via pylint
 asttokens==2.0.4
     # via
     #   eth-brownie
@@ -63,7 +61,7 @@ cytoolz==0.11.0
     #   eth-brownie
     #   eth-keyfile
     #   eth-utils
-decorator==4.4.2
+decorator==5.0.5
     # via -r requirements.in
 eth-abi==2.1.1
     # via
@@ -76,7 +74,7 @@ eth-account==0.5.2
     # via
     #   eth-brownie
     #   web3
-eth-brownie==1.14.3
+eth-brownie==1.14.4
     # via -r requirements.in
 eth-event==1.2.1
     # via eth-brownie
@@ -134,6 +132,10 @@ idna==2.10
     # via
     #   eth-brownie
     #   requests
+importlib-metadata==3.10.0
+    # via eth-brownie
+importlib-resources==5.1.2
+    # via eth-brownie
 inflection==0.5.0
     # via
     #   eth-brownie
@@ -147,8 +149,6 @@ ipfshttpclient==0.7.0
     # via
     #   eth-brownie
     #   web3
-isort==5.8.0
-    # via pylint
 jsonschema==3.2.0
     # via
     #   eth-brownie
@@ -157,15 +157,11 @@ jsonschema==3.2.0
 lazy-load==0.8.2
     # via -r requirements.in
 lazy-object-proxy==1.6.0
-    # via
-    #   astroid
-    #   lazy-load
+    # via lazy-load
 lru-dict==1.1.7
     # via
     #   eth-brownie
     #   web3
-mccabe==0.6.1
-    # via pylint
 more-itertools==8.7.0
     # via
     #   eth-brownie
@@ -223,7 +219,7 @@ pycryptodome==3.10.1
     #   vyper
 pygments-lexer-solidity==0.5.1
     # via eth-brownie
-pygments==2.6.1
+pygments==2.8.1
     # via
     #   eth-brownie
     #   pygments-lexer-solidity
@@ -231,8 +227,6 @@ pyjwt==1.7.1
     # via
     #   eth-brownie
     #   pythx
-pylint==2.7.3
-    # via -r requirements.in
 pyparsing==2.4.7
     # via
     #   eth-brownie
@@ -245,15 +239,12 @@ pytest-forked==1.3.0
     # via
     #   eth-brownie
     #   pytest-xdist
-pytest-timeout==1.4.2
-    # via -r requirements.in
 pytest-xdist==1.34.0
     # via eth-brownie
 pytest==6.0.1
     # via
     #   eth-brownie
     #   pytest-forked
-    #   pytest-timeout
     #   pytest-xdist
 python-dateutil==2.8.1
     # via
@@ -261,7 +252,7 @@ python-dateutil==2.8.1
     #   mythx-models
     #   pythx
 python-dotenv==0.16.0
-    # via -r requirements.in
+    # via eth-brownie
 pythx==1.6.1
     # via eth-brownie
 pyyaml==5.4.1
@@ -310,7 +301,6 @@ toml==0.10.2
     # via
     #   black
     #   eth-brownie
-    #   pylint
     #   pytest
 toolz==0.11.1
     # via
@@ -322,6 +312,8 @@ typed-ast==1.4.2
     # via
     #   black
     #   eth-brownie
+typing-extensions==3.7.4.3
+    # via eth-brownie
 urllib3==1.26.4
     # via
     #   eth-brownie
@@ -344,8 +336,10 @@ websockets==8.1
     # via
     #   eth-brownie
     #   web3
-wrapt==1.12.1
-    # via astroid
+zipp==3.4.1
+    # via
+    #   eth-brownie
+    #   importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

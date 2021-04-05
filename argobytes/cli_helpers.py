@@ -26,19 +26,23 @@ class BrownieAccount(click.ParamType):
     name = "account"
 
     def convert(self, value, param, ctx):
+        # brownie needs an active network to setup the account
+        connect_fn = ctx.obj["brownie_connect_fn"]
+
+        connect_fn()
+
+        # make a noop connect function in case this gets called again for some reason
+        ctx.obj["brownie_connect_fn"] = lambda: None
+
         try:
             if value.endswith(".json"):
                 return accounts.load(value)
         except Exception as e:
-            # TODO: what type of exception should we catch?
+            # TODO: what type of exception should we catch? 
             self.fail(
                 f"Brownie could not load named account {value!r}: {e}", param, ctx,
             )
         try:
-            if "." in value:
-                # TODO: i thought brownie would do this for us, but i got an exception
-                value = web3.ens.resolve(value)
-
             return accounts.at(value, force=True)
         except Exception as e:
             # TODO: what type of exception should we catch?
@@ -129,9 +133,6 @@ def brownie_connect(func, *args, **kwargs):
 
     connect_fn()
 
-    # TODO: curve info script doesn't appear to be connected
-    print("connected")
-
     return func(*args, **kwargs)
 
 
@@ -161,9 +162,11 @@ def prompt_loud_confirmation(account):
 
 
 @decorator
-@brownie_connect
 def with_dry_run(func, account, tokens, *args, confirm_delay=6, **kwargs):
-    """Run a function against a fork network and then confirm before doing it for real."""
+    """Run a function against a fork network and then confirm before doing it for real.
+    
+    since we have an account, the @brownie_connect decorator isn't needed
+    """
 
     def do_func():
         with print_start_and_end_balance(account, tokens):

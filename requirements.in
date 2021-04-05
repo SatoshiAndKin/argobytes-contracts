@@ -6,8 +6,4 @@ decorator
 eth-abi
 eth-brownie
 lazy_load
-pylint
-# pytest-random-order
-pytest-timeout
-python-dotenv
 tokenlists

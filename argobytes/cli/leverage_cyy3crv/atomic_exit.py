@@ -37,7 +37,6 @@ ExitData = namedtuple(
 @click.command(cls=CommandWithAccount)
 @click.option("--tip-eth", default=0)
 @click.option("--tip-3crv", default=0)
-@brownie_connect
 def atomic_exit(account, tip_eth, tip_3crv):
     """Use a flash loan to withdraw from a leveraged cyy3crv position."""
     # TODO: we need an account with private keys

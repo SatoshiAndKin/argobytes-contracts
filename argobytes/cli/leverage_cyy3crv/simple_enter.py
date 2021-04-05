@@ -28,7 +28,6 @@ from argobytes.tokens import (
 
 
 @click.command(cls=CommandWithAccount)
-@brownie_connect
 def simple_enter():
     """Make a bunch of transactions to deposit into leveraged cyy3crv position."""
     # TODO: we need an account with private keys

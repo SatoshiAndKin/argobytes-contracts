@@ -29,6 +29,8 @@ autoflake==1.4
     # via -r requirements-dev.in
 autopep8==1.5.6
     # via -r requirements-dev.in
+backports.entry-points-selectable==1.0.3
+    # via pytest-randomly
 bandit==1.7.0
     # via -r requirements-dev.in
 base58==2.1.0
@@ -71,7 +73,7 @@ cytoolz==0.11.0
     #   eth-brownie
     #   eth-keyfile
     #   eth-utils
-decorator==4.4.2
+decorator==5.0.5
     # via -r requirements.in
 eth-abi==2.1.1
     # via
@@ -84,7 +86,7 @@ eth-account==0.5.2
     # via
     #   eth-brownie
     #   web3
-eth-brownie==1.14.3
+eth-brownie==1.14.4
     # via -r requirements.in
 eth-event==1.2.1
     # via eth-brownie
@@ -146,6 +148,10 @@ idna==2.10
     # via
     #   eth-brownie
     #   requests
+importlib-metadata==3.10.0
+    # via eth-brownie
+importlib-resources==5.1.2
+    # via eth-brownie
 inflection==0.5.0
     # via
     #   eth-brownie
@@ -243,7 +249,7 @@ pyflakes==2.3.1
     # via autoflake
 pygments-lexer-solidity==0.5.1
     # via eth-brownie
-pygments==2.6.1
+pygments==2.8.1
     # via
     #   eth-brownie
     #   pygments-lexer-solidity
@@ -252,7 +258,7 @@ pyjwt==1.7.1
     #   eth-brownie
     #   pythx
 pylint==2.7.4
-    # via -r requirements.in
+    # via -r requirements-dev.in
 pyparsing==2.4.7
     # via
     #   eth-brownie
@@ -265,14 +271,17 @@ pytest-forked==1.3.0
     # via
     #   eth-brownie
     #   pytest-xdist
+pytest-randomly==3.6.0
+    # via -r requirements-dev.in
 pytest-timeout==1.4.2
-    # via -r requirements.in
+    # via -r requirements-dev.in
 pytest-xdist==1.34.0
     # via eth-brownie
 pytest==6.0.1
     # via
     #   eth-brownie
     #   pytest-forked
+    #   pytest-randomly
     #   pytest-timeout
     #   pytest-xdist
 python-dateutil==2.8.1
@@ -281,7 +290,7 @@ python-dateutil==2.8.1
     #   mythx-models
     #   pythx
 python-dotenv==0.16.0
-    # via -r requirements.in
+    # via eth-brownie
 pythx==1.6.1
     # via eth-brownie
 pyupgrade==2.11.0
@@ -354,6 +363,8 @@ typed-ast==1.4.2
     # via
     #   black
     #   eth-brownie
+typing-extensions==3.7.4.3
+    # via eth-brownie
 urllib3==1.26.4
     # via
     #   eth-brownie
@@ -378,6 +389,10 @@ websockets==8.1
     #   web3
 wrapt==1.12.1
     # via astroid
+zipp==3.4.1
+    # via
+    #   eth-brownie
+    #   importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

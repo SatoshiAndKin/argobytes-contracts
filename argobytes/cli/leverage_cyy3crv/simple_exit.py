@@ -28,7 +28,6 @@ from argobytes.tokens import (
 
 
 @click.command(cls=CommandWithAccount)
-@brownie_connect
 def simple_exit(account):
     """Make a bunch of transactions to withdraw from a leveraged cyy3crv position."""
     print(f"Hello, {account}")
