@@ -137,39 +137,43 @@ def print_token_balances(balances, label=None):
     pprint(dict_for_printing)
 
 
-def token_approve(account, balances, extra_balances, spender, amount=2 ** 256 - 1):
+def token_approve(account, balances, spender, extra_balances=None, amount=2 ** 256 - 1):
     """For every token that we have a balance of, Approve unlimited (or a specified amount) for the spender."""
-    for token, balance in balances.items():
-        if token.address in extra_balances:
-            balance += extra_balances[token.address]
+    if extra_balances is None:
+        extra_balances = {}
 
-        if balance == 0:
+    for token, balance in balances.items():
+        summed_balance = balance + extra_balances.get(token.address, 0)
+
+        if summed_balance == 0:
             continue
+
+        if amount is None:
+            # if amount is not specified, we approve the balance
+            amount = summed_balance
 
         allowed = token.allowance(account, spender)
 
         if allowed >= amount:
             print(f"No approval needed for {token.address}")
-            # TODO: claiming 3crv could increase our balance and mean that we actually do need an approval
             continue
         elif allowed == 0:
             pass
         else:
-            # TODO: do any of our tokens actually need this stupid check?
+            # TODO: do any of our tokens actually need this set to 0 first? maybe do this if a bool is set
             print(f"Clearing {token.address} approval...")
             _approve_tx = token.approve(spender, 0, {"from": account})
 
             # approve_tx.info()
 
-        if amount is None:
-            print(
-                f"Approving {spender} for {balance} of {account}'s {token.address}..."
-            )
-            amount = balance
-        else:
+        if amount == 2 ** 256 - 1:
+            # the amount is the max
             print(
                 f"Approving {spender} for unlimited of {account}'s {token.address}..."
             )
+        else:
+            # the amount was specified
+            print(f"Approving {spender} for {amount} of {account}'s {token.address}...")
 
         approve_tx = token.approve(spender, amount, {"from": account})
 
@@ -179,6 +183,8 @@ def token_approve(account, balances, extra_balances, spender, amount=2 ** 256 - 
 
 def transfer_token(from_address, to, token, decimal_amount):
     """Transfer tokens from an account that we don't actually control."""
+    token = load_token_or_contract(token)
+
     decimals = token.decimals()
 
     amount = int(decimal_amount * 10 ** decimals)

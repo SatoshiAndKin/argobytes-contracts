@@ -6,7 +6,6 @@ import brownie
 import click
 from brownie import ZERO_ADDRESS, Contract, accounts
 from brownie.network.web3 import _resolve_address
-from dotenv import find_dotenv, load_dotenv
 
 from argobytes.cli_helpers import CommandWithAccount, brownie_connect
 from argobytes.contracts import (
@@ -40,10 +39,9 @@ ExitData = namedtuple(
 def atomic_exit(account, tip_eth, tip_3crv):
     """Use a flash loan to withdraw from a leveraged cyy3crv position."""
     # TODO: we need an account with private keys
-    account = accounts.at(os.environ["LEVERAGE_ACCOUNT"], force=True)
     print(f"Hello, {account}")
 
-    # 0.5 == 0.5%
+    # 0.5 is 0.5%
     # slippage = ['small', 'medium', 'high', 'bad idea']
     slippage_pct = 0.5  # TODO: this should be a click arg
 
@@ -128,9 +126,7 @@ def atomic_exit(account, tip_eth, tip_3crv):
 
     pprint(exit_data)
 
-    extra_balances = {}
-
-    token_approve(account, balances, extra_balances, argobytes_clone)
+    token_approve(account, balances, argobytes_clone)
 
     # flashloan through the clone
     exit_tx = argobytes_clone.flashBorrow(

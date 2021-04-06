@@ -4,7 +4,7 @@ import pytest
 from brownie import accounts, project
 from click.testing import CliRunner
 
-from argobytes.cli.leverage_cyy3crv import simple_enter, simple_exit
+from argobytes.cli.leverage_cyy3crv import simple_exit, simple_enter
 from argobytes.contracts import load_contract
 from argobytes.tokens import transfer_token
 
@@ -14,9 +14,6 @@ def test_simple_scripts(
     click_test_runner, exit_cyy3crv_action, monkeypatch, unlocked_binance,
 ):
     account = accounts[0]
-
-    # TODO: use flags instead of env?
-    monkeypatch.setenv("LEVERAGE_ACCOUNT", str(account))
 
     dai = load_contract(exit_cyy3crv_action.DAI())
     usdc = load_contract(exit_cyy3crv_action.USDC())
@@ -37,7 +34,7 @@ def test_simple_scripts(
     # TODO: call enter multiple times
     for x in range(3):
         print(f"enter loop {x}")
-        enter_result = click_test_runner(simple_enter)
+        enter_result = click_test_runner(simple_enter, ["--account", str(account)])
 
         # TODO: if we didn't get very much, stop looping
 
@@ -63,7 +60,7 @@ def test_simple_scripts(
     x = 0
     while cyy3crv_balance > 0 and x < 20:
         print(f"exit loop {x}")
-        exit_result = click_test_runner(simple_exit)
+        exit_result = click_test_runner(simple_exit, ["--account", str(account)])
 
         assert exit_result.exit_code == 0
 

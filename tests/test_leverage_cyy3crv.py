@@ -18,9 +18,6 @@ def test_atomic_scripts(
 ):
     account = accounts[0]
 
-    # TODO: use click args
-    monkeypatch.setenv("LEVERAGE_ACCOUNT", str(account))
-
     dai = load_contract(exit_cyy3crv_action.DAI())
     usdc = load_contract(exit_cyy3crv_action.USDC())
     usdt = load_contract(exit_cyy3crv_action.USDT())
@@ -36,7 +33,7 @@ def test_atomic_scripts(
     # transfer_token(unlocked_binance, accounts[0], usdc, 10000)
     # transfer_token(unlocked_binance, accounts[0], usdt, 10000)
 
-    enter_result = click_test_runner(atomic_enter)
+    enter_result = click_test_runner(atomic_enter, ["--account", str(account)])
 
     assert enter_result.exit_code == 0
 
@@ -61,7 +58,7 @@ def test_atomic_scripts(
     # TODO: how much DAI actually needs to be added to the pool
     transfer_token(unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai, 1000000)
 
-    exit_result = click_test_runner(atomic_exit)
+    exit_result = click_test_runner(atomic_exit, ["--account", str(account)])
 
     assert exit_result.exit_code == 0
 

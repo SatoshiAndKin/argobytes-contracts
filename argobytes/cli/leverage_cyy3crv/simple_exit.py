@@ -2,7 +2,7 @@ import brownie
 import click
 from brownie import ZERO_ADDRESS, Contract, accounts
 from brownie.network.web3 import _resolve_address
-from dotenv import find_dotenv, load_dotenv
+from decimal import Decimal
 
 from argobytes.cli_helpers import CommandWithAccount, brownie_connect
 from argobytes.contracts import (
@@ -66,7 +66,7 @@ def simple_exit(account):
 
     # approve 100%. if we approve borrowBalance, then we leave some dust behind since the approve transaction adds a block of interest
     # also, since this is a simple exit, we will probably have to run this again
-    approve(account, {dai: start_balances[dai]}, {}, cydai)
+    token_approve(account, {dai: start_balances[dai]}, cydai)
 
     borrow_balance = cydai.borrowBalanceCurrent.call(account)
     print(f"cyDAI borrow_balance: {borrow_balance}")
@@ -80,7 +80,7 @@ def simple_exit(account):
         pass
     elif start_balances[dai] > borrow_balance:
         # we have more DAI than we need. repay the full balance
-        cydai.repayBorrow(repay_balance)
+        cydai.repayBorrow(borrow_balance)
     else:
         # we do not have enough DAI. repay what we can
         # TODO: skip this if its a small amount?
@@ -89,7 +89,7 @@ def simple_exit(account):
     # we need more DAI!
     # calculate how much cyy3crv we can safely withdraw
     (error, liquidity, shortfall) = cream.getHypotheticalAccountLiquidity(
-        account, cydai, 0, repay_balance
+        account, cydai, 0, borrow_balance
     )
     assert error == 0
     assert shortfall == 0

@@ -4,10 +4,10 @@ from click.testing import CliRunner
 from eth_abi.packed import encode_abi_packed
 from eth_utils import keccak, to_bytes, to_checksum_address
 
-from argobytes import to_hex32
 from argobytes.addresses import *
 from argobytes.contracts import get_or_clone, get_or_create, load_contract
 from argobytes.tokens import load_token_or_contract
+from argobytes.web3_helpers import to_hex32
 
 
 @pytest.fixture(autouse=True, scope="function")

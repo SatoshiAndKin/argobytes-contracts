@@ -27,12 +27,13 @@ class BrownieAccount(click.ParamType):
 
     def convert(self, value, param, ctx):
         # brownie needs an active network to setup the account
-        connect_fn = ctx.obj["brownie_connect_fn"]
+        if ctx and ctx.obj:
+            connect_fn = ctx.obj["brownie_connect_fn"]
 
-        connect_fn()
+            connect_fn()
 
-        # make a noop connect function in case this gets called again for some reason
-        ctx.obj["brownie_connect_fn"] = lambda: None
+            # make a noop connect function in case this gets called again for some reason
+            ctx.obj["brownie_connect_fn"] = lambda: None
 
         try:
             if value.endswith(".json"):

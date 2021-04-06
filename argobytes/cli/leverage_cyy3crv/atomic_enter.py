@@ -150,7 +150,7 @@ def atomic_enter(account, min_3crv_to_claim):
     if enter_data.claim_3crv:
         extra_balances[threecrv.address] = claimable_3crv
 
-    token_approve(account, balances, extra_balances, argobytes_clone)
+    token_approve(account, balances, argobytes_clone, extra_balances)
 
     # flashloan through the clone
     pprint(enter_data)
@@ -169,13 +169,13 @@ def atomic_enter(account, min_3crv_to_claim):
 
     print("enter success!")
 
-    # TODO: these queries crash ganache-cli
-    # print(f"enter success! {enter_tx.return_value}")
-
-    # TODO: check gas_used is less than some limit
+    """
+    # TODO: this crashes ganache
+    print(f"enter success! {enter_tx.return_value}")
 
     # TODO: this crashes ganache
-    # enter_tx.info()
+    enter_tx.info()
+    """
 
     # num_events = len(enter_tx.events)
     # print(f"num events: {num_events}")
@@ -190,17 +190,13 @@ def atomic_enter(account, min_3crv_to_claim):
     """
 
     # TODO: what should we set this to?
+    # TODO: this should be in the tests, not here
     print(f"enter_tx.gas_used: {enter_tx.gas_used}")
     assert enter_tx.gas_used < 1200000
 
     print(f"clone ({argobytes_clone.address}) balances")
     balances = get_balances(argobytes_clone, tokens)
     print_token_balances(balances)
-
-    # TODO: why is this not working? we return cyy3crv.balanceOf!
-    # assert balances[cyy3crv] == enter_tx.return_value
-
-    # TODO: make sure the clone has cyy3crv?
 
     print(f"account ({account}) balances")
     print_token_balances(get_balances(account, tokens))

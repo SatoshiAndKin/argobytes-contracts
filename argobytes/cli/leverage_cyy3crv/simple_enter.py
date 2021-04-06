@@ -3,7 +3,6 @@ import os
 import click
 from brownie import Contract, accounts
 from brownie.network.web3 import _resolve_address
-from dotenv import find_dotenv, load_dotenv
 from eth_utils import to_int
 
 from argobytes.cli_helpers import CommandWithAccount, brownie_connect
@@ -18,6 +17,7 @@ from argobytes.contracts import (
     get_or_clone,
     get_or_create,
     load_contract,
+    poke_contracts,
 )
 from argobytes.tokens import (
     print_token_balances,
@@ -28,10 +28,9 @@ from argobytes.tokens import (
 
 
 @click.command(cls=CommandWithAccount)
-def simple_enter():
+def simple_enter(account):
     """Make a bunch of transactions to deposit into leveraged cyy3crv position."""
     # TODO: we need an account with private keys
-    account = accounts.at(os.environ["LEVERAGE_ACCOUNT"])
     print(f"Hello, {account}")
 
     min_3crv_to_claim = os.environ.get("MIN_3CRV_TO_CLAIM", 50)
@@ -79,7 +78,7 @@ def simple_enter():
         usdt: balances[usdt],
     }
 
-    approve(account, balances_for_3crv_pool, {}, threecrv_pool)
+    token_approve(account, balances_for_3crv_pool, threecrv_pool)
 
     threecrv_add_liquidity_tx = threecrv_pool.add_liquidity(
         [
@@ -102,7 +101,7 @@ def simple_enter():
     balances_for_y3crv = get_balances(account, [threecrv])
     print_token_balances(balances, f"{account} balances_for_y3crv:")
 
-    approve(account, balances_for_y3crv, {}, y3crv)
+    token_approve(account, balances_for_y3crv, y3crv)
 
     y3crv_deposit_tx = y3crv.deposit(balances_for_y3crv[threecrv], {"from": account})
     # y3crv_deposit_tx.info()
@@ -125,7 +124,7 @@ def simple_enter():
     balances_for_cyy3crv = get_balances(account, [y3crv])
     print_token_balances(balances_for_cyy3crv, f"{account} balances for cyy3crv:")
 
-    approve(account, balances_for_cyy3crv, {}, cyy3crv)
+    token_approve(account, balances_for_cyy3crv, cyy3crv)
 
     mint_tx = cyy3crv.mint(balances_for_cyy3crv[y3crv], {"from": account})
     # mint_tx.info()

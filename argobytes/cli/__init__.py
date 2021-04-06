@@ -73,7 +73,7 @@ def cli(
     def brownie_connect():
         if network == "none":
             logger.warning(
-                f"{brownie_project._name} is the active project. It is not conencted to any networks"
+                f"{brownie_project._name} is the active project. Not connected to any networks"
             )
         else:
             brownie_network.connect(network)
