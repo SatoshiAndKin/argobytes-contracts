@@ -38,7 +38,7 @@ class BrownieAccount(click.ParamType):
             if value.endswith(".json"):
                 return accounts.load(value)
         except Exception as e:
-            # TODO: what type of exception should we catch? 
+            # TODO: what type of exception should we catch?
             self.fail(
                 f"Brownie could not load named account {value!r}: {e}", param, ctx,
             )

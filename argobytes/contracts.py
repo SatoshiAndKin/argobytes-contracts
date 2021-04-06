@@ -10,6 +10,7 @@ import tokenlists
 from brownie import ETH_ADDRESS, ZERO_ADDRESS, Contract, _cli, accounts, project, web3
 from brownie.exceptions import VirtualMachineError
 from brownie.network import web3
+from eth_abi import decode_single
 from eth_abi.packed import encode_abi_packed
 from eth_utils import keccak, to_bytes, to_checksum_address, to_hex
 from lazy_load import lazy
@@ -201,8 +202,7 @@ def lazy_contract(address: str, owner=None):
     return lazy(lambda: load_contract(address, owner))
 
 
-# @functools.lru_cache(maxsize=None)
-def load_contract(token_name_or_address: str, owner=None):
+def load_contract(token_name_or_address: str, owner=None, block=None):
     """
     if token_name_or_address.lower() == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
         # this is gross, but i think it works
@@ -243,7 +243,49 @@ def load_contract(token_name_or_address: str, owner=None):
     # TODO: theres other ways to have an impl too. usdc has one that uses storage
     impl = None
     if hasattr(contract, "implementation"):
-        impl = Contract(contract.implementation.call(), owner=owner)
+        try:
+            impl_addr = contract.implementation.call()
+        except Exception as e:
+            # maybe its "org.zepplinos.proxy.implementation"
+            impl_addr = web3.eth.getStorageAt(
+                address,
+                "0x7050c9e0f4ca769c69bd3a8ef740bc37934f8e2c036e5a723fd8ee048ed3f8c3",
+                block,
+            )
+
+            impl_addr = decode_single("address", impl_addr)
+
+            if impl_addr == brownie.ZERO_ADDRESS:
+                # or maybe its https://eips.ethereum.org/EIPS/eip-1967 Unstructured Storage Proxies
+                impl_addr = web3.eth.getStorageAt(
+                    address,
+                    "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+                    block,
+                )
+
+                impl_addr = decode_single("address", impl_addr)
+
+                if impl_addr == brownie.ZERO_ADDRESS:
+                    # or maybe they are using EIP-1967 beacon address
+                    beacon_addr = web3.eth.getStorageAt(
+                        address,
+                        "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50",
+                        block,
+                    )
+
+                    beacon_addr = decode_single("address", beacon_addr)
+
+                    if beacon_addr == brownie.ZERO_ADDRESS:
+                        raise ValueError("Unable to load contract proxy")
+
+                    beacon = Contract(beacon_addr, owner=owner)
+
+                    impl_addr = beacon.implementation.call()
+
+        if impl_addr == brownie.ZERO_ADDRESS:
+            raise ValueError("Unable to load contract proxy")
+
+        impl = Contract(impl_addr, owner=owner)
     elif hasattr(contract, "target"):
         impl = Contract(contract.target.call(), owner=owner)
 
