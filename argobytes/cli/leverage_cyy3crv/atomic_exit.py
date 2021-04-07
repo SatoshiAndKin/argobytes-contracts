@@ -21,10 +21,10 @@ from argobytes.contracts import (
     poke_contracts,
 )
 from argobytes.tokens import (
-    token_approve,
-    print_token_balances,
     get_balances,
     get_claimable_3crv,
+    print_token_balances,
+    token_approve,
 )
 from argobytes.web3_helpers import get_average_block_time
 

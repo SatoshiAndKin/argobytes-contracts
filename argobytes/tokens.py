@@ -1,10 +1,10 @@
 # TODO: this file is more than tokens. it has helpers for general contracts too
 
 # TODO: move curve stuff back to argobytes_extra
+import contextlib
 from decimal import Decimal
 from json import JSONDecodeError
 from pprint import pprint
-import contextlib
 
 import brownie
 import tokenlists

@@ -1,8 +1,9 @@
+from decimal import Decimal
+
 import brownie
 import click
 from brownie import ZERO_ADDRESS, Contract, accounts
 from brownie.network.web3 import _resolve_address
-from decimal import Decimal
 
 from argobytes.cli_helpers import CommandWithAccount, brownie_connect
 from argobytes.contracts import (
@@ -19,11 +20,11 @@ from argobytes.contracts import (
     poke_contracts,
 )
 from argobytes.tokens import (
-    print_token_balances,
-    get_token_decimals,
-    token_approve,
     get_balances,
     get_claimable_3crv,
+    get_token_decimals,
+    print_token_balances,
+    token_approve,
 )
 
 

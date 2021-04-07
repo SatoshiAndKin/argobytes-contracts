@@ -12,6 +12,8 @@ appdirs==1.4.4
     # via
     #   black
     #   eth-brownie
+arrow==1.0.3
+    # via -r requirements.in
 astroid==2.5.2
     # via pylint
 asttokens==2.0.4
@@ -286,6 +288,7 @@ pytest==6.0.1
     #   pytest-xdist
 python-dateutil==2.8.1
     # via
+    #   arrow
     #   eth-brownie
     #   mythx-models
     #   pythx

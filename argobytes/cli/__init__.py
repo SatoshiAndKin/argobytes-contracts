@@ -26,12 +26,13 @@ from click_plugins import with_plugins
 from pkg_resources import iter_entry_points
 
 from argobytes.cli_helpers import brownie_connect, get_project_root, logger
-from argobytes.contracts import get_or_clone, get_or_create
+from argobytes.contracts import get_or_clone, get_or_create, load_contract
 from argobytes.tokens import (
     load_token_or_contract,
     print_start_and_end_balance,
     print_token_balances,
 )
+from argobytes.transactions import get_transaction, sync_tx_cache
 
 from .tx_info import tx_info
 
@@ -111,7 +112,15 @@ def cli(
 @brownie_connect
 def console(ctx):
     """Interactive shell."""
-    shell = Console(project=ctx.obj["brownie_project"])
+    extra_locals = {
+        "get_transaction": get_transaction,
+        "load_contract": load_contract,
+        "load_token_or_contract": load_token_or_contract,
+        "sync_tx_cache": sync_tx_cache,
+    }
+
+    shell = Console(project=ctx.obj["brownie_project"], extra_locals=extra_locals)
+
     shell.interact(banner="Argobytes environment is ready.", exitmsg="Goodbye!")
 
 
