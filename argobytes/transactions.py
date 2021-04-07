@@ -53,7 +53,6 @@ def fetch_transaction(txid):
 _tx_cache = None
 
 
-@atexit.register
 def close_transaction_cache():
     global _tx_cache
 
