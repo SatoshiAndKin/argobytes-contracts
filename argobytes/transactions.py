@@ -70,27 +70,30 @@ def close_transaction_cache():
         _tx_cache.close()
 
 
-def get_transaction(txid):
+def get_transaction(txid, force=False):
     """Get a transaction from our cache or the blockchain."""
     global _tx_cache
 
     get_transaction_cache()
 
-    if txid in _tx_cache:
+    if isinstance(txid, int):
+        txid = hex(txid)
+
+    if force or txid not in _tx_cache:
+        tx = fetch_transaction(txid)
+
+        if tx.confirmations >= 6:
+            # this is a threading.Event and can't be saved to the cache
+            tx._confirmed = True
+
+            _tx_cache[tx.txid] = tx
+    else:
         tx = _tx_cache[txid]
 
         # put back the threading event. it's needed by some brownie functions
         # we know this confirmed since we only cache deeply confirmed transactions
         tx._confirmed = threading.Event()
         tx._confirmed.set()
-    else:
-        tx = fetch_transaction(txid)
-
-        if tx.confirmations >= 100:
-            # this is a threading.Event and can't be saved to the cache
-            tx._confirmed = True
-
-            _tx_cache[tx.txid] = tx
 
     return tx
 
