@@ -104,10 +104,10 @@ def simple_exit(account):
     # TODO: does leaving headroom make sense? how much? add it in only if this isn't the last repayment?
     available_cyy3crv_in_usd = liquidity / Decimal(0.90)
     available_cyy3crv_in_3crv = available_cyy3crv_in_usd / (
-        Decimal(threecrv_pool.get_virtual_price()) / Decimal(1e18)
+        Decimal(threecrv_pool.get_virtual_price()) / Decimal("1e18")
     )
     available_cyy3crv_in_y3crv = available_cyy3crv_in_3crv / (
-        Decimal(y3crv.getPricePerFullShare()) / Decimal(1e18)
+        Decimal(y3crv.getPricePerFullShare.call()) / Decimal("1e18")
     )
 
     one_cyy3crv_in_y3crv = Decimal(cyy3crv.exchangeRateCurrent.call()) / Decimal(
@@ -116,7 +116,11 @@ def simple_exit(account):
 
     available_cyy3crv = available_cyy3crv_in_y3crv / one_cyy3crv_in_y3crv
 
-    assert cyy3crv.redeem(available_cyy3crv).return_value == 0
+    redeem_tx = cyy3crv.redeem(available_cyy3crv)
+
+    redeem_tx.info()
+
+    assert redeem_tx.return_value == 0
 
     y3crv_balance = y3crv.balanceOf(account)
 

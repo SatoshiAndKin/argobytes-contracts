@@ -11,7 +11,7 @@ from argobytes.tokens import transfer_token
 
 @pytest.mark.require_network("mainnet-fork")
 def test_simple_scripts(
-    click_test_runner, exit_cyy3crv_action, monkeypatch, unlocked_binance,
+    click_test_runner, exit_cyy3crv_action, unlocked_binance,
 ):
     account = accounts[0]
 
@@ -32,13 +32,13 @@ def test_simple_scripts(
     # transfer_token(unlocked_binance, account, usdt, 10000)
 
     # TODO: call enter multiple times
-    for x in range(3):
+    for x in range(1):
         print(f"enter loop {x}")
         enter_result = click_test_runner(simple_enter, ["--account", str(account)])
 
         # TODO: if we didn't get very much, stop looping
 
-    assert enter_result.exit_code == 0
+        assert enter_result.exit_code == 0
 
     # TODO: make sure we can't get liquidated
 
