@@ -1,3 +1,4 @@
+# TODO: now that theres 2 commands, put them in a group together?
 import click
 from brownie import chain, network
 
@@ -6,9 +7,18 @@ from argobytes.contracts import load_contract
 
 
 @click.command()
+@click.argument("txid")
 @brownie_connect
-def tx_info():
+def tx_info(txid):
     """Inspect transactions."""
+    print_tx_info(txid)
+
+
+
+@click.command()
+@brownie_connect
+def tx_loop():
+    """Inspect multiple transactions."""
     # TODO: use click features
     while True:
         try:
@@ -21,7 +31,7 @@ def tx_info():
     print("\n\nGoodbye!")
 
 
-def print_tx_info(tx):
+def print_tx_info(tx, call_trace=False):
     tx = chain.get_transaction(tx)
 
     # sometimes logs don't parse
@@ -38,8 +48,9 @@ def print_tx_info(tx):
     print()
     tx.info()
 
-    print()
-    tx.call_trace()
+    if call_trace:
+        print()
+        tx.call_trace()
 
     if tx.status == 0:
         # revert!

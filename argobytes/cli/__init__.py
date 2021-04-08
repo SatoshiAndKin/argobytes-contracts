@@ -34,7 +34,7 @@ from argobytes.tokens import (
 )
 from argobytes.transactions import get_event_contract, get_transaction, sync_tx_cache
 
-from .tx_info import tx_info
+from .tx_info import tx_info, tx_loop
 
 gas_choices = click.Choice(["slow", "standard", "fast", "rapid"])
 
@@ -140,6 +140,7 @@ def donate():
 
 
 cli.add_command(tx_info)
+cli.add_command(tx_loop)
 
 
 def main():
