@@ -202,7 +202,7 @@ def lazy_contract(address: str, owner=None):
     return lazy(lambda: load_contract(address, owner))
 
 
-def load_contract(token_name_or_address: str, owner=None, block=None):
+def load_contract(token_name_or_address: str, owner=None, block=None, force=False):
     """
     if token_name_or_address.lower() == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
         # this is gross, but i think it works
@@ -237,7 +237,11 @@ def load_contract(token_name_or_address: str, owner=None, block=None):
     else:
         address = to_checksum_address(token_name_or_address)
 
-    contract = Contract(address, owner=owner)
+    if force:
+        contract = Contract.from_explorer(address)
+        contract._owner = owner
+    else:
+        contract = Contract(address, owner=owner)
 
     # check if this is a proxy contract
     # TODO: theres other ways to have an impl too. usdc has one that uses storage
@@ -278,16 +282,28 @@ def load_contract(token_name_or_address: str, owner=None, block=None):
                     if beacon_addr == brownie.ZERO_ADDRESS:
                         raise ValueError("Unable to load contract proxy")
 
-                    beacon = Contract(beacon_addr, owner=owner)
+                    if force:
+                        beacon = Contract.from_explorer(beacon_addr)
+                        beacon._owner = owner
+                    else:
+                        beacon = Contract(beacon_addr, owner=owner)
 
                     impl_addr = beacon.implementation.call()
 
         if impl_addr == brownie.ZERO_ADDRESS:
             raise ValueError("Unable to load contract proxy")
 
-        impl = Contract(impl_addr, owner=owner)
+        if force:
+            impl = Contract.from_explorer(impl_addr)
+            impl._owner = owner
+        else:
+            impl = Contract(impl_addr, owner=owner)
     elif hasattr(contract, "target"):
-        impl = Contract(contract.target.call(), owner=owner)
+        if force:
+            impl = Contract.from_explorer(contract.target.call())
+            impl._owner = owner
+        else:
+            impl = Contract(contract.target.call(), owner=owner)
 
     if impl:
         contract = Contract.from_abi(contract._name, address, impl.abi, owner=owner)

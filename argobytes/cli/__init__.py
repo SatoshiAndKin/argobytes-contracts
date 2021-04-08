@@ -32,7 +32,7 @@ from argobytes.tokens import (
     print_start_and_end_balance,
     print_token_balances,
 )
-from argobytes.transactions import get_transaction, sync_tx_cache
+from argobytes.transactions import get_event_contract, get_transaction, sync_tx_cache
 
 from .tx_info import tx_info
 
@@ -113,6 +113,7 @@ def cli(
 def console(ctx):
     """Interactive shell."""
     extra_locals = {
+        "get_event_contract": get_event_contract,
         "get_transaction": get_transaction,
         "load_contract": load_contract,
         "load_token_or_contract": load_token_or_contract,

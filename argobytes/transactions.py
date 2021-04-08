@@ -20,7 +20,7 @@ def get_event_contract(tx, event):
     return load_contract(address)
 
 
-def fetch_transaction(txid):
+def fetch_transaction(txid, force=False):
     """Get a transaction from the blockchain."""
 
     # TODO: `tx = chain.get_transaction(txid)`?
@@ -32,7 +32,7 @@ def fetch_transaction(txid):
     # TODO: brownie should probably have an option to do this for us. make a github issue
     # get the contract for parsing events from logs
     try:
-        load_contract(tx.receiver)
+        load_contract(tx.receiver, force=force)
     except Exception:
         # not all contracts have verified source code. we'll have to make due
         pass
@@ -40,7 +40,7 @@ def fetch_transaction(txid):
     for l in tx.logs:
         # get more contracts for parsing events from logs
         try:
-            load_contract(l.address)
+            load_contract(l.address, force=force)
         except Exception:
             # not all contracts have verified source code. we'll have to make due
             pass
