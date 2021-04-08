@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 import click
@@ -35,18 +36,32 @@ class BrownieAccount(click.ParamType):
             # make a noop connect function in case this gets called again for some reason
             ctx.obj["brownie_connect_fn"] = lambda: None
 
-        try:
-            if value.endswith(".json"):
+        # check for private key in a file
+        if value.endswith(".key"):
+            try:
+                key_path = Path(value).resolve()
+
+                # check for secure permisions
+                assert key_path.stat() == 0o100400, "key files must be mode 400"
+
+                return accounts.add(key_path.read_text())
+            except Exception as e:
+                self.fail(
+                    f"Brownie could not load account from {value!r}: {e}", param, ctx,
+                )
+
+        if value.endswith(".json"):
+            try:
                 return accounts.load(value)
-        except Exception as e:
-            # TODO: what type of exception should we catch?
-            self.fail(
-                f"Brownie could not load named account {value!r}: {e}", param, ctx,
-            )
+            except Exception as e:
+                self.fail(
+                    f"Brownie could not load named account {value!r}: {e}", param, ctx,
+                )
+
+        # we just have an address. this is helpful in forked mode
         try:
             return accounts.at(value, force=True)
         except Exception as e:
-            # TODO: what type of exception should we catch?
             self.fail(
                 f"Brownie could not get account {value!r}: {e}", param, ctx,
             )
@@ -60,7 +75,7 @@ class Salt(click.ParamType):
 
     def convert(self, value, param, ctx):
         try:
-            # TODO: what should we do with this value?
+            # TODO: what should we do with this value? we need to make sure its a bytes32
             return value
         except Exception as e:
             # TODO: what type of exception should we catch?

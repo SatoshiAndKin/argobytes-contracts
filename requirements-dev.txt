@@ -4,6 +4,8 @@
 #
 #    pip-compile requirements-dev.in
 #
+ape-safe==0.1.2
+    # via -r requirements.in
 apipkg==1.5
     # via
     #   eth-brownie
@@ -14,6 +16,10 @@ appdirs==1.4.4
     #   eth-brownie
 arrow==1.0.3
     # via -r requirements.in
+asgiref==3.3.4
+    # via django
+asn1crypto==1.4.0
+    # via coincurve
 astroid==2.5.2
     # via pylint
 asttokens==2.0.4
@@ -47,10 +53,16 @@ black==19.10b0
     # via
     #   -r requirements-dev.in
     #   eth-brownie
+cached-property==1.5.2
+    # via
+    #   gnosis-py
+    #   py-ecc
 certifi==2020.12.5
     # via
     #   eth-brownie
     #   requests
+cffi==1.14.5
+    # via coincurve
 chardet==4.0.0
     # via
     #   eth-brownie
@@ -70,6 +82,8 @@ click==7.1.2
     #   click-option-group
     #   click-plugins
     #   eth-brownie
+coincurve==15.0.0
+    # via ethereum
 cytoolz==0.11.0
     # via
     #   eth-brownie
@@ -77,19 +91,28 @@ cytoolz==0.11.0
     #   eth-utils
 decorator==5.0.5
     # via -r requirements.in
+django-filter==2.4.0
+    # via gnosis-py
+django==3.2
+    # via
+    #   django-filter
+    #   gnosis-py
 eth-abi==2.1.1
     # via
     #   -r requirements.in
     #   eth-account
     #   eth-brownie
     #   eth-event
+    #   py-eth-sig-utils
     #   web3
 eth-account==0.5.2
     # via
     #   eth-brownie
     #   web3
 eth-brownie==1.14.4
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   ape-safe
 eth-event==1.2.1
     # via eth-brownie
 eth-hash[pycryptodome]==0.2.0
@@ -117,6 +140,7 @@ eth-typing==2.2.2
     #   eth-brownie
     #   eth-keys
     #   eth-utils
+    #   py-ecc
     #   web3
 eth-utils==1.9.5
     # via
@@ -127,16 +151,23 @@ eth-utils==1.9.5
     #   eth-keyfile
     #   eth-keys
     #   eth-rlp
+    #   py-ecc
     #   rlp
     #   web3
+ethereum==2.3.2
+    # via gnosis-py
 execnet==1.8.0
     # via
     #   eth-brownie
     #   pytest-xdist
+future==0.18.2
+    # via ethereum
 gitdb==4.0.7
     # via gitpython
 gitpython==3.1.14
     # via bandit
+gnosis-py==2.8.5
+    # via ape-safe
 hexbytes==0.2.1
     # via
     #   eth-account
@@ -196,6 +227,8 @@ multiaddr==0.0.9
     # via
     #   eth-brownie
     #   ipfshttpclient
+mypy-extensions==0.4.3
+    # via py-ecc
 mythx-models==1.9.1
     # via
     #   eth-brownie
@@ -207,6 +240,7 @@ netaddr==0.8.0
 packaging==20.9
     # via
     #   eth-brownie
+    #   gnosis-py
     #   pytest
 parsimonious==0.8.1
     # via
@@ -216,6 +250,8 @@ pathspec==0.8.1
     # via
     #   black
     #   eth-brownie
+pbkdf2==1.3
+    # via ethereum
 pbr==5.5.1
     # via stevedore
 pluggy==0.13.1
@@ -230,6 +266,12 @@ protobuf==3.15.6
     #   web3
 psutil==5.8.0
     # via eth-brownie
+py-ecc==5.2.0
+    # via
+    #   ethereum
+    #   py-eth-sig-utils
+py-eth-sig-utils==0.4.0
+    # via gnosis-py
 py-solc-ast==1.2.8
     # via eth-brownie
 py-solc-x==1.1.0
@@ -241,12 +283,18 @@ py==1.10.0
     #   pytest-forked
 pycodestyle==2.7.0
     # via autopep8
+pycparser==2.20
+    # via cffi
 pycryptodome==3.10.1
     # via
     #   eth-brownie
     #   eth-hash
     #   eth-keyfile
+    #   ethereum
+    #   py-eth-sig-utils
     #   vyper
+pyethash==0.1.27
+    # via ethereum
 pyflakes==2.3.1
     # via autoflake
 pygments-lexer-solidity==0.5.1
@@ -269,6 +317,8 @@ pyrsistent==0.17.3
     # via
     #   eth-brownie
     #   jsonschema
+pysha3==1.0.2
+    # via ethereum
 pytest-forked==1.3.0
     # via
     #   eth-brownie
@@ -296,19 +346,25 @@ python-dotenv==0.16.0
     # via eth-brownie
 pythx==1.6.1
     # via eth-brownie
+pytz==2021.1
+    # via django
 pyupgrade==2.11.0
     # via -r requirements-dev.in
 pyyaml==5.4.1
     # via
     #   bandit
     #   eth-brownie
+    #   ethereum
 regex==2020.11.13
     # via
     #   black
     #   eth-brownie
+repoze.lru==0.7
+    # via ethereum
 requests==2.25.1
     # via
     #   eth-brownie
+    #   gnosis-py
     #   ipfshttpclient
     #   py-solc-x
     #   pythx
@@ -319,6 +375,10 @@ rlp==1.2.0
     #   eth-account
     #   eth-brownie
     #   eth-rlp
+    #   ethereum
+    #   py-eth-sig-utils
+scrypt==0.8.17
+    # via ethereum
 semantic-version==2.8.5
     # via
     #   eth-brownie
@@ -343,6 +403,8 @@ sortedcontainers==2.3.0
     # via
     #   eth-brownie
     #   hypothesis
+sqlparse==0.4.1
+    # via django
 stevedore==3.3.0
     # via bandit
 tokenize-rt==4.1.0
@@ -385,7 +447,9 @@ wcwidth==0.2.5
     #   eth-brownie
     #   prompt-toolkit
 web3==5.11.1
-    # via eth-brownie
+    # via
+    #   eth-brownie
+    #   gnosis-py
 websockets==8.1
     # via
     #   eth-brownie
