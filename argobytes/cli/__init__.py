@@ -25,16 +25,20 @@ from brownie.network.gas.strategies import GasNowScalingStrategy
 from click_plugins import with_plugins
 from pkg_resources import iter_entry_points
 
-from argobytes.cli_helpers import brownie_connect, get_project_root, logger
+from argobytes.cli_helpers import (
+    COMMON_HELPERS,
+    brownie_connect,
+    get_project_root,
+    logger,
+)
 from argobytes.contracts import get_or_clone, get_or_create, load_contract
 from argobytes.tokens import (
     load_token_or_contract,
     print_start_and_end_balance,
     print_token_balances,
 )
-from argobytes.transactions import get_event_contract, get_transaction, sync_tx_cache
 
-from .tx_info import tx_info, tx_loop
+from .tx import tx
 
 gas_choices = click.Choice(["slow", "standard", "fast", "rapid"])
 
@@ -112,15 +116,7 @@ def cli(
 @brownie_connect
 def console(ctx):
     """Interactive shell."""
-    extra_locals = {
-        "get_event_contract": get_event_contract,
-        "get_transaction": get_transaction,
-        "load_contract": load_contract,
-        "load_token_or_contract": load_token_or_contract,
-        "sync_tx_cache": sync_tx_cache,
-    }
-
-    shell = Console(project=ctx.obj["brownie_project"], extra_locals=extra_locals)
+    shell = Console(project=ctx.obj["brownie_project"], extra_locals=COMMON_HELPERS)
 
     shell.interact(banner="Argobytes environment is ready.", exitmsg="Goodbye!")
 
@@ -139,8 +135,7 @@ def donate():
     raise NotImplementedError
 
 
-cli.add_command(tx_info)
-cli.add_command(tx_loop)
+cli.add_command(tx)
 
 
 def main():
