@@ -3,6 +3,7 @@ import os
 from decimal import Decimal
 from pathlib import Path
 
+import brownie
 import click
 import eth_abi
 import eth_utils
@@ -20,6 +21,7 @@ from decorator import decorator
 from eth_abi.packed import encode_abi_packed
 from eth_utils import keccak, to_bytes, to_checksum_address, to_hex
 from lazy_load import lazy
+from hexbytes import HexBytes
 
 from argobytes.contracts import get_or_clone, get_or_create, load_contract
 from argobytes.tokens import load_token, load_token_or_contract, print_token_balances
@@ -29,8 +31,10 @@ logger = logging.getLogger("argobytes")
 
 
 COMMON_HELPERS = {
+    "brownie": brownie,
     "ApeSafe": ApeSafe,
     "Decimal": Decimal,
+    "HexBytes": HexBytes,
     "eth_abi": eth_abi,
     "eth_utils": eth_utils,
     "get_event_contract": get_event_contract,
