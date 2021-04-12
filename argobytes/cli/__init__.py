@@ -95,8 +95,8 @@ def cli(
                 )
                 gas_price(gas_strategy)
                 logger.info(f"Default gas strategy: {gas_strategy}")
-            elif network in ["bsc", "bsc-fork"]:
-                gas_strategy = "10 gwei"
+            elif network in ["bsc-main", "bsc-main-fork"]:
+                gas_strategy = "5 gwei"
                 gas_price(gas_strategy)
                 logger.info(f"Default gas price: {gas_strategy}")
             elif network in ["matic", "matic-fork"]:
@@ -108,6 +108,7 @@ def cli(
 
     # pass the project on to the other functions
     ctx.obj["brownie_connect_fn"] = brownie_connect
+    ctx.obj["brownie_forked"] = "fork" in network
     ctx.obj["brownie_project"] = brownie_project
 
 

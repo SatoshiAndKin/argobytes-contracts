@@ -24,7 +24,7 @@ from argobytes.tokens import (
     get_balances,
     get_claimable_3crv,
     print_token_balances,
-    token_approve,
+    safe_token_approve,
 )
 from argobytes.web3_helpers import get_average_block_time
 
@@ -126,7 +126,7 @@ def atomic_exit(account, tip_eth, tip_3crv):
 
     pprint(exit_data)
 
-    token_approve(account, balances, argobytes_clone)
+    safe_token_approve(account, balances, argobytes_clone)
 
     # flashloan through the clone
     exit_tx = argobytes_clone.flashBorrow(

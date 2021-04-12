@@ -24,7 +24,7 @@ from argobytes.tokens import (
     get_claimable_3crv,
     get_token_decimals,
     print_token_balances,
-    token_approve,
+    safe_token_approve,
 )
 
 
@@ -67,7 +67,7 @@ def simple_exit(account):
 
     # approve 100%. if we approve borrowBalance, then we leave some dust behind since the approve transaction adds a block of interest
     # also, since this is a simple exit, we will probably have to run this again
-    token_approve(account, {dai: start_balances[dai]}, cydai)
+    safe_token_approve(account, {dai: start_balances[dai]}, cydai)
 
     borrow_balance = cydai.borrowBalanceCurrent.call(account)
     print(f"cyDAI borrow_balance: {borrow_balance}")

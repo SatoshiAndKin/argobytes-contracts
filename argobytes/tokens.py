@@ -80,6 +80,15 @@ def get_balances(account, tokens):
     return {token: token.balanceOf(account) for token in tokens}
 
 
+def get_decimal_shift(token):
+    if isinstance(token, int):
+        decimals = token
+    else:
+        decimals = get_token_decimals(token)
+
+    return Decimal(10 ** decimals)
+
+
 def get_token_decimals(token_contract):
     if token_contract.address in _cache_decimals:
         return _cache_decimals[token_contract.address]
@@ -100,7 +109,7 @@ def get_token_decimals(token_contract):
     return decimals
 
 
-def get_token_symbol(token_contract):
+def get_token_symbol(token_contract, weth_to_eth=True):
     if token_contract.address in _cache_symbols:
         return _cache_symbols[token_contract.address]
 
@@ -113,36 +122,86 @@ def get_token_symbol(token_contract):
     else:
         raise ValueError
 
+    if symbol == "WETH":
+        if weth_to_eth:
+            symbol = "ETH"
+    elif symbol == "WBNB":
+        if weth_to_eth:
+            symbol = "BNB"
+    elif symbol == "UNI-V2":
+        token0 = load_contract(token_contract.token0())
+        token1 = load_contract(token_contract.token1())
+
+        symbol0 = get_token_symbol(token0, weth_to_eth=True)
+        symbol1 = get_token_symbol(token1, weth_to_eth=True)
+
+        # TODO: do this for UNI-V1, BPT, etc.
+        symbol = f"UNI-V2-{symbol0}/{symbol1}"
+    elif symbol == "BPT":
+        underlying_tokens = token_contract.getCurrentTokens()
+
+        underlying_symbols = [
+            get_token_symbol(load_contract(underlying), weth_to_eth=True)
+            for underlying in underlying_tokens
+        ]
+
+        underlying_symbols = "/".join(underlying_symbols)
+
+        symbol = f"BPT {underlying_symbols}"
+    elif symbol.upper() == "UNI-V1":
+        underlying_token = load_contract(token_contract.tokenAddress())
+
+        underlying_symbol = get_token_symbol(underlying_token, weth_to_eth=False)
+
+        symbol = f"UNI-V1-{underlying_symbol}"
+    elif symbol == "Cake-LP":
+        token0 = load_contract(token_contract.token0())
+        token1 = load_contract(token_contract.token1())
+
+        symbol0 = get_token_symbol(token0, weth_to_eth=True)
+        symbol1 = get_token_symbol(token1, weth_to_eth=True)
+
+        # TODO: do this for UNI-V1, BPT, etc.
+        symbol = f"Cake-LP-{symbol0}/{symbol1}"
+
     _cache_symbols[token_contract.address] = symbol
 
     return symbol
 
 
-def print_token_balances(balances, label=None):
-    # TODO: symbol cache
-
+def print_token_balances(balances, label=None, as_usd=False):
     if label:
         print(label)
 
     dict_for_printing = dict()
 
     for token, amount in balances.items():
+        decimal_shift = get_decimal_shift(token)
         symbol = get_token_symbol(token)
 
-        if symbol:
-            dict_for_printing[symbol] = amount
+        if as_usd:
+            raise NotImplementedError("WIP")
         else:
-            dict_for_printing[token.address] = amount
+            display_amount = Decimal(amount) / decimal_shift
+
+        if symbol:
+            dict_for_printing[symbol] = display_amount
+        else:
+            dict_for_printing[token.address] = display_amount
 
     pprint(dict_for_printing)
 
 
-def token_approve(account, balances, spender, extra_balances=None, amount=2 ** 256 - 1):
+def safe_token_approve(account, balances, spender, extra_balances=None, amount=2 ** 256 - 1):
     """For every token that we have a balance of, Approve unlimited (or a specified amount) for the spender."""
     if extra_balances is None:
         extra_balances = {}
 
+    pending_txs = []
+
     for token, balance in balances.items():
+        token_symbol = get_token_symbol(token, weth_to_eth=False)
+
         summed_balance = balance + extra_balances.get(token.address, 0)
 
         if summed_balance == 0:
@@ -155,31 +214,35 @@ def token_approve(account, balances, spender, extra_balances=None, amount=2 ** 2
         allowed = token.allowance(account, spender)
 
         if allowed >= amount:
-            print(f"No approval needed for {token.address}")
+            # print(f"No approval needed for {token.address}")
             continue
         elif allowed == 0:
             pass
         else:
             # TODO: do any of our tokens actually need this set to 0 first? maybe do this if a bool is set
             print(f"Clearing {token.address} approval...")
-            _approve_tx = token.approve(spender, 0, {"from": account})
+            approve_tx = token.approve(spender, 0, {"from": account, "required_confs": 0})
 
-            # approve_tx.info()
+            pending_txs.append(approve_tx)
 
         if amount == 2 ** 256 - 1:
             # the amount is the max
             print(
-                f"Approving {spender} for unlimited of {account}'s {token.address}..."
+                f"Approving {spender} for unlimited of {account}'s {token_symbol}..."
             )
         else:
             # the amount was specified
-            print(f"Approving {spender} for {amount} of {account}'s {token.address}...")
+            print(f"Approving {spender} for {amount} of {account}'s {token_symbol}...")
 
-        approve_tx = token.approve(spender, amount, {"from": account})
+        approve_tx = token.approve(spender, amount, {"from": account, "required_confs": 0})
+
+        pending_txs.append(approve_tx)
 
         # TODO: if debug, print this
         # approve_tx.info()
 
+    if pending_txs:
+        pending_txs[-1].wait(1)
 
 def transfer_token(from_address, to, token, decimal_amount):
     """Transfer tokens from an account that we don't actually control."""

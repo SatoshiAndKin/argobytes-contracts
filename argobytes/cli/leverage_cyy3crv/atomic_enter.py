@@ -27,7 +27,7 @@ from argobytes.tokens import (
     get_balances,
     get_claimable_3crv,
     print_token_balances,
-    token_approve,
+    safe_token_approve,
 )
 
 EnterData = namedtuple(
@@ -150,7 +150,7 @@ def atomic_enter(account, min_3crv_to_claim):
     if enter_data.claim_3crv:
         extra_balances[threecrv.address] = claimable_3crv
 
-    token_approve(account, balances, argobytes_clone, extra_balances)
+    safe_token_approve(account, balances, argobytes_clone, extra_balances)
 
     # flashloan through the clone
     pprint(enter_data)

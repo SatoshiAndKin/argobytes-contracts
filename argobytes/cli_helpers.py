@@ -39,6 +39,7 @@ COMMON_HELPERS = {
     "eth_utils": eth_utils,
     "get_event_contract": get_event_contract,
     "get_transaction": get_transaction,
+    "history": brownie_network.history,
     "load_contract": load_contract,
     "load_token": load_token,
     "load_token_or_contract": load_token_or_contract,
@@ -175,9 +176,10 @@ def brownie_connect(func, *args, **kwargs):
     return func(*args, **kwargs)
 
 
-# TODO: this should be in brownie
 def debug_shell(extra_locals, banner="Argobytes debug time.", exitmsg=""):
     """You probably want to use this with 'debug_shell(locals())'."""
+    extra_locals.update(COMMON_HELPERS)
+
     shell = _cli.console.Console(project.ArgobytesContractsProject, extra_locals)
     shell.interact(banner=banner, exitmsg=exitmsg)
 
@@ -201,7 +203,7 @@ def prompt_loud_confirmation(account):
 
 
 @decorator
-def with_dry_run(func, account, tokens, *args, confirm_delay=6, **kwargs):
+def with_dry_run(func, account, tokens=None, *args, confirm_delay=6, **kwargs):
     """Run a function against a fork network and then confirm before doing it for real.
     
     since we have an account, the @brownie_connect decorator isn't needed
