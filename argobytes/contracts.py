@@ -198,8 +198,8 @@ def get_or_create_flash_borrower(default_account, salt):
     return get_or_create(default_account, ArgobytesFlashBorrower, salt, None)
 
 
-def lazy_contract(address: str, owner=None):
-    return lazy(lambda: load_contract(address, owner))
+def lazy_contract(address, owner=None):
+    return lazy(lambda: load_contract(address, owner or getattr(lazy_contract, "_default_owner", None)))
 
 
 def load_contract(token_name_or_address: str, owner=None, block=None, force=False):
@@ -216,6 +216,9 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
 
         return contract
     """
+    if callable(token_name_or_address):
+        token_name_or_address = token_name_or_address()
+
     if isinstance(token_name_or_address, Contract):
         if owner:
             token_name_or_address._owner = owner

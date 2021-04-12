@@ -23,7 +23,7 @@ from eth_utils import keccak, to_bytes, to_checksum_address, to_hex
 from lazy_load import lazy
 from hexbytes import HexBytes
 
-from argobytes.contracts import get_or_clone, get_or_create, load_contract
+from argobytes.contracts import get_or_clone, get_or_create, load_contract, lazy_contract
 from argobytes.tokens import load_token, load_token_or_contract, print_token_balances
 from argobytes.transactions import get_event_contract, get_transaction, sync_tx_cache
 
@@ -68,27 +68,31 @@ class BrownieAccount(click.ParamType):
                 # check for secure permisions
                 assert key_path.stat() == 0o100400, "key files must be mode 400"
 
-                return accounts.add(key_path.read_text())
+                account = accounts.add(key_path.read_text())
             except Exception as e:
                 self.fail(
                     f"Brownie could not load account from {value!r}: {e}", param, ctx,
                 )
-
-        if value.endswith(".json"):
+        elif value.endswith(".json"):
             try:
-                return accounts.load(value)
+                account = accounts.load(value)
             except Exception as e:
                 self.fail(
                     f"Brownie could not load named account {value!r}: {e}", param, ctx,
                 )
+        else:
+            # we just have an address. this is helpful in forked mode
+            try:
+                account = accounts.at(value, force=True)
+            except Exception as e:
+                self.fail(
+                    f"Brownie could not get account {value!r}: {e}", param, ctx,
+                )
+        
+        # i dont like this, but it works
+        lazy_contract._default_owner = account
 
-        # we just have an address. this is helpful in forked mode
-        try:
-            return accounts.at(value, force=True)
-        except Exception as e:
-            self.fail(
-                f"Brownie could not get account {value!r}: {e}", param, ctx,
-            )
+        return account
 
 
 BROWNIE_ACCOUNT = BrownieAccount()
