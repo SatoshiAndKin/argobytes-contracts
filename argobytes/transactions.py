@@ -54,6 +54,7 @@ _tx_cache = None
 
 
 def close_transaction_cache():
+    global _tx_cache
     if _tx_cache is None:
         return
 
@@ -95,6 +96,7 @@ def get_transaction(txid, force=False):
 
 
 def get_transaction_cache():
+    global _tx_cache
     if _tx_cache is None:
         atexit.register(close_transaction_cache)
 
@@ -113,6 +115,7 @@ def get_transaction_cache():
 
 
 def sync_tx_cache():
+    global _tx_cache
     if _tx_cache is None:
         return
 
