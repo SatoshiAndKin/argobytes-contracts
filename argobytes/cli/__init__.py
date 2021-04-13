@@ -23,9 +23,11 @@ from brownie._cli.console import Console
 from brownie.network import gas_price
 from brownie.network.gas.strategies import GasNowScalingStrategy
 from click_plugins import with_plugins
+from flashbots import flashbot
 from pkg_resources import iter_entry_points
 
 from argobytes.cli_helpers import (
+    BROWNIE_ACCOUNT,
     COMMON_HELPERS,
     brownie_connect,
     get_project_root,
@@ -49,6 +51,7 @@ gas_choices = click.Choice(["slow", "standard", "fast", "rapid"])
 @click.group()
 @click_log.simple_verbosity_option(logger)
 @click.password_option("--etherscan-token", envvar="ETHERSCAN_TOKEN")
+@click.option("--flashbot-account", default=None, type=BROWNIE_ACCOUNT)
 @click.option("--gas-speed", default="standard", type=gas_choices, show_default=True)
 @click.option("--gas-max-speed", default="rapid", type=gas_choices, show_default=True)
 @click.option("--gas-increment", default=1.125, show_default=True)
@@ -59,6 +62,7 @@ gas_choices = click.Choice(["slow", "standard", "fast", "rapid"])
 def cli(
     ctx,
     etherscan_token,
+    flashbot_account,
     gas_speed,
     gas_max_speed,
     gas_increment,
@@ -84,6 +88,10 @@ def cli(
             brownie_network.connect(network)
 
             logger.info(f"{brownie_project._name} is the active {network} project.")
+
+            if flashbot_account:
+                print(f"Using {flashbot_account} for signing flashbot bundles.")
+                flashbot(web3, flashbot_account)
 
             if network in ["mainnet", "mainnet-fork"]:
                 # TODO: write my own strategy

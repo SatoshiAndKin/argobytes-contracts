@@ -74,6 +74,7 @@ class BrownieAccount(click.ParamType):
                     f"Brownie could not load account from {value!r}: {e}", param, ctx,
                 )
         elif value.endswith(".json"):
+            print(f"Loading account @ {value}...")
             try:
                 account = accounts.load(value)
             except Exception as e:
@@ -82,6 +83,8 @@ class BrownieAccount(click.ParamType):
                 )
         else:
             # we just have an address. this is helpful in forked mode
+            # TODO: don't alway force?
+            # TODO: if brownie is not connected, exit with an error?
             try:
                 account = accounts.at(value, force=True)
             except Exception as e:
