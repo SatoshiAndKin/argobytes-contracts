@@ -62,11 +62,19 @@ class BrownieAccount(click.ParamType):
 
         # check for private key in a file
         if value.endswith(".key"):
+            # TODO: read an environment var to allow customizing this?
+            key_dir = Path.home().joinpath(".argobytes/keys")
+
+            # TODO: is this the mode that we want?
+            assert key_dir.stat().st_mode == 0o40755, "key dir must be mode 0700"
+
             try:
-                key_path = Path(value).resolve()
+                key_path = key_dir.joinpath(value)
 
                 # check for secure permisions
-                assert key_path.stat() == 0o100400, "key files must be mode 400"
+                # TODO: is this the mode that we want?
+                print(oct(key_path.stat().st_mode))
+                assert key_path.stat().st_mode == 0o100400, "key files must be mode 0400"
 
                 account = accounts.add(key_path.read_text())
             except Exception as e:
