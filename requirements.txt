@@ -125,7 +125,7 @@ ethereum==2.3.2
     # via gnosis-py
 execnet==1.8.0
     # via pytest-xdist
-git+https://github.com/flashbots/web3-flashbots.git
+-e git+https://github.com/flashbots/web3-flashbots.git#egg=flashbots
     # via -r requirements.in
 future==0.18.2
     # via ethereum

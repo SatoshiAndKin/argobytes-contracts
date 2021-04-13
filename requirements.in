@@ -8,7 +8,9 @@ decorator
 eth-abi
 lazy_load
 
-git+https://github.com/flashbots/web3-flashbots.git
+# TODO: get this from pypi
+# TODO: this does not like being installed with '-e'
+git+https://github.com/flashbots/web3-flashbots.git#egg=flashbots
 
 -e ../brownie
 -e ../py-tokenlists

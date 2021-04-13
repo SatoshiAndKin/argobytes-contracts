@@ -10,9 +10,23 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 # read requirements.in instead of requirements.txt
 # if we read requirements.txt, it can be difficult to use this as a library
-# TODO: this doesn't work with `pip install -e` and have `-e` in requirements.in
+# TODO: think more about this
+requirements = []
 with open("requirements.in", "r") as f:
-    requirements = list(map(str.strip, f.read().split("\n")))
+    for r in f.readlines():
+        r = r.strip()
+
+        if r.startswith("#"):
+            continue
+
+        if "#egg=" in r:
+            _, r = r.split("#egg=")
+        elif r.startswith("-e"):
+            # TODO: dont just skip this. grab the package name from the path
+            continue
+
+        requirements.append(r)
+
 
 setuptools.setup(
     name="argobytes",
