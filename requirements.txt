@@ -4,16 +4,18 @@
 #
 #    pip-compile
 #
+-e file:///Users/ski/code/brownie
+    # via
+    #   -r requirements.in
+    #   ape-safe
+-e file:///Users/ski/code/py-tokenlists
+    # via -r requirements.in
 ape-safe==0.1.2
     # via -r requirements.in
 apipkg==1.5
-    # via
-    #   eth-brownie
-    #   execnet
+    # via execnet
 appdirs==1.4.4
-    # via
-    #   black
-    #   eth-brownie
+    # via black
 arrow==1.0.3
     # via -r requirements.in
 asgiref==3.3.4
@@ -21,24 +23,17 @@ asgiref==3.3.4
 asn1crypto==1.4.0
     # via coincurve
 asttokens==2.0.4
-    # via
-    #   eth-brownie
-    #   vyper
+    # via vyper
 attrs==20.3.0
     # via
     #   black
-    #   eth-brownie
     #   hypothesis
     #   jsonschema
     #   pytest
 base58==2.1.0
-    # via
-    #   eth-brownie
-    #   multiaddr
+    # via multiaddr
 bitarray==1.2.2
-    # via
-    #   eth-account
-    #   eth-brownie
+    # via eth-account
 black==19.10b0
     # via eth-brownie
 cached-property==1.5.2
@@ -46,15 +41,11 @@ cached-property==1.5.2
     #   gnosis-py
     #   py-ecc
 certifi==2020.12.5
-    # via
-    #   eth-brownie
-    #   requests
+    # via requests
 cffi==1.14.5
     # via coincurve
 chardet==4.0.0
-    # via
-    #   eth-brownie
-    #   requests
+    # via requests
 click-log==0.3.2
     # via -r requirements.in
 click-option-group==0.5.2
@@ -69,15 +60,13 @@ click==7.1.2
     #   click-log
     #   click-option-group
     #   click-plugins
-    #   eth-brownie
 coincurve==15.0.0
     # via ethereum
 cytoolz==0.11.0
     # via
-    #   eth-brownie
     #   eth-keyfile
     #   eth-utils
-decorator==5.0.5
+decorator==5.0.6
     # via -r requirements.in
 django-filter==2.4.0
     # via gnosis-py
@@ -93,14 +82,10 @@ eth-abi==2.1.1
     #   eth-event
     #   py-eth-sig-utils
     #   web3
-eth-account==0.5.2
+eth-account==0.5.4
     # via
     #   eth-brownie
     #   web3
-eth-brownie==1.14.4
-    # via
-    #   -r requirements.in
-    #   ape-safe
 eth-event==1.2.1
     # via eth-brownie
 eth-hash[pycryptodome]==0.2.0
@@ -110,22 +95,16 @@ eth-hash[pycryptodome]==0.2.0
     #   eth-utils
     #   web3
 eth-keyfile==0.5.1
-    # via
-    #   eth-account
-    #   eth-brownie
+    # via eth-account
 eth-keys==0.3.3
     # via
     #   eth-account
-    #   eth-brownie
     #   eth-keyfile
 eth-rlp==0.2.1
-    # via
-    #   eth-account
-    #   eth-brownie
+    # via eth-account
 eth-typing==2.2.2
     # via
     #   eth-abi
-    #   eth-brownie
     #   eth-keys
     #   eth-utils
     #   py-ecc
@@ -145,9 +124,9 @@ eth-utils==1.9.5
 ethereum==2.3.2
     # via gnosis-py
 execnet==1.8.0
-    # via
-    #   eth-brownie
-    #   pytest-xdist
+    # via pytest-xdist
+git+https://github.com/flashbots/web3-flashbots.git
+    # via -r requirements.in
 future==0.18.2
     # via ethereum
 gnosis-py==2.8.5
@@ -162,29 +141,17 @@ hexbytes==0.2.1
 hypothesis==5.41.3
     # via eth-brownie
 idna==2.10
-    # via
-    #   eth-brownie
-    #   requests
-importlib-metadata==3.10.0
-    # via eth-brownie
-importlib-resources==5.1.2
-    # via eth-brownie
+    # via requests
 inflection==0.5.0
     # via
-    #   eth-brownie
     #   mythx-models
     #   pythx
 iniconfig==1.1.1
-    # via
-    #   eth-brownie
-    #   pytest
-ipfshttpclient==0.7.0
-    # via
-    #   eth-brownie
-    #   web3
+    # via pytest
+ipfshttpclient==0.7.0a1
+    # via web3
 jsonschema==3.2.0
     # via
-    #   eth-brownie
     #   mythx-models
     #   web3
 lazy-load==0.8.2
@@ -192,52 +159,33 @@ lazy-load==0.8.2
 lazy-object-proxy==1.6.0
     # via lazy-load
 lru-dict==1.1.7
-    # via
-    #   eth-brownie
-    #   web3
+    # via web3
 more-itertools==8.7.0
-    # via
-    #   eth-brownie
-    #   pytest
+    # via pytest
 multiaddr==0.0.9
-    # via
-    #   eth-brownie
-    #   ipfshttpclient
+    # via ipfshttpclient
 mypy-extensions==0.4.3
     # via py-ecc
 mythx-models==1.9.1
-    # via
-    #   eth-brownie
-    #   pythx
+    # via pythx
 netaddr==0.8.0
-    # via
-    #   eth-brownie
-    #   multiaddr
+    # via multiaddr
 packaging==20.9
     # via
-    #   eth-brownie
     #   gnosis-py
     #   pytest
 parsimonious==0.8.1
-    # via
-    #   eth-abi
-    #   eth-brownie
+    # via eth-abi
 pathspec==0.8.1
-    # via
-    #   black
-    #   eth-brownie
+    # via black
 pbkdf2==1.3
     # via ethereum
 pluggy==0.13.1
-    # via
-    #   eth-brownie
-    #   pytest
+    # via pytest
 prompt-toolkit==3.0.8
     # via eth-brownie
 protobuf==3.15.6
-    # via
-    #   eth-brownie
-    #   web3
+    # via web3
 psutil==5.8.0
     # via eth-brownie
 py-ecc==5.2.0
@@ -259,7 +207,6 @@ pycparser==2.20
     # via cffi
 pycryptodome==3.10.1
     # via
-    #   eth-brownie
     #   eth-hash
     #   eth-keyfile
     #   ethereum
@@ -274,23 +221,15 @@ pygments==2.8.1
     #   eth-brownie
     #   pygments-lexer-solidity
 pyjwt==1.7.1
-    # via
-    #   eth-brownie
-    #   pythx
+    # via pythx
 pyparsing==2.4.7
-    # via
-    #   eth-brownie
-    #   packaging
+    # via packaging
 pyrsistent==0.17.3
-    # via
-    #   eth-brownie
-    #   jsonschema
+    # via jsonschema
 pysha3==1.0.2
     # via ethereum
 pytest-forked==1.3.0
-    # via
-    #   eth-brownie
-    #   pytest-xdist
+    # via pytest-xdist
 pytest-xdist==1.34.0
     # via eth-brownie
 pytest==6.0.1
@@ -301,7 +240,6 @@ pytest==6.0.1
 python-dateutil==2.8.1
     # via
     #   arrow
-    #   eth-brownie
     #   mythx-models
     #   pythx
 python-dotenv==0.16.0
@@ -315,9 +253,7 @@ pyyaml==5.4.1
     #   eth-brownie
     #   ethereum
 regex==2020.11.13
-    # via
-    #   black
-    #   eth-brownie
+    # via black
 repoze.lru==0.7
     # via ethereum
 requests==2.25.1
@@ -348,7 +284,6 @@ semantic-version==2.8.5
 six==1.15.0
     # via
     #   asttokens
-    #   eth-brownie
     #   jsonschema
     #   multiaddr
     #   parsimonious
@@ -356,58 +291,36 @@ six==1.15.0
     #   pytest-xdist
     #   python-dateutil
 sortedcontainers==2.3.0
-    # via
-    #   eth-brownie
-    #   hypothesis
+    # via hypothesis
 sqlparse==0.4.1
     # via django
-tokenlists==0.1.0a1
-    # via -r requirements.in
 toml==0.10.2
     # via
     #   black
-    #   eth-brownie
     #   pytest
 toolz==0.11.1
-    # via
-    #   cytoolz
-    #   eth-brownie
+    # via cytoolz
 tqdm==4.53.0
     # via eth-brownie
 typed-ast==1.4.2
-    # via
-    #   black
-    #   eth-brownie
-typing-extensions==3.7.4.3
-    # via eth-brownie
+    # via black
 urllib3==1.26.4
-    # via
-    #   eth-brownie
-    #   requests
+    # via requests
 varint==1.0.2
-    # via
-    #   eth-brownie
-    #   multiaddr
+    # via multiaddr
 vvm==0.1.0
     # via eth-brownie
 vyper==0.2.11
     # via eth-brownie
 wcwidth==0.2.5
+    # via prompt-toolkit
+web3==5.18.0
     # via
     #   eth-brownie
-    #   prompt-toolkit
-web3==5.11.1
-    # via
-    #   eth-brownie
+    #   flashbots
     #   gnosis-py
 websockets==8.1
-    # via
-    #   eth-brownie
-    #   web3
-zipp==3.4.1
-    # via
-    #   eth-brownie
-    #   importlib-metadata
+    # via web3
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

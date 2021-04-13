@@ -6,6 +6,9 @@ click-plugins
 click-spinner
 decorator
 eth-abi
-eth-brownie
 lazy_load
-tokenlists
+
+git+https://github.com/flashbots/web3-flashbots.git
+
+-e ../brownie
+-e ../py-tokenlists

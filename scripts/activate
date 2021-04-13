@@ -1,6 +1,8 @@
 # source me!
 # TODO: exit if this isn't being sourced
 
+export BROWNIE_LIB=1
+
 . .env
 . venv/bin/activate
 
