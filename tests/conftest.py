@@ -1,8 +1,6 @@
 import pytest
 from brownie import *
 from click.testing import CliRunner
-from eth_abi.packed import encode_abi_packed
-from eth_utils import keccak, to_bytes, to_checksum_address
 
 from argobytes.addresses import *
 from argobytes.contracts import get_or_clone, get_or_create, load_contract

@@ -6,13 +6,10 @@ from enum import IntFlag
 
 import brownie
 import rlp
-import tokenlists
-from brownie import ETH_ADDRESS, ZERO_ADDRESS, Contract, _cli, accounts, project, web3
-from brownie.exceptions import VirtualMachineError
+from brownie import Contract, ETH_ADDRESS, ZERO_ADDRESS, web3
 from brownie.network import web3
 from eth_abi import decode_single
-from eth_abi.packed import encode_abi_packed
-from eth_utils import keccak, to_bytes, to_checksum_address, to_hex
+from eth_utils import keccak, to_bytes, to_checksum_address
 from lazy_load import lazy
 
 from argobytes.web3_helpers import to_hex32

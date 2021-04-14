@@ -1,9 +1,9 @@
 from decimal import Decimal
 
 import pytest
-from brownie import accounts, project
+from brownie import accounts
 
-from argobytes.cli.leverage_cyy3crv import atomic_enter, atomic_exit, simple_enter
+from argobytes.cli.leverage_cyy3crv import atomic_enter, atomic_exit
 from argobytes.contracts import load_contract
 from argobytes.tokens import transfer_token
 

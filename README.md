@@ -169,8 +169,8 @@ Run:
 Run:
 
     isort .
-    autoflake -r --in-place --remove-unused-variables argobytes scripts setup.py tests
-    black argobytes scripts setup.py tests
+    autoflake -r --in-place --remove-all-unused-imports argobytes scripts setup.py tests
+    black --line-length 120 argobytes scripts setup.py tests
 
 TODO: automate this
 

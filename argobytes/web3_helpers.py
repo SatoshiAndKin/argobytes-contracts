@@ -1,13 +1,8 @@
 # import functools
 
-import rlp
-import tokenlists
-from brownie import ETH_ADDRESS, ZERO_ADDRESS, Contract, _cli, accounts, project
-from brownie.exceptions import VirtualMachineError
+from brownie import Contract
 from brownie.network import web3
-from eth_abi.packed import encode_abi_packed
-from eth_utils import keccak, to_bytes, to_checksum_address, to_hex
-from lazy_load import lazy
+from eth_utils import to_hex
 
 
 def find_block_at(search_timestamp, average_block_time=None):

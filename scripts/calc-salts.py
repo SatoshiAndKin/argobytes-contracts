@@ -7,11 +7,9 @@
 # TODO: rewrite this now that we aren't using diamonds
 import os
 
-import rlp
 from argobytes_mainnet import *
 from argobytes_util import *
 from brownie import *
-from eth_utils import keccak, to_bytes, to_checksum_address
 
 
 def main():

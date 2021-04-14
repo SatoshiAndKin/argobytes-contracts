@@ -1,9 +1,5 @@
-import brownie
-import pytest
-from brownie import ZERO_ADDRESS, accounts
-from brownie.test import given, strategy
+from brownie import accounts
 from eth_utils import to_bytes
-from hypothesis import settings
 
 
 # TODO: this test crashes ganache when we try to collect coverage

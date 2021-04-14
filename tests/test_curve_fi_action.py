@@ -1,8 +1,4 @@
-import brownie
-import pytest
-from brownie import Contract, accounts
-from brownie.test import given, strategy
-from hypothesis import settings
+from brownie import Contract
 
 
 # TODO: parameterize this

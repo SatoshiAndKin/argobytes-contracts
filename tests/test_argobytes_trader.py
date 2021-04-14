@@ -1,8 +1,4 @@
-import brownie
-import pytest
-from brownie import ZERO_ADDRESS, accounts
-from brownie.test import given, strategy
-from hypothesis import settings
+from brownie import accounts
 
 
 def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action, weth9_erc20):

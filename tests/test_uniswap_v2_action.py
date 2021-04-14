@@ -1,8 +1,4 @@
-import brownie
-import pytest
-from brownie import ZERO_ADDRESS, accounts
-from brownie.test import given, strategy
-from hypothesis import settings
+from brownie import accounts
 
 
 def test_action(uniswap_v2_router, uniswap_v2_action, dai_erc20, usdc_erc20, weth9_erc20):

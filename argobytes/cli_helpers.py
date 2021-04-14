@@ -6,24 +6,14 @@ import brownie
 import click
 import eth_abi
 import eth_utils
-import rlp
-import tokenlists
 from ape_safe import ApeSafe
-from brownie import ETH_ADDRESS, ZERO_ADDRESS, Contract, _cli, accounts
+from brownie import _cli
 from brownie import network as brownie_network
 from brownie import project
-from brownie._cli.console import Console
-from brownie.exceptions import VirtualMachineError
-from brownie.network import gas_price, web3
-from brownie.network.gas.strategies import GasNowScalingStrategy
-from decorator import decorator
-from eth_abi.packed import encode_abi_packed
-from eth_utils import keccak, to_bytes, to_checksum_address, to_hex
 from hexbytes import HexBytes
-from lazy_load import lazy
 
-from argobytes.contracts import get_or_clone, get_or_create, lazy_contract, load_contract
-from argobytes.tokens import load_token, load_token_or_contract, print_token_balances
+from argobytes.contracts import load_contract
+from argobytes.tokens import load_token, load_token_or_contract
 from argobytes.transactions import get_event_contract, get_transaction, sync_tx_cache
 
 

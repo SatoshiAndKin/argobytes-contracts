@@ -1,8 +1,7 @@
 from decimal import Decimal
 
 import pytest
-from brownie import accounts, project
-from click.testing import CliRunner
+from brownie import accounts
 
 from argobytes.cli.leverage_cyy3crv import simple_enter, simple_exit
 from argobytes.contracts import load_contract
