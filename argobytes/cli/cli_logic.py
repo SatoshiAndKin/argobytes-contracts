@@ -40,11 +40,13 @@ def cli(
     # put this into the environment so that brownie sees it
     os.environ["ETHERSCAN_TOKEN"] = etherscan_token
 
-    # setup the project and network the same way brownie's run helper does
-    brownie_project = project.load(get_project_root())
-    brownie_project.load_config()
-
     def brownie_connect():
+        # setup the project and network the same way brownie's run helper does
+        brownie_project = project.load(get_project_root())
+        brownie_project.load_config()
+
+        ctx.obj["brownie_project"] = brownie_project
+
         if network == "none":
             logger.warning(f"{brownie_project._name} is the active project. Not connected to any networks")
         else:
@@ -81,7 +83,6 @@ def cli(
     ctx.obj["brownie_connect_fn"] = brownie_connect
     ctx.obj["brownie_forked"] = "fork" in network
     ctx.obj["brownie_network"] = network
-    ctx.obj["brownie_project"] = brownie_project
 
 
 def console(ctx):

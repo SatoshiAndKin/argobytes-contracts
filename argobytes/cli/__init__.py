@@ -17,6 +17,7 @@ import os
 import click
 import click_log
 from click_plugins import with_plugins
+# TODO: pkg_resources is super slow to import. maybe use a different plugin library
 from pkg_resources import iter_entry_points
 
 from argobytes.cli_helpers_lite import BROWNIE_ACCOUNT, brownie_connect, gas_choices, logger
@@ -41,7 +42,6 @@ def cli(
 ):
     """Ethereum helpers."""
     from .cli_logic import cli
-
     cli(ctx, etherscan_token, flashbot_account, gas_speed, gas_max_speed, gas_increment, gas_block_duration, network)
 
 
@@ -51,7 +51,6 @@ def cli(
 def console(ctx):
     """Interactive shell."""
     from .cli_logic import console
-
     console(ctx)
 
 
@@ -66,12 +65,10 @@ def donate():
     <https://donate.pypi.org/>
     """
     from .cli_logic import donate
-
-    console(ctx)
+    donate()
 
 
 from .tx import tx
-
 cli.add_command(tx)
 
 
