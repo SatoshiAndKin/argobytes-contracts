@@ -66,17 +66,16 @@ class BrownieAccount(click.ParamType):
             key_dir = Path.home().joinpath(".argobytes/keys")
 
             # TODO: is this the mode that we want?
-            assert key_dir.stat().st_mode == 0o40755, "key dir must be mode 0700"
+            assert key_dir.stat().st_mode == 0o40700, "key dir must be mode 0700"
 
             try:
                 key_path = key_dir.joinpath(value)
 
                 # check for secure permisions
                 # TODO: is this the mode that we want?
-                print(oct(key_path.stat().st_mode))
                 assert key_path.stat().st_mode == 0o100400, "key files must be mode 0400"
 
-                account = accounts.add(key_path.read_text())
+                account = accounts.add(key_path.read_text().strip())
             except Exception as e:
                 self.fail(
                     f"Brownie could not load account from {value!r}: {e}", param, ctx,
