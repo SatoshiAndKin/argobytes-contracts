@@ -39,7 +39,7 @@ setuptools.setup(
     url="https://github.com/SatoshiAndKin/argobytes-contracts",
     packages=setuptools.find_packages(),
     install_requires=requirements,
-    python_requires=">=3.6,<4",
+    python_requires=">=3.9,<4",
     include_package_data=True,
     entry_points={
         "console_scripts": ["argobytes=argobytes.cli:main",],
