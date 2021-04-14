@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import IntFlag
 
 import brownie
+import click
 import rlp
 from brownie import Contract, ETH_ADDRESS, ZERO_ADDRESS, web3
 from brownie.network import web3
