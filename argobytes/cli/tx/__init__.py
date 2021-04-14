@@ -1,6 +1,6 @@
 import click
 
-from argobytes.cli_helpers import brownie_connect
+from argobytes.cli_helpers_lite import brownie_connect
 
 
 @click.group()

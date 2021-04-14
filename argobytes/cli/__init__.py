@@ -13,14 +13,13 @@ Our scripts will usually want two addresses:
 This entrypoint will handle setting these accounts up and then starting brownie.
 """
 import os
-from pkg_resources import iter_entry_points
 
 import click
 import click_log
 from click_plugins import with_plugins
+from pkg_resources import iter_entry_points
 
-from argobytes.cli_helpers import logger, BROWNIE_ACCOUNT, gas_choices, brownie_connect
-
+from argobytes.cli_helpers_lite import BROWNIE_ACCOUNT, brownie_connect, gas_choices, logger
 
 # TODO: pre-emptive click flag to set network to "none"? otherwise we waste time connecting to mainnet-fork if we dont need a node
 
@@ -70,7 +69,9 @@ def donate():
 
     console(ctx)
 
+
 from .tx import tx
+
 cli.add_command(tx)
 
 

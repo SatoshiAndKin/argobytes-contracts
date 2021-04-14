@@ -1,6 +1,6 @@
 import click
 
-from argobytes.cli_helpers import CommandWithAccount
+from argobytes.cli_helpers_lite import CommandWithAccount
 
 
 @click.group()

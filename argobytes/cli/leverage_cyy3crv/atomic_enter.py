@@ -23,12 +23,7 @@ from argobytes.contracts import (
     lazy_contract,
     poke_contracts,
 )
-from argobytes.tokens import (
-    get_balances,
-    get_claimable_3crv,
-    print_token_balances,
-    safe_token_approve,
-)
+from argobytes.tokens import get_balances, get_claimable_3crv, print_token_balances, safe_token_approve
 
 EnterData = namedtuple(
     "EnterData",

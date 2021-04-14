@@ -91,9 +91,13 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
     if needed_salts:
         # deploy more proxies that are all owned by the first
         if len(needed_salts) == 1:
-            sybil_tx = argobytes_factory.createClone(deployed_contract, needed_salts[0], owner,)
+            argobytes_factory.createClone(
+                deployed_contract, needed_salts[0], owner,
+            )
         else:
-            sybil_tx = argobytes_factory.createClones(deployed_contract, needed_salts, owner,)
+            argobytes_factory.createClones(
+                deployed_contract, needed_salts, owner,
+            )
 
         # sybil_tx.info()
 
@@ -223,7 +227,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
     if hasattr(contract, "implementation"):
         try:
             impl_addr = contract.implementation.call()
-        except Exception as e:
+        except Exception:
             # maybe its "org.zepplinos.proxy.implementation"
             impl_addr = web3.eth.getStorageAt(
                 address, "0x7050c9e0f4ca769c69bd3a8ef740bc37934f8e2c036e5a723fd8ee048ed3f8c3", block,
