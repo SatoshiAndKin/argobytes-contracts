@@ -4,11 +4,15 @@
 #
 #    pip-compile
 #
--e file:///Users/ski/code/brownie
+-e ../brownie
     # via
     #   -r requirements.in
     #   ape-safe
--e file:///Users/ski/code/py-tokenlists
+-e ../pythx
+    # via
+    #   -r requirements.in
+    #   eth-brownie
+-e ../py-tokenlists
     # via -r requirements.in
 ape-safe==0.1.2
     # via -r requirements.in
@@ -125,7 +129,7 @@ ethereum==2.3.2
     # via gnosis-py
 execnet==1.8.0
     # via pytest-xdist
--e git+https://github.com/flashbots/web3-flashbots.git#egg=flashbots
+git+https://github.com/flashbots/web3-flashbots.git#egg=flashbots
     # via -r requirements.in
 future==0.18.2
     # via ethereum
@@ -142,7 +146,7 @@ hypothesis==5.41.3
     # via eth-brownie
 idna==2.10
     # via requests
-inflection==0.5.0
+inflection==0.5.1
     # via
     #   mythx-models
     #   pythx
@@ -166,7 +170,7 @@ multiaddr==0.0.9
     # via ipfshttpclient
 mypy-extensions==0.4.3
     # via py-ecc
-mythx-models==1.9.1
+mythx-models==2.0.1
     # via pythx
 netaddr==0.8.0
     # via multiaddr
@@ -212,6 +216,8 @@ pycryptodome==3.10.1
     #   ethereum
     #   py-eth-sig-utils
     #   vyper
+pydantic==1.7.3
+    # via mythx-models
 pyethash==0.1.27
     # via ethereum
 pygments-lexer-solidity==0.5.1
@@ -243,8 +249,6 @@ python-dateutil==2.8.1
     #   mythx-models
     #   pythx
 python-dotenv==0.16.0
-    # via eth-brownie
-pythx==1.6.1
     # via eth-brownie
 pytz==2021.1
     # via django
