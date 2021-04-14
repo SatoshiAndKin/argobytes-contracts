@@ -42,9 +42,7 @@ def test_uniswap_arbitrage(
             uniswap_v1_action,
             1,
             # uniswap_v1_action.tradeEtherToToken(address to, address exchange, address dest_token, uint dest_min_tokens)
-            uniswap_v1_action.tradeEtherToToken.encode_input(
-                uniswap_v1_action, usdc_exchange, usdc_erc20, 1
-            ),
+            uniswap_v1_action.tradeEtherToToken.encode_input(uniswap_v1_action, usdc_exchange, usdc_erc20, 1),
         ),
         # trade USDC to DAI
         (
@@ -60,30 +58,24 @@ def test_uniswap_arbitrage(
             uniswap_v1_action,
             0,
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens)
-            uniswap_v1_action.tradeTokenToEther.encode_input(
-                argobytes_proxy_clone, dai_exchange, dai_erc20, 1
-            ),
+            uniswap_v1_action.tradeTokenToEther.encode_input(argobytes_proxy_clone, dai_exchange, dai_erc20, 1),
         ),
     ]
 
     proxy_actions = [
         (
             argobytes_trader,
-            0,  # delegatecall
-            True,  # pass ETH
-            argobytes_trader.atomicArbitrage.encode_input(
-                accounts[0], borrows, argobytes_multicall, trade_actions,
-            ),
+            0,
+            True,
+            argobytes_trader.atomicArbitrage.encode_input(accounts[0], borrows, argobytes_multicall, trade_actions,),
         )
-    ]
+    ]  # delegatecall  # pass ETH
 
     owner = argobytes_proxy_clone.owner()
 
     assert owner == brownie.accounts[0]
 
-    arbitrage_tx = argobytes_proxy_clone.executeMany(
-        proxy_actions, {"value": value, "gasPrice": 0,}
-    )
+    arbitrage_tx = argobytes_proxy_clone.executeMany(proxy_actions, {"value": value, "gasPrice": 0,})
 
     # TODO: should we compare this to running with burning gas token?
     print("gas used: ", arbitrage_tx.gas_used)

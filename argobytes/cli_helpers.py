@@ -99,9 +99,8 @@ class BrownieAccount(click.ParamType):
                 self.fail(
                     f"Brownie could not get account {value!r}: {e}", param, ctx,
                 )
-        
-        # i dont like this, but it works
-        lazy_contract._default_owner = account
+
+        ctx.obj["lazy_contract_default_account"] = account
 
         return account
 
@@ -161,21 +160,13 @@ class CommandWithProxySalts(CommandWithAccount):
         self.params.insert(
             0,
             click.core.Option(
-                ("--factory-salt",),
-                type=SALT,
-                help="ArgobytesFactory deploy salt",
-                default="",
-                show_default=True,
+                ("--factory-salt",), type=SALT, help="ArgobytesFactory deploy salt", default="", show_default=True,
             ),
         )
         self.params.insert(
             0,
             click.core.Option(
-                ("--clone-salt",),
-                type=SALT,
-                help="Account's clone's deploy salt",
-                default="",
-                show_default=True,
+                ("--clone-salt",), type=SALT, help="Account's clone's deploy salt", default="", show_default=True,
             ),
         )
 

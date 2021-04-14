@@ -51,9 +51,7 @@ def load_token(token_symbol: str):
             pass
 
     if token_info is None:
-        raise ValueError(
-            f"Symbol '{token_symbol}' is not in any of our tokenlists: {known_lists}"
-        )
+        raise ValueError(f"Symbol '{token_symbol}' is not in any of our tokenlists: {known_lists}")
 
     token_address = to_checksum_address(token_info.address)
 
@@ -141,8 +139,7 @@ def get_token_symbol(token_contract, weth_to_eth=True):
         underlying_tokens = token_contract.getCurrentTokens()
 
         underlying_symbols = [
-            get_token_symbol(load_contract(underlying), weth_to_eth=True)
-            for underlying in underlying_tokens
+            get_token_symbol(load_contract(underlying), weth_to_eth=True) for underlying in underlying_tokens
         ]
 
         underlying_symbols = "/".join(underlying_symbols)
@@ -227,9 +224,7 @@ def safe_token_approve(account, balances, spender, extra_balances=None, amount=2
 
         if amount == 2 ** 256 - 1:
             # the amount is the max
-            print(
-                f"Approving {spender} for unlimited of {account}'s {token_symbol}..."
-            )
+            print(f"Approving {spender} for unlimited of {account}'s {token_symbol}...")
         else:
             # the amount was specified
             print(f"Approving {spender} for {amount} of {account}'s {token_symbol}...")
@@ -243,6 +238,7 @@ def safe_token_approve(account, balances, spender, extra_balances=None, amount=2
 
     if pending_txs:
         pending_txs[-1].wait(1)
+
 
 def transfer_token(from_address, to, token, decimal_amount):
     """Transfer tokens from an account that we don't actually control."""
@@ -274,9 +270,7 @@ def print_start_and_end_balance(account, tokens=None):
     # TODO: print the number of transactions done?
     print(f"\n{account} used {gas_used} gas.")
     print(
-        f"\nspent balance of {account}:",
-        (starting_balance - ending_balance) / 1e18,
-        "\n",
+        f"\nspent balance of {account}:", (starting_balance - ending_balance) / 1e18, "\n",
     )
 
     if tokens:

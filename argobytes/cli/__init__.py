@@ -60,14 +60,7 @@ gas_choices = click.Choice(["slow", "standard", "fast", "rapid"])
 @click.pass_context
 @click.version_option()
 def cli(
-    ctx,
-    etherscan_token,
-    flashbot_account,
-    gas_speed,
-    gas_max_speed,
-    gas_increment,
-    gas_block_duration,
-    network,
+    ctx, etherscan_token, flashbot_account, gas_speed, gas_max_speed, gas_increment, gas_block_duration, network,
 ):
     """Ethereum helpers."""
     ctx.ensure_object(dict)
@@ -81,9 +74,7 @@ def cli(
 
     def brownie_connect():
         if network == "none":
-            logger.warning(
-                f"{brownie_project._name} is the active project. Not connected to any networks"
-            )
+            logger.warning(f"{brownie_project._name} is the active project. Not connected to any networks")
         else:
             brownie_network.connect(network)
 
@@ -117,6 +108,7 @@ def cli(
     # pass the project on to the other functions
     ctx.obj["brownie_connect_fn"] = brownie_connect
     ctx.obj["brownie_forked"] = "fork" in network
+    ctx.obj["brownie_network"] = network
     ctx.obj["brownie_project"] = brownie_project
 
 
@@ -156,8 +148,5 @@ def main():
     standalone_mode = os.environ.get("ARGOBYTES_CLICK_STANDALONE", "1") == "1"
 
     cli(
-        obj={},
-        auto_envvar_prefix="ARGOBYTES",
-        prog_name="argobytes",
-        standalone_mode=standalone_mode,
+        obj={}, auto_envvar_prefix="ARGOBYTES", prog_name="argobytes", standalone_mode=standalone_mode,
     )

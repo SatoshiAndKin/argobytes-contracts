@@ -5,9 +5,7 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-def test_simple_arbitrage(
-    argobytes_multicall, argobytes_trader, example_action, weth9_erc20
-):
+def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action, weth9_erc20):
     value = 1e18
 
     # get some WETH for accounts[1]
@@ -34,16 +32,10 @@ def test_simple_arbitrage(
     # NOTE! Multicall actions do not have CallType! That is just our proxy actions! maybe need different names?
     actions = [
         # sweep WETH
-        (
-            example_action,
-            False,
-            example_action.sweep.encode_input(accounts[0], weth9_erc20, 0),
-        ),
+        (example_action, False, example_action.sweep.encode_input(accounts[0], weth9_erc20, 0),),
     ]
 
-    arbitrage_tx = argobytes_trader.atomicArbitrage(
-        accounts[0], borrows, argobytes_multicall, actions
-    )
+    arbitrage_tx = argobytes_trader.atomicArbitrage(accounts[0], borrows, argobytes_multicall, actions)
 
     assert weth9_erc20.balanceOf(example_action) == 0
     assert weth9_erc20.balanceOf(argobytes_trader) == 0

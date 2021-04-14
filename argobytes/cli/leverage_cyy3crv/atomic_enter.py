@@ -72,9 +72,7 @@ def atomic_enter(account, min_3crv_to_claim):
     usdc = lazy_contract(enter_cyy3crv_action.USDC())
     usdt = lazy_contract(enter_cyy3crv_action.USDT())
     threecrv = lazy_contract(enter_cyy3crv_action.THREE_CRV())
-    threecrv_pool = ArgobytesInterfaces.ICurvePool(
-        enter_cyy3crv_action.THREE_CRV_POOL()
-    )
+    threecrv_pool = ArgobytesInterfaces.ICurvePool(enter_cyy3crv_action.THREE_CRV_POOL())
     y3crv = lazy_contract(enter_cyy3crv_action.Y_THREE_CRV())
     cyy3crv = lazy_contract(enter_cyy3crv_action.CY_Y_THREE_CRV())
     fee_distribution = lazy_contract(enter_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION())
@@ -121,12 +119,7 @@ def atomic_enter(account, min_3crv_to_claim):
     # TODO: do this properly. use virtualprice and yearn's price calculation
     print("warning! summed_balances is not actually priced in USD")
     summed_balances = Decimal(
-        enter_data.dai
-        + enter_data.usdc
-        + enter_data.usdt
-        + enter_data.threecrv
-        + enter_data.y3crv
-        + claimable_3crv
+        enter_data.dai + enter_data.usdc + enter_data.usdt + enter_data.threecrv + enter_data.y3crv + claimable_3crv
     )
 
     print(f"summed_balances:   {summed_balances}")
@@ -141,9 +134,7 @@ def atomic_enter(account, min_3crv_to_claim):
 
     assert flash_loan_amount > 0, "no flash loan calculated"
 
-    enter_data = enter_data._replace(
-        dai_flash_fee=lender.flashFee(dai, flash_loan_amount)
-    )
+    enter_data = enter_data._replace(dai_flash_fee=lender.flashFee(dai, flash_loan_amount))
 
     extra_balances = {}
 
@@ -158,13 +149,7 @@ def atomic_enter(account, min_3crv_to_claim):
         lender,
         dai,
         flash_loan_amount,
-        ArgobytesAction(
-            enter_cyy3crv_action,
-            ArgobytesActionCallType.DELEGATE,
-            False,
-            "enter",
-            enter_data,
-        ).tuple,
+        ArgobytesAction(enter_cyy3crv_action, ArgobytesActionCallType.DELEGATE, False, "enter", enter_data,).tuple,
     )
 
     print("enter success!")

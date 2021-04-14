@@ -47,9 +47,7 @@ def simple_exit(account):
     usdc = load_contract(exit_cyy3crv_action.USDC(), account)
     usdt = load_contract(exit_cyy3crv_action.USDT(), account)
     threecrv = load_contract(exit_cyy3crv_action.THREE_CRV(), account)
-    threecrv_pool = ArgobytesInterfaces.ICurvePool(
-        exit_cyy3crv_action.THREE_CRV_POOL(), account
-    )
+    threecrv_pool = ArgobytesInterfaces.ICurvePool(exit_cyy3crv_action.THREE_CRV_POOL(), account)
     y3crv = ArgobytesInterfaces.IYVault(exit_cyy3crv_action.Y_THREE_CRV(), account)
     cyy3crv = ArgobytesInterfaces.ICERC20(exit_cyy3crv_action.CY_Y_THREE_CRV(), account)
     cydai = ArgobytesInterfaces.ICERC20(exit_cyy3crv_action.CY_DAI(), account)
@@ -89,9 +87,7 @@ def simple_exit(account):
 
     # we need more DAI!
     # calculate how much cyy3crv we can safely withdraw
-    (error, liquidity, shortfall) = cream.getHypotheticalAccountLiquidity(
-        account, cydai, 0, borrow_balance
-    )
+    (error, liquidity, shortfall) = cream.getHypotheticalAccountLiquidity(account, cydai, 0, borrow_balance)
     assert error == 0
     assert shortfall == 0
 

@@ -28,12 +28,7 @@ class ArgobytesActionCallType(IntFlag):
 
 class ArgobytesAction:
     def __init__(
-        self,
-        contract,
-        call_type: ArgobytesActionCallType,
-        forward_value: bool,
-        function_name: str,
-        *function_args,
+        self, contract, call_type: ArgobytesActionCallType, forward_value: bool, function_name: str, *function_args,
     ):
         data = getattr(contract, function_name).encode_input(*function_args)
 
@@ -55,18 +50,14 @@ class EthContract:
         return brownie.web3.eth.getBalance(str(account))
 
 
-def get_deterministic_contract(
-    default_account, contract, salt="", constructor_args=None
-):
+def get_deterministic_contract(default_account, contract, salt="", constructor_args=None):
     """Use eip-2470 to create a contract with deterministic addresses."""
     if constructor_args is None:
         constructor_args = []
 
     contract_initcode = contract.deploy.encode_input(*constructor_args)
 
-    contract_address = mk_contract_address2(
-        SingletonFactory.address, salt, contract_initcode
-    )
+    contract_address = mk_contract_address2(SingletonFactory.address, salt, contract_initcode)
 
     if web3.eth.getCode(contract_address).hex() == "0x":
         raise ValueError(f"Contract {contract.name} not deployed!")
@@ -76,18 +67,12 @@ def get_deterministic_contract(
 
 def get_or_clone(owner, argobytes_factory, deployed_contract, salt=""):
     """Fetches an existing clone or creates a new clone."""
-    clone_exists, clone_address = argobytes_factory.cloneExists(
-        deployed_contract, salt, owner
-    )
+    clone_exists, clone_address = argobytes_factory.cloneExists(deployed_contract, salt, owner)
 
     if not clone_exists:
-        clone_address = argobytes_factory.createClone(
-            deployed_contract, salt
-        ).return_value
+        clone_address = argobytes_factory.createClone(deployed_contract, salt).return_value
 
-    return Contract.from_abi(
-        deployed_contract._name, clone_address, deployed_contract.abi, owner
-    )
+    return Contract.from_abi(deployed_contract._name, clone_address, deployed_contract.abi, owner)
 
 
 def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
@@ -95,9 +80,7 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
     my_proxys_proxies = []
 
     for salt in salts:
-        (proxy_exists, proxy_address) = argobytes_factory.cloneExists(
-            deployed_contract, salt, owner
-        )
+        (proxy_exists, proxy_address) = argobytes_factory.cloneExists(deployed_contract, salt, owner)
 
         my_proxys_proxies.append(proxy_address)
 
@@ -108,29 +91,21 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
     if needed_salts:
         # deploy more proxies that are all owned by the first
         if len(needed_salts) == 1:
-            sybil_tx = argobytes_factory.createClone(
-                deployed_contract, needed_salts[0], owner,
-            )
+            sybil_tx = argobytes_factory.createClone(deployed_contract, needed_salts[0], owner,)
         else:
-            sybil_tx = argobytes_factory.createClones(
-                deployed_contract, needed_salts, owner,
-            )
+            sybil_tx = argobytes_factory.createClones(deployed_contract, needed_salts, owner,)
 
         # sybil_tx.info()
 
         # we already calculated the address above. just use that
         # my_proxys_proxies.extend([event['clone'] for event in sybil_tx.events["NewClone"]])
 
-    _contract = lambda address: Contract.from_abi(
-        deployed_contract._name, address, deployed_contract.abi, owner
-    )
+    _contract = lambda address: Contract.from_abi(deployed_contract._name, address, deployed_contract.abi, owner)
 
     return [_contract(address) for address in my_proxys_proxies]
 
 
-def get_or_clone_flash_borrower(
-    account, borrower_salt="", clone_salt="", factory_salt=""
-):
+def get_or_clone_flash_borrower(account, borrower_salt="", clone_salt="", factory_salt=""):
     raise NotImplementedError(
         "only get_factory and get_flash_borrower. if we create, users might be surprised by a deploy. deploy should always be done via deploy script"
     )
@@ -149,27 +124,19 @@ def get_or_clone_flash_borrower(
 
 # TODO: rename to get_or_deterministic_create?
 # @functools.lru_cache(maxsize=None)
-def get_or_create(
-    default_account, contract, no_create=False, salt="", constructor_args=None
-):
+def get_or_create(default_account, contract, no_create=False, salt="", constructor_args=None):
     """Use eip-2470 to create a contract with deterministic addresses."""
     if constructor_args is None:
         constructor_args = []
 
     contract_initcode = contract.deploy.encode_input(*constructor_args)
 
-    contract_address = mk_contract_address2(
-        SingletonFactory.address, salt, contract_initcode
-    )
+    contract_address = mk_contract_address2(SingletonFactory.address, salt, contract_initcode)
 
     if web3.eth.getCode(contract_address).hex() == "0x":
         if no_create:
-            raise Exception(
-                f"{contract} is not yet deployed. This is likely an issue with configuration."
-            )
-        deploy_tx = SingletonFactory.deploy(
-            contract_initcode, salt, {"from": default_account}
-        )
+            raise Exception(f"{contract} is not yet deployed. This is likely an issue with configuration.")
+        deploy_tx = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account})
 
         deployed_contract_address = deploy_tx.return_value
 
@@ -199,7 +166,11 @@ def get_or_create_flash_borrower(default_account, salt):
 
 
 def lazy_contract(address, owner=None):
-    return lazy(lambda: load_contract(address, owner or getattr(lazy_contract, "_default_owner", None)))
+    return lazy(
+        lambda: load_contract(
+            address, owner or click.get_current_context().obj.get("lazy_contract_default_account", None)
+        )
+    )
 
 
 def load_contract(token_name_or_address: str, owner=None, block=None, force=False):
@@ -255,9 +226,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
         except Exception as e:
             # maybe its "org.zepplinos.proxy.implementation"
             impl_addr = web3.eth.getStorageAt(
-                address,
-                "0x7050c9e0f4ca769c69bd3a8ef740bc37934f8e2c036e5a723fd8ee048ed3f8c3",
-                block,
+                address, "0x7050c9e0f4ca769c69bd3a8ef740bc37934f8e2c036e5a723fd8ee048ed3f8c3", block,
             )
 
             impl_addr = decode_single("address", impl_addr)
@@ -265,9 +234,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
             if impl_addr == brownie.ZERO_ADDRESS:
                 # or maybe its https://eips.ethereum.org/EIPS/eip-1967 Unstructured Storage Proxies
                 impl_addr = web3.eth.getStorageAt(
-                    address,
-                    "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
-                    block,
+                    address, "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc", block,
                 )
 
                 impl_addr = decode_single("address", impl_addr)
@@ -275,9 +242,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
                 if impl_addr == brownie.ZERO_ADDRESS:
                     # or maybe they are using EIP-1967 beacon address
                     beacon_addr = web3.eth.getStorageAt(
-                        address,
-                        "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50",
-                        block,
+                        address, "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50", block,
                     )
 
                     beacon_addr = decode_single("address", beacon_addr)
@@ -337,12 +302,7 @@ def mk_contract_address2(sender: str, salt: str, initcode: str) -> str:
         salt = to_hex32(text=salt)
 
     raw = b"".join(
-        [
-            to_bytes(hexstr="0xff"),
-            to_bytes(hexstr=sender),
-            to_bytes(hexstr=salt),
-            keccak(to_bytes(hexstr=initcode)),
-        ]
+        [to_bytes(hexstr="0xff"), to_bytes(hexstr=sender), to_bytes(hexstr=salt), keccak(to_bytes(hexstr=initcode)),]
     )
 
     assert len(raw) == 85, "incorrect length of inputs!"

@@ -25,9 +25,7 @@ def find_block_at(search_timestamp, average_block_time=None):
     # TODO: if search_timestamp is ahead of latest block, warn by how much
 
     # TODO: how much of a buffer should we add?
-    blocks_to_search = (
-        (latest_block.timestamp - search_timestamp) / average_block_time * 2
-    )
+    blocks_to_search = (latest_block.timestamp - search_timestamp) / average_block_time * 2
 
     # we don't want to go too far back in time. so lets make an educated guess at the the first block to bother checking
     first_block_num = max(latest_block.number - blocks_to_search, 0)

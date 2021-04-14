@@ -5,9 +5,7 @@ from brownie.test import given, strategy
 from hypothesis import settings
 
 
-def test_action(
-    uniswap_v2_router, uniswap_v2_action, dai_erc20, usdc_erc20, weth9_erc20
-):
+def test_action(uniswap_v2_router, uniswap_v2_action, dai_erc20, usdc_erc20, weth9_erc20):
     value = 1e17
 
     distant_deadline = 100000000000
@@ -20,11 +18,7 @@ def test_action(
     # trade ETH to USDC
     # our action isn't needed for this. we just use the router directly
     uniswap_v2_router.swapExactETHForTokens(
-        1,
-        [weth9_erc20, usdc_erc20],
-        uniswap_v2_action,
-        distant_deadline,
-        {"value": value, "from": accounts[0]},
+        1, [weth9_erc20, usdc_erc20], uniswap_v2_action, distant_deadline, {"value": value, "from": accounts[0]},
     )
 
     # make sure USDC balance on the action is non-zero
@@ -32,9 +26,7 @@ def test_action(
 
     # trade USDC to DAI
     # tradeTokenToToken(address to, address router, address[] calldata path, uint256 dest_min_tokens)
-    uniswap_v2_action.tradeTokenToToken(
-        uniswap_v2_action, uniswap_v2_router, [usdc_erc20, dai_erc20], 1
-    )
+    uniswap_v2_action.tradeTokenToToken(uniswap_v2_action, uniswap_v2_router, [usdc_erc20, dai_erc20], 1)
 
     # make sure USDC balance on the action is zero
     assert usdc_erc20.balanceOf(uniswap_v2_action) == 0
@@ -49,9 +41,7 @@ def test_action(
 
     # trade DAI to ETH
     # tradeTokenToEther(address payable to, address exchange, address src_token, uint256 dest_min_tokens)
-    uniswap_v2_action.tradeTokenToEther(
-        accounts[0], uniswap_v2_router, [dai_erc20, weth9_erc20], 1
-    )
+    uniswap_v2_action.tradeTokenToEther(accounts[0], uniswap_v2_router, [dai_erc20, weth9_erc20], 1)
 
     # make sure DAI balance on the action is zero (i think it will be swept back to accounts[0])
     assert dai_erc20.balanceOf(uniswap_v2_action) == 0

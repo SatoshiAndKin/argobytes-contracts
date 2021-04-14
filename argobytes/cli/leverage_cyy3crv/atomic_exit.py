@@ -28,9 +28,7 @@ from argobytes.tokens import (
 )
 from argobytes.web3_helpers import get_average_block_time
 
-ExitData = namedtuple(
-    "ExitData", ["dai_flash_fee", "max_3crv_burned", "tip_3crv", "sender",],
-)
+ExitData = namedtuple("ExitData", ["dai_flash_fee", "max_3crv_burned", "tip_3crv", "sender",],)
 
 
 @click.command(cls=CommandWithAccount)
@@ -93,10 +91,7 @@ def atomic_exit(account, tip_eth, tip_3crv):
     # TODO: is this right? i think it might be overshooting. i don't think it matters that much though
     interest_slippage_blocks = int((5 * 60) / get_average_block_time())
     # https://www.geeksforgeeks.org/python-program-for-compound-interest/
-    flash_loan_amount = int(
-        dai_borrowed
-        * (pow((1 + borrow_rate_per_block / 1e18), interest_slippage_blocks))
-    )
+    flash_loan_amount = int(dai_borrowed * (pow((1 + borrow_rate_per_block / 1e18), interest_slippage_blocks)))
 
     print(f"flash_loan_amount: {flash_loan_amount}")
 
@@ -118,10 +113,7 @@ def atomic_exit(account, tip_eth, tip_3crv):
     ) * (1 + slippage_pct / 100)
 
     exit_data = ExitData(
-        dai_flash_fee=flash_loan_fee,
-        max_3crv_burned=max_3crv_burned,
-        tip_3crv=tip_3crv,
-        sender=account,
+        dai_flash_fee=flash_loan_fee, max_3crv_burned=max_3crv_burned, tip_3crv=tip_3crv, sender=account,
     )
 
     pprint(exit_data)
@@ -133,13 +125,7 @@ def atomic_exit(account, tip_eth, tip_3crv):
         lender,
         dai,
         flash_loan_amount,
-        ArgobytesAction(
-            exit_cyy3crv_action,
-            ArgobytesActionCallType.DELEGATE,
-            False,
-            "exit",
-            *exit_data,
-        ).tuple,
+        ArgobytesAction(exit_cyy3crv_action, ArgobytesActionCallType.DELEGATE, False, "exit", *exit_data,).tuple,
         {"value": tip_eth,},
     )
 

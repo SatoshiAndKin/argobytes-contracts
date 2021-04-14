@@ -51,9 +51,7 @@ def test_simple_execute(argobytes_proxy_clone, example_action):
         example_action.sweep.encode_input(accounts[0], ZERO_ADDRESS, 0),
     )
 
-    atomic_arbitrage_tx = argobytes_proxy_clone.execute(
-        action, {"value": value, "gasPrice": 0,}
-    )
+    atomic_arbitrage_tx = argobytes_proxy_clone.execute(action, {"value": value, "gasPrice": 0,})
 
     # atomic_arbitrage_tx.info()
 

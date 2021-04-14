@@ -26,15 +26,11 @@ def test_3pool_trade(curve_fi_action, curve_fi_3pool, onesplit_helper):
     # TODO: check balances
     assert balance_a > 0
 
-    curve_fi_action.trade(
-        curve_fi_3pool, a_id, b_id, curve_fi_action, token_a, token_b, 1
-    )
+    curve_fi_action.trade(curve_fi_3pool, a_id, b_id, curve_fi_action, token_a, token_b, 1)
 
     # TODO: check balances
 
-    curve_fi_action.trade(
-        curve_fi_3pool, b_id, a_id, curve_fi_action, token_b, token_a, 1
-    )
+    curve_fi_action.trade(curve_fi_3pool, b_id, a_id, curve_fi_action, token_b, token_a, 1)
 
     # TODO: check balances
     # TODO: actually assert things
@@ -60,15 +56,11 @@ def test_compound_trade(curve_fi_action, curve_fi_compound, onesplit_helper):
 
     # TODO: check balances
 
-    curve_fi_action.trade(
-        curve_fi_compound, a_id, b_id, curve_fi_action, token_a, token_b, 1
-    )
+    curve_fi_action.trade(curve_fi_compound, a_id, b_id, curve_fi_action, token_a, token_b, 1)
 
     # TODO: check balances
 
-    curve_fi_action.trade(
-        curve_fi_compound, b_id, a_id, curve_fi_action, token_b, token_a, 1
-    )
+    curve_fi_action.trade(curve_fi_compound, b_id, a_id, curve_fi_action, token_b, token_a, 1)
 
     # TODO: check balances
     # TODO: actually assert things
@@ -93,15 +85,11 @@ def test_compound_trade_underlying(curve_fi_action, curve_fi_compound, onesplit_
 
     # TODO: check balances
 
-    curve_fi_action.tradeUnderlying(
-        curve_fi_compound, a_id, b_id, curve_fi_action, token_a, token_b, 1
-    )
+    curve_fi_action.tradeUnderlying(curve_fi_compound, a_id, b_id, curve_fi_action, token_a, token_b, 1)
 
     # TODO: check balances
 
-    curve_fi_action.tradeUnderlying(
-        curve_fi_compound, b_id, a_id, curve_fi_action, token_b, token_a, 1
-    )
+    curve_fi_action.tradeUnderlying(curve_fi_compound, b_id, a_id, curve_fi_action, token_b, token_a, 1)
 
     # TODO: check balances
     # TODO: actually assert things

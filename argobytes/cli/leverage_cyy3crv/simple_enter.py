@@ -44,15 +44,11 @@ def simple_enter(account):
     usdc = load_contract(enter_cyy3crv_action.USDC())
     usdt = load_contract(enter_cyy3crv_action.USDT())
     threecrv = load_contract(enter_cyy3crv_action.THREE_CRV())
-    threecrv_pool = ArgobytesInterfaces.ICurvePool(
-        enter_cyy3crv_action.THREE_CRV_POOL()
-    )
+    threecrv_pool = ArgobytesInterfaces.ICurvePool(enter_cyy3crv_action.THREE_CRV_POOL())
     y3crv = ArgobytesInterfaces.IYVault(enter_cyy3crv_action.Y_THREE_CRV())
     cyy3crv = ArgobytesInterfaces.ICERC20(enter_cyy3crv_action.CY_Y_THREE_CRV())
     cydai = ArgobytesInterfaces.ICERC20(enter_cyy3crv_action.CY_DAI())
-    fee_distribution = ArgobytesInterfaces.ICurveFeeDistribution(
-        enter_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION()
-    )
+    fee_distribution = ArgobytesInterfaces.ICurveFeeDistribution(enter_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION())
     cream = ArgobytesInterfaces.IComptroller(enter_cyy3crv_action.CREAM())
 
     tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv, cydai]
@@ -81,11 +77,7 @@ def simple_enter(account):
     safe_token_approve(account, balances_for_3crv_pool, threecrv_pool)
 
     threecrv_add_liquidity_tx = threecrv_pool.add_liquidity(
-        [
-            balances_for_3crv_pool[dai],
-            balances_for_3crv_pool[usdc],
-            balances_for_3crv_pool[usdt],
-        ],
+        [balances_for_3crv_pool[dai], balances_for_3crv_pool[usdc], balances_for_3crv_pool[usdt],],
         min_3crv_mint_amount,
         {"from": account},
     )
@@ -130,13 +122,7 @@ def simple_enter(account):
     # mint_tx.info()
 
     # TODO: need to use actual prices of 3crv and dai
-    borrow_amount = int(
-        balances_for_y3crv[threecrv]
-        * threecrv_pool.get_virtual_price()
-        / 1e18
-        * 0.9
-        * 0.9
-    )
+    borrow_amount = int(balances_for_y3crv[threecrv] * threecrv_pool.get_virtual_price() / 1e18 * 0.9 * 0.9)
     print(f"borrow_amount: {borrow_amount}")
 
     assert borrow_amount > 0
@@ -146,11 +132,7 @@ def simple_enter(account):
     print_token_balances(balances_before_borrow, f"{account} balances before borrow:")
 
     # TODO: we could use `borrow_amount` here
-    (
-        cream_error,
-        cream_liquidity,
-        cream_shortfall,
-    ) = cream.getHypotheticalAccountLiquidity(account, cydai, 0, 0)
+    (cream_error, cream_liquidity, cream_shortfall,) = cream.getHypotheticalAccountLiquidity(account, cydai, 0, 0)
 
     print(f"cream_error: {cream_error}")
     print(f"cream_liquidity (before borrow): {cream_liquidity}")
