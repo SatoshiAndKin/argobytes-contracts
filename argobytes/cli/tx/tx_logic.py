@@ -1,26 +1,14 @@
-# TODO: now that theres 2 commands, put them in a group together?
-import click
 from brownie import chain, network
 
 from argobytes.cli_helpers import COMMON_HELPERS, brownie_connect, debug_shell, logger
 from argobytes.contracts import load_contract
 
 
-@click.group()
-def tx():
-    """Inspect transactions."""
-
-
-@tx.command(name="info")
-@click.argument("txid")
-@brownie_connect
 def tx_info(txid):
     """Inspect transactions."""
     print_tx_info(txid)
 
 
-@tx.command(name="loop")
-@brownie_connect
 def tx_loop():
     """Inspect multiple transactions."""
     # TODO: use click features

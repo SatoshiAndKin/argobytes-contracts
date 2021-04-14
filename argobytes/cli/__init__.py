@@ -13,36 +13,14 @@ Our scripts will usually want two addresses:
 This entrypoint will handle setting these accounts up and then starting brownie.
 """
 import os
+from pkg_resources import iter_entry_points
 
 import click
 import click_log
-from brownie import accounts
-from brownie import network as brownie_network
-from brownie import project, web3
-from brownie._cli.console import Console
-from brownie.network import gas_price
-from brownie.network.gas.strategies import GasNowScalingStrategy
 from click_plugins import with_plugins
-from flashbots import flashbot
-from pkg_resources import iter_entry_points
 
-from argobytes.cli_helpers import (
-    BROWNIE_ACCOUNT,
-    COMMON_HELPERS,
-    brownie_connect,
-    get_project_root,
-    logger,
-)
-from argobytes.contracts import get_or_clone, get_or_create, load_contract
-from argobytes.tokens import (
-    load_token_or_contract,
-    print_start_and_end_balance,
-    print_token_balances,
-)
+from argobytes.cli_helpers import logger, BROWNIE_ACCOUNT, gas_choices, brownie_connect
 
-from .tx import tx
-
-gas_choices = click.Choice(["slow", "standard", "fast", "rapid"])
 
 # TODO: pre-emptive click flag to set network to "none"? otherwise we waste time connecting to mainnet-fork if we dont need a node
 
@@ -63,67 +41,23 @@ def cli(
     ctx, etherscan_token, flashbot_account, gas_speed, gas_max_speed, gas_increment, gas_block_duration, network,
 ):
     """Ethereum helpers."""
-    ctx.ensure_object(dict)
+    from .cli_logic import cli
 
-    # put this into the environment so that brownie sees it
-    os.environ["ETHERSCAN_TOKEN"] = etherscan_token
-
-    # setup the project and network the same way brownie's run helper does
-    brownie_project = project.load(get_project_root())
-    brownie_project.load_config()
-
-    def brownie_connect():
-        if network == "none":
-            logger.warning(f"{brownie_project._name} is the active project. Not connected to any networks")
-        else:
-            brownie_network.connect(network)
-
-            logger.info(f"{brownie_project._name} is the active {network} project.")
-
-            if flashbot_account:
-                print(f"Using {flashbot_account} for signing flashbot bundles.")
-                flashbot(web3, flashbot_account)
-
-            if network in ["mainnet", "mainnet-fork"]:
-                # TODO: write my own strategy
-                gas_strategy = GasNowScalingStrategy(
-                    initial_speed=gas_speed,
-                    max_speed=gas_max_speed,
-                    increment=gas_increment,
-                    block_duration=gas_block_duration,
-                )
-                gas_price(gas_strategy)
-                logger.info(f"Default gas strategy: {gas_strategy}")
-            elif network in ["bsc-main", "bsc-main-fork"]:
-                gas_strategy = "5 gwei"
-                gas_price(gas_strategy)
-                logger.info(f"Default gas price: {gas_strategy}")
-            elif network in ["matic", "matic-fork"]:
-                gas_strategy = "1 gwei"
-                gas_price(gas_strategy)
-                logger.info(f"Default gas price: {gas_strategy}")
-            else:
-                logger.warning("No default gas price or gas strategy has been set!")
-
-    # pass the project on to the other functions
-    ctx.obj["brownie_connect_fn"] = brownie_connect
-    ctx.obj["brownie_forked"] = "fork" in network
-    ctx.obj["brownie_network"] = network
-    ctx.obj["brownie_project"] = brownie_project
+    cli(ctx, etherscan_token, flashbot_account, gas_speed, gas_max_speed, gas_increment, gas_block_duration, network)
 
 
 @cli.command()
 @click.pass_context
-@brownie_connect
+@brownie_connect()
 def console(ctx):
     """Interactive shell."""
-    shell = Console(project=ctx.obj["brownie_project"], extra_locals=COMMON_HELPERS)
+    from .cli_logic import console
 
-    shell.interact(banner="Argobytes environment is ready.", exitmsg="Goodbye!")
+    console(ctx)
 
 
 @cli.command()
-@brownie_connect
+@brownie_connect()
 def donate():
     """Donate ETH or tokens to the developers.
 
@@ -132,10 +66,11 @@ def donate():
     <https://gitcoin.co/eth-brownie>
     <https://donate.pypi.org/>
     """
-    web3.ens.resolve("tip.satoshiandkin.eth")
-    raise NotImplementedError
+    from .cli_logic import donate
 
+    console(ctx)
 
+from .tx import tx
 cli.add_command(tx)
 
 

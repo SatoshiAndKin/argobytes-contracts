@@ -5,7 +5,6 @@ from brownie import Contract, accounts
 from brownie.network.web3 import _resolve_address
 from eth_utils import to_int
 
-from argobytes.cli_helpers import CommandWithAccount, brownie_connect
 from argobytes.contracts import (
     ArgobytesAction,
     ArgobytesActionCallType,
@@ -27,7 +26,6 @@ from argobytes.tokens import (
 )
 
 
-@click.command(cls=CommandWithAccount)
 def simple_enter(account):
     """Make a bunch of transactions to deposit into leveraged cyy3crv position."""
     # TODO: we need an account with private keys

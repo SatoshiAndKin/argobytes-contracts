@@ -7,7 +7,6 @@ import click
 from brownie import ZERO_ADDRESS, Contract, accounts
 from brownie.network.web3 import _resolve_address
 
-from argobytes.cli_helpers import CommandWithAccount, brownie_connect
 from argobytes.contracts import (
     ArgobytesAction,
     ArgobytesActionCallType,
@@ -31,9 +30,6 @@ from argobytes.web3_helpers import get_average_block_time
 ExitData = namedtuple("ExitData", ["dai_flash_fee", "max_3crv_burned", "tip_3crv", "sender",],)
 
 
-@click.command(cls=CommandWithAccount)
-@click.option("--tip-eth", default=0)
-@click.option("--tip-3crv", default=0)
 def atomic_exit(account, tip_eth, tip_3crv):
     """Use a flash loan to withdraw from a leveraged cyy3crv position."""
     # TODO: we need an account with private keys

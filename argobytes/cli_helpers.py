@@ -107,6 +107,9 @@ class BrownieAccount(click.ParamType):
 BROWNIE_ACCOUNT = BrownieAccount()
 
 
+gas_choices = click.Choice(["slow", "standard", "fast", "rapid"])
+
+
 class Salt(click.ParamType):
     name = "salt"
 
@@ -171,8 +174,12 @@ class CommandWithProxySalts(CommandWithAccount):
 
 
 @decorator
-def brownie_connect(func, *args, **kwargs):
+def brownie_connect(func, *args, default_network=None, **kwargs):
     ctx = click.get_current_context()
+
+    if not ctx.obj["brownie_network"]:
+        # TODO: this isn't going to get called. think more about this
+        ctx.obj["brownie_network"] = default_network
 
     connect_fn = ctx.obj["brownie_connect_fn"]
 
@@ -211,7 +218,7 @@ def prompt_loud_confirmation(account):
 def with_dry_run(func, account, tokens=None, *args, confirm_delay=6, **kwargs):
     """Run a function against a fork network and then confirm before doing it for real.
     
-    since we have an account, the @brownie_connect decorator isn't needed
+    since we have an account, the @brownie_connect() decorator isn't needed
     """
 
     def do_func():

@@ -9,7 +9,7 @@ from brownie.network.web3 import _resolve_address
 from eth_utils import to_int
 from lazy_load import lazy
 
-from argobytes.cli_helpers import CommandWithAccount, brownie_connect, logger
+from argobytes.cli_helpers import logger
 from argobytes.contracts import (
     ArgobytesAction,
     ArgobytesActionCallType,
@@ -48,8 +48,6 @@ EnterData = namedtuple(
 )
 
 
-@click.command(cls=CommandWithAccount)
-@click.option("--min-3crv-to-claim", default=50, show_default=True)
 def atomic_enter(account, min_3crv_to_claim):
     """Use a flash loan to deposit into leveraged cyy3crv position."""
     logger.info(f"Hello, {account}")

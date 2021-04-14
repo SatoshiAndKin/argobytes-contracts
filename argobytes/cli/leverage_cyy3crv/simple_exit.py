@@ -5,7 +5,6 @@ import click
 from brownie import ZERO_ADDRESS, Contract, accounts
 from brownie.network.web3 import _resolve_address
 
-from argobytes.cli_helpers import CommandWithAccount, brownie_connect
 from argobytes.contracts import (
     ArgobytesAction,
     ArgobytesActionCallType,
@@ -28,7 +27,6 @@ from argobytes.tokens import (
 )
 
 
-@click.command(cls=CommandWithAccount)
 def simple_exit(account):
     """Make a bunch of transactions to withdraw from a leveraged cyy3crv position."""
     print(f"Hello, {account}")
