@@ -3,8 +3,8 @@
 
 export BROWNIE_LIB=1
 
-. .env
-. venv/bin/activate
+source .env
+source venv/bin/activate
 
 PATH=$(pwd)/node_modules/.bin:$PATH
 
