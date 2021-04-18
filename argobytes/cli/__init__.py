@@ -17,10 +17,16 @@ import os
 import click
 import click_log
 from click_plugins import with_plugins
+
 # TODO: pkg_resources is super slow to import. maybe use a different plugin library
 from pkg_resources import iter_entry_points
 
-from argobytes.cli_helpers_lite import BROWNIE_ACCOUNT, brownie_connect, gas_choices, logger
+from argobytes.cli_helpers_lite import (
+    BROWNIE_ACCOUNT,
+    brownie_connect,
+    gas_choices,
+    logger,
+)
 
 # TODO: pre-emptive click flag to set network to "none"? otherwise we waste time connecting to mainnet-fork if we dont need a node
 
@@ -34,7 +40,7 @@ from argobytes.cli_helpers_lite import BROWNIE_ACCOUNT, brownie_connect, gas_cho
 @click.option("--gas-max-speed", default="rapid", type=gas_choices, show_default=True)
 @click.option("--gas-increment", default=1.125, show_default=True)
 @click.option("--gas-block-duration", default=2, show_default=True)
-@click.option("--network", default="mainnet-fork", show_default=True)
+@click.option("--network", default=None, type=str, show_default=True)
 @click.pass_context
 @click.version_option()
 def cli(
@@ -42,7 +48,10 @@ def cli(
 ):
     """Ethereum helpers."""
     from .cli_logic import cli
-    cli(ctx, etherscan_token, flashbot_account, gas_speed, gas_max_speed, gas_increment, gas_block_duration, network)
+
+    cli(
+        ctx, etherscan_token, flashbot_account, gas_speed, gas_max_speed, gas_increment, gas_block_duration, network,
+    )
 
 
 @cli.command()
@@ -51,6 +60,7 @@ def cli(
 def console(ctx):
     """Interactive shell."""
     from .cli_logic import console
+
     console(ctx)
 
 
@@ -65,10 +75,12 @@ def donate():
     <https://donate.pypi.org/>
     """
     from .cli_logic import donate
+
     donate()
 
 
 from .tx import tx
+
 cli.add_command(tx)
 
 

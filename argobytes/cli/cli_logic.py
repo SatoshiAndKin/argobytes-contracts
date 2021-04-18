@@ -28,7 +28,11 @@ from pkg_resources import iter_entry_points
 from argobytes.cli_helpers_lite import BROWNIE_ACCOUNT, logger
 from argobytes.cli_helpers import COMMON_HELPERS, get_project_root
 from argobytes.contracts import get_or_clone, get_or_create, load_contract
-from argobytes.tokens import load_token_or_contract, print_start_and_end_balance, print_token_balances
+from argobytes.tokens import (
+    load_token_or_contract,
+    print_start_and_end_balance,
+    print_token_balances,
+)
 
 
 def cli(
@@ -41,13 +45,16 @@ def cli(
     os.environ["ETHERSCAN_TOKEN"] = etherscan_token
 
     def brownie_connect():
+        # this allows later click commands to set the default. there might be a better way
+        network = ctx.obj["brownie_network"] or ctx.obj.get("default_brownie_network")
+
         # setup the project and network the same way brownie's run helper does
         brownie_project = project.load(get_project_root())
         brownie_project.load_config()
 
         ctx.obj["brownie_project"] = brownie_project
 
-        if network == "none":
+        if network == "none" or network is None:
             logger.warning(f"{brownie_project._name} is the active project. Not connected to any networks")
         else:
             brownie_network.connect(network)
@@ -80,9 +87,8 @@ def cli(
                 logger.warning("No default gas price or gas strategy has been set!")
 
     # pass the project on to the other functions
-    ctx.obj["brownie_connect_fn"] = brownie_connect
-    ctx.obj["brownie_forked"] = "fork" in network
     ctx.obj["brownie_network"] = network
+    ctx.obj["brownie_connect_fn"] = brownie_connect
 
 
 def console(ctx):

@@ -17,6 +17,7 @@ class BrownieAccount(click.ParamType):
         from pathlib import Path
 
         # brownie needs an active network to setup the account
+        # TODO: i'd like to be able to set the default network smarter
         if ctx and ctx.obj:
             connect_fn = ctx.obj["brownie_connect_fn"]
 
@@ -141,10 +142,6 @@ class CommandWithProxySalts(CommandWithAccount):
 @decorator
 def brownie_connect(func, *args, default_network=None, **kwargs):
     ctx = click.get_current_context()
-
-    if not ctx.obj["brownie_network"]:
-        # TODO: this isn't going to get called. think more about this
-        ctx.obj["brownie_network"] = default_network
 
     connect_fn = ctx.obj["brownie_connect_fn"]
 

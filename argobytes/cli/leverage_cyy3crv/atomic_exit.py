@@ -19,7 +19,12 @@ from argobytes.contracts import (
     lazy_contract,
     poke_contracts,
 )
-from argobytes.tokens import get_balances, get_claimable_3crv, print_token_balances, safe_token_approve
+from argobytes.tokens import (
+    get_balances,
+    get_claimable_3crv,
+    print_token_balances,
+    safe_token_approve,
+)
 from argobytes.web3_helpers import get_average_block_time
 
 ExitData = namedtuple("ExitData", ["dai_flash_fee", "max_3crv_burned", "tip_3crv", "sender",],)

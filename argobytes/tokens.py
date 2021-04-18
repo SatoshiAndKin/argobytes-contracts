@@ -75,7 +75,7 @@ def load_token_or_contract(token_symbol_or_address: str):
 def get_balances(account, tokens):
     # TODO: multicall
     # if you need ETH, use an EthContract() for the token
-    return {token: token.balanceOf(account) for token in tokens}
+    return {token: Decimal(token.balanceOf(account)) for token in tokens}
 
 
 def get_decimal_shift(token):

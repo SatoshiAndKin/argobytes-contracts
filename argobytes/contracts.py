@@ -170,7 +170,7 @@ def get_or_create_flash_borrower(default_account, salt):
 def lazy_contract(address, owner=None):
     return lazy(
         lambda: load_contract(
-            address, owner or click.get_current_context().obj.get("lazy_contract_default_account", None)
+            address, owner or click.get_current_context().obj.get("lazy_contract_default_account", None),
         )
     )
 
