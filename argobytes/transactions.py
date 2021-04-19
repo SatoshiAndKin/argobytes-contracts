@@ -6,6 +6,7 @@ from pathlib import Path
 
 import arrow
 from brownie import chain, network
+from brownie.network.transaction import Status
 
 from .contracts import load_contract
 
@@ -119,3 +120,26 @@ def sync_tx_cache():
         return
 
     _tx_cache.sync()
+
+
+# TODO: context manager to do this automatically?
+# TODO: where should this be?
+def wait_for_confirmation(pending_txs, required_confs=1):
+    if pending_txs:
+        # wait for the last transaction to confirm (if it confirms, then all the previous ones have confirmed)
+        pending_txs[-1].wait(required_confs)
+
+        for tx in pending_txs:
+            # this isn't pending anymore!
+            if tx.status == Status.Confirmed:
+                # TODO: if debug verbosity, print the tx info
+                continue
+
+            tx.info()
+
+            # TODO: return something special if there were reverts? exit if something reverted
+            raise Exception(f"Transaction {tx.txid} reverted!")
+
+        pending_txs = []
+
+    return pending_txs

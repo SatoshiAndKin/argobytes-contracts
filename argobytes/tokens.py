@@ -11,6 +11,7 @@ import tokenlists
 from eth_utils import to_checksum_address
 
 from .contracts import EthContract, load_contract
+from .transactions import wait_for_confirmation
 
 _cache_symbols = {}
 _cache_decimals = {}
@@ -217,7 +218,7 @@ def safe_token_approve(account, balances, spender, extra_balances=None, amount=2
             pass
         else:
             # TODO: do any of our tokens actually need this set to 0 first? maybe do this if a bool is set
-            print(f"Clearing {token.address} approval...")
+            print(f"Clearing {token_symbol} ({token.address}) approval...")
             approve_tx = token.approve(spender, 0, {"from": account, "required_confs": 0})
 
             pending_txs.append(approve_tx)
@@ -236,8 +237,7 @@ def safe_token_approve(account, balances, spender, extra_balances=None, amount=2
         # TODO: if debug, print this
         # approve_tx.info()
 
-    if pending_txs:
-        pending_txs[-1].wait(1)
+    wait_for_confirmation(pending_txs)
 
 
 def transfer_token(from_address, to, token, decimal_amount):
