@@ -19,15 +19,18 @@ from argobytes.contracts import (
     lazy_contract,
     poke_contracts,
 )
-from argobytes.tokens import (
-    get_balances,
-    get_claimable_3crv,
-    print_token_balances,
-    safe_token_approve,
-)
+from argobytes.tokens import get_balances, get_claimable_3crv, print_token_balances, safe_token_approve
 from argobytes.web3_helpers import get_average_block_time
 
-ExitData = namedtuple("ExitData", ["dai_flash_fee", "max_3crv_burned", "tip_3crv", "sender",],)
+ExitData = namedtuple(
+    "ExitData",
+    [
+        "dai_flash_fee",
+        "max_3crv_burned",
+        "tip_3crv",
+        "sender",
+    ],
+)
 
 
 def atomic_exit(account, tip_eth, tip_3crv):
@@ -101,15 +104,25 @@ def atomic_exit(account, tip_eth, tip_3crv):
     # TODO: safety check on the flash loan fee?
 
     # TODO: this is slightly high because we add 5 minutes of interest. we could spend gas subtracting out the unused slack, but i doubt its worthwhile
-    max_3crv_burned = threecrv_pool.calc_token_amount(
-        # dai, usdc, usdt
-        [flash_loan_amount + flash_loan_fee, 0, 0,],
-        # is_deposit
-        False,
-    ) * (1 + slippage_pct / 100)
+    max_3crv_burned = (
+        threecrv_pool.calc_token_amount(
+            # dai, usdc, usdt
+            [
+                flash_loan_amount + flash_loan_fee,
+                0,
+                0,
+            ],
+            # is_deposit
+            False,
+        )
+        * (1 + slippage_pct / 100)
+    )
 
     exit_data = ExitData(
-        dai_flash_fee=flash_loan_fee, max_3crv_burned=max_3crv_burned, tip_3crv=tip_3crv, sender=account,
+        dai_flash_fee=flash_loan_fee,
+        max_3crv_burned=max_3crv_burned,
+        tip_3crv=tip_3crv,
+        sender=account,
     )
 
     pprint(exit_data)
@@ -121,8 +134,16 @@ def atomic_exit(account, tip_eth, tip_3crv):
         lender,
         dai,
         flash_loan_amount,
-        ArgobytesAction(exit_cyy3crv_action, ArgobytesActionCallType.DELEGATE, False, "exit", *exit_data,).tuple,
-        {"value": tip_eth,},
+        ArgobytesAction(
+            exit_cyy3crv_action,
+            ArgobytesActionCallType.DELEGATE,
+            False,
+            "exit",
+            *exit_data,
+        ).tuple,
+        {
+            "value": tip_eth,
+        },
     )
 
     print("exit success!")

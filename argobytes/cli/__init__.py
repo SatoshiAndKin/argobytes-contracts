@@ -21,12 +21,7 @@ from click_plugins import with_plugins
 # TODO: pkg_resources is super slow to import. maybe use a different plugin library
 from pkg_resources import iter_entry_points
 
-from argobytes.cli_helpers_lite import (
-    BROWNIE_ACCOUNT,
-    brownie_connect,
-    gas_choices,
-    logger,
-)
+from argobytes.cli_helpers_lite import BROWNIE_ACCOUNT, brownie_connect, gas_choices, logger
 
 # TODO: pre-emptive click flag to set network to "none"? otherwise we waste time connecting to mainnet-fork if we dont need a node
 
@@ -44,13 +39,27 @@ from argobytes.cli_helpers_lite import (
 @click.pass_context
 @click.version_option()
 def cli(
-    ctx, etherscan_token, flashbot_account, gas_speed, gas_max_speed, gas_increment, gas_block_duration, network,
+    ctx,
+    etherscan_token,
+    flashbot_account,
+    gas_speed,
+    gas_max_speed,
+    gas_increment,
+    gas_block_duration,
+    network,
 ):
     """Ethereum helpers."""
     from .cli_logic import cli
 
     cli(
-        ctx, etherscan_token, flashbot_account, gas_speed, gas_max_speed, gas_increment, gas_block_duration, network,
+        ctx,
+        etherscan_token,
+        flashbot_account,
+        gas_speed,
+        gas_max_speed,
+        gas_increment,
+        gas_block_duration,
+        network,
     )
 
 
@@ -93,5 +102,8 @@ def main():
     standalone_mode = os.environ.get("ARGOBYTES_CLICK_STANDALONE", "1") == "1"
 
     cli(
-        obj={}, auto_envvar_prefix="ARGOBYTES", prog_name="argobytes", standalone_mode=standalone_mode,
+        obj={},
+        auto_envvar_prefix="ARGOBYTES",
+        prog_name="argobytes",
+        standalone_mode=standalone_mode,
     )

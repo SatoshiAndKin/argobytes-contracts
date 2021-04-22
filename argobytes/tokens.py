@@ -272,7 +272,9 @@ def print_start_and_end_balance(account, tokens=None):
     # TODO: print the number of transactions done?
     print(f"\n{account} used {gas_used} gas.")
     print(
-        f"\nspent balance of {account}:", (starting_balance - ending_balance) / 1e18, "\n",
+        f"\nspent balance of {account}:",
+        (starting_balance - ending_balance) / 1e18,
+        "\n",
     )
 
     if tokens:

@@ -5,7 +5,6 @@ import logging
 import click
 from decorator import decorator
 
-
 logger = logging.getLogger("argobytes")
 
 
@@ -13,8 +12,9 @@ class BrownieAccount(click.ParamType):
     name = "account"
 
     def convert(self, value, param, ctx):
-        from brownie import accounts
         from pathlib import Path
+
+        from brownie import accounts
 
         # brownie needs an active network to setup the account
         # TODO: i'd like to be able to set the default network smarter
@@ -44,7 +44,9 @@ class BrownieAccount(click.ParamType):
                 account = accounts.add(key_path.read_text().strip())
             except Exception as e:
                 self.fail(
-                    f"Brownie could not load account from {value!r}: {e}", param, ctx,
+                    f"Brownie could not load account from {value!r}: {e}",
+                    param,
+                    ctx,
                 )
         elif value.endswith(".json"):
             print(f"Loading account @ {value}...")
@@ -52,7 +54,9 @@ class BrownieAccount(click.ParamType):
                 account = accounts.load(value)
             except Exception as e:
                 self.fail(
-                    f"Brownie could not load named account {value!r}: {e}", param, ctx,
+                    f"Brownie could not load named account {value!r}: {e}",
+                    param,
+                    ctx,
                 )
         else:
             # we just have an address. this is helpful in forked mode
@@ -62,7 +66,9 @@ class BrownieAccount(click.ParamType):
                 account = accounts.at(value, force=True)
             except Exception as e:
                 self.fail(
-                    f"Brownie could not get account {value!r}: {e}", param, ctx,
+                    f"Brownie could not get account {value!r}: {e}",
+                    param,
+                    ctx,
                 )
 
         ctx.obj["lazy_contract_default_account"] = account
@@ -86,7 +92,9 @@ class Salt(click.ParamType):
         except Exception as e:
             # TODO: what type of exception should we catch?
             self.fail(
-                f"Could not parse '{value!r}' as a salt: {e}", param, ctx,
+                f"Could not parse '{value!r}' as a salt: {e}",
+                param,
+                ctx,
             )
 
 
@@ -128,13 +136,21 @@ class CommandWithProxySalts(CommandWithAccount):
         self.params.insert(
             0,
             click.core.Option(
-                ("--factory-salt",), type=SALT, help="ArgobytesFactory deploy salt", default="", show_default=True,
+                ("--factory-salt",),
+                type=SALT,
+                help="ArgobytesFactory deploy salt",
+                default="",
+                show_default=True,
             ),
         )
         self.params.insert(
             0,
             click.core.Option(
-                ("--clone-salt",), type=SALT, help="Account's clone's deploy salt", default="", show_default=True,
+                ("--clone-salt",),
+                type=SALT,
+                help="Account's clone's deploy salt",
+                default="",
+                show_default=True,
             ),
         )
 
@@ -153,7 +169,7 @@ def brownie_connect(func, *args, default_network=None, **kwargs):
 @decorator
 def with_dry_run(func, account, tokens=None, *args, confirm_delay=6, **kwargs):
     """Run a function against a fork network and then confirm before doing it for real.
-    
+
     since we have an account, the @brownie_connect() decorator isn't needed
     """
 

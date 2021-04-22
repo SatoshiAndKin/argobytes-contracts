@@ -18,12 +18,7 @@ from argobytes.contracts import (
     load_contract,
     poke_contracts,
 )
-from argobytes.tokens import (
-    get_balances,
-    get_claimable_3crv,
-    print_token_balances,
-    safe_token_approve,
-)
+from argobytes.tokens import get_balances, get_claimable_3crv, print_token_balances, safe_token_approve
 
 
 def simple_enter(account):
@@ -75,7 +70,11 @@ def simple_enter(account):
     safe_token_approve(account, balances_for_3crv_pool, threecrv_pool)
 
     threecrv_add_liquidity_tx = threecrv_pool.add_liquidity(
-        [balances_for_3crv_pool[dai], balances_for_3crv_pool[usdc], balances_for_3crv_pool[usdt],],
+        [
+            balances_for_3crv_pool[dai],
+            balances_for_3crv_pool[usdc],
+            balances_for_3crv_pool[usdt],
+        ],
         min_3crv_mint_amount,
         {"from": account},
     )
@@ -130,7 +129,11 @@ def simple_enter(account):
     print_token_balances(balances_before_borrow, f"{account} balances before borrow:")
 
     # TODO: we could use `borrow_amount` here
-    (cream_error, cream_liquidity, cream_shortfall,) = cream.getHypotheticalAccountLiquidity(account, cydai, 0, 0)
+    (
+        cream_error,
+        cream_liquidity,
+        cream_shortfall,
+    ) = cream.getHypotheticalAccountLiquidity(account, cydai, 0, 0)
 
     print(f"cream_error: {cream_error}")
     print(f"cream_liquidity (before borrow): {cream_liquidity}")

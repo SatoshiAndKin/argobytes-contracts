@@ -7,7 +7,7 @@ from enum import IntFlag
 import brownie
 import click
 import rlp
-from brownie import Contract, ETH_ADDRESS, ZERO_ADDRESS, web3
+from brownie import ETH_ADDRESS, ZERO_ADDRESS, Contract, web3
 from brownie.network import web3
 from eth_abi import decode_single
 from eth_utils import keccak, to_bytes, to_checksum_address
@@ -15,7 +15,15 @@ from lazy_load import lazy
 
 from argobytes.web3_helpers import to_hex32
 
-ActionTuple = namedtuple("Action", ["target", "call_type", "forward_value", "data",])
+ActionTuple = namedtuple(
+    "Action",
+    [
+        "target",
+        "call_type",
+        "forward_value",
+        "data",
+    ],
+)
 
 
 class ArgobytesActionCallType(IntFlag):
@@ -26,7 +34,12 @@ class ArgobytesActionCallType(IntFlag):
 
 class ArgobytesAction:
     def __init__(
-        self, contract, call_type: ArgobytesActionCallType, forward_value: bool, function_name: str, *function_args,
+        self,
+        contract,
+        call_type: ArgobytesActionCallType,
+        forward_value: bool,
+        function_name: str,
+        *function_args,
     ):
         data = getattr(contract, function_name).encode_input(*function_args)
 
@@ -90,11 +103,15 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
         # deploy more proxies that are all owned by the first
         if len(needed_salts) == 1:
             argobytes_factory.createClone(
-                deployed_contract, needed_salts[0], owner,
+                deployed_contract,
+                needed_salts[0],
+                owner,
             )
         else:
             argobytes_factory.createClones(
-                deployed_contract, needed_salts, owner,
+                deployed_contract,
+                needed_salts,
+                owner,
             )
 
         # sybil_tx.info()
@@ -170,7 +187,8 @@ def get_or_create_flash_borrower(default_account, salt):
 def lazy_contract(address, owner=None):
     return lazy(
         lambda: load_contract(
-            address, owner or click.get_current_context().obj.get("lazy_contract_default_account", None),
+            address,
+            owner or click.get_current_context().obj.get("lazy_contract_default_account", None),
         )
     )
 
@@ -228,7 +246,9 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
         except Exception:
             # maybe its "org.zepplinos.proxy.implementation"
             impl_addr = web3.eth.getStorageAt(
-                address, "0x7050c9e0f4ca769c69bd3a8ef740bc37934f8e2c036e5a723fd8ee048ed3f8c3", block,
+                address,
+                "0x7050c9e0f4ca769c69bd3a8ef740bc37934f8e2c036e5a723fd8ee048ed3f8c3",
+                block,
             )
 
             impl_addr = decode_single("address", impl_addr)
@@ -236,7 +256,9 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
             if impl_addr == brownie.ZERO_ADDRESS:
                 # or maybe its https://eips.ethereum.org/EIPS/eip-1967 Unstructured Storage Proxies
                 impl_addr = web3.eth.getStorageAt(
-                    address, "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc", block,
+                    address,
+                    "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+                    block,
                 )
 
                 impl_addr = decode_single("address", impl_addr)
@@ -244,7 +266,9 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
                 if impl_addr == brownie.ZERO_ADDRESS:
                     # or maybe they are using EIP-1967 beacon address
                     beacon_addr = web3.eth.getStorageAt(
-                        address, "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50", block,
+                        address,
+                        "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50",
+                        block,
                     )
 
                     beacon_addr = decode_single("address", beacon_addr)
@@ -304,7 +328,12 @@ def mk_contract_address2(sender: str, salt: str, initcode: str) -> str:
         salt = to_hex32(text=salt)
 
     raw = b"".join(
-        [to_bytes(hexstr="0xff"), to_bytes(hexstr=sender), to_bytes(hexstr=salt), keccak(to_bytes(hexstr=initcode)),]
+        [
+            to_bytes(hexstr="0xff"),
+            to_bytes(hexstr=sender),
+            to_bytes(hexstr=salt),
+            keccak(to_bytes(hexstr=initcode)),
+        ]
     )
 
     assert len(raw) == 85, "incorrect length of inputs!"

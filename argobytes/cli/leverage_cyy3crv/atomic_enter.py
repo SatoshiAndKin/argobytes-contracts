@@ -23,12 +23,7 @@ from argobytes.contracts import (
     lazy_contract,
     poke_contracts,
 )
-from argobytes.tokens import (
-    get_balances,
-    get_claimable_3crv,
-    print_token_balances,
-    safe_token_approve,
-)
+from argobytes.tokens import get_balances, get_claimable_3crv, print_token_balances, safe_token_approve
 
 EnterData = namedtuple(
     "EnterData",
@@ -147,7 +142,13 @@ def atomic_enter(account, min_3crv_to_claim):
         lender,
         dai,
         flash_loan_amount,
-        ArgobytesAction(enter_cyy3crv_action, ArgobytesActionCallType.DELEGATE, False, "enter", enter_data,).tuple,
+        ArgobytesAction(
+            enter_cyy3crv_action,
+            ArgobytesActionCallType.DELEGATE,
+            False,
+            "enter",
+            enter_data,
+        ).tuple,
     )
 
     print("enter success!")

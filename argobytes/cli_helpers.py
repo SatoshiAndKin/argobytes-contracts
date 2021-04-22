@@ -16,7 +16,6 @@ from argobytes.contracts import load_contract
 from argobytes.tokens import load_token, load_token_or_contract
 from argobytes.transactions import get_event_contract, get_transaction, sync_tx_cache
 
-
 COMMON_HELPERS = {
     "brownie": brownie,
     "ApeSafe": ApeSafe,
