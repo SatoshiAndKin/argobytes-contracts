@@ -127,9 +127,12 @@ def sync_tx_cache():
 def wait_for_confirmation(pending_txs, required_confs=1):
     if pending_txs:
         # wait for the last transaction to confirm (if it confirms, then all the previous ones have confirmed)
-        pending_txs[-1].wait(required_confs)
+        # pending_txs[-1].wait(required_confs)
 
         for tx in pending_txs:
+            # we wait for each one because that prints some extra info
+            tx.wait(required_confs)
+
             # this isn't pending anymore!
             if tx.status == Status.Confirmed:
                 # TODO: if debug verbosity, print the tx info

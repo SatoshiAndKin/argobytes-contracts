@@ -175,7 +175,7 @@ def print_token_balances(balances, label=None, as_usd=False):
 
     for token, amount in balances.items():
         decimal_shift = get_decimal_shift(token)
-        symbol = get_token_symbol(token)
+        symbol = get_token_symbol(token, weth_to_eth=False)
 
         if as_usd:
             raise NotImplementedError("WIP")
@@ -190,7 +190,7 @@ def print_token_balances(balances, label=None, as_usd=False):
     pprint(dict_for_printing)
 
 
-def safe_token_approve(account, balances, spender, extra_balances=None, amount=2 ** 256 - 1):
+def safe_token_approve(account, balances, spender, extra_balances=None, amount=2 ** 256 - 1, reset=False):
     """For every token that we have a balance of, Approve unlimited (or a specified amount) for the spender."""
     if extra_balances is None:
         extra_balances = {}
@@ -211,15 +211,17 @@ def safe_token_approve(account, balances, spender, extra_balances=None, amount=2
 
         allowed = token.allowance(account, spender)
 
+        print(f"{spender} is currently allowed to spend {allowed} of {account}'s {token_symbol}. Need {summed_balance}")
+
         if allowed >= amount:
             # print(f"No approval needed for {token.address}")
             continue
         elif allowed == 0:
             pass
-        else:
-            # TODO: do any of our tokens actually need this set to 0 first? maybe do this if a bool is set
+        elif reset:
+            # TODO: we should have a list of tokens that need this behavior instead of taking a kwarg
             print(f"Clearing {token_symbol} ({token.address}) approval...")
-            approve_tx = token.approve(spender, 0, {"from": account, "required_confs": 0})
+            approve_tx = token.approve(spender, 0, {"from": account, "required_confs": 0, "gas_buffer": 1.3})
 
             pending_txs.append(approve_tx)
 
@@ -230,7 +232,7 @@ def safe_token_approve(account, balances, spender, extra_balances=None, amount=2
             # the amount was specified
             print(f"Approving {spender} for {amount} of {account}'s {token_symbol}...")
 
-        approve_tx = token.approve(spender, amount, {"from": account, "required_confs": 0})
+        approve_tx = token.approve(spender, amount, {"from": account, "required_confs": 0, "gas_buffer": 1.3})
 
         pending_txs.append(approve_tx)
 
