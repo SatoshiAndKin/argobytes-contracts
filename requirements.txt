@@ -4,15 +4,11 @@
 #
 #    pip-compile
 #
--e ../brownie
+-e file:///Users/ski/code/brownie
     # via
     #   -r requirements.in
     #   ape-safe
--e ../pythx
-    # via
-    #   -r requirements.in
-    #   eth-brownie
--e ../py-tokenlists
+-e file:///Users/ski/code/py-tokenlists
     # via -r requirements.in
 ape-safe==0.1.2
     # via -r requirements.in
@@ -30,7 +26,6 @@ asttokens==2.0.4
     # via vyper
 attrs==20.3.0
     # via
-    #   black
     #   hypothesis
     #   jsonschema
     #   pytest
@@ -38,7 +33,7 @@ base58==2.1.0
     # via multiaddr
 bitarray==1.2.2
     # via eth-account
-black==19.10b0
+black==20.8b1
     # via eth-brownie
 cached-property==1.5.2
     # via
@@ -146,7 +141,7 @@ hypothesis==5.41.3
     # via eth-brownie
 idna==2.10
     # via requests
-inflection==0.5.1
+inflection==0.5.0
     # via
     #   mythx-models
     #   pythx
@@ -169,8 +164,10 @@ more-itertools==8.7.0
 multiaddr==0.0.9
     # via ipfshttpclient
 mypy-extensions==0.4.3
-    # via py-ecc
-mythx-models==2.0.1
+    # via
+    #   black
+    #   py-ecc
+mythx-models==1.9.1
     # via pythx
 netaddr==0.8.0
     # via multiaddr
@@ -216,8 +213,6 @@ pycryptodome==3.10.1
     #   ethereum
     #   py-eth-sig-utils
     #   vyper
-pydantic==1.7.3
-    # via mythx-models
 pyethash==0.1.27
     # via ethereum
 pygments-lexer-solidity==0.5.1
@@ -249,6 +244,8 @@ python-dateutil==2.8.1
     #   mythx-models
     #   pythx
 python-dotenv==0.16.0
+    # via eth-brownie
+pythx==1.6.1
     # via eth-brownie
 pytz==2021.1
     # via django
@@ -307,6 +304,8 @@ toolz==0.11.1
 tqdm==4.53.0
     # via eth-brownie
 typed-ast==1.4.2
+    # via black
+typing-extensions==3.7.4.3
     # via black
 urllib3==1.26.4
     # via requests

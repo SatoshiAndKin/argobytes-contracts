@@ -14,4 +14,3 @@ git+https://github.com/flashbots/web3-flashbots.git#egg=flashbots
 
 -e ../brownie
 -e ../py-tokenlists
--e ../pythx

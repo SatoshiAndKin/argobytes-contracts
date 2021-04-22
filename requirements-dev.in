@@ -1,4 +1,4 @@
--r requirements.in
+-c requirements.txt
 
 autoflake
 autopep8
