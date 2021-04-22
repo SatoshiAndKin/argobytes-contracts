@@ -4,11 +4,11 @@
 #
 #    pip-compile
 #
--e file:///Users/ski/code/brownie
+-e ../brownie
     # via
     #   -r requirements.in
     #   ape-safe
--e file:///Users/ski/code/py-tokenlists
+-e ../py-tokenlists
     # via -r requirements.in
 ape-safe==0.1.2
     # via -r requirements.in
