@@ -209,12 +209,13 @@ def safe_token_approve(account, balances, spender, extra_balances=None, amount=2
             # if amount is not specified, we approve the balance
             amount = summed_balance
 
+        # TODO: double check this. my last automated run did an approve, but everything should have already been done
         allowed = token.allowance(account, spender)
 
         print(f"{spender} is currently allowed to spend {allowed} of {account}'s {token_symbol}. Need {summed_balance}")
 
-        if allowed >= amount:
-            # print(f"No approval needed for {token.address}")
+        if allowed >= summed_balance:
+            # print(f"No change in approvals needed for {token.address}")
             continue
         elif allowed == 0:
             pass
