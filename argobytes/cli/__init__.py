@@ -29,7 +29,7 @@ from argobytes.cli_helpers_lite import BROWNIE_ACCOUNT, brownie_connect, gas_cho
 @with_plugins(iter_entry_points("argobytes.plugins"))
 @click.group()
 @click_log.simple_verbosity_option(logger)
-@click.password_option("--etherscan-token", envvar="ETHERSCAN_TOKEN")
+@click.option("--etherscan-token", default="", envvar="ETHERSCAN_TOKEN")
 @click.option("--flashbot-account", default=None, type=BROWNIE_ACCOUNT)
 @click.option("--gas-speed", default="standard", type=gas_choices, show_default=True)
 @click.option("--gas-max-speed", default="rapid", type=gas_choices, show_default=True)
