@@ -9,3 +9,6 @@ pylint
 pytest-randomly
 pytest-timeout
 isort
+
+-e ../brownie
+-e ../py-tokenlists

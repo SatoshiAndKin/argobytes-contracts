@@ -4,12 +4,6 @@
 #
 #    pip-compile
 #
--e ../brownie
-    # via
-    #   -r requirements.in
-    #   ape-safe
--e ../py-tokenlists
-    # via -r requirements.in
 ape-safe==0.1.2
     # via -r requirements.in
 apipkg==1.5
@@ -85,6 +79,10 @@ eth-account==0.5.4
     # via
     #   eth-brownie
     #   web3
+git+https://code.argobytes.com/git/brownie.git#egg=eth-brownie
+    # via
+    #   -r requirements.in
+    #   ape-safe
 eth-event==1.2.1
     # via eth-brownie
 eth-hash[pycryptodome]==0.2.0
@@ -295,6 +293,8 @@ sortedcontainers==2.3.0
     # via hypothesis
 sqlparse==0.4.1
     # via django
+git+https://code.argobytes.com/git/py-tokenlists.git#egg=tokenlists
+    # via -r requirements.in
 toml==0.10.2
     # via
     #   black
