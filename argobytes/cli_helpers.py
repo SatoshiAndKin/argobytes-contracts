@@ -43,7 +43,7 @@ def debug_shell(extra_locals, banner="Argobytes debug time.", exitmsg=""):
 
 def get_project_root() -> Path:
     """Root directory of the brownie project."""
-    return Path(__file__).parent.parent
+    return Path(__file__).parent.joinpath("argobytes_brownie_project")
 
 
 def prompt_loud_confirmation(account):

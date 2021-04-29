@@ -1,4 +1,4 @@
--c requirements.txt
+-r requirements.txt
 
 autoflake
 autopep8
@@ -10,5 +10,6 @@ pytest-randomly
 pytest-timeout
 isort
 
--e ../brownie
--e ../py-tokenlists
+# TODO: how can we do this? i thought "-c requirements.txt" but thata gives a warning now
+# -e ../brownie
+# -e ../py-tokenlists

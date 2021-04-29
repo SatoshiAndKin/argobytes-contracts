@@ -1,13 +1,6 @@
-include brownie-*.yaml
-include ethpm-*.yaml
 include FAQ.md
 include LICENSE.txt
 include NOTES.md
 include requirements.in
 include requirements.txt
-graft build
-graft contracts
-graft contracts
 graft docs
-graft interfaces
-graft scripts

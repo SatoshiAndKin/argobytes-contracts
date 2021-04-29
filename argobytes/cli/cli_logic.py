@@ -47,6 +47,8 @@ def cli(
     # put this into the environment so that brownie sees it
     os.environ["ETHERSCAN_TOKEN"] = etherscan_token
 
+    # TODO: set brownie autofetch_sources
+
     def brownie_connect():
         # this allows later click commands to set the default. there might be a better way
         network = ctx.obj["brownie_network"] or ctx.obj.get("default_brownie_network")
