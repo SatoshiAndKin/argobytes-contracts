@@ -102,6 +102,10 @@ from .tx import tx
 
 cli.add_command(tx)
 
+from .compilers import download_all
+
+cli.add_command(download_all)
+
 
 def main():
     """Run the click app."""
