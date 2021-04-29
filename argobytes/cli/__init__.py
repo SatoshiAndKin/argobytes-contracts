@@ -64,9 +64,6 @@ def cli(
         network,
     )
 
-    if noop:
-        ctx.exit(0)
-
 
 @cli.command()
 @click.pass_context
