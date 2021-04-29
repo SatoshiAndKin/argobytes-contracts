@@ -12,5 +12,5 @@ lazy_load
 # TODO: this does not like being installed with '-e'
 git+https://github.com/flashbots/web3-flashbots.git#egg=flashbots
 
-git+https://code.argobytes.com/git/brownie.git#egg=eth-brownie
-git+https://code.argobytes.com/git/py-tokenlists.git#egg=tokenlists
+git+https://git.argobytes.com/git/brownie.git#egg=eth-brownie
+git+https://git.argobytes.com/git/py-tokenlists.git#egg=tokenlists

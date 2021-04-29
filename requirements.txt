@@ -79,7 +79,7 @@ eth-account==0.5.4
     # via
     #   eth-brownie
     #   web3
-git+https://code.argobytes.com/git/brownie.git#egg=eth-brownie
+git+https://git.argobytes.com/git/brownie.git#egg=eth-brownie
     # via
     #   -r requirements.in
     #   ape-safe
@@ -293,7 +293,7 @@ sortedcontainers==2.3.0
     # via hypothesis
 sqlparse==0.4.1
     # via django
-git+https://code.argobytes.com/git/py-tokenlists.git#egg=tokenlists
+git+https://git.argobytes.com/git/py-tokenlists.git#egg=tokenlists
     # via -r requirements.in
 toml==0.10.2
     # via
