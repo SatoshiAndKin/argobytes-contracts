@@ -374,7 +374,7 @@ OneSplit = lazy_contract("1proto.eth")
 # USDC may not be decentralized, but Coinbase can trade to USD in my bank account at 1:1 and no fee
 USDC = lazy_contract("usdc")
 
-ArgobytesProject = lazy(lambda: brownie.project.ArgobytesContractsProject)
+ArgobytesProject = lazy(lambda: brownie.project.ArgobytesProject)
 
 ArgobytesInterfaces = lazy(lambda: ArgobytesProject.interface)
 

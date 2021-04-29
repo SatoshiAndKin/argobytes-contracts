@@ -54,7 +54,7 @@ def cli(
         network = ctx.obj["brownie_network"] or ctx.obj.get("default_brownie_network")
 
         # setup the project and network the same way brownie's run helper does
-        brownie_project = project.load(get_project_root())
+        brownie_project = project.load(get_project_root(), "ArgobytesProject")
         brownie_project.load_config()
 
         ctx.obj["brownie_project"] = brownie_project
@@ -84,7 +84,7 @@ def cli(
                 gas_strategy = "5 gwei"
                 gas_price(gas_strategy)
                 logger.info(f"Default gas price: {gas_strategy}")
-            elif network in ["matic", "matic-fork"]:
+            elif network in ["polygon", "polygon-fork"]:
                 gas_strategy = "1 gwei"
                 gas_price(gas_strategy)
                 logger.info(f"Default gas price: {gas_strategy}")
