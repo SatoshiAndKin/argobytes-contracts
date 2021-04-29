@@ -22,7 +22,7 @@ from click_plugins import with_plugins
 from pkg_resources import iter_entry_points
 
 from argobytes.cli_helpers_lite import BROWNIE_ACCOUNT, brownie_connect, gas_choices, logger
-from .compilers import download_all
+from .compilers import compilers
 from .tx import tx
 
 # TODO: pre-emptive click flag to set network to "none"? otherwise we waste time connecting to mainnet-fork if we dont need a node
@@ -110,8 +110,8 @@ def donate():
     donate()
 
 
+cli.add_command(compilers)
 cli.add_command(tx)
-cli.add_command(download_all)
 
 
 def main():
