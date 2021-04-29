@@ -4,4 +4,4 @@ include NOTES.md
 include requirements.in
 include requirements.txt
 graft docs
-graft argobytes/argobytes_brownie_project
+recursive-include argobytes/argobytes_brownie_project/ *
