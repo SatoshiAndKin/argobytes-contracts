@@ -72,6 +72,14 @@ def console(ctx):
 
     console(ctx)
 
+@cli.command()
+@click.option("command")
+@click.pass_context
+@brownie_connect()
+def run(ctx):
+    """Run a simple command (UNDER CONSTRUCTION)."""
+    raise NotImplemented
+
 
 @cli.command()
 @brownie_connect()

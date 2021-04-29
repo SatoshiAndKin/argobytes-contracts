@@ -10,3 +10,4 @@ Dockerfile
 reports/
 node_modules/
 venv/
+argobytes/argobytes_brownie_project/build/*
