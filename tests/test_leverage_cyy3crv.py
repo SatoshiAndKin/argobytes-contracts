@@ -10,7 +10,10 @@ from argobytes.tokens import transfer_token
 
 @pytest.mark.require_network("mainnet-fork")
 def test_atomic_scripts(
-    argobytes_flash_clone, click_test_runner, exit_cyy3crv_action, unlocked_binance,
+    argobytes_flash_clone,
+    click_test_runner,
+    exit_cyy3crv_action,
+    unlocked_binance,
 ):
     account = accounts[0]
 

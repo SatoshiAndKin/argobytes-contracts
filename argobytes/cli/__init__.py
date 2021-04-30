@@ -1,25 +1,11 @@
-"""
-There are lots of ways to manage Ethereum account keys.
-
-Our scripts will usually want two addresses:
-    1. hardware wallet (ledger or trezor) account requiring user interaction
-        - ledger
-        - trezor
-    2. local account that can be automated
-        - brownie account
-        - address without a key for read-only access
-        - mnemonic and hd path
-
-This entrypoint will handle setting these accounts up and then starting brownie.
-"""
 import os
-from importlib_metadata import entry_points
 
 import click
 import click_log
 from click_plugins import with_plugins
+from importlib_metadata import entry_points
 
-from argobytes.cli_helpers_lite import BROWNIE_ACCOUNT, brownie_connect, gas_choices, logger
+from ..cli_helpers_lite import BROWNIE_ACCOUNT, brownie_connect, gas_choices, logger
 from .compilers import compilers
 from .tx import tx
 
@@ -77,6 +63,7 @@ def noop():
     """Do nothing but import the project (helpful for setup)."""
     pass
 
+
 # TODO: write this
 """
 @cli.command()
@@ -87,6 +74,7 @@ def run(ctx):
     ""Run a simple command (UNDER CONSTRUCTION).""
     raise NotImplemented
 """
+
 
 @cli.command()
 @brownie_connect()

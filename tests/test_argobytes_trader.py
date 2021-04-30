@@ -22,13 +22,21 @@ def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action,
 
     borrows = [
         # 1 WETH from accounts[0] to example_action
-        (value, weth9_erc20, example_action,),
+        (
+            value,
+            weth9_erc20,
+            example_action,
+        ),
     ]
 
     # NOTE! Multicall actions do not have CallType! That is just our proxy actions! maybe need different names?
     actions = [
         # sweep WETH
-        (example_action, False, example_action.sweep.encode_input(accounts[0], weth9_erc20, 0),),
+        (
+            example_action,
+            False,
+            example_action.sweep.encode_input(accounts[0], weth9_erc20, 0),
+        ),
     ]
 
     arbitrage_tx = argobytes_trader.atomicArbitrage(accounts[0], borrows, argobytes_multicall, actions)

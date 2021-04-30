@@ -14,7 +14,11 @@ def test_action(uniswap_v2_router, uniswap_v2_action, dai_erc20, usdc_erc20, wet
     # trade ETH to USDC
     # our action isn't needed for this. we just use the router directly
     uniswap_v2_router.swapExactETHForTokens(
-        1, [weth9_erc20, usdc_erc20], uniswap_v2_action, distant_deadline, {"value": value, "from": accounts[0]},
+        1,
+        [weth9_erc20, usdc_erc20],
+        uniswap_v2_action,
+        distant_deadline,
+        {"value": value, "from": accounts[0]},
     )
 
     # make sure USDC balance on the action is non-zero

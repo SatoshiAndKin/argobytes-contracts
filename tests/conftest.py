@@ -173,7 +173,13 @@ def onesplit_helper(onesplit, interface):
         assert expected_return_amount > 1
 
         onesplit.swap(
-            ZERO_ADDRESS, dest_token, eth_amount, 1, distribution, flags, {"from": accounts[0], "value": eth_amount},
+            ZERO_ADDRESS,
+            dest_token,
+            eth_amount,
+            1,
+            distribution,
+            flags,
+            {"from": accounts[0], "value": eth_amount},
         )
 
         actual_return_amount = dest_token.balanceOf.call(accounts[0])
@@ -269,7 +275,15 @@ def uniswap_v1_helper(uniswap_v1_factory, interface):
 
         deadline = 9000000000
 
-        tx = exchange.ethToTokenTransferInput(src_amount, deadline, to, {"value": src_amount, "from": accounts[0],})
+        tx = exchange.ethToTokenTransferInput(
+            src_amount,
+            deadline,
+            to,
+            {
+                "value": src_amount,
+                "from": accounts[0],
+            },
+        )
 
         return tx.return_value
 

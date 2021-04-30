@@ -32,7 +32,15 @@ def reset_block_time(synthetix_exchange_rates, token_bytestr, web3):
     web3.testing.mine(last_update_time)
 
 
-def test_action(no_call_coverage, susd_erc20, synthetix_address_resolver, synthetix_depot, synthetix_depot_action, synthetix_exchange_rates, web3):
+def test_action(
+    no_call_coverage,
+    susd_erc20,
+    synthetix_address_resolver,
+    synthetix_depot,
+    synthetix_depot_action,
+    synthetix_exchange_rates,
+    web3,
+):
     eth_amount = 2e17
 
     # TODO: add some sUSD to the depot if there isn't enough
@@ -45,8 +53,7 @@ def test_action(no_call_coverage, susd_erc20, synthetix_address_resolver, synthe
     reset_block_time(synthetix_exchange_rates, eth_bytestr, web3)
 
     # make the trade for ETH -> sUSD
-    tx = synthetix_depot_action.tradeEtherToSynthUSD(
-        accounts[0], 1, synthetix_depot, susd_erc20, {"from": accounts[0]})
+    tx = synthetix_depot_action.tradeEtherToSynthUSD(accounts[0], 1, synthetix_depot, susd_erc20, {"from": accounts[0]})
 
     # check the balance
-    assert(susd_erc20.balanceOf(accounts[0]) > 0)
+    assert susd_erc20.balanceOf(accounts[0]) > 0

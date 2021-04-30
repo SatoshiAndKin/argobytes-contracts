@@ -42,7 +42,11 @@ setuptools.setup(
     python_requires=">=3.9,<4",
     include_package_data=True,
     entry_points={
-        "console_scripts": ["argobytes=argobytes.cli:main",],
-        "argobytes.plugins": ["leverage_cyy3crv=argobytes.cli.leverage_cyy3crv:leverage_cyy3crv",],
+        "console_scripts": [
+            "argobytes=argobytes.cli:main",
+        ],
+        "argobytes.plugins": [
+            "leverage_cyy3crv=argobytes.cli.leverage_cyy3crv:leverage_cyy3crv",
+        ],
     },
 )
