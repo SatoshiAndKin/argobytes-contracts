@@ -139,6 +139,8 @@ hypothesis==5.41.3
     # via eth-brownie
 idna==2.10
     # via requests
+importlib-metadata==4.0.1
+    # via -r requirements.in
 inflection==0.5.0
     # via
     #   mythx-models
@@ -324,6 +326,8 @@ web3==5.18.0
     #   gnosis-py
 websockets==8.1
     # via web3
+zipp==3.4.1
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

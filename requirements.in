@@ -6,6 +6,7 @@ click-plugins
 click-spinner
 decorator
 eth-abi
+importlib_metadata
 lazy_load
 
 # TODO: get this from pypi
