@@ -61,7 +61,7 @@ def console(ctx):
 @click.argument("python_code", type=str)
 @brownie_connect()
 def run(python_code):
-    """Run arbitrary python code. Be careful with this!"""
+    """Exec arbitrary (and hopefully audited!) python code. Be careful with this!"""
     exec(python_code)
 
 
