@@ -67,16 +67,14 @@ def run(python_code):
     eval(python_code, {}, COMMON_HELPERS)
 
 
-# TODO: write this
-"""
 @cli.command()
-@click.option("command")
-@click.pass_context
+@click.argument("python_file", type=click.File(mode='r'))
 @brownie_connect()
-def run(ctx):
-    ""Run a simple command (UNDER CONSTRUCTION).""
-    raise NotImplemented
-"""
+def run_file(python_file):
+    """Exec arbitrary (and hopefully audited!) python code. Be careful with this!"""
+    from argobytes.cli_helpers import COMMON_HELPERS
+
+    eval(python_file.read(), {}, COMMON_HELPERS)
 
 
 @cli.command()
