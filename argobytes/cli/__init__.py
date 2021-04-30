@@ -62,7 +62,9 @@ def console(ctx):
 @brownie_connect()
 def run(python_code):
     """Exec arbitrary (and hopefully audited!) python code. Be careful with this!"""
-    exec(python_code)
+    from argobytes.cli_helpers import COMMON_HELPERS
+
+    eval(python_code, {}, COMMON_HELPERS)
 
 
 # TODO: write this
