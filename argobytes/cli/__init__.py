@@ -13,22 +13,18 @@ Our scripts will usually want two addresses:
 This entrypoint will handle setting these accounts up and then starting brownie.
 """
 import os
+from importlib_metadata import entry_points
 
 import click
 import click_log
 from click_plugins import with_plugins
 
-# TODO: pkg_resources is super slow to import. maybe use a different plugin library
-from pkg_resources import iter_entry_points
-
 from argobytes.cli_helpers_lite import BROWNIE_ACCOUNT, brownie_connect, gas_choices, logger
 from .compilers import compilers
 from .tx import tx
 
-# TODO: pre-emptive click flag to set network to "none"? otherwise we waste time connecting to mainnet-fork if we dont need a node
 
-
-@with_plugins(iter_entry_points("argobytes.plugins"))
+@with_plugins(entry_points()["argobytes.plugins"])
 @click.group()
 @click_log.simple_verbosity_option(logger)
 @click.option("--etherscan-token", default="", envvar="ETHERSCAN_TOKEN")
