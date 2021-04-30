@@ -58,10 +58,11 @@ def console(ctx):
 
 
 @cli.command()
+@click.argument("python_code", type=str)
 @brownie_connect()
-def noop():
-    """Do nothing but import the project (helpful for setup)."""
-    pass
+def run(python_code):
+    """Run arbitrary python code. Be careful with this!"""
+    exec(python_code)
 
 
 # TODO: write this
