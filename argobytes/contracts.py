@@ -290,7 +290,13 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
             impl = Contract(contract.target.call(), owner=owner)
 
     if impl:
-        contract = Contract.from_abi(f"{contract._name} of {impl._name}", address, impl.abi, owner=owner)
+        if hasattr(impl, "symbol"):
+            symbol = impl.symbol()
+            name = f"{contract._name} of {symbol}"
+        else:
+            name = f"{contract._name} of {impl._name}"
+
+        contract = Contract.from_abi(name, address, impl.abi, owner=owner)
 
     return contract
 
