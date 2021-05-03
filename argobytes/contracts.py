@@ -230,7 +230,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
     # check if this is a proxy contract
     # TODO: theres other ways to have an impl too. usdc has one that uses storage
     impl = None
-    if hasattr(contract, "implementation") or contract._name.endswith("Proxy"):
+    if hasattr(contract, "implementation") or "Proxy" in contract._name:
         try:
             impl_addr = contract.implementation.call()
         except Exception:
