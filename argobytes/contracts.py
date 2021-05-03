@@ -204,6 +204,9 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
             token_name_or_address._owner = owner
         return token_name_or_address
 
+    if isinstance(token_name_or_address, int):
+        token_name_or_address = hex(token_name_or_address)
+
     if token_name_or_address.lower() in ["eth", ZERO_ADDRESS, ETH_ADDRESS.lower()]:
         # TODO: just use weth for eth?
         # TODO: we need this to work on other chains like BSC and Matic
@@ -228,77 +231,86 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
         contract = Contract(address, owner=owner)
 
     # check if this is a proxy contract
-    # TODO: theres other ways to have an impl too. usdc has one that uses storage
-    impl = None
-    if hasattr(contract, "implementation") or "Proxy" in contract._name:
-        try:
-            impl_addr = contract.implementation.call()
-        except Exception:
-            # maybe its "org.zepplinos.proxy.implementation"
-            impl_addr = web3.eth.getStorageAt(
-                address,
-                "0x7050c9e0f4ca769c69bd3a8ef740bc37934f8e2c036e5a723fd8ee048ed3f8c3",
-                block,
-            )
-
-            impl_addr = decode_single("address", impl_addr)
-
-            if impl_addr == brownie.ZERO_ADDRESS:
-                # or maybe its https://eips.ethereum.org/EIPS/eip-1967 Unstructured Storage Proxies
-                impl_addr = web3.eth.getStorageAt(
-                    address,
-                    "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
-                    block,
-                )
-
-                impl_addr = decode_single("address", impl_addr)
-
-                if impl_addr == brownie.ZERO_ADDRESS:
-                    # or maybe they are using EIP-1967 beacon address
-                    beacon_addr = web3.eth.getStorageAt(
-                        address,
-                        "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50",
-                        block,
-                    )
-
-                    beacon_addr = decode_single("address", beacon_addr)
-
-                    if beacon_addr == brownie.ZERO_ADDRESS:
-                        raise ValueError("Unable to load contract proxy")
-
-                    if force:
-                        beacon = Contract.from_explorer(beacon_addr)
-                        beacon._owner = owner
-                    else:
-                        beacon = Contract(beacon_addr, owner=owner)
-
-                    impl_addr = beacon.implementation.call()
-
-        if impl_addr == brownie.ZERO_ADDRESS:
-            raise ValueError("Unable to load contract proxy")
-
-        if force:
-            impl = Contract.from_explorer(impl_addr)
-            impl._owner = owner
-        else:
-            impl = Contract(impl_addr, owner=owner)
-    elif hasattr(contract, "target"):
-        if force:
-            impl = Contract.from_explorer(contract.target.call())
-            impl._owner = owner
-        else:
-            impl = Contract(contract.target.call(), owner=owner)
-
-    if impl:
-        if hasattr(impl, "symbol"):
-            symbol = impl.symbol()
-            name = f"{contract._name} of {symbol}"
-        else:
-            name = f"{contract._name} of {impl._name}"
-
-        contract = Contract.from_abi(name, address, impl.abi, owner=owner)
+    contract = check_for_proxy(contract, block, force=force)
+    contract._owner = owner
 
     return contract
+
+def check_for_proxy(contract, block, force=False):
+    # if this doesn't look like a proxy, return early
+    if not ("Proxy" in contract._name or hasattr(contract, "implementation") or hasattr(contract, "target")):
+        return contract
+
+    impl_addr = brownie.ZERO_ADDRESS
+
+    is_probably_proxy = "Proxy" in contract._name
+
+    if impl_addr == brownie.ZERO_ADDRESS and hasattr(contract, "implementation"):
+        is_probably_proxy = True
+        try:
+            # sometimes even if this function exists, it reverts because we are supposed to look at some random storage slot instead
+            impl_addr = contract.implementation.call()
+        except Exception:
+            pass
+
+    if impl_addr == brownie.ZERO_ADDRESS and hasattr(contract, "target"):
+        is_probably_proxy = True
+        impl_addr = contract.target.call()
+
+    if impl_addr == brownie.ZERO_ADDRESS:
+        # maybe its "org.zepplinos.proxy.implementation"
+        impl_addr = web3.eth.getStorageAt(
+            contract.address,
+            "0x7050c9e0f4ca769c69bd3a8ef740bc37934f8e2c036e5a723fd8ee048ed3f8c3",
+            block,
+        )
+        impl_addr = decode_single("address", impl_addr)
+
+    if impl_addr == brownie.ZERO_ADDRESS:
+        # or maybe its https://eips.ethereum.org/EIPS/eip-1967 Unstructured Storage Proxies
+        impl_addr = web3.eth.getStorageAt(
+            contract.address,
+            "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+            block,
+        )
+        impl_addr = decode_single("address", impl_addr)
+
+    if impl_addr == brownie.ZERO_ADDRESS:
+        # or maybe they are using EIP-1967 beacon address
+        beacon_addr = web3.eth.getStorageAt(
+            contract.address,
+            "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50",
+            block,
+        )
+        beacon_addr = decode_single("address", beacon_addr)
+
+        if beacon_addr != brownie.ZERO_ADDRESS:
+            if force:
+                beacon = Contract.from_explorer(beacon_addr)
+            else:
+                beacon = Contract(beacon_addr)
+
+            impl_addr = beacon.implementation.call()
+
+    if impl_addr == brownie.ZERO_ADDRESS:
+        # logger.debug(f"Could not detect implementation contract for {contract}")
+        return contract
+
+    if force:
+        impl = Contract.from_explorer(impl_addr)
+    else:
+        impl = Contract(impl_addr)
+
+    if hasattr(impl, "symbol"):
+        symbol = impl.symbol()
+        name = f"{contract._name} of {symbol}"
+    elif contract._name == impl._name:
+        name = contract._name
+    else:
+        name = f"{contract._name} of {impl._name}"
+
+    # create a new contract object with the implementation's abi but the proxy's address
+    return Contract.from_abi(name, contract.address, impl.abi)
 
 
 def mk_contract_address(sender: str, nonce: int) -> str:
