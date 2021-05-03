@@ -194,29 +194,19 @@ def lazy_contract(address, owner=None):
 
 
 def load_contract(token_name_or_address: str, owner=None, block=None, force=False):
-    """
-    if token_name_or_address.lower() == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
-        # this is gross, but i think it works
-        # USDC does weird things to get their implementation
-        # TODO: don't hard code this!!!
-        impl = Contract("0xB7277a6e95992041568D9391D09d0122023778A2")
-
-        proxy = Contract("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
-
-        contract = Contract.from_abi(proxy._name, proxy.address, impl.abi, owner=owner)
-
-        return contract
-    """
     if callable(token_name_or_address):
+        # sometimes it is useful to get the address from a function
         token_name_or_address = token_name_or_address()
 
     if isinstance(token_name_or_address, Contract):
+        # we were given a contract rather than an address or token name. return early
         if owner:
             token_name_or_address._owner = owner
         return token_name_or_address
 
     if token_name_or_address.lower() in ["eth", ZERO_ADDRESS, ETH_ADDRESS.lower()]:
         # TODO: just use weth for eth?
+        # TODO: we need this to work on other chains like BSC and Matic
         return EthContract()
     elif token_name_or_address.lower() == "ankreth":
         # TODO: find a tokenlist with this on it
@@ -240,7 +230,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
     # check if this is a proxy contract
     # TODO: theres other ways to have an impl too. usdc has one that uses storage
     impl = None
-    if hasattr(contract, "implementation"):
+    if hasattr(contract, "implementation") or contract._name.endswith("Proxy"):
         try:
             impl_addr = contract.implementation.call()
         except Exception:
@@ -300,7 +290,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
             impl = Contract(contract.target.call(), owner=owner)
 
     if impl:
-        contract = Contract.from_abi(contract._name, address, impl.abi, owner=owner)
+        contract = Contract.from_abi(f"{contract._name} of {impl._name}", address, impl.abi, owner=owner)
 
     return contract
 

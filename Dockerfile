@@ -29,5 +29,3 @@ COPY requirements.txt /myapp/
 RUN pip install --disable-pip-version-check --no-cache-dir -r /myapp/requirements.txt
 
 COPY . /myapp/
-
-# TODO: smart entrypoint that defaults to calling argobytes
