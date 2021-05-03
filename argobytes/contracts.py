@@ -297,18 +297,20 @@ def check_for_proxy(contract, block, force=False):
     else:
         impl = Contract(impl_addr)
 
-    raise Exception
-
-    if hasattr(impl, "symbol"):
-        symbol = impl.symbol()
-        name = f"{contract._name} to {symbol}"
-    elif contract._name == impl._name or not impl._name:
-        name = f"{contract._name} to {impl.address}"
+    if contract._name == impl._name or not impl._name:
+        name = f"{contract._name}"
     else:
         name = f"{contract._name} to {impl._name}"
 
     # create a new contract object with the implementation's abi but the proxy's address
-    return Contract.from_abi(name, contract.address, impl.abi)
+    contract = Contract.from_abi(name, contract.address, impl.abi)
+
+    if hasattr(contract, "symbol"):
+        symbol = contract.symbol()
+        if symbol:
+            contract = Contract.from_abi(symbol, contract.address, impl.abi)
+
+    return contract
 
 
 def mk_contract_address(sender: str, nonce: int) -> str:
