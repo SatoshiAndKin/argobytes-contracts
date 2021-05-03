@@ -243,10 +243,7 @@ def check_for_proxy(contract, block, force=False):
 
     impl_addr = brownie.ZERO_ADDRESS
 
-    is_probably_proxy = "Proxy" in contract._name
-
     if impl_addr == brownie.ZERO_ADDRESS and hasattr(contract, "implementation"):
-        is_probably_proxy = True
         try:
             # sometimes even if this function exists, it reverts because we are supposed to look at some random storage slot instead
             impl_addr = contract.implementation.call()
@@ -254,7 +251,6 @@ def check_for_proxy(contract, block, force=False):
             pass
 
     if impl_addr == brownie.ZERO_ADDRESS and hasattr(contract, "target"):
-        is_probably_proxy = True
         impl_addr = contract.target.call()
 
     if impl_addr == brownie.ZERO_ADDRESS:
@@ -301,13 +297,15 @@ def check_for_proxy(contract, block, force=False):
     else:
         impl = Contract(impl_addr)
 
+    raise Exception
+
     if hasattr(impl, "symbol"):
         symbol = impl.symbol()
-        name = f"{contract._name} of {symbol}"
-    elif contract._name == impl._name:
-        name = contract._name
+        name = f"{contract._name} to {symbol}"
+    elif contract._name == impl._name or not impl._name:
+        name = f"{contract._name} to {impl.address}"
     else:
-        name = f"{contract._name} of {impl._name}"
+        name = f"{contract._name} to {impl._name}"
 
     # create a new contract object with the implementation's abi but the proxy's address
     return Contract.from_abi(name, contract.address, impl.abi)

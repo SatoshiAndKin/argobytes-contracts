@@ -71,7 +71,7 @@ def run(python_code):
 @click.argument("python_file", type=click.File(mode='r'))
 @brownie_connect()
 def run_file(python_file):
-    """Exec arbitrary (and hopefully audited!) python code. Be careful with this!"""
+    """Exec arbitrary (and hopefully audited!) python files. Be careful with this!"""
     from argobytes.cli_helpers import COMMON_HELPERS
 
     eval(python_file.read(), {}, COMMON_HELPERS)
