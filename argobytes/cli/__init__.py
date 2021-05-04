@@ -68,7 +68,7 @@ def run(python_code):
 
 
 @cli.command()
-@click.argument("python_file", type=click.File(mode='r'))
+@click.argument("python_file", type=click.File(mode="r"))
 @brownie_connect()
 def run_file(python_file):
     """Exec arbitrary (and hopefully audited!) python files. Be careful with this!"""

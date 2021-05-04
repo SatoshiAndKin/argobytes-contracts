@@ -185,12 +185,18 @@ def get_or_create_flash_borrower(default_account, salt):
 
 
 def lazy_contract(address, owner=None):
-    return lazy(
-        lambda: load_contract(
-            address,
-            owner or click.get_current_context().obj.get("lazy_contract_default_account", None),
-        )
-    )
+    def _owner(owner):
+        if owner:
+            return owner
+
+        try:
+            click_ctx = click.get_current_context()
+        except Exception:
+            return None
+
+        return click_ctx.obj.get("lazy_contract_default_account", None)
+
+    return lazy(lambda: load_contract(address, _owner(owner)))
 
 
 def load_contract(token_name_or_address: str, owner=None, block=None, force=False):
@@ -235,6 +241,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
     contract._owner = owner
 
     return contract
+
 
 def check_for_proxy(contract, block, force=False):
     # if this doesn't look like a proxy, return early
@@ -288,6 +295,14 @@ def check_for_proxy(contract, block, force=False):
 
             impl_addr = beacon.implementation.call()
 
+    if impl_addr == brownie.ZERO_ADDRESS and contract._name == "Proxy":
+        # TODO: this might catch more than we want! lots of contracts use storage slot 0!
+        impl_addr = web3.eth.getStorageAt(contract.address, 0, block)
+        try:
+            impl_addr = decode_single("address", impl_addr)
+        except Exception:
+            impl_addr = brownie.ZERO_ADDRESS
+
     if impl_addr == brownie.ZERO_ADDRESS:
         # logger.debug(f"Could not detect implementation contract for {contract}")
         return contract
@@ -297,18 +312,15 @@ def check_for_proxy(contract, block, force=False):
     else:
         impl = Contract(impl_addr)
 
-    if contract._name == impl._name or not impl._name:
-        name = f"{contract._name}"
-    else:
-        name = f"{contract._name} to {impl._name}"
-
     # create a new contract object with the implementation's abi but the proxy's address
-    contract = Contract.from_abi(name, contract.address, impl.abi)
+    contract = Contract.from_abi(contract._name, contract.address, impl.abi)
 
-    if hasattr(contract, "symbol"):
-        symbol = contract.symbol()
-        if symbol:
-            contract = Contract.from_abi(symbol, contract.address, impl.abi)
+    if contract._name == impl._name or not impl._name:
+        full_name = contract._name
+    else:
+        full_name = f"{contract._name} to {impl._name}"
+
+    contract._full_name = full_name
 
     return contract
 
