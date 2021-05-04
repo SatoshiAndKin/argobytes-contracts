@@ -312,16 +312,24 @@ def check_for_proxy(contract, block, force=False):
     else:
         impl = Contract(impl_addr)
 
+    # the proxy might be a proxy itself
+    impl = check_for_proxy(impl, block, force=force)
+
+    if hasattr(impl, "_full_name"):
+        impl_name = impl._full_name
+    else:
+        impl_name = impl._name
+
     # create a new contract object with the implementation's abi but the proxy's address
     contract = Contract.from_abi(contract._name, contract.address, impl.abi)
 
-    if contract._name == impl._name or not impl._name:
-        full_name = contract._name
+    if contract._name == impl_name or not impl_name:
+        full_name = contract._full_name
     else:
-        full_name = f"{contract._name} to {impl._name}"
+        full_name = f"{contract._name} to {impl_name}"
 
     contract._full_name = full_name
-
+    contract._impl_contract = impl
     return contract
 
 
