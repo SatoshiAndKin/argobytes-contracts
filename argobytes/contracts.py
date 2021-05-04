@@ -267,7 +267,10 @@ def check_for_proxy(contract, block, force=False):
             "0x7050c9e0f4ca769c69bd3a8ef740bc37934f8e2c036e5a723fd8ee048ed3f8c3",
             block,
         )
-        impl_addr = decode_single("address", impl_addr)
+        try:
+            impl_addr = decode_single("address", impl_addr)
+        except Exception:
+            impl_addr = brownie.ZERO_ADDRESS
 
     if impl_addr == brownie.ZERO_ADDRESS:
         # or maybe its https://eips.ethereum.org/EIPS/eip-1967 Unstructured Storage Proxies
@@ -276,7 +279,10 @@ def check_for_proxy(contract, block, force=False):
             "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
             block,
         )
-        impl_addr = decode_single("address", impl_addr)
+        try:
+            impl_addr = decode_single("address", impl_addr)
+        except Exception:
+            impl_addr = brownie.ZERO_ADDRESS
 
     if impl_addr == brownie.ZERO_ADDRESS:
         # or maybe they are using EIP-1967 beacon address
@@ -285,15 +291,18 @@ def check_for_proxy(contract, block, force=False):
             "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50",
             block,
         )
-        beacon_addr = decode_single("address", beacon_addr)
+        try:
+            beacon_addr = decode_single("address", beacon_addr)
+        except Exception:
+            pass
+        else:
+            if beacon_addr != brownie.ZERO_ADDRESS:
+                if force:
+                    beacon = Contract.from_explorer(beacon_addr)
+                else:
+                    beacon = Contract(beacon_addr)
 
-        if beacon_addr != brownie.ZERO_ADDRESS:
-            if force:
-                beacon = Contract.from_explorer(beacon_addr)
-            else:
-                beacon = Contract(beacon_addr)
-
-            impl_addr = beacon.implementation.call()
+                impl_addr = beacon.implementation.call()
 
     if impl_addr == brownie.ZERO_ADDRESS and contract._name == "Proxy":
         # TODO: this might catch more than we want! lots of contracts use storage slot 0!
