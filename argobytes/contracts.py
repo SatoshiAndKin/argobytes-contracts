@@ -3,6 +3,7 @@ import multiprocessing
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import IntFlag
+from warnings import warn
 
 import brownie
 import click
@@ -200,32 +201,43 @@ def lazy_contract(address, owner=None):
 
 
 def load_contract(token_name_or_address: str, owner=None, block=None, force=False):
+    # TODO: cache by block
+
     if callable(token_name_or_address):
         # sometimes it is useful to get the address from a function
-        token_name_or_address = token_name_or_address()
+        try:
+            token_name_or_address = token_name_or_address()
+        except TypeError:
+            # this is odd. i've seen `TypeError: 'Contract' object is not callable`
+            pass
 
-    if isinstance(token_name_or_address, Contract):
+    if isinstance(token_name_or_address, Contract) or isinstance(token_name_or_address, EthContract):
         # we were given a contract rather than an address or token name. return early
         if owner:
             token_name_or_address._owner = owner
         return token_name_or_address
 
     if isinstance(token_name_or_address, int):
-        token_name_or_address = hex(token_name_or_address)
+        token_name_or_address = to_checksum_address(hex(token_name_or_address))
 
+    # TODO: don't lower. use checksum addresses everywhere
     if token_name_or_address.lower() in ["eth", ZERO_ADDRESS, ETH_ADDRESS.lower()]:
         # TODO: just use weth for eth?
         # TODO: we need this to work on other chains like BSC and Matic
         return EthContract()
     elif token_name_or_address.lower() == "ankreth":
         # TODO: find a tokenlist with this on it
-        token_name_or_address = "0xe95a203b1a91a908f9b9ce46459d101078c2c3cb"
+        token_name_or_address = to_checksum_address("0xe95a203b1a91a908f9b9ce46459d101078c2c3cb")
     elif token_name_or_address.lower() == "obtc":  # boring DAO BTC
         # TODO: find a tokenlist with this on it
         token_name_or_address = "0x8064d9Ae6cDf087b1bcd5BDf3531bD5d8C537a68"
 
     # this raises a ValueError if this is not an address or ENS name
     if "." in token_name_or_address:
+        if block is not None:
+            # TODO: PR against web3 to take a block argument
+            # https://github.com/ethereum/web3.py/issues/1984
+            warn("Looking up {token_name_or_address} against the latest block, not {block}")
         address = web3.ens.resolve(token_name_or_address)
     else:
         address = to_checksum_address(token_name_or_address)
@@ -245,6 +257,12 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
 
 def check_for_proxy(contract, block, force=False):
     # if this doesn't look like a proxy, return early
+
+    # TODO: cache on this (include the block in the key!)
+
+    if contract._name == "DSProxy":
+        return contract
+
     if not ("Proxy" in contract._name or hasattr(contract, "implementation") or hasattr(contract, "target")):
         return contract
 

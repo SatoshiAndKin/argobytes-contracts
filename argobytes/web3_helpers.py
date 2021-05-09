@@ -99,4 +99,5 @@ def reset_block_time():
 
 
 def to_hex32(primitive=None, hexstr=None, text=None):
+    # TODO: eth_abi.encode_single('bytes32', b'Synthetix')
     return to_hex(primitive, hexstr, text).ljust(66, "0")
