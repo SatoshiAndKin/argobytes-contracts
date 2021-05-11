@@ -11,11 +11,15 @@ from brownie.network.transaction import Status
 from .contracts import load_contract
 
 
-def get_event_contract(tx, event):
+def get_event_address(tx, event):
     if isinstance(event, str):
         event = tx.events[event]
 
-    address = tx.logs[event.pos[0]].address
+    return tx.logs[event.pos[0]].address
+
+
+def get_event_contract(tx, event):
+    address = get_event_address(tx, event)
 
     return load_contract(address)
 

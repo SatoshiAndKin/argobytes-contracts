@@ -426,8 +426,6 @@ SingletonFactory = lazy_contract("0xce0042B868300000d44A59004Da54A005ffdcf9f")
 DyDxFlashLender = lazy_contract("0x6bdC1FCB2F13d1bA9D26ccEc3983d5D4bf318693")
 
 OneSplit = lazy_contract("1proto.eth")
-# USDC may not be decentralized, but Coinbase can trade to USD in my bank account at 1:1 and no fee
-USDC = lazy_contract("usdc")
 
 ArgobytesProject = lazy(lambda: brownie.project.ArgobytesProject)
 
