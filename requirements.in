@@ -1,4 +1,3 @@
-# ape-safe
 arrow
 click-log
 click-option-group
@@ -9,8 +8,12 @@ eth-abi
 importlib_metadata
 lazy_load
 
+# TODO: this is no longer compatible with brownie (web3 version conflict)
+# ape-safe
+
 # TODO: get this from pypi
 # TODO: this does not like being installed with '-e'
+# TODO: this is no longer compatible with brownie (web3 version conflict)
 # git+https://github.com/flashbots/web3-flashbots.git#egg=flashbots
 
 git+https://git.argobytes.com/git/brownie.git#egg=eth-brownie
