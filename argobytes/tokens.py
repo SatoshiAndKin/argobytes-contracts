@@ -94,6 +94,12 @@ def get_token_decimals(token_contract):
 
     if token_contract in [brownie.ETH_ADDRESS, brownie.ZERO_ADDRESS]:
         decimals = 18
+    elif token_contract.address == "0x57Ab1E02fEE23774580C119740129eAC7081e9D3":
+        # old sUSD contract
+        decimals = 18
+    elif token_contract.address == "0xC011A72400E58ecD99Ee497CF89E3775d4bd732F":
+        # this is a proxy to a proxy to a gnosis safe
+        decimals = 18
     elif hasattr(token_contract, "decimals"):
         decimals = token_contract.decimals()
     elif hasattr(token_contract, "DECIMALS"):
