@@ -1,4 +1,4 @@
-ape-safe
+# ape-safe
 arrow
 click-log
 click-option-group
@@ -11,7 +11,7 @@ lazy_load
 
 # TODO: get this from pypi
 # TODO: this does not like being installed with '-e'
-git+https://github.com/flashbots/web3-flashbots.git#egg=flashbots
+# git+https://github.com/flashbots/web3-flashbots.git#egg=flashbots
 
 git+https://git.argobytes.com/git/brownie.git#egg=eth-brownie
 git+https://git.argobytes.com/git/py-tokenlists.git#egg=tokenlists

@@ -4,18 +4,12 @@
 #
 #    pip-compile
 #
-ape-safe==0.1.2
-    # via -r requirements.in
 apipkg==1.5
     # via execnet
 appdirs==1.4.4
     # via black
 arrow==1.0.3
     # via -r requirements.in
-asgiref==3.3.4
-    # via django
-asn1crypto==1.4.0
-    # via coincurve
 asttokens==2.0.4
     # via vyper
 attrs==20.3.0
@@ -29,14 +23,8 @@ bitarray==1.2.2
     # via eth-account
 black==20.8b1
     # via eth-brownie
-cached-property==1.5.2
-    # via
-    #   gnosis-py
-    #   py-ecc
 certifi==2020.12.5
     # via requests
-cffi==1.14.5
-    # via coincurve
 chardet==4.0.0
     # via requests
 click-log==0.3.2
@@ -53,36 +41,25 @@ click==7.1.2
     #   click-log
     #   click-option-group
     #   click-plugins
-coincurve==15.0.0
-    # via ethereum
 cytoolz==0.11.0
     # via
     #   eth-keyfile
     #   eth-utils
 decorator==5.0.6
     # via -r requirements.in
-django-filter==2.4.0
-    # via gnosis-py
-django==3.2
-    # via
-    #   django-filter
-    #   gnosis-py
 eth-abi==2.1.1
     # via
     #   -r requirements.in
     #   eth-account
     #   eth-brownie
     #   eth-event
-    #   py-eth-sig-utils
     #   web3
 eth-account==0.5.4
     # via
     #   eth-brownie
     #   web3
 git+https://git.argobytes.com/git/brownie.git#egg=eth-brownie
-    # via
-    #   -r requirements.in
-    #   ape-safe
+    # via -r requirements.in
 eth-event==1.2.1
     # via eth-brownie
 eth-hash[pycryptodome]==0.2.0
@@ -104,7 +81,6 @@ eth-typing==2.2.2
     #   eth-abi
     #   eth-keys
     #   eth-utils
-    #   py-ecc
     #   web3
 eth-utils==1.9.5
     # via
@@ -115,19 +91,10 @@ eth-utils==1.9.5
     #   eth-keyfile
     #   eth-keys
     #   eth-rlp
-    #   py-ecc
     #   rlp
     #   web3
-ethereum==2.3.2
-    # via gnosis-py
 execnet==1.8.0
     # via pytest-xdist
-git+https://github.com/flashbots/web3-flashbots.git#egg=flashbots
-    # via -r requirements.in
-future==0.18.2
-    # via ethereum
-gnosis-py==2.8.5
-    # via ape-safe
 hexbytes==0.2.1
     # via
     #   eth-account
@@ -164,23 +131,17 @@ more-itertools==8.7.0
 multiaddr==0.0.9
     # via ipfshttpclient
 mypy-extensions==0.4.3
-    # via
-    #   black
-    #   py-ecc
+    # via black
 mythx-models==1.9.1
     # via pythx
 netaddr==0.8.0
     # via multiaddr
 packaging==20.9
-    # via
-    #   gnosis-py
-    #   pytest
+    # via pytest
 parsimonious==0.8.1
     # via eth-abi
 pathspec==0.8.1
     # via black
-pbkdf2==1.3
-    # via ethereum
 pluggy==0.13.1
     # via pytest
 prompt-toolkit==3.0.8
@@ -189,12 +150,6 @@ protobuf==3.15.6
     # via web3
 psutil==5.8.0
     # via eth-brownie
-py-ecc==5.2.0
-    # via
-    #   ethereum
-    #   py-eth-sig-utils
-py-eth-sig-utils==0.4.0
-    # via gnosis-py
 py-solc-ast==1.2.8
     # via eth-brownie
 py-solc-x==1.1.0
@@ -204,17 +159,11 @@ py==1.10.0
     #   eth-brownie
     #   pytest
     #   pytest-forked
-pycparser==2.20
-    # via cffi
 pycryptodome==3.10.1
     # via
     #   eth-hash
     #   eth-keyfile
-    #   ethereum
-    #   py-eth-sig-utils
     #   vyper
-pyethash==0.1.27
-    # via ethereum
 pygments-lexer-solidity==0.5.1
     # via eth-brownie
 pygments==2.8.1
@@ -227,8 +176,6 @@ pyparsing==2.4.7
     # via packaging
 pyrsistent==0.17.3
     # via jsonschema
-pysha3==1.0.2
-    # via ethereum
 pytest-forked==1.3.0
     # via pytest-xdist
 pytest-xdist==1.34.0
@@ -247,20 +194,13 @@ python-dotenv==0.16.0
     # via eth-brownie
 pythx==1.6.1
     # via eth-brownie
-pytz==2021.1
-    # via django
 pyyaml==5.4.1
-    # via
-    #   eth-brownie
-    #   ethereum
+    # via eth-brownie
 regex==2020.11.13
     # via black
-repoze.lru==0.7
-    # via ethereum
 requests==2.25.1
     # via
     #   eth-brownie
-    #   gnosis-py
     #   ipfshttpclient
     #   py-solc-x
     #   pythx
@@ -271,10 +211,6 @@ rlp==1.2.0
     #   eth-account
     #   eth-brownie
     #   eth-rlp
-    #   ethereum
-    #   py-eth-sig-utils
-scrypt==0.8.17
-    # via ethereum
 semantic-version==2.8.5
     # via
     #   eth-brownie
@@ -293,8 +229,6 @@ six==1.15.0
     #   python-dateutil
 sortedcontainers==2.3.0
     # via hypothesis
-sqlparse==0.4.1
-    # via django
 git+https://git.argobytes.com/git/py-tokenlists.git#egg=tokenlists
     # via -r requirements.in
 toml==0.10.2
@@ -320,10 +254,7 @@ vyper==0.2.11
 wcwidth==0.2.5
     # via prompt-toolkit
 web3==5.18.0
-    # via
-    #   eth-brownie
-    #   flashbots
-    #   gnosis-py
+    # via eth-brownie
 websockets==8.1
     # via web3
 zipp==3.4.1

@@ -6,7 +6,7 @@ import brownie
 import click
 import eth_abi
 import eth_utils
-from ape_safe import ApeSafe
+# from ape_safe import ApeSafe
 from brownie import _cli, project
 from brownie import network as brownie_network
 from hexbytes import HexBytes
@@ -19,7 +19,7 @@ COMMON_HELPERS = {
     "brownie": brownie,
     "ArgobytesInterfaces": ArgobytesInterfaces,
     "ArgobytesBrownieProject": ArgobytesBrownieProject,
-    "ApeSafe": ApeSafe,
+    # "ApeSafe": ApeSafe,
     "Decimal": Decimal,
     "HexBytes": HexBytes,
     "eth_abi": eth_abi,
