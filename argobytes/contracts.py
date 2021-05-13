@@ -427,29 +427,29 @@ DyDxFlashLender = lazy_contract("0x6bdC1FCB2F13d1bA9D26ccEc3983d5D4bf318693")
 
 OneSplit = lazy_contract("1proto.eth")
 
-ArgobytesProject = lazy(lambda: brownie.project.ArgobytesProject)
+ArgobytesBrownieProject = lazy(lambda: brownie.project.ArgobytesBrownieProject)
 
-ArgobytesInterfaces = lazy(lambda: ArgobytesProject.interface)
+ArgobytesInterfaces = lazy(lambda: ArgobytesBrownieProject.interface)
 
 # lazy load these because they aren't available at import time here
 # TODO: use long project path in case multiple projects are loaded?
-ArgobytesAuthority = lazy(lambda: ArgobytesProject.ArgobytesAuthority)
-ArgobytesFactory = lazy(lambda: ArgobytesProject.ArgobytesFactory)
-ArgobytesMulticall = lazy(lambda: ArgobytesProject.ArgobytesMulticall)
+ArgobytesAuthority = lazy(lambda: ArgobytesBrownieProject.ArgobytesAuthority)
+ArgobytesFactory = lazy(lambda: ArgobytesBrownieProject.ArgobytesFactory)
+ArgobytesMulticall = lazy(lambda: ArgobytesBrownieProject.ArgobytesMulticall)
 
 # clonable
-ArgobytesFlashBorrower = lazy(lambda: ArgobytesProject.ArgobytesFlashBorrower)
-ArgobytesProxy = lazy(lambda: ArgobytesProject.ArgobytesProxy)
+ArgobytesFlashBorrower = lazy(lambda: ArgobytesBrownieProject.ArgobytesFlashBorrower)
+ArgobytesProxy = lazy(lambda: ArgobytesBrownieProject.ArgobytesProxy)
 
 # actions
-ArgobytesTrader = lazy(lambda: ArgobytesProject.ArgobytesTrader)
-EnterCYY3CRVAction = lazy(lambda: ArgobytesProject.EnterCYY3CRVAction)
-ExitCYY3CRVAction = lazy(lambda: ArgobytesProject.ExitCYY3CRVAction)
+ArgobytesTrader = lazy(lambda: ArgobytesBrownieProject.ArgobytesTrader)
+EnterCYY3CRVAction = lazy(lambda: ArgobytesBrownieProject.EnterCYY3CRVAction)
+ExitCYY3CRVAction = lazy(lambda: ArgobytesBrownieProject.ExitCYY3CRVAction)
 
 # exchanges
-CurveFiAction = lazy(lambda: ArgobytesProject.CurveFiAction)
-ExampleAction = lazy(lambda: ArgobytesProject.ExampleAction)
-KyberAction = lazy(lambda: ArgobytesProject.KyberAction)
-UniswapV1Action = lazy(lambda: ArgobytesProject.UniswapV1Action)
-UniswapV2Action = lazy(lambda: ArgobytesProject.UniswapV2Action)
-Weth9Action = lazy(lambda: ArgobytesProject.Weth9Action)
+CurveFiAction = lazy(lambda: ArgobytesBrownieProject.CurveFiAction)
+ExampleAction = lazy(lambda: ArgobytesBrownieProject.ExampleAction)
+KyberAction = lazy(lambda: ArgobytesBrownieProject.KyberAction)
+UniswapV1Action = lazy(lambda: ArgobytesBrownieProject.UniswapV1Action)
+UniswapV2Action = lazy(lambda: ArgobytesBrownieProject.UniswapV2Action)
+Weth9Action = lazy(lambda: ArgobytesBrownieProject.Weth9Action)

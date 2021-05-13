@@ -11,20 +11,23 @@ from brownie import _cli, project
 from brownie import network as brownie_network
 from hexbytes import HexBytes
 
-from argobytes.contracts import load_contract
+from argobytes.contracts import load_contract, ArgobytesBrownieProject, ArgobytesInterfaces
 from argobytes.tokens import load_token, load_token_or_contract
-from argobytes.transactions import get_event_contract, get_transaction, sync_tx_cache
+from argobytes.transactions import get_event_address, get_event_contract, get_transaction, sync_tx_cache
 
 COMMON_HELPERS = {
     "brownie": brownie,
+    "ArgobytesInterfaces": ArgobytesInterfaces,
+    "ArgobytesBrownieProject": ArgobytesBrownieProject,
     "ApeSafe": ApeSafe,
     "Decimal": Decimal,
     "HexBytes": HexBytes,
     "eth_abi": eth_abi,
     "eth_utils": eth_utils,
+    "get_event_address": get_event_address,
     "get_event_contract": get_event_contract,
     "get_transaction": get_transaction,
-    "history": brownie_network.history,
+    "brownie_history": brownie_network.history,
     "load_contract": load_contract,
     "load_token": load_token,
     "load_token_or_contract": load_token_or_contract,
