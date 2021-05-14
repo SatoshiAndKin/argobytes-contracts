@@ -200,8 +200,26 @@ def lazy_contract(address, owner=None):
     return lazy(lambda: load_contract(address, _owner(owner)))
 
 
+_contract_cache = {}
+
+
 def load_contract(token_name_or_address: str, owner=None, block=None, force=False):
-    # TODO: cache by block
+    if block == "latest":
+        block = None
+    elif isinstance(token_name_or_address, str) and "." in token_name_or_address:
+        # TODO: PR against web3 to take a block argument
+        # https://github.com/ethereum/web3.py/issues/1984
+        warn("Looking up {token_name_or_address} against the latest block, not {block}")
+
+        block = None
+
+    cache_key = (token_name_or_address, owner, block)
+
+    if cache_key in _contract_cache:
+        contract = _contract_cache[cache_key]
+        contract._owner = owner
+
+        return contract
 
     if callable(token_name_or_address):
         # sometimes it is useful to get the address from a function
@@ -213,8 +231,10 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
 
     if isinstance(token_name_or_address, Contract) or isinstance(token_name_or_address, EthContract):
         # we were given a contract rather than an address or token name. return early
-        if owner:
-            token_name_or_address._owner = owner
+        token_name_or_address._owner = owner
+
+        _contract_cache[cache_key] = token_name_or_address
+
         return token_name_or_address
 
     if isinstance(token_name_or_address, int):
@@ -224,7 +244,11 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
     if token_name_or_address.lower() in ["eth", ZERO_ADDRESS, ETH_ADDRESS.lower()]:
         # TODO: just use weth for eth?
         # TODO: we need this to work on other chains like BSC and Matic
-        return EthContract()
+        contract = EthContract()
+
+        _contract_cache[cache_key] = contract
+
+        return contract
     elif token_name_or_address.lower() == "ankreth":
         # TODO: find a tokenlist with this on it
         token_name_or_address = to_checksum_address("0xe95a203b1a91a908f9b9ce46459d101078c2c3cb")
@@ -234,10 +258,6 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
 
     # this raises a ValueError if this is not an address or ENS name
     if "." in token_name_or_address:
-        if block is not None:
-            # TODO: PR against web3 to take a block argument
-            # https://github.com/ethereum/web3.py/issues/1984
-            warn("Looking up {token_name_or_address} against the latest block, not {block}")
         address = web3.ens.resolve(token_name_or_address)
     else:
         address = to_checksum_address(token_name_or_address)
@@ -251,6 +271,8 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
     # check if this is a proxy contract
     contract = check_for_proxy(contract, block, force=force)
     contract._owner = owner
+
+    _contract_cache[cache_key] = contract
 
     return contract
 

@@ -37,7 +37,7 @@ def fetch_transaction(txid, force=False):
     # TODO: brownie should probably have an option to do this for us. make a github issue
     # get the contract for parsing events from logs
     try:
-        load_contract(tx.receiver, force=force)
+        load_contract(tx.receiver, force=force, block=tx.block_number)
     except Exception:
         # not all contracts have verified source code. we'll have to make due
         pass
@@ -45,10 +45,12 @@ def fetch_transaction(txid, force=False):
     for l in tx.logs:
         # get more contracts for parsing events from logs
         try:
-            load_contract(l.address, force=force)
+            load_contract(l.address, force=force, block=tx.block_number)
         except Exception:
             # not all contracts have verified source code. we'll have to make due
             pass
+
+    # TODO: if (unknown) events, try loading contracts for all subcalls?
 
     # now that the contracts with the relevant events are loaded, we can fetch the transaction and have complete data
     # we build the receipt directly since chain.get_transaction does some other work
