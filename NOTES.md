@@ -114,3 +114,7 @@ Metamask Mnemonic
 0. allowed arbitrager
 
 - i think we will need a "max accounts" on the wallet so that we don't grow to big. do we have this already?
+
+====
+
+need to think more about the license. i think LGPL doesn't make sense with how smart contracts work. i want a license that keeps contracts open, but interfaces can be what the devs want.

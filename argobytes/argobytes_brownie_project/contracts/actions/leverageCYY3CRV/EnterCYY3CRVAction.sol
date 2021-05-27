@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-// TODO: rewrite this to be a target for ArgobytesFlashBorrower
 // TODO: consistent revert strings
 pragma solidity 0.8.4;
 pragma abicoder v2;
@@ -10,6 +9,7 @@ import {LeverageCYY3CRVConstants} from "./Constants.sol";
 
 contract EnterCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
 
+    // TODO: debug event. remove this before deploying
     event ArgobytesLogUint(address indexed proxy, uint8 id, uint256 data);
 
     // this function takes a lot of inputs so we put them into a struct
