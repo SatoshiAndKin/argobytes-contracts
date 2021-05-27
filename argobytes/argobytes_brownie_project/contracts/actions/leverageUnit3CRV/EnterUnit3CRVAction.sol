@@ -116,8 +116,6 @@ contract EnterUnit3CRVAction is ArgobytesTips, LeverageUnit3CRVConstants {
         temp = THREE_CRV_GAUGE_UNIT.deposit(temp);
         // temp is now this THREE_CRV_GAUGE_UNIT balance
 
-        flash_dai_amount += data.dai_flash_fee;
-
         // approve the vault (not the CDP manager) to take the 3crv-gauge-unit 
         THREE_CRV_GAUGE_UNIT.approve(UNIT_VAULT, temp);
 
@@ -126,6 +124,7 @@ contract EnterUnit3CRVAction is ArgobytesTips, LeverageUnit3CRVConstants {
         UNIT_CDP_MANAGER.join(THREE_CRV_GAUGE_UNIT, temp, data.mint_usdp);
 
         // trade USDP for DAI to pay back the flash loan
+        flash_dai_amount += data.dai_flash_fee;
         USDP_POOL.exchange_underlying(0, 1, data.mint_usdp, flash_dai_amount);
 
         // the flash loan provider will transfer DAI from here to pay bacak the loan
