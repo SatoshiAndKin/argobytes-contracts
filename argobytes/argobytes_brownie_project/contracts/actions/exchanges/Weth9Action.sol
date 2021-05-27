@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // TODO: WETH10 is out. it is backwards compatible with 9, but has more features. do we care about any of them?
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 

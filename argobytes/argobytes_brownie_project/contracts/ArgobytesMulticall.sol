@@ -10,7 +10,7 @@ If you need more complex ways to call multiple actions and move ETH around, you 
 
 TODO: think about this smore. make it re-use code in ArgobytesProxy? do we even need it anymore?
 */
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 

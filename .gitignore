@@ -1,5 +1,6 @@
 __pycache__
 .brownie
+.DS_Store
 .env
 .history
 .vscode/

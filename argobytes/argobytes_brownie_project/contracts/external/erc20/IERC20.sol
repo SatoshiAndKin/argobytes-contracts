@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
-import {IERC20 as OZ_IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
+import {IERC20} from "@OpenZeppelin/token/ERC20/IERC20.sol";
 
-interface CompleteIERC20 is OZ_IERC20 {
+interface CompleteIERC20 is IERC20 {
     // OZ is missing getter functions for the state variables
     function decimals() external view returns (uint256);
     function name() external view returns (string memory);
@@ -19,3 +19,4 @@ interface UnindexedIERC20 {
     // transfer event without indexes
     event Transfer(address from, address to, uint256 value);
 }
+ 

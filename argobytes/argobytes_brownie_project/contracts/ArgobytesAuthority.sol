@@ -6,7 +6,7 @@ This is a seperate contract from the proxy so that there's no chance of delegate
 
 The key includes msg.sender which should prevent most shinanengans.
 */
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
 import {ActionTypes} from "contracts/abstract/ActionTypes.sol";
 

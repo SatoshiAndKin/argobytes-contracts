@@ -467,6 +467,8 @@ ArgobytesProxy = lazy(lambda: ArgobytesBrownieProject.ArgobytesProxy)
 ArgobytesTrader = lazy(lambda: ArgobytesBrownieProject.ArgobytesTrader)
 EnterCYY3CRVAction = lazy(lambda: ArgobytesBrownieProject.EnterCYY3CRVAction)
 ExitCYY3CRVAction = lazy(lambda: ArgobytesBrownieProject.ExitCYY3CRVAction)
+EnterUnit3CRVAction = lazy(lambda: ArgobytesBrownieProject.EnterUnit3CRVAction)
+ExitUnit3CRVAction = lazy(lambda: ArgobytesBrownieProject.ExitUnit3CRVAction)
 
 # exchanges
 CurveFiAction = lazy(lambda: ArgobytesBrownieProject.CurveFiAction)

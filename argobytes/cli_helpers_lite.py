@@ -71,7 +71,10 @@ class BrownieAccount(click.ParamType):
                     ctx,
                 )
 
-        ctx.obj["lazy_contract_default_account"] = account
+        if isinstance(ctx.obj, dict):
+            ctx.obj["lazy_contract_default_account"] = account
+        else:
+            ctx.obj = {"lazy_contract_default_account": account}
 
         return account
 

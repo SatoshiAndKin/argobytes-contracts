@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // TODO: rewrite this to be a target for ArgobytesFlashBorrower
 // TODO: consistent revert strings
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 pragma abicoder v2;
 
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";
 
 import {ArgobytesTips} from "contracts/ArgobytesTips.sol";
 
-import {Constants} from "./Constants.sol";
+import {LeverageCYY3CRVConstants} from "./Constants.sol";
 
-contract ExitCYY3CRVAction is ArgobytesTips, Constants {
+contract ExitCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
 
     /// @notice leveraged cyy3crv -> y3crv -> 3crv -> stablecoins
     /// @dev Delegatecall this from ArgobytesFlashBorrower.flashBorrow

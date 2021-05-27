@@ -1,6 +1,6 @@
 // https://github.com/makerdao/developerguides/blob/master/Oasis/intro-to-oasis/intro-to-oasis-maker-otc.md
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 

@@ -7,7 +7,7 @@ https://github.com/Synthetixio/synthetix/blob/develop/contracts/Depot.sol#L20
 
 The depot is capable of trading SNX, too. However, that is only done on Testnets.
 */
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
 import {IERC20} from "contracts/external/erc20/IERC20.sol";
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";

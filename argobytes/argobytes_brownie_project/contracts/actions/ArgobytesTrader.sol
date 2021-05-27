@@ -3,13 +3,12 @@
 // Burns LiquidGasToken (or compatible contracts)
 // TODO: finish ArgobytesProxy refactor
 // TODO: rewrite this to use the FlashLoan EIP instead of dydx. this allows lots more tokens
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
-import {SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
+import {IERC20, SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
 
 import {ArgobytesAuth} from "contracts/abstract/ArgobytesAuth.sol";
 import {ArgobytesMulticall} from "contracts/ArgobytesMulticall.sol";
-import {IERC20} from "contracts/external/erc20/IERC20.sol";
 
 contract ArgobytesTrader {
     // TODO: use this event

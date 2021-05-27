@@ -10,27 +10,26 @@ import {IERC20} from "contracts/external/erc20/IERC20.sol";
 import {ICurvePool} from "contracts/external/curvefi/ICurvePool.sol";
 import {ICurveFeeDistribution} from "contracts/external/curvefi/ICurveFeeDistribution.sol";
 
-import {ICERC20} from "contracts/external/cream/ICERC20.sol";
-import {IComptroller} from "contracts/external/cream/IComptroller.sol";
+import {ICurveGaugeUnit, IUnitVault, IUnitCDPManager} from "contracts/external/unit/Unit.sol";
 
-import {IYVault} from "contracts/external/yearn/IYVault.sol";
- 
-abstract contract LeverageCYY3CRVConstants {
+abstract contract LeverageUnit3CRVConstants {
     // stablecoins
     IERC20 public constant DAI = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
     IERC20 public constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     IERC20 public constant USDT = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+    IERC20 public constant USDP = IERC20(0x1456688345527bE1f37E9e627DA0837D6f08C925);
 
     // curve
     IERC20 public constant THREE_CRV = IERC20(0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490);
     ICurvePool public constant THREE_CRV_POOL = ICurvePool(0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7);
+
+    // IERC20 public constant USDP_THREE_CRV = IERC20(0x7Eb40E450b9655f4B3cC4259BCC731c63ff55ae6);
+    ICurvePool public constant USDP_POOL = ICurvePool(0x42d7025938bEc20B69cBae5A77421082407f053A);
+
     ICurveFeeDistribution public constant THREE_CRV_FEE_DISTRIBUTION = ICurveFeeDistribution(0xA464e6DCda8AC41e03616F95f4BC98a13b8922Dc);
 
-    // cream
-    IComptroller public constant CREAM = IComptroller(0xAB1c342C7bf5Ec5F02ADEA1c2270670bCa144CbB);
-    ICERC20 public constant CY_Y_THREE_CRV = ICERC20(0x7589C9E17BCFcE1Ccaa1f921196FDa177F0207Fc);
-    ICERC20 public constant CY_DAI = ICERC20(0x8e595470Ed749b85C6F7669de83EAe304C2ec68F);
-
-    // yearn
-    IYVault public constant Y_THREE_CRV = IYVault(0x9cA85572E6A3EbF24dEDd195623F188735A5179f);
+    // unit
+    address public constant THREE_CRV_GAUGE_UNIT = address(0x4bfB2FA13097E5312B19585042FdbF3562dC8676);
+    address public constant UNIT_VAULT = address(0xb1cFF81b9305166ff1EFc49A129ad2AfCd7BCf19);
+    address public constant UNIT_CDP_MANAGER = address(0x0e13ab042eC5AB9Fc6F43979406088B9028F66fA);
 }

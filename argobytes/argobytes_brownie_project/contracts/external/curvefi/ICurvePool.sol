@@ -1,18 +1,22 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
 // TODO: each pool is slightly different. this is built to work with 3crv, but also has "exchange_underlying"
 interface ICurvePool {
 
     function A() external view returns (uint256 out);
 
+    function add_liquidity(uint256[2] memory amounts, uint256 min_mint_amount) external;
     function add_liquidity(uint256[3] memory amounts, uint256 min_mint_amount) external;
+    function add_liquidity(uint256[4] memory amounts, uint256 min_mint_amount) external;
 
     function admin_fee() external view returns (uint256 out);
 
     function balances(uint256 arg0) external view returns (uint256 out);
 
+    function calc_token_amount(uint256[2] memory amounts, bool is_deposit) external view returns (uint256 lp_tokens);
     function calc_token_amount(uint256[3] memory amounts, bool is_deposit) external view returns (uint256 lp_tokens);
+    function calc_token_amount(uint256[4] memory amounts, bool is_deposit) external view returns (uint256 lp_tokens);
 
     // this is int128 in vyper
     function coins(uint256 arg0) external view returns (address out);

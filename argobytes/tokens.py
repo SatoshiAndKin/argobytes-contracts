@@ -27,9 +27,11 @@ def get_claimable_3crv(account, fee_distribution, min_crv=50):
     return claimable
 
 
-def load_token(token_symbol: str):
+def load_token(token_symbol: str, owner=None):
     if token_symbol in _cache_token:
-        return _cache_token[token_symbol]
+        token = _cache_token[token_symbol]
+        token._owner = owner
+        return token
 
     if token_symbol == "eth":
         # TODO: think about this more. this isn't a contract
@@ -59,7 +61,7 @@ def load_token(token_symbol: str):
     _cache_decimals[token_address] = token_info.decimals
     _cache_symbols[token_address] = token_info.symbol
 
-    contract = load_contract(token_address)
+    contract = load_contract(token_address, owner=owner)
 
     _cache_token[token_symbol] = contract
 
@@ -101,9 +103,9 @@ def get_token_decimals(token_contract):
         # this is a proxy to a proxy to a gnosis safe
         decimals = 18
     elif hasattr(token_contract, "decimals"):
-        decimals = token_contract.decimals()
+        decimals = token_contract.decimals.call()
     elif hasattr(token_contract, "DECIMALS"):
-        decimals = token_contract.DECIMALS()
+        decimals = token_contract.DECIMALS.call()
     else:
         raise ValueError
 
@@ -196,7 +198,7 @@ def print_token_balances(balances, label=None, as_usd=False):
     pprint(dict_for_printing)
 
 
-def safe_token_approve(account, balances, spender, extra_balances=None, amount=2 ** 256 - 1, reset=False):
+def safe_token_approve(account, balances, spender, extra_balances=None, amount=2 ** 256 - 1, reset=False, required_confs=0):
     """For every token that we have a balance of, Approve unlimited (or a specified amount) for the spender."""
     if extra_balances is None:
         extra_balances = {}
@@ -229,7 +231,7 @@ def safe_token_approve(account, balances, spender, extra_balances=None, amount=2
         elif reset:
             # TODO: we should have a list of tokens that need this behavior instead of taking a kwarg
             print(f"Clearing {token_symbol} ({token.address}) approval...")
-            approve_tx = token.approve(spender, 0, {"from": account, "required_confs": 0, "gas_buffer": 1.3})
+            approve_tx = token.approve(spender, 0, {"from": account, "required_confs": required_confs, "gas_buffer": 1.3})
 
             pending_txs.append(approve_tx)
 
@@ -240,14 +242,15 @@ def safe_token_approve(account, balances, spender, extra_balances=None, amount=2
             # the amount was specified
             print(f"Approving {spender} for {amount} of {account}'s {token_symbol}...")
 
-        approve_tx = token.approve(spender, amount, {"from": account, "required_confs": 0, "gas_buffer": 1.3})
+        approve_tx = token.approve(spender, amount, {"from": account, "required_confs": required_confs, "gas_buffer": 1.3})
 
         pending_txs.append(approve_tx)
 
         # TODO: if debug, print this
         # approve_tx.info()
 
-    wait_for_confirmation(pending_txs)
+    if required_confs == 0:
+        wait_for_confirmation(pending_txs)
 
 
 def transfer_token(from_address, to, token, decimal_amount):

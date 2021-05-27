@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // base class for clone targets
 // contains a very powerful "execute" function! The owner is in full control!
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 

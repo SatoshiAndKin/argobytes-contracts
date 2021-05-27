@@ -12,6 +12,7 @@ from argobytes.web3_helpers import to_hex32
 def isolation(fn_isolation, monkeypatch):
     # test isolation, always use!
     # be careful though! you can still leak state in other fixtures use scope="module" or scope="session"
+    fn_isolation
 
     # standalone mode means exceptions bubble up
     monkeypatch.setenv("ARGOBYTES_CLICK_STANDALONE", "0")

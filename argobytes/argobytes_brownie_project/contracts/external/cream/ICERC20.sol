@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
 import {IERC20} from "../erc20/IERC20.sol";
 

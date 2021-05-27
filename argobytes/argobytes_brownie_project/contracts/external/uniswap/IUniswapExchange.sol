@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
 /* https://docs.uniswap.io/smart-contract-integration/interface#exchange-interface */
 
