@@ -29,7 +29,7 @@ abstract contract LeverageUnit3CRVConstants {
     ICurveFeeDistribution public constant THREE_CRV_FEE_DISTRIBUTION = ICurveFeeDistribution(0xA464e6DCda8AC41e03616F95f4BC98a13b8922Dc);
 
     // unit
-    address public constant THREE_CRV_GAUGE_UNIT = address(0x4bfB2FA13097E5312B19585042FdbF3562dC8676);
-    address public constant UNIT_VAULT = address(0xb1cFF81b9305166ff1EFc49A129ad2AfCd7BCf19);
-    address public constant UNIT_CDP_MANAGER = address(0x0e13ab042eC5AB9Fc6F43979406088B9028F66fA);
+    ICurveGaugeUnit public constant THREE_CRV_GAUGE_UNIT = ICurveGaugeUnit(0x4bfB2FA13097E5312B19585042FdbF3562dC8676);
+    IUnitVault public constant UNIT_VAULT = IUnitVault(0xb1cFF81b9305166ff1EFc49A129ad2AfCd7BCf19);
+    IUnitCDPManager public constant UNIT_CDP_MANAGER = IUnitCDPManager(0x0e13ab042eC5AB9Fc6F43979406088B9028F66fA);
 }

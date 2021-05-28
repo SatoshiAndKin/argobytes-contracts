@@ -30,7 +30,7 @@ contract EnterUnit3CRVAction is ArgobytesTips, LeverageUnit3CRVConstants {
     /// @dev Delegatecall this from ArgobytesFlashBorrower.flashBorrow
     function enter(
         EnterData calldata data
-    ) external payable returns (uint256) {
+    ) external payable {
         // we don't need auth here because this is only used via delegatecall that already has auth
 
         uint256 temp;  // we are going to be checking a lot of balances
@@ -111,17 +111,17 @@ contract EnterUnit3CRVAction is ArgobytesTips, LeverageUnit3CRVConstants {
         }
 
         // deposit 3crv into 3crv-gauge-unit
-        temp = threecrv.balanceOf(address(this))
-        THREE_CRV.approve(THREE_CRV_GAUGE_UNIT, temp);
+        temp = THREE_CRV.balanceOf(address(this));
+        THREE_CRV.approve(address(THREE_CRV_GAUGE_UNIT), temp);
         temp = THREE_CRV_GAUGE_UNIT.deposit(temp);
         // temp is now this THREE_CRV_GAUGE_UNIT balance
 
         // approve the vault (not the CDP manager) to take the 3crv-gauge-unit 
-        THREE_CRV_GAUGE_UNIT.approve(UNIT_VAULT, temp);
+        THREE_CRV_GAUGE_UNIT.approve(address(UNIT_VAULT), temp);
 
         // join deposits 3crv-gauge-unit and mints USDP
         // mint_usdp MUST be enough to cover flash_dai_amount
-        UNIT_CDP_MANAGER.join(THREE_CRV_GAUGE_UNIT, temp, data.mint_usdp);
+        UNIT_CDP_MANAGER.join(address(THREE_CRV_GAUGE_UNIT), temp, data.mint_usdp);
 
         // trade USDP for DAI to pay back the flash loan
         flash_dai_amount += data.dai_flash_fee;
@@ -130,6 +130,6 @@ contract EnterUnit3CRVAction is ArgobytesTips, LeverageUnit3CRVConstants {
         // the flash loan provider will transfer DAI from here to pay bacak the loan
         // the necessary DAI approval is already done
 
-        return liquidity;
+        // TODO: return something?
     }
 }
