@@ -8,15 +8,19 @@ apipkg==1.5
     # via execnet
 appdirs==1.4.4
     # via black
-arrow==1.0.3
+appnope==0.1.2
+    # via ipython
+arrow==1.1.0
     # via -r requirements.in
 asttokens==2.0.4
     # via vyper
-attrs==20.3.0
+attrs==21.2.0
     # via
     #   hypothesis
     #   jsonschema
     #   pytest
+backcall==0.2.0
+    # via ipython
 base58==2.1.0
     # via multiaddr
 bitarray==1.2.2
@@ -29,13 +33,13 @@ chardet==4.0.0
     # via requests
 click-log==0.3.2
     # via -r requirements.in
-click-option-group==0.5.2
+click-option-group==0.5.3
     # via -r requirements.in
 click-plugins==1.1.1
     # via -r requirements.in
 click-spinner==0.1.10
     # via -r requirements.in
-click==7.1.2
+click==8.0.1
     # via
     #   black
     #   click-log
@@ -45,8 +49,10 @@ cytoolz==0.11.0
     # via
     #   eth-keyfile
     #   eth-utils
-decorator==5.0.6
-    # via -r requirements.in
+decorator==5.0.9
+    # via
+    #   -r requirements.in
+    #   ipython
 eth-abi==2.1.1
     # via
     #   -r requirements.in
@@ -60,9 +66,9 @@ eth-account==0.5.4
     #   web3
 git+https://git.argobytes.com/git/brownie.git#egg=eth-brownie
     # via -r requirements.in
-eth-event==1.2.1
+eth-event==1.2.3
     # via eth-brownie
-eth-hash[pycryptodome]==0.2.0
+eth-hash[pycryptodome]==0.3.1
     # via
     #   eth-brownie
     #   eth-event
@@ -82,18 +88,19 @@ eth-typing==2.2.2
     #   eth-keys
     #   eth-utils
     #   web3
-eth-utils==1.9.5
+eth-utils==1.10.0
     # via
     #   eth-abi
     #   eth-account
     #   eth-brownie
     #   eth-event
+    #   eth-hash
     #   eth-keyfile
     #   eth-keys
     #   eth-rlp
     #   rlp
     #   web3
-execnet==1.8.0
+execnet==1.8.1
     # via pytest-xdist
 hexbytes==0.2.1
     # via
@@ -102,11 +109,11 @@ hexbytes==0.2.1
     #   eth-event
     #   eth-rlp
     #   web3
-hypothesis==5.41.3
+hypothesis==6.13.9
     # via eth-brownie
 idna==2.10
     # via requests
-importlib-metadata==4.0.1
+importlib-metadata==4.3.1
     # via -r requirements.in
 inflection==0.5.0
     # via
@@ -116,6 +123,12 @@ iniconfig==1.1.1
     # via pytest
 ipfshttpclient==0.7.0a1
     # via web3
+ipython-genutils==0.2.0
+    # via traitlets
+ipython==7.24.0
+    # via -r requirements.in
+jedi==0.18.0
+    # via ipython
 jsonschema==3.2.0
     # via
     #   mythx-models
@@ -126,8 +139,8 @@ lazy-object-proxy==1.6.0
     # via lazy-load
 lru-dict==1.1.7
     # via web3
-more-itertools==8.7.0
-    # via pytest
+matplotlib-inline==0.1.2
+    # via ipython
 multiaddr==0.0.9
     # via ipfshttpclient
 mypy-extensions==0.4.3
@@ -140,16 +153,26 @@ packaging==20.9
     # via pytest
 parsimonious==0.8.1
     # via eth-abi
+parso==0.8.2
+    # via jedi
 pathspec==0.8.1
     # via black
+pexpect==4.8.0
+    # via ipython
+pickleshare==0.7.5
+    # via ipython
 pluggy==0.13.1
     # via pytest
-prompt-toolkit==3.0.8
-    # via eth-brownie
-protobuf==3.15.6
+prompt-toolkit==3.0.18
+    # via
+    #   eth-brownie
+    #   ipython
+protobuf==3.17.1
     # via web3
 psutil==5.8.0
     # via eth-brownie
+ptyprocess==0.7.0
+    # via pexpect
 py-solc-ast==1.2.8
     # via eth-brownie
 py-solc-x==1.1.0
@@ -164,11 +187,12 @@ pycryptodome==3.10.1
     #   eth-hash
     #   eth-keyfile
     #   vyper
-pygments-lexer-solidity==0.5.1
+pygments-lexer-solidity==0.7.0
     # via eth-brownie
-pygments==2.8.1
+pygments==2.9.0
     # via
     #   eth-brownie
+    #   ipython
     #   pygments-lexer-solidity
 pyjwt==1.7.1
     # via pythx
@@ -180,7 +204,7 @@ pytest-forked==1.3.0
     # via pytest-xdist
 pytest-xdist==1.34.0
     # via eth-brownie
-pytest==6.0.1
+pytest==6.2.4
     # via
     #   eth-brownie
     #   pytest-forked
@@ -196,7 +220,7 @@ pythx==1.6.1
     # via eth-brownie
 pyyaml==5.4.1
     # via eth-brownie
-regex==2020.11.13
+regex==2021.4.4
     # via black
 requests==2.25.1
     # via
@@ -218,7 +242,7 @@ semantic-version==2.8.5
     #   tokenlists
     #   vvm
     #   vyper
-six==1.15.0
+six==1.16.0
     # via
     #   asttokens
     #   jsonschema
@@ -227,7 +251,7 @@ six==1.15.0
     #   protobuf
     #   pytest-xdist
     #   python-dateutil
-sortedcontainers==2.3.0
+sortedcontainers==2.4.0
     # via hypothesis
 git+https://git.argobytes.com/git/py-tokenlists.git#egg=tokenlists
     # via -r requirements.in
@@ -237,24 +261,30 @@ toml==0.10.2
     #   pytest
 toolz==0.11.1
     # via cytoolz
-tqdm==4.53.0
+tqdm==4.61.0
     # via eth-brownie
-typed-ast==1.4.2
+traitlets==5.0.5
+    # via
+    #   ipython
+    #   matplotlib-inline
+typed-ast==1.4.3
     # via black
-typing-extensions==3.7.4.3
+typing-extensions==3.10.0.0
     # via black
-urllib3==1.26.4
+urllib3==1.26.5
     # via requests
 varint==1.0.2
     # via multiaddr
 vvm==0.1.0
     # via eth-brownie
-vyper==0.2.11
+vyper==0.2.12
     # via eth-brownie
 wcwidth==0.2.5
     # via prompt-toolkit
 web3==5.18.0
-    # via eth-brownie
+    # via
+    #   -r requirements.in
+    #   eth-brownie
 websockets==8.1
     # via web3
 zipp==3.4.1

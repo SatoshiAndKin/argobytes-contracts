@@ -6,7 +6,9 @@ click-spinner
 decorator
 eth-abi
 importlib_metadata
+ipython
 lazy_load
+web3==5.18.0
 
 # TODO: this is no longer compatible with brownie (web3 version conflict)
 # ape-safe

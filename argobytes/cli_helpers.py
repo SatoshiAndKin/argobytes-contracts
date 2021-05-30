@@ -33,6 +33,7 @@ COMMON_HELPERS = {
     "load_token": load_token,
     "load_token_or_contract": load_token_or_contract,
     "sync_tx_cache": sync_tx_cache,
+    "web3": brownie.web3,
 }
 
 

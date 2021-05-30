@@ -14,21 +14,15 @@ This entrypoint will handle setting these accounts up and then starting brownie.
 """
 import os
 
-import click
-import click_log
+import IPython
 from brownie import network as brownie_network
 from brownie import project, web3
-from brownie._cli.console import Console
 from brownie.network import gas_price
 from brownie.network.gas.strategies import GasNowScalingStrategy
-from click_plugins import with_plugins
 from flashbots import flashbot
-from pkg_resources import iter_entry_points
 
 from argobytes.cli_helpers import COMMON_HELPERS, get_project_root
-from argobytes.cli_helpers_lite import BROWNIE_ACCOUNT, logger
-from argobytes.contracts import get_or_clone, get_or_create, load_contract
-from argobytes.tokens import load_token_or_contract, print_start_and_end_balance, print_token_balances
+from argobytes.cli_helpers_lite import logger
 
 
 def cli(
@@ -98,9 +92,7 @@ def cli(
 
 def console(ctx):
     """Interactive shell."""
-    shell = Console(project=ctx.obj["brownie_project"], extra_locals=COMMON_HELPERS)
-
-    shell.interact(banner="Argobytes environment is ready.", exitmsg="Goodbye!")
+    IPython.start_ipython(argv=[], user_ns=COMMON_HELPERS)
 
 
 def donate():
