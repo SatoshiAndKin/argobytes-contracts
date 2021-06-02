@@ -126,16 +126,13 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
 
 
 def get_or_clone_flash_borrower(account, borrower_salt="", clone_salt="", factory_salt=""):
-    raise NotImplementedError(
-        "only get_factory and get_flash_borrower. if we create, users might be surprised by a deploy. deploy should always be done via deploy script"
-    )
     factory = get_or_create_factory(account, factory_salt)
 
     # we don't actually want the proxy. flash_borrower does more
     # proxy = get_or_create_proxy(account, salt)
     flash_borrower = get_or_create_flash_borrower(account, borrower_salt)
 
-    clone = get_or_clone(account, factory, flash_borrower, clone_salt)
+    clone = get_or_clone(account, factory, flash_borrower, salt=clone_salt)
 
     print(f"clone owned by {account}:", clone)
 
@@ -156,6 +153,7 @@ def get_or_create(default_account, contract, no_create=False, salt="", construct
     if web3.eth.getCode(contract_address).hex() == "0x":
         if no_create:
             raise Exception(f"{contract} is not yet deployed. This is likely an issue with configuration.")
+
         deploy_tx = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account})
 
         deployed_contract_address = deploy_tx.return_value
@@ -174,15 +172,15 @@ def get_or_create(default_account, contract, no_create=False, salt="", construct
 
 
 def get_or_create_factory(default_account, salt):
-    return get_or_create(default_account, ArgobytesFactory, salt, None)
+    return get_or_create(default_account, ArgobytesFactory, salt=salt)
 
 
 def get_or_create_proxy(default_account, salt):
-    return get_or_create(default_account, ArgobytesProxy, salt, None)
+    return get_or_create(default_account, ArgobytesProxy, salt=salt)
 
 
 def get_or_create_flash_borrower(default_account, salt):
-    return get_or_create(default_account, ArgobytesFlashBorrower, salt, None)
+    return get_or_create(default_account, ArgobytesFlashBorrower, salt=salt)
 
 
 def lazy_contract(address, owner=None):

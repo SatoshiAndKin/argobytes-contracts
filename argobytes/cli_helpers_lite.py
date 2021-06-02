@@ -164,17 +164,23 @@ def brownie_connect(func, *args, default_network=None, **kwargs):
 
     connect_fn = ctx.obj["brownie_connect_fn"]
 
+    if default_network:
+        ctx.obj["default_brownie_network"] = default_network
+
     connect_fn()
 
     return func(*args, **kwargs)
 
 
-@decorator
-def with_dry_run(func, account, tokens=None, *args, confirm_delay=6, **kwargs):
+def with_dry_run(func, account, *args, tokens=None, confirm_delay_secs=6, **kwargs):
     """Run a function against a fork network and then confirm before doing it for real.
 
     since we have an account, the @brownie_connect() decorator isn't needed
     """
+    import time
+    from argobytes.tokens import print_start_and_end_balance
+
+    assert account, "no account!"
 
     def do_func():
         with print_start_and_end_balance(account, tokens):
@@ -186,14 +192,14 @@ def with_dry_run(func, account, tokens=None, *args, confirm_delay=6, **kwargs):
         do_func()
     """
 
-    prompt_for_confirmation(account)
+    # prompt_for_confirmation(account)
 
     click.secho(
-        f"\nI hope it did what you wanted on our forked net, because we are doing it for real in {confirm_delay} seconds.\n\n",
-        fg=red,
+        f"\nI hope it did what you wanted on our forked net, because we are doing it for real in {confirm_delay_secs} seconds.\n\n",
+        fg="red",
     )
-    click.secho("[Ctrl C] to cancel", blink=True, bold=True, fg=red)
-    time.sleep(confirm_delay)
+    click.secho("[Ctrl C] to cancel", blink=True, bold=True, fg="red")
+    time.sleep(confirm_delay_secs)
 
     do_func()
 
