@@ -2,7 +2,6 @@
 pragma solidity 0.8.4;
 
 abstract contract ImmutablyOwnedClone {
-
     modifier onlyOwner() {
         require(owner() == msg.sender, "!owner");
         _;

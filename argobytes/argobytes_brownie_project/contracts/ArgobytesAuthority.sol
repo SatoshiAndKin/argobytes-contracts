@@ -10,8 +10,7 @@ pragma solidity 0.8.4;
 
 import {ActionTypes} from "contracts/abstract/ActionTypes.sol";
 
-
-contract ArgobytesAuthority{
+contract ArgobytesAuthority {
     // key is from `createKey`
     mapping(bytes => bool) authorizations;
 

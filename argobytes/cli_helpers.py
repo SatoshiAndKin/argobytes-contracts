@@ -15,6 +15,8 @@ from hexbytes import HexBytes
 from argobytes.contracts import load_contract, ArgobytesBrownieProject, ArgobytesInterfaces
 from argobytes.tokens import load_token, load_token_or_contract
 from argobytes.transactions import get_event_address, get_event_contract, get_transaction, sync_tx_cache
+from argobytes.cli_helpers_lite import logger
+
 
 COMMON_HELPERS = {
     "brownie": brownie,
@@ -55,9 +57,9 @@ def prompt_loud_confirmation(account):
     print("*" * 80)
 
     if account is None:
-        logger.warn(f"\nWARNING! Continuing past this will spend ETH!\n")
+        logger.warning("\nWARNING! Continuing past this will spend ETH!\n")
     else:
-        logger.warn(f"\nWARNING! Continuing past this will spend ETH from {account}!\n")
+        logger.warning("\nWARNING! Continuing past this will spend ETH from %s!\n", account)
 
     # TODO: print the active network/chain id
     click.confirm("\nDo you want to continue?\n", abort=True)

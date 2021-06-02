@@ -11,7 +11,6 @@ import {ArgobytesTips} from "contracts/ArgobytesTips.sol";
 import {LeverageCYY3CRVConstants} from "./Constants.sol";
 
 contract ExitCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
-
     /// @notice leveraged cyy3crv -> y3crv -> 3crv -> stablecoins
     /// @dev Delegatecall this from ArgobytesFlashBorrower.flashBorrow
     function exit(
@@ -24,7 +23,7 @@ contract ExitCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
 
         uint256 flash_dai_amount = DAI.balanceOf(address(this));
 
-        uint256 temp;  // we are going to check a lot of balances
+        uint256 temp; // we are going to check a lot of balances
 
         // send any ETH as a tip to the developer
         if (msg.value > 0) {
@@ -90,9 +89,7 @@ contract ExitCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
 
         // add the fee
         // flash loaning max DAI is likely impossible, but even if this rolls over, things revert
-        unchecked {
-            flash_dai_amount += dai_flash_fee;
-        }
+        unchecked {flash_dai_amount += dai_flash_fee;}
 
         // burn enough 3crv to get back enough DAI to pay back the flash loan
         // we could allow exiting to DAI, USDC, or USDT here, but i think exiting with 3crv makes the most sense
@@ -129,9 +126,7 @@ contract ExitCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
                 require(THREE_CRV.transfer(tip_address, tip_3crv), "ExitCYY3CRVAction !tip_3crv");
 
                 // no need for checked math since we do a comparison just before this
-                unchecked {
-                    temp -= tip_3crv;
-                }
+                unchecked {temp -= tip_3crv;}
             }
         }
 

@@ -26,7 +26,8 @@ abstract contract LeverageUnit3CRVConstants {
     // IERC20 public constant USDP_THREE_CRV = IERC20(0x7Eb40E450b9655f4B3cC4259BCC731c63ff55ae6);
     ICurvePool public constant USDP_POOL = ICurvePool(0x42d7025938bEc20B69cBae5A77421082407f053A);
 
-    ICurveFeeDistribution public constant THREE_CRV_FEE_DISTRIBUTION = ICurveFeeDistribution(0xA464e6DCda8AC41e03616F95f4BC98a13b8922Dc);
+    ICurveFeeDistribution public constant THREE_CRV_FEE_DISTRIBUTION =
+        ICurveFeeDistribution(0xA464e6DCda8AC41e03616F95f4BC98a13b8922Dc);
 
     // unit
     ICurveGaugeUnit public constant THREE_CRV_GAUGE_UNIT = ICurveGaugeUnit(0x4bfB2FA13097E5312B19585042FdbF3562dC8676);

@@ -171,6 +171,7 @@ Run:
     isort .
     autoflake -r --in-place --remove-all-unused-imports argobytes scripts setup.py tests
     black --line-length 120 argobytes scripts setup.py tests
+    yarn run prettier
 
 TODO: automate this
 
@@ -182,7 +183,6 @@ This project wouldn't be possible without so many other projects.
 - [Solidity](https://solidity.readthedocs.io/)
 - [Geth](https://github.com/ethereum/go-ethereum)
 - [Kollateral](https://www.kollateral.co/)
-- [Liquid Gas Token](https://lgt.exchange)
 - [OpenZeppelin](https://openzeppelin.com/contracts)
 - [Ganache-cli](https://github.com/trufflesuite/ganache-cli)
 - [Etherscan](https://etherscan.io)

@@ -3,14 +3,11 @@ pragma solidity 0.8.4;
 
 import {IERC20} from "contracts/library/UniversalERC20.sol";
 
-import {
-    IUniswapExchange
-} from "contracts/external/uniswap/IUniswapExchange.sol";
+import {IUniswapExchange} from "contracts/external/uniswap/IUniswapExchange.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
 contract UniswapV1Action is AbstractERC20Exchange {
-
     function tradeEtherToToken(
         address to,
         address exchange,
@@ -19,9 +16,11 @@ contract UniswapV1Action is AbstractERC20Exchange {
     ) external payable {
         // def ethToTokenTransferInput(min_tokens: uint256, deadline: timestamp, recipient: address) -> uint256
         // solium-disable-next-line security/no-block-members
-        IUniswapExchange(exchange).ethToTokenTransferInput{
-            value: address(this).balance
-        }(dest_min_tokens, block.timestamp, to);
+        IUniswapExchange(exchange).ethToTokenTransferInput{value: address(this).balance}(
+            dest_min_tokens,
+            block.timestamp,
+            to
+        );
     }
 
     // TODO: allow trading between 2 factories?
@@ -63,7 +62,6 @@ contract UniswapV1Action is AbstractERC20Exchange {
         uint256 dest_min_tokens
     ) external {
         uint256 src_balance = IERC20(src_token).balanceOf(address(this));
-
 
         IERC20(src_token).approve(exchange, src_balance);
 

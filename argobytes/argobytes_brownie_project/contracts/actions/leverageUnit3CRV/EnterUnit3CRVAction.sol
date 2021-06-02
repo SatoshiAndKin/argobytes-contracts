@@ -8,7 +8,6 @@ import {ArgobytesTips} from "contracts/ArgobytesTips.sol";
 import {LeverageUnit3CRVConstants} from "./Constants.sol";
 
 contract EnterUnit3CRVAction is ArgobytesTips, LeverageUnit3CRVConstants {
-
     // this function takes a lot of inputs so we put them into a struct
     // this isn't as gas efficient, but it compiles without "stack too deep" errors
     struct EnterData {
@@ -28,12 +27,10 @@ contract EnterUnit3CRVAction is ArgobytesTips, LeverageUnit3CRVConstants {
 
     /// @notice stablecoins -> 3crv -> 3crv-gauge-unit <-> borrow usdp
     /// @dev Delegatecall this from ArgobytesFlashBorrower.flashBorrow
-    function enter(
-        EnterData calldata data
-    ) external payable {
+    function enter(EnterData calldata data) external payable {
         // we don't need auth here because this is only used via delegatecall that already has auth
 
-        uint256 temp;  // we are going to be checking a lot of balances
+        uint256 temp; // we are going to be checking a lot of balances
 
         // we should already have DAI from the flash loan
         uint256 flash_dai_amount = DAI.balanceOf(address(this));
@@ -75,16 +72,12 @@ contract EnterUnit3CRVAction is ArgobytesTips, LeverageUnit3CRVConstants {
                 USDT.transferFrom(data.sender, address(this), data.usdt);
 
                 // approve the exchange
-                USDT.approve(address(THREE_CRV_POOL), data.usdt);    
+                USDT.approve(address(THREE_CRV_POOL), data.usdt);
             }
 
             // trade dai/usdc/usdt into 3crv
             THREE_CRV_POOL.add_liquidity(
-                [
-                    flash_dai_amount + data.dai,
-                    data.usdc,
-                    data.usdt
-                ],
+                [flash_dai_amount + data.dai, data.usdc, data.usdt],
                 data.min_3crv_mint_amount
             );
         }
@@ -116,7 +109,7 @@ contract EnterUnit3CRVAction is ArgobytesTips, LeverageUnit3CRVConstants {
         temp = THREE_CRV_GAUGE_UNIT.deposit(temp);
         // temp is now this THREE_CRV_GAUGE_UNIT balance
 
-        // approve the vault (not the CDP manager) to take the 3crv-gauge-unit 
+        // approve the vault (not the CDP manager) to take the 3crv-gauge-unit
         THREE_CRV_GAUGE_UNIT.approve(address(UNIT_VAULT), temp);
 
         // join deposits 3crv-gauge-unit and mints USDP

@@ -11,10 +11,7 @@ interface IDepot {
 
     // function depositSynths(uint amount) external;
 
-    function synthsReceivedForEther(uint256 amount)
-        external
-        view
-        returns (uint256);
+    function synthsReceivedForEther(uint256 amount) external view returns (uint256);
 
     // function withdrawMyDepositedSynths() external;
 
@@ -29,28 +26,11 @@ interface IDepot {
 
     event MaxEthPurchaseUpdated(uint256 amount);
     event FundsWalletUpdated(address newFundsWallet);
-    event Exchange(
-        string fromCurrency,
-        uint256 fromAmount,
-        string toCurrency,
-        uint256 toAmount
-    );
+    event Exchange(string fromCurrency, uint256 fromAmount, string toCurrency, uint256 toAmount);
     event SynthWithdrawal(address user, uint256 amount);
-    event SynthDeposit(
-        address indexed user,
-        uint256 amount,
-        uint256 indexed depositIndex
-    );
-    event SynthDepositRemoved(
-        address indexed user,
-        uint256 amount,
-        uint256 indexed depositIndex
-    );
-    event SynthDepositNotAccepted(
-        address user,
-        uint256 amount,
-        uint256 minimum
-    );
+    event SynthDeposit(address indexed user, uint256 amount, uint256 indexed depositIndex);
+    event SynthDepositRemoved(address indexed user, uint256 amount, uint256 indexed depositIndex);
+    event SynthDepositNotAccepted(address user, uint256 amount, uint256 minimum);
     event MinimumDepositAmountUpdated(uint256 amount);
     event NonPayableContract(address indexed receiver, uint256 amount);
     event ClearedDeposit(

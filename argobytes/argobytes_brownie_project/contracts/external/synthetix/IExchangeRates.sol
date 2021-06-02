@@ -11,29 +11,17 @@ interface IExchangeRates {
         bytes32 destinationCurrencyKey
     ) external view returns (uint256);
 
-    function rateForCurrency(bytes32 currencyKey)
-        external
-        view
-        returns (uint256);
+    function rateForCurrency(bytes32 currencyKey) external view returns (uint256);
 
-    function ratesForCurrencies(bytes32[] calldata currencyKeys)
-        external
-        view
-        returns (uint256[] memory);
+    function ratesForCurrencies(bytes32[] calldata currencyKeys) external view returns (uint256[] memory);
 
     function rateIsStale(bytes32 currencyKey) external view returns (bool);
 
     function rateIsFrozen(bytes32 currencyKey) external view returns (bool);
 
-    function anyRateIsStale(bytes32[] calldata currencyKeys)
-        external
-        view
-        returns (bool);
+    function anyRateIsStale(bytes32[] calldata currencyKeys) external view returns (bool);
 
-    function getCurrentRoundId(bytes32 currencyKey)
-        external
-        view
-        returns (uint256);
+    function getCurrentRoundId(bytes32 currencyKey) external view returns (uint256);
 
     function effectiveValueAtRound(
         bytes32 sourceCurrencyKey,
@@ -50,18 +38,12 @@ interface IExchangeRates {
         uint256 timediff
     ) external view returns (uint256);
 
-    function ratesAndStaleForCurrencies(bytes32[] calldata currencyKeys)
-        external
-        view
-        returns (uint256[] memory, bool);
+    function ratesAndStaleForCurrencies(bytes32[] calldata currencyKeys) external view returns (uint256[] memory, bool);
 
     function rateAndTimestampAtRound(bytes32 currencyKey, uint256 roundId)
         external
         view
         returns (uint256 rate, uint256 time);
 
-    function lastRateUpdateTimes(bytes32 currencyKey)
-        external
-        view
-        returns (uint256);
+    function lastRateUpdateTimes(bytes32 currencyKey) external view returns (uint256);
 }

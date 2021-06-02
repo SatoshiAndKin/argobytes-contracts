@@ -54,12 +54,7 @@ contract CurveFiAction is AbstractERC20Exchange {
         IERC20(src_token).approve(exchange, src_amount);
 
         // do the trade
-        ICurvePool(exchange).exchange_underlying(
-            i,
-            j,
-            src_amount,
-            dest_min_tokens
-        );
+        ICurvePool(exchange).exchange_underlying(i, j, src_amount, dest_min_tokens);
 
         uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
 

@@ -10,11 +10,7 @@ pragma solidity 0.8.4;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
-import {
-    IERC20,
-    UniversalERC20,
-    SafeERC20
-} from "contracts/library/UniversalERC20.sol";
+import {IERC20, UniversalERC20, SafeERC20} from "contracts/library/UniversalERC20.sol";
 
 contract AbstractERC20Exchange {
     using Address for address;
@@ -28,10 +24,7 @@ contract AbstractERC20Exchange {
     
     I'll write a blog post about this one day, but all the tokens doing fancy things for front-running prevention have made this annoying.
     */
-    function clearApproval(
-        address token,
-        address who
-    ) external {
+    function clearApproval(address token, address who) external {
         IERC20(token).approve(who, 0);
     }
 

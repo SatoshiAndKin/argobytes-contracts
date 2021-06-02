@@ -8,7 +8,6 @@ import {ArgobytesTips} from "contracts/ArgobytesTips.sol";
 import {LeverageCYY3CRVConstants} from "./Constants.sol";
 
 contract EnterCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
-
     // TODO: debug event. remove this before deploying
     event ArgobytesLogUint(address indexed proxy, uint8 id, uint256 data);
 
@@ -31,12 +30,10 @@ contract EnterCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
 
     /// @notice stablecoins -> 3crv -> y3crv -> leveraged cyy3crv
     /// @dev Delegatecall this from ArgobytesFlashBorrower.flashBorrow
-    function enter(
-        EnterData calldata data
-    ) external payable returns (uint256) {
+    function enter(EnterData calldata data) external payable returns (uint256) {
         // TODO: we don't need auth here anymore. this is only used via delegatecall that already has auth. but think about it more
 
-        uint256 temp;  // we are going to be checking a lot of balances
+        uint256 temp; // we are going to be checking a lot of balances
 
         // we should already have DAI from the flash loan
         uint256 flash_dai_amount = DAI.balanceOf(address(this));
@@ -79,16 +76,12 @@ contract EnterCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
                 USDT.transferFrom(data.sender, address(this), data.usdt);
 
                 // approve the exchange
-                USDT.approve(address(THREE_CRV_POOL), data.usdt);    
+                USDT.approve(address(THREE_CRV_POOL), data.usdt);
             }
 
             // trade dai/usdc/usdt into 3crv
             THREE_CRV_POOL.add_liquidity(
-                [
-                    flash_dai_amount + data.dai,
-                    data.usdc,
-                    data.usdt
-                ],
+                [flash_dai_amount + data.dai, data.usdc, data.usdt],
                 data.min_3crv_mint_amount
             );
         }
@@ -125,7 +118,10 @@ contract EnterCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
 
         // grab the data.sender's y3crv
         if (data.y3crv > 0) {
-            require(Y_THREE_CRV.transferFrom(data.sender, address(this), data.y3crv), "EnterCYY3CRVAction !Y_THREE_CRV");
+            require(
+                Y_THREE_CRV.transferFrom(data.sender, address(this), data.y3crv),
+                "EnterCYY3CRVAction !Y_THREE_CRV"
+            );
         }
 
         // setup cream
@@ -156,7 +152,8 @@ contract EnterCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
         emit ArgobytesLogUint(address(this), 5, flash_dai_amount);
 
         // make sure we can borrow enough DAI from cream
-        (uint error, uint liquidity, uint shortfall) = CREAM.getHypotheticalAccountLiquidity(address(this), address(CY_DAI), 0, flash_dai_amount);
+        (uint256 error, uint256 liquidity, uint256 shortfall) =
+            CREAM.getHypotheticalAccountLiquidity(address(this), address(CY_DAI), 0, flash_dai_amount);
         require(error == 0, "EnterCYY3CRVAction CREAM error");
         require(shortfall == 0, "EnterCYY3CRVAction CREAM shortfall");
         require(liquidity >= data.min_cream_liquidity, "EnterCYY3CRVAction !min_cream_liquidity");

@@ -36,9 +36,9 @@ contract ArgobytesTrader {
     }
 
     /**
-    * @dev ArgobytesProxy delegatecall actions can use this, but only safely from the owner
-    * @notice Make atomic arbitrage trades
-    */
+     * @dev ArgobytesProxy delegatecall actions can use this, but only safely from the owner
+     * @notice Make atomic arbitrage trades
+     */
     function atomicArbitrage(
         address borrow_from,
         Borrow[] calldata borrows,
@@ -56,18 +56,9 @@ contract ArgobytesTrader {
             // TODO: think about this and approvals more
             // TODO: do we want this address(0) check? i think it will be helpful in the case where the clone is holding the coins
             if (borrow_from == address(0)) {
-                SafeERC20.safeTransfer(
-                    borrows[i].token,
-                    borrows[i].dest,
-                    borrows[i].amount
-                );
+                SafeERC20.safeTransfer(borrows[i].token, borrows[i].dest, borrows[i].amount);
             } else {
-                SafeERC20.safeTransferFrom(
-                    borrows[i].token,
-                    borrow_from,
-                    borrows[i].dest,
-                    borrows[i].amount
-                );
+                SafeERC20.safeTransferFrom(borrows[i].token, borrow_from, borrows[i].dest, borrows[i].amount);
             }
         }
 
@@ -93,10 +84,7 @@ contract ArgobytesTrader {
             uint256 end_balance = borrows[j].token.balanceOf(borrow_from);
 
             // make sure the balance increased
-            require(
-                end_balance >= start_balances[j],
-                "ArgobytesTrader: BAD_ARBITRAGE"
-            );
+            require(end_balance >= start_balances[j], "ArgobytesTrader: BAD_ARBITRAGE");
         }
 
         // TODO: refund excess ETH?
@@ -119,18 +107,9 @@ contract ArgobytesTrader {
         for (uint256 i = 0; i < withdraws.length; i++) {
             // TODO: think about this and approvals more
             if (withdraw_from == address(0)) {
-                SafeERC20.safeTransfer(
-                    withdraws[i].token,
-                    withdraws[i].dest,
-                    withdraws[i].amount
-                );
+                SafeERC20.safeTransfer(withdraws[i].token, withdraws[i].dest, withdraws[i].amount);
             } else {
-                SafeERC20.safeTransferFrom(
-                    withdraws[i].token,
-                    withdraw_from,
-                    withdraws[i].dest,
-                    withdraws[i].amount
-                );
+                SafeERC20.safeTransferFrom(withdraws[i].token, withdraw_from, withdraws[i].dest, withdraws[i].amount);
             }
         }
 
@@ -141,7 +120,11 @@ contract ArgobytesTrader {
     }
 
     /// @dev safety check for the end of your atomicTrade or atomicArbitrage actions
-    function requireERC20Balance(IERC20 token, address who, uint256 min_balance) public {
+    function requireERC20Balance(
+        IERC20 token,
+        address who,
+        uint256 min_balance
+    ) public {
         require(token.balanceOf(who) >= min_balance, "ArgobytesTrader !balance");
     }
 
@@ -164,11 +147,6 @@ contract ArgobytesTrader {
         // TODO: make sure this multicall contract is approved
         require(false, "ArgobytesTrader.safeAtomicArbitrage !argobytes_multicall");
 
-        atomicArbitrage(
-            borrow_from,
-            borrows,
-            argobytes_multicall,
-            actions
-        );
+        atomicArbitrage(borrow_from, borrows, argobytes_multicall, actions);
     }
 }

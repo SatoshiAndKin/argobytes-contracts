@@ -69,10 +69,7 @@ interface IKyberNetworkProxy {
 
     function getUserCapInWei(address user) external view returns (uint256);
 
-    function getUserCapInTokenWei(address user, IERC20 token)
-        external
-        view
-        returns (uint256);
+    function getUserCapInTokenWei(address user, IERC20 token) external view returns (uint256);
 
     function maxGasPrice() external view returns (uint256);
 

@@ -2,14 +2,11 @@
 pragma solidity 0.8.4;
 
 import {IERC20} from "contracts/library/UniversalERC20.sol";
-import {
-    IUniswapV2Router02
-} from "contracts/external/uniswap/IUniswapV2Router02.sol";
+import {IUniswapV2Router02} from "contracts/external/uniswap/IUniswapV2Router02.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
 contract UniswapV2Action is AbstractERC20Exchange {
-
     /*
     // we don't need this. just use router.swapExactETHForTokens as your action
     function tradeEtherToToken(
@@ -50,13 +47,7 @@ contract UniswapV2Action is AbstractERC20Exchange {
         ) external returns (uint[] memory amounts);
         */
         // solium-disable-next-line security/no-block-members
-        IUniswapV2Router02(router).swapExactTokensForTokens(
-            src_balance,
-            dest_min_tokens,
-            path,
-            to,
-            block.timestamp
-        );
+        IUniswapV2Router02(router).swapExactTokensForTokens(src_balance, dest_min_tokens, path, to, block.timestamp);
     }
 
     function tradeTokenToEther(
@@ -75,12 +66,6 @@ contract UniswapV2Action is AbstractERC20Exchange {
             returns (uint[] memory amounts);
         */
         // solium-disable-next-line security/no-block-members
-        IUniswapV2Router02(router).swapExactTokensForETH(
-            src_balance,
-            dest_min_tokens,
-            path,
-            to,
-            block.timestamp
-        );
+        IUniswapV2Router02(router).swapExactTokensForETH(src_balance, dest_min_tokens, path, to, block.timestamp);
     }
 }

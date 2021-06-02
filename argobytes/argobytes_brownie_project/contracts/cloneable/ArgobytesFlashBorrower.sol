@@ -21,7 +21,6 @@ abstract contract ArgobytesFlashBorrowerEvents {
 }
 
 contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents, IERC3156FlashBorrower {
-
     /// @dev diamond storage
     bytes32 constant FLASH_BORROWER_POSITION = keccak256("argobytes.storage.FlashBorrower.lender");
 
@@ -71,10 +70,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         // check auth (owner is always allowed to use any lender and any action)
         if (msg.sender != owner()) {
             requireAuth(action.target, action.call_type, BytesLib.toBytes4(action.target_calldata));
-            require(
-                s.allowed_lenders[lender],
-                "FlashBorrower.flashBorrow !lender"
-            );
+            require(s.allowed_lenders[lender], "FlashBorrower.flashBorrow !lender");
         }
 
         // we could pass the calldata to the lender and have them pass it back, but that seems less safe
@@ -98,7 +94,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         delete s.pending_action;
         delete s.pending_return;
     }
-    
+
     /// @dev ERC-3156 Flash loan callback
     function onFlashLoan(
         address initiator,
@@ -106,27 +102,15 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         uint256 amount,
         uint256 fee,
         bytes calldata data
-    ) external override returns(bytes32) {
+    ) external override returns (bytes32) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
         // auth
         // pending_loan is like the opposite of a re-entrancy guard
-        require(
-            s.pending_flashloan,
-            "FlashBorrower.onFlashLoan !pending_loan"
-        );
-        require(
-            msg.sender == s.pending_lender,
-            "FlashBorrower.onFlashLoan !pending_lender"
-        );
-        require(
-            initiator == address(this),
-            "FlashBorrower.onFlashLoan !initiator"
-        );
-        require(
-            Address.isContract(s.pending_action.target),
-            "FlashBorrower.onFlashLoan !target"
-        );
+        require(s.pending_flashloan, "FlashBorrower.onFlashLoan !pending_loan");
+        require(msg.sender == s.pending_lender, "FlashBorrower.onFlashLoan !pending_lender");
+        require(initiator == address(this), "FlashBorrower.onFlashLoan !initiator");
+        require(Address.isContract(s.pending_action.target), "FlashBorrower.onFlashLoan !target");
 
         // clear pending_loan now in case the delegatecall tries to do something sneaky
         // though i think storing things in state will protect things better

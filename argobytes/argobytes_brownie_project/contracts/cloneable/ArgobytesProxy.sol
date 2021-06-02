@@ -11,7 +11,6 @@ import {AddressLib} from "contracts/library/AddressLib.sol";
 import {BytesLib} from "contracts/library/BytesLib.sol";
 
 contract ArgobytesProxy is ArgobytesAuth {
-
     struct Action {
         address target;
         ActionTypes.Call call_type;
@@ -29,13 +28,9 @@ contract ArgobytesProxy is ArgobytesAuth {
      * Call arbitrarty functions on arbitrary contracts.
      * WARNING! This is essentially a backdoor that allows for anything to happen. This isn't DeFi. This is a personal wallet.
      * The owner is allowed to call anything. This is helpful in case funds get somehow stuck.
-     * The owner can authorize other contracts 
+     * The owner can authorize other contracts
      */
-    function execute(Action calldata action)
-        public
-        payable
-        returns (bytes memory response)
-    {
+    function execute(Action calldata action) public payable returns (bytes memory response) {
         // check auth
         if (msg.sender != owner()) {
             requireAuth(action.target, action.call_type, BytesLib.toBytes4(action.target_calldata));
@@ -43,10 +38,7 @@ contract ArgobytesProxy is ArgobytesAuth {
 
         // re-entrancy protection?
 
-        require(
-            Address.isContract(action.target),
-            "ArgobytesProxy.execute !target"
-        );
+        require(Address.isContract(action.target), "ArgobytesProxy.execute !target");
 
         // uncheckedDelegateCall is safe because we just checked that `target` is a contract
         if (action.call_type == ActionTypes.Call.DELEGATE) {
@@ -66,11 +58,7 @@ contract ArgobytesProxy is ArgobytesAuth {
     }
 
     // TODO: write example of using this to deploy a contract, then calling a function on it
-    function executeMany(Action[] calldata actions)
-        public
-        payable
-        returns (bytes[] memory responses)
-    {
+    function executeMany(Action[] calldata actions) public payable returns (bytes[] memory responses) {
         responses = new bytes[](actions.length);
 
         for (uint256 i = 0; i < actions.length; i++) {

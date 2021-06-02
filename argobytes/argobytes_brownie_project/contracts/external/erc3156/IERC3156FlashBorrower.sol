@@ -2,7 +2,6 @@
 pragma solidity 0.8.4;
 
 interface IERC3156FlashBorrower {
-
     /**
      * @dev Receive a flash loan.
      * @param initiator The initiator of the loan.

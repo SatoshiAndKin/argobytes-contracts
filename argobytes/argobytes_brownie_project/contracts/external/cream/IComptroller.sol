@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 interface IComptroller {
     function checkMembership(address account, address cToken) external view returns (bool);
 
-    function enterMarkets(address[] memory cTokens) external returns (uint[] memory);
+    function enterMarkets(address[] memory cTokens) external returns (uint256[] memory);
 
     /**
      * @notice Determine the current account liquidity wrt collateral requirements
@@ -12,7 +12,14 @@ interface IComptroller {
                 account liquidity in excess of collateral requirements,
      *          account shortfall below collateral requirements)
      */
-    function getAccountLiquidity(address account) external view returns (uint, uint, uint);
+    function getAccountLiquidity(address account)
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        );
 
     /**
      * @notice Determine what the account liquidity would be if the given amounts were redeemed/borrowed
@@ -27,6 +34,14 @@ interface IComptroller {
     function getHypotheticalAccountLiquidity(
         address account,
         address cTokenModify,
-        uint redeemTokens,
-        uint borrowAmount) external view returns (uint, uint, uint);
+        uint256 redeemTokens,
+        uint256 borrowAmount
+    )
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        );
 }

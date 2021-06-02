@@ -21,10 +21,7 @@ contract Weth9Action {
 
         // send WETH to the next contract
         // we know _WETH9 returns a bool, so no need to use safeTransfer
-        require(
-            IWETH9(weth).transfer(to, balance),
-            "Weth9Action.wrap_all_to: transfer failed"
-        );
+        require(IWETH9(weth).transfer(to, balance), "Weth9Action.wrap_all_to: transfer failed");
     }
 
     // there is no need for returnLeftoverToken. this will always convert everything

@@ -14,17 +14,11 @@ pragma solidity 0.8.4;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
-
 contract ArgobytesMulticall {
-
     // TODO: there's also cases where we want to do a specific amount. think more about this
     // TODO: i think we can just make a different Actor contract for them
     // maybe use a "Amount" entry and have a bytes field that we decode for any extra data?
-    enum ValueMode {
-        None,
-        Balance,
-        Msg
-    }
+    enum ValueMode {None, Balance, Msg}
 
     // TODO: have a "requireSuccess" bool?
     struct Action {

@@ -5,26 +5,10 @@ pragma solidity 0.8.4;
 
 interface IUniswapExchange {
     // Events
-    event TokenPurchase(
-        address indexed buyer,
-        uint256 indexed eth_sold,
-        uint256 indexed tokens_bought
-    );
-    event EthPurchase(
-        address indexed buyer,
-        uint256 indexed tokens_sold,
-        uint256 indexed eth_bought
-    );
-    event AddLiquidity(
-        address indexed provider,
-        uint256 indexed eth_amount,
-        uint256 indexed token_amount
-    );
-    event RemoveLiquidity(
-        address indexed provider,
-        uint256 indexed eth_amount,
-        uint256 indexed token_amount
-    );
+    event TokenPurchase(address indexed buyer, uint256 indexed eth_sold, uint256 indexed tokens_bought);
+    event EthPurchase(address indexed buyer, uint256 indexed tokens_sold, uint256 indexed eth_bought);
+    event AddLiquidity(address indexed provider, uint256 indexed eth_amount, uint256 indexed token_amount);
+    event RemoveLiquidity(address indexed provider, uint256 indexed eth_amount, uint256 indexed token_amount);
 
     // Address of ERC20 token sold on this exchange
     function tokenAddress() external view returns (address token);
@@ -47,31 +31,16 @@ interface IUniswapExchange {
     ) external returns (uint256, uint256);
 
     // Get Prices
-    function getEthToTokenInputPrice(uint256 eth_sold)
-        external
-        view
-        returns (uint256 tokens_bought);
+    function getEthToTokenInputPrice(uint256 eth_sold) external view returns (uint256 tokens_bought);
 
-    function getEthToTokenOutputPrice(uint256 tokens_bought)
-        external
-        view
-        returns (uint256 eth_sold);
+    function getEthToTokenOutputPrice(uint256 tokens_bought) external view returns (uint256 eth_sold);
 
-    function getTokenToEthInputPrice(uint256 tokens_sold)
-        external
-        view
-        returns (uint256 eth_bought);
+    function getTokenToEthInputPrice(uint256 tokens_sold) external view returns (uint256 eth_bought);
 
-    function getTokenToEthOutputPrice(uint256 eth_bought)
-        external
-        view
-        returns (uint256 tokens_sold);
+    function getTokenToEthOutputPrice(uint256 eth_bought) external view returns (uint256 tokens_sold);
 
     // Trade ETH to ERC20
-    function ethToTokenSwapInput(uint256 min_tokens, uint256 deadline)
-        external
-        payable
-        returns (uint256 tokens_bought);
+    function ethToTokenSwapInput(uint256 min_tokens, uint256 deadline) external payable returns (uint256 tokens_bought);
 
     function ethToTokenTransferInput(
         uint256 min_tokens,
@@ -79,10 +48,7 @@ interface IUniswapExchange {
         address recipient
     ) external payable returns (uint256 tokens_bought);
 
-    function ethToTokenSwapOutput(uint256 tokens_bought, uint256 deadline)
-        external
-        payable
-        returns (uint256 eth_sold);
+    function ethToTokenSwapOutput(uint256 tokens_bought, uint256 deadline) external payable returns (uint256 eth_sold);
 
     function ethToTokenTransferOutput(
         uint256 tokens_bought,
@@ -208,10 +174,7 @@ interface IUniswapExchange {
 
     function approve(address _spender, uint256 _value) external returns (bool);
 
-    function allowance(address _owner, address _spender)
-        external
-        view
-        returns (uint256);
+    function allowance(address _owner, address _spender) external view returns (uint256);
 
     function balanceOf(address _owner) external view returns (uint256);
 

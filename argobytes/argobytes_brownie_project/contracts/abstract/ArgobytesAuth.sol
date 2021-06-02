@@ -13,10 +13,8 @@ import {BytesLib} from "contracts/library/BytesLib.sol";
 import {ActionTypes} from "./ActionTypes.sol";
 import {ImmutablyOwnedClone} from "./ImmutablyOwnedClone.sol";
 
-
 // TODO: should this be able to receive a flash loan?
 abstract contract ArgobytesAuth is ImmutablyOwnedClone {
-
     /// @dev diamond storage
     bytes32 constant ARGOBYTES_AUTH_POSITION = keccak256("argobytes.storage.ArgobytesAuth");
 
@@ -34,10 +32,7 @@ abstract contract ArgobytesAuth is ImmutablyOwnedClone {
         }
     }
 
-    event AuthorityTransferred(
-        address indexed previous_authority,
-        address indexed new_authority
-    );
+    event AuthorityTransferred(address indexed previous_authority, address indexed new_authority);
 
     modifier auth(ActionTypes.Call call_type) {
         // do auth first. that is safest
@@ -71,7 +66,11 @@ abstract contract ArgobytesAuth is ImmutablyOwnedClone {
         authorized = s.authority.canCall(sender, target, call_type, sig);
     }
 
-    function requireAuth(address target, ActionTypes.Call call_type, bytes4 sig) internal view {
+    function requireAuth(
+        address target,
+        ActionTypes.Call call_type,
+        bytes4 sig
+    ) internal view {
         require(isAuthorized(msg.sender, call_type, target, sig), "ArgobytesAuth: 403");
     }
 

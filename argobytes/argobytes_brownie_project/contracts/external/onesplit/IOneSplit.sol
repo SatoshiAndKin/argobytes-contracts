@@ -58,11 +58,7 @@ abstract contract IOneSplit is IOneSplitConsts {
         uint256 amount,
         uint256 parts,
         uint256 disableFlags
-    )
-        public
-        virtual
-        view
-        returns (uint256 returnAmount, uint256[] memory distribution);
+    ) public view virtual returns (uint256 returnAmount, uint256[] memory distribution);
 
     function swap(
         address fromToken,
@@ -71,5 +67,5 @@ abstract contract IOneSplit is IOneSplitConsts {
         uint256 minReturn,
         uint256[] memory distribution,
         uint256 disableFlags
-    ) public virtual payable;
+    ) public payable virtual;
 }

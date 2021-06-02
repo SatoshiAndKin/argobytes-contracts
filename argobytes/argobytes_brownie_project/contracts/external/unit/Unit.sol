@@ -8,10 +8,12 @@ interface ICurveGaugeUnit is IERC20 {
     function deposit(uint256 amount) external returns (uint256);
 }
 
-interface IUnitVault {
-
-}
+interface IUnitVault {}
 
 interface IUnitCDPManager {
-    function join(address collateral, uint256 collateral_amount, uint256 usdp_amount) external;
+    function join(
+        address collateral,
+        uint256 collateral_amount,
+        uint256 usdp_amount
+    ) external;
 }

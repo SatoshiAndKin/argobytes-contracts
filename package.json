@@ -1,9 +1,14 @@
 {
   "devDependencies": {
     "ganache-cli": "^6.12.2",
+    "prettier": "^2.3.0",
+    "prettier-plugin-solidity": "^1.0.0-beta.11",
     "solc": "0.8.4"
   },
   "funDependencies": {
     "eth95": "^0.1.2"
+  },
+  "scripts": {
+    "prettier": "prettier --write 'argobytes/**/contracts/**/*.sol' --print-width 120"
   }
 }
