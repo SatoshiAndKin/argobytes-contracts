@@ -2,7 +2,7 @@ from brownie import accounts
 
 
 def test_deploy_clone(argobytes_factory, argobytes_proxy):
-    tx = argobytes_factory.createClone(argobytes_proxy, "")
+    tx = argobytes_factory.createClone19(argobytes_proxy, "")
 
     # tx.info()
 
@@ -27,7 +27,7 @@ def test_deploy_clones(argobytes_factory, argobytes_proxy):
         3,
     ]
 
-    tx = argobytes_factory.createClones(argobytes_proxy, salts)
+    tx = argobytes_factory.createClone19s(argobytes_proxy, salts)
 
     # tx.info()
 

@@ -1,6 +1,5 @@
 from decimal import Decimal
 
-import pytest
 from brownie import accounts
 
 from argobytes.cli.leverage_cyy3crv import simple_enter, simple_exit
@@ -8,7 +7,6 @@ from argobytes.contracts import load_contract
 from argobytes.tokens import transfer_token
 
 
-@pytest.mark.require_network("mainnet-fork")
 def test_simple_scripts(
     click_test_runner,
     exit_cyy3crv_action,

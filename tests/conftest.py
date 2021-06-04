@@ -1,5 +1,5 @@
 import pytest
-from brownie import network, project, web3
+from brownie import accounts, network, project, web3
 from brownie.test.fixtures import PytestBrownieFixtures
 from click.testing import CliRunner
 

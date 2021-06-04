@@ -83,9 +83,9 @@ def test_singleton_factory():
     assert deployed == ZERO_ADDRESS
 
 
-def test_get_or_create(ArgobytesFactory):
-    contract_a = get_or_create(accounts[0], ArgobytesFactory)
+def test_get_or_create(ArgobytesFactory19):
+    contract_a = get_or_create(accounts[0], ArgobytesFactory19)
 
-    contract_b = get_or_create(accounts[0], ArgobytesFactory)
+    contract_b = get_or_create(accounts[0], ArgobytesFactory19)
 
-    assert contract_a == contract_b
+    assert contract_a.address == contract_b.address

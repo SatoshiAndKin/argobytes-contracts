@@ -1,4 +1,4 @@
-from brownie import Contract
+from brownie import accounts, Contract
 
 
 # TODO: parameterize this
@@ -33,7 +33,7 @@ def test_3pool_trade(curve_fi_action, curve_fi_3pool, onesplit_helper):
 
 
 # TODO: this is failing but 3pool works. ganache-bug?
-def test_compound_trade(curve_fi_action, curve_fi_compound, onesplit_helper):
+def test_compound_trade(cdai_erc20, cusdc_erc20, curve_fi_action, curve_fi_compound, onesplit_helper):
     a_id = 0
     b_id = 1
 
@@ -51,6 +51,10 @@ def test_compound_trade(curve_fi_action, curve_fi_compound, onesplit_helper):
     onesplit_helper(1e18, token_a, curve_fi_action)
 
     # TODO: check balances
+
+    # TODO: compound has some issues with ganache-cli. calling mint(0) brings in some state that might fix things
+    # cdai_erc20.mint(0, {"from": accounts[0]})
+    # cusdc_erc20.mint(0, {"from": accounts[0]})
 
     curve_fi_action.trade(curve_fi_compound, a_id, b_id, curve_fi_action, token_a, token_b, 1)
 
