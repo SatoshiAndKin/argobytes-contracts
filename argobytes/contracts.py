@@ -446,32 +446,3 @@ SingletonFactory = lazy_contract("0xce0042B868300000d44A59004Da54A005ffdcf9f")
 DyDxFlashLender = lazy_contract("0x6bdC1FCB2F13d1bA9D26ccEc3983d5D4bf318693")
 
 OneSplit = lazy_contract("1proto.eth")
-
-ArgobytesBrownieProject = lazy(lambda: brownie.project.ArgobytesBrownieProject)
-
-ArgobytesInterfaces = lazy(lambda: ArgobytesBrownieProject.interface)
-
-# lazy load these because they aren't available at import time here
-# TODO: use long project path in case multiple projects are loaded?
-ArgobytesAuthority = lazy(lambda: ArgobytesBrownieProject.ArgobytesAuthority)
-ArgobytesFactory = lazy(lambda: ArgobytesBrownieProject.ArgobytesFactory)
-ArgobytesMulticall = lazy(lambda: ArgobytesBrownieProject.ArgobytesMulticall)
-
-# clonable
-ArgobytesFlashBorrower = lazy(lambda: ArgobytesBrownieProject.ArgobytesFlashBorrower)
-ArgobytesProxy = lazy(lambda: ArgobytesBrownieProject.ArgobytesProxy)
-
-# actions
-ArgobytesTrader = lazy(lambda: ArgobytesBrownieProject.ArgobytesTrader)
-EnterCYY3CRVAction = lazy(lambda: ArgobytesBrownieProject.EnterCYY3CRVAction)
-ExitCYY3CRVAction = lazy(lambda: ArgobytesBrownieProject.ExitCYY3CRVAction)
-EnterUnit3CRVAction = lazy(lambda: ArgobytesBrownieProject.EnterUnit3CRVAction)
-ExitUnit3CRVAction = lazy(lambda: ArgobytesBrownieProject.ExitUnit3CRVAction)
-
-# exchanges
-CurveFiAction = lazy(lambda: ArgobytesBrownieProject.CurveFiAction)
-ExampleAction = lazy(lambda: ArgobytesBrownieProject.ExampleAction)
-KyberAction = lazy(lambda: ArgobytesBrownieProject.KyberAction)
-UniswapV1Action = lazy(lambda: ArgobytesBrownieProject.UniswapV1Action)
-UniswapV2Action = lazy(lambda: ArgobytesBrownieProject.UniswapV2Action)
-Weth9Action = lazy(lambda: ArgobytesBrownieProject.Weth9Action)

@@ -1,11 +1,28 @@
 import pytest
-from brownie import *
+from brownie import network, project, web3
+from brownie.test.fixtures import PytestBrownieFixtures
 from click.testing import CliRunner
 
 from argobytes.addresses import *
+from argobytes.cli_helpers import get_project_root
 from argobytes.contracts import get_or_clone, get_or_create, load_contract
 from argobytes.tokens import load_token_or_contract
 from argobytes.web3_helpers import to_hex32
+
+
+@pytest.fixture(autouse=True, scope="session")
+def setup_brownie_mainnet_fork(pytestconfig):
+    project_root = get_project_root()
+
+    # setup the project and network the same way brownie's run helper does
+    brownie_project = project.load(project_root)
+    brownie_project.load_config()
+
+    network.connect("mainnet-fork")
+
+    # TODO: brownie does some other setup for hypothesis and multiple-processes
+    fixtures = PytestBrownieFixtures(pytestconfig, brownie_project)
+    pytestconfig.pluginmanager.register(fixtures, "brownie-fixtures")
 
 
 @pytest.fixture(autouse=True, scope="function")
@@ -41,8 +58,12 @@ def argobytes_factory(ArgobytesFactory):
 
 @pytest.fixture(scope="function")
 def argobytes_proxy(ArgobytesProxy):
-    # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
-    return get_or_create(accounts[0], ArgobytesProxy)
+    # on mainnet we use the (bytes32) salt to generate custom addresses with lots of zero bytes
+    # for our tests, we just need an address with the first byte being a zero
+    # TODO: cache this
+    salt = NotImplemented
+
+    return get_or_create(accounts[0], ArgobytesProxy, salt=salt)
 
 
 @pytest.fixture(scope="function")
@@ -53,8 +74,12 @@ def argobytes_proxy_clone(argobytes_factory, argobytes_proxy):
 
 @pytest.fixture(scope="function")
 def argobytes_flash_borrower(ArgobytesFlashBorrower):
-    # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests=
-    return get_or_create(accounts[0], ArgobytesFlashBorrower)
+    # on mainnet we use the (bytes32) salt to generate custom addresses with lots of zero bytes
+    # for our tests, we just need an address with the first byte being a zero
+    # TODO: cache this
+    salt = NotImplemented
+
+    return get_or_create(accounts[0], ArgobytesFlashBorrower, salt=salt)
 
 
 @pytest.fixture(scope="function")

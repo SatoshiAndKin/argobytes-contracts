@@ -6,7 +6,6 @@ pragma solidity 0.8.4;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
 import {ArgobytesAuthority} from "contracts/ArgobytesAuthority.sol";
-import {ArgobytesFactory} from "contracts/ArgobytesFactory.sol";
 import {AddressLib} from "contracts/library/AddressLib.sol";
 import {BytesLib} from "contracts/library/BytesLib.sol";
 
