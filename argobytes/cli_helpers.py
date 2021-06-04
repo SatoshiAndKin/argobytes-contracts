@@ -1,22 +1,23 @@
 """CLI helpers that you should import inside the logic parts (outside of where click decorators are)."""
 from decimal import Decimal
 from pathlib import Path
-from lazy_load import lazy
 
 import brownie
 import click
 import eth_abi
 import eth_utils
+import IPython
 
 # from ape_safe import ApeSafe
-from brownie import _cli, project
 from brownie import network as brownie_network
+from brownie import project
 from hexbytes import HexBytes
+from lazy_load import lazy
 
+from argobytes.cli_helpers_lite import logger
 from argobytes.contracts import load_contract
 from argobytes.tokens import load_token, load_token_or_contract
 from argobytes.transactions import get_event_address, get_event_contract, get_transaction, sync_tx_cache
-from argobytes.cli_helpers_lite import logger
 
 
 ArgobytesBrownieProject = lazy(lambda: project.ArgobytesBrownieProject)
@@ -45,11 +46,13 @@ COMMON_HELPERS = {
 
 
 def debug_shell(extra_locals, banner="Argobytes debug time.", exitmsg=""):
-    """You probably want to use this with 'debug_shell(locals())'."""
+    """You probably want to use this with 'debug_shell(locals())'.
+
+    TODO: use ipython
+    """
     extra_locals.update(COMMON_HELPERS)
 
-    shell = _cli.console.Console(project.ArgobytesContractsProject, extra_locals)
-    shell.interact(banner=banner, exitmsg=exitmsg)
+    IPython.start_ipython(argv=[], user_ns=extra_locals)
 
 
 def get_project_root() -> Path:

@@ -1,3 +1,4 @@
+from logging import debug
 import os
 
 import click
@@ -48,13 +49,12 @@ def cli(
 
 
 @cli.command()
-@click.pass_context
 @brownie_connect()
-def console(ctx):
+def console():
     """Interactive shell."""
-    from .cli_logic import console
+    from argobytes.cli_helpers import debug_shell
 
-    console(ctx)
+    debug_shell({})
 
 
 @cli.command()
