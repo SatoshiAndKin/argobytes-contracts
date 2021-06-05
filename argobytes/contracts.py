@@ -387,7 +387,7 @@ def check_for_proxy(contract, block, force=False):
     return contract
 
 
-def find_create2_salt(sender: str, initcode_hash: str, leading_zeros: int = 1, salt: int = None) -> bytes:
+def find_create2_salt(sender: bytes, initcode_hash: bytes, leading_zeros: int = 1) -> bytes:
     """Find a salt that creates an address with leading zero bytes.
 
     :param salt: the first salt to try
@@ -397,24 +397,18 @@ def find_create2_salt(sender: str, initcode_hash: str, leading_zeros: int = 1, s
     assert isinstance(leading_zeros, int)
 
     if not leading_zeros:
-        if salt is None:
-            return to_bytes32(text="")
+        return to_bytes32(text="")
 
-        return to_bytes(salt)
-
-    if salt is None:
-        # start scanning at a random address
-        salt = random.randint(0, 2 ** 256)
+    # start scanning at a random address
+    salt = random.randint(0, 2 ** 256)
 
     prefix = b'\x00' * leading_zeros
-
-    sender = to_bytes(hexstr=str(sender))
 
     # TODO: GPU accelerated awesomess
     while True:
         salt_bytes = to_bytes32(salt)
 
-        found_address_bytes, _ = mk_contract_address2_bytes(sender, salt_bytes, initcode_hash)
+        found_address_bytes = mk_contract_address2_bytes(sender, salt_bytes, initcode_hash)
 
         # TODO: check found_address_bytes and return if theres a match
         if found_address_bytes.startswith(prefix):
@@ -454,12 +448,12 @@ def hash_initcode(initcode: str) -> bytes:
 
 
 def mk_contract_address2(sender: str, initcode: str, leading_zeros: int = 0, salt: str = None):
-    sender = to_bytes(hexstr=sender)
+    sender_bytes = to_bytes(hexstr=sender)
 
     initcode_hash = hash_initcode(initcode)
 
     if salt is None:
-        salt = find_create2_salt(sender, initcode_hash, leading_zeros=leading_zeros, salt=salt)
+        salt = find_create2_salt(sender_bytes, initcode_hash, leading_zeros=leading_zeros)
     elif isinstance(salt, bytes):
         pass
     elif salt.startswith("0x"):
@@ -469,7 +463,7 @@ def mk_contract_address2(sender: str, initcode: str, leading_zeros: int = 0, sal
     else:
         raise ValueError("Unrecognized type for salt")
 
-    address_bytes = mk_contract_address2_bytes(sender, salt, initcode_hash)
+    address_bytes = mk_contract_address2_bytes(sender_bytes, salt, initcode_hash)
 
     return to_checksum_address(address_bytes), salt
 
