@@ -78,10 +78,10 @@ def get_deterministic_contract(default_account, contract, salt="", constructor_a
 
 def get_or_clone(owner, argobytes_factory, deployed_contract, salt=""):
     """Fetches an existing clone or creates a new clone."""
-    clone_exists, clone_address = argobytes_factory.cloneExists(deployed_contract, salt, owner)
+    clone_exists, clone_address = argobytes_factory.clone19Exists(deployed_contract, salt, owner)
 
     if not clone_exists:
-        clone_address = argobytes_factory.createClone(deployed_contract, salt).return_value
+        argobytes_factory.createClone19(deployed_contract, salt)
 
     return Contract.from_abi(deployed_contract._name, clone_address, deployed_contract.abi, owner)
 
@@ -91,7 +91,7 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
     my_proxys_proxies = []
 
     for salt in salts:
-        (proxy_exists, proxy_address) = argobytes_factory.cloneExists(deployed_contract, salt, owner)
+        (proxy_exists, proxy_address) = argobytes_factory.clone19Exists(deployed_contract, salt, owner)
 
         my_proxys_proxies.append(proxy_address)
 

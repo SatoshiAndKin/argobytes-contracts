@@ -47,15 +47,15 @@ contract ArgobytesFactory19 {
             // the first 10 of these bytes are for setup. the contract bytecode is 10 bytes shorter
             // TODO: DOCUMENT the "2c" at the start
             // TODO: document the "72" at the end
-            mstore(code, 0x3d602c80600a3d3981f3363d3d373d3d3d363d72000000000000000000000000)
+            mstore(code, 0x3d604080600a3d3981f3363d3d373d3d3d363d72000000000000000000000000)
             // target contract that the clone delegates all calls to (20+19 = 39 bytes)
             // addresses are 20 bytes, but we require the use of create2 salts to get a 19 byte address
             // everything is accessed in 32 byte chunks, so we need to shift it by 32-(20-1) bytes (104 bits)
             // lots of devs use hex, but I just don't think quickly in hex so I use decimal.
             mstore(add(code, 20), shl(104, target))
             // end of the contract (39+15 bytes = 54)
-            // TODO: document the "2c" in here
-            mstore(add(code, 39), 0x5af43d82803e903d91602c57fd5bf30000000000000000000000000000000000)
+            // TODO: document the "2a" in here
+            mstore(add(code, 39), 0x5af43d82803e903d91602a57fd5bf30000000000000000000000000000000000)
             // finally, add the owner to the end (54+20 bytes = 74)
             // 1. so we get a unique address from CREATE2
             // 2. so it can be used as an immutable owner
@@ -102,11 +102,12 @@ contract ArgobytesFactory19 {
 
             // start of the contract (20 bytes)
             // 10 of these bytes are for setup. the contract bytecode is 10 bytes shorter
-            mstore(code, 0x3d604180600a3d3981f3363d3d373d3d3d363d72000000000000000000000000)
+            // this is the same as the official contract except the contract length is 20 bytes longer
+            mstore(code, 0x3d604080600a3d3981f3363d3d373d3d3d363d72000000000000000000000000)
             // target contract that the clone delegates all calls to (20+19 = 39 bytes)
             mstore(add(code, 20), shl(104, target))
             // end of the contract (39+15 = 54 bytes)
-            mstore(add(code, 39), 0x5af43d82803e903d91602c57fd5bf30000000000000000000000000000000000)
+            mstore(add(code, 39), 0x5af43d82803e903d91602a57fd5bf30000000000000000000000000000000000)
             // add the owner to the end (54+20 = 74 bytes)
             // 1. so we get a unique address from CREATE2
             // 2. so it can be used as an immutable owner
@@ -140,7 +141,7 @@ contract ArgobytesFactory19 {
             mstore(clone, 0x363d3d373d3d3d363d7200000000000000000000000000000000000000000000)
             // target is a 19 byte address. (32-19) * 8 = 104
             mstore(add(clone, 10), shl(104, target))
-            mstore(add(clone, 29), 0x5af43d82803e903d91602c57fd5bf30000000000000000000000000000000000)
+            mstore(add(clone, 29), 0x5af43d82803e903d91602a57fd5bf30000000000000000000000000000000000)
             // we could copy the owner, but theres no real need
             // mstore(add(clone, 44), owner)
 
