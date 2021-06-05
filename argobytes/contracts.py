@@ -78,10 +78,16 @@ def get_deterministic_contract(default_account, contract, salt="", constructor_a
 
 def get_or_clone(owner, argobytes_factory, deployed_contract, salt=""):
     """Fetches an existing clone or creates a new clone."""
-    clone_exists, clone_address = argobytes_factory.clone19Exists(deployed_contract, salt, owner)
+    try:
+        clone_address = argobytes_factory.createClone19.call(deployed_contract, salt, owner)
+    except Exception as e:
+        # clone already exists
+        clone_address = decode_single('address', e.return_value)
+    else:
+        # clone does not exist
+        deploy_tx = argobytes_factory.createClone19(deployed_contract, salt, owner)
 
-    if not clone_exists:
-        argobytes_factory.createClone19(deployed_contract, salt)
+        deploy_tx.info()
 
     return Contract.from_abi(deployed_contract._name, clone_address, deployed_contract.abi, owner)
 
