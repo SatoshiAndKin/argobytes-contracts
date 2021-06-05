@@ -2,23 +2,13 @@ from collections import namedtuple
 from decimal import Decimal
 from pprint import pprint
 
-import brownie
-import click
-from brownie import Contract, accounts
-from brownie.network.web3 import _resolve_address
-from eth_utils import to_int
-from lazy_load import lazy
-
 from argobytes.cli_helpers import logger
 from argobytes.contracts import (
     ArgobytesAction,
     ArgobytesActionCallType,
-    ArgobytesFactory19,
-    ArgobytesFlashBorrower,
     ArgobytesBrownieProject,
     ArgobytesInterfaces,
     DyDxFlashLender,
-    EnterCYY3CRVAction,
     get_or_clone,
     get_or_create,
     get_or_create_flash_borrower,
@@ -53,7 +43,7 @@ def atomic_enter(account, min_3crv_to_claim):
     # deploy our contracts if necessary
     argobytes_factory = get_or_create_factory(account)
     argobytes_flash_borrower = get_or_create_flash_borrower(account)
-    enter_cyy3crv_action = get_or_create(account, EnterCYY3CRVAction)
+    enter_cyy3crv_action = get_or_create(account, ArgobytesBrownieProject.EnterCYY3CRVAction)
 
     # get the clone for the account
     argobytes_clone = get_or_clone(account, argobytes_factory, argobytes_flash_borrower)

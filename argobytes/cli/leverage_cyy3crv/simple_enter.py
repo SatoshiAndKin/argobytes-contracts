@@ -8,9 +8,9 @@ from eth_utils import to_int
 from argobytes.contracts import (
     ArgobytesAction,
     ArgobytesActionCallType,
+    ArgobytesBrownieProject,
     ArgobytesInterfaces,
     DyDxFlashLender,
-    EnterCYY3CRVAction,
     get_or_clone,
     get_or_create,
     load_contract,
@@ -27,7 +27,7 @@ def simple_enter(account):
     min_3crv_to_claim = os.environ.get("MIN_3CRV_TO_CLAIM", 50)
 
     # deploy our contracts if necessary
-    enter_cyy3crv_action = get_or_create(account, EnterCYY3CRVAction)
+    enter_cyy3crv_action = get_or_create(account, ArgobytesBrownieProject.EnterCYY3CRVAction)
 
     print("Preparing contracts...")
     # TODO: use multicall to get all the addresses?

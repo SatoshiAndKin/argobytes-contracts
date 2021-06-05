@@ -4,14 +4,13 @@ from brownie import accounts
 
 from argobytes.cli.leverage_cyy3crv import atomic_enter, atomic_exit
 from argobytes.contracts import load_contract
-from argobytes.tokens import transfer_token
 
 
 def test_atomic_scripts(
     argobytes_flash_clone,
     click_test_runner,
     exit_cyy3crv_action,
-    unlocked_binance,
+    unlocked_uniswap_v2,
 ):
     account = accounts[0]
 
@@ -26,9 +25,9 @@ def test_atomic_scripts(
     initial_dai = Decimal(10000)
 
     # borrow some tokens from binance
-    transfer_token(unlocked_binance, accounts[0], dai, initial_dai)
-    # transfer_token(unlocked_binance, accounts[0], usdc, 10000)
-    # transfer_token(unlocked_binance, accounts[0], usdt, 10000)
+    unlocked_uniswap_v2(dai, initial_dai, accounts[0])
+    # unlocked_uniswap_v2(usdc, 10000, accounts[0])
+    # unlocked_uniswap_v2(usdt, 10000, accounts[0])
 
     enter_result = click_test_runner(atomic_enter, ["--account", str(account)])
 
@@ -53,7 +52,7 @@ def test_atomic_scripts(
     # simulate some trades so that 3pool increases in value
     # TODO: make some actual trades?
     # TODO: how much DAI actually needs to be added to the pool
-    transfer_token(unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai, 1000000)
+    unlocked_uniswap_v2(dai, 1000000, exit_cyy3crv_action.THREE_CRV_POOL())
 
     exit_result = click_test_runner(atomic_exit, ["--account", str(account)])
 

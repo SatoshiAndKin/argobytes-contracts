@@ -4,13 +4,12 @@ from brownie import accounts
 
 from argobytes.cli.leverage_cyy3crv import simple_enter, simple_exit
 from argobytes.contracts import load_contract
-from argobytes.tokens import transfer_token
 
 
 def test_simple_scripts(
     click_test_runner,
     exit_cyy3crv_action,
-    unlocked_binance,
+    unlocked_uniswap_v2,
 ):
     account = accounts[0]
 
@@ -26,9 +25,9 @@ def test_simple_scripts(
     initial_dai = Decimal(10000)
 
     # borrow some tokens from binance
-    transfer_token(unlocked_binance, account, dai, initial_dai)
-    # transfer_token(unlocked_binance, account, usdc, 10000)
-    # transfer_token(unlocked_binance, account, usdt, 10000)
+    unlocked_uniswap_v2(dai, initial_dai, account)
+    # unlocked_uniswap_v2(usdc, 10000, account)
+    # unlocked_uniswap_v2(usdt, 10000, account)
 
     # TODO: call enter multiple times
     for x in range(1):
@@ -51,7 +50,7 @@ def test_simple_scripts(
 
     # simulate some trades so that 3pool increases in value
     # TODO: make some actual trades? how much DAI actually needs to be added to the pool
-    transfer_token(unlocked_binance, exit_cyy3crv_action.THREE_CRV_POOL(), dai, 200000)
+    unlocked_uniswap_v2(dai, 200000, exit_cyy3crv_action.THREE_CRV_POOL())
 
     cyy3crv_balance = cyy3crv.balanceOf(account)
 

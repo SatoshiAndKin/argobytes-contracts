@@ -2,24 +2,19 @@ import os
 from collections import namedtuple
 from pprint import pprint
 
-import brownie
-import click
-from brownie import ZERO_ADDRESS, Contract, accounts
-from brownie.network.web3 import _resolve_address
-
 from argobytes.contracts import (
     ArgobytesAction,
     ArgobytesActionCallType,
+    ArgobytesBrownieProject,
     get_or_create_factory,
     DyDxFlashLender,
-    ExitCYY3CRVAction,
     get_or_clone,
     get_or_create,
     get_or_create_flash_borrower,
     lazy_contract,
     poke_contracts,
 )
-from argobytes.tokens import get_balances, get_claimable_3crv, print_token_balances, safe_token_approve
+from argobytes.tokens import get_balances, print_token_balances, safe_token_approve
 from argobytes.web3_helpers import get_average_block_time
 
 ExitData = namedtuple(
@@ -47,7 +42,7 @@ def atomic_exit(account, tip_eth, tip_3crv):
     # deploy our contracts if necessary
     argobytes_factory = get_or_create_factory(account)
     argobytes_flash_borrower = get_or_create_flash_borrower(account)
-    exit_cyy3crv_action = get_or_create(account, ExitCYY3CRVAction)
+    exit_cyy3crv_action = get_or_create(account, ArgobytesBrownieProject.ExitCYY3CRVAction)
 
     # get the clone for the account
     argobytes_clone = get_or_clone(account, argobytes_factory, argobytes_flash_borrower)
