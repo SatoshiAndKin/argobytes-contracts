@@ -1,20 +1,19 @@
 """Handle Ethereum smart Contracts."""
 import multiprocessing
+import random
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import IntFlag
 from warnings import warn
 
-import brownie
 import click
 import rlp
-from brownie import ETH_ADDRESS, ZERO_ADDRESS, Contract, web3
-from brownie.network import web3
+from brownie import ETH_ADDRESS, ZERO_ADDRESS, Contract, project, web3
 from eth_abi import decode_single
 from eth_utils import keccak, to_bytes, to_checksum_address
 from lazy_load import lazy
 
-from argobytes.web3_helpers import to_hex32
+from argobytes.web3_helpers import to_bytes32
 
 ActionTuple = namedtuple(
     "Action",
@@ -50,7 +49,7 @@ class ArgobytesAction:
 class EthContract:
     def __init__(self):
         """Handle ETH like an ERC20."""
-        self.address = brownie.ETH_ADDRESS
+        self.address = ETH_ADDRESS
 
     def decimals(self):
         return 18
@@ -59,7 +58,7 @@ class EthContract:
         return "ETH"
 
     def balanceOf(self, account):
-        return brownie.web3.eth.getBalance(str(account))
+        return web3.eth.getBalance(str(account))
 
 
 def get_deterministic_contract(default_account, contract, salt="", constructor_args=None):
@@ -69,7 +68,7 @@ def get_deterministic_contract(default_account, contract, salt="", constructor_a
 
     contract_initcode = contract.deploy.encode_input(*constructor_args)
 
-    contract_address = mk_contract_address2(SingletonFactory.address, salt, contract_initcode)
+    contract_address, salt = mk_contract_address2(SingletonFactory.address, contract_initcode, salt=salt)
 
     if web3.eth.getCode(contract_address).hex() == "0x":
         raise ValueError(f"Contract {contract.name} not deployed!")
@@ -103,13 +102,13 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
     if needed_salts:
         # deploy more proxies that are all owned by the first
         if len(needed_salts) == 1:
-            argobytes_factory.createClone(
+            argobytes_factory.createClone19(
                 deployed_contract,
                 needed_salts[0],
                 owner,
             )
         else:
-            argobytes_factory.createClones(
+            argobytes_factory.createClone19s(
                 deployed_contract,
                 needed_salts,
                 owner,
@@ -125,12 +124,12 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
     return [_contract(address) for address in my_proxys_proxies]
 
 
-def get_or_clone_flash_borrower(account, borrower_salt="", clone_salt="", factory_salt=""):
+def get_or_clone_flash_borrower(account, borrower_salt="", clone_salt="", factory_salt="", leading_zeros=1):
     factory = get_or_create_factory(account, factory_salt)
 
     # we don't actually want the proxy. flash_borrower does more
     # proxy = get_or_create_proxy(account, salt)
-    flash_borrower = get_or_create_flash_borrower(account, borrower_salt)
+    flash_borrower = get_or_create_flash_borrower(account, borrower_salt, leading_zeros=leading_zeros)
 
     clone = get_or_clone(account, factory, flash_borrower, salt=clone_salt)
 
@@ -140,15 +139,16 @@ def get_or_clone_flash_borrower(account, borrower_salt="", clone_salt="", factor
 
 
 # TODO: rename to get_or_deterministic_create?
-# @functools.lru_cache(maxsize=None)
-def get_or_create(default_account, contract, no_create=False, salt="", constructor_args=None):
+def get_or_create(default_account, contract, no_create=False, salt=None, constructor_args=None, leading_zeros=0):
     """Use eip-2470 to create a contract with deterministic addresses."""
     if constructor_args is None:
         constructor_args = []
 
     contract_initcode = contract.deploy.encode_input(*constructor_args)
 
-    contract_address = mk_contract_address2(SingletonFactory.address, salt, contract_initcode)
+    contract_address, salt = mk_contract_address2(
+        str(SingletonFactory.address), contract_initcode, leading_zeros=leading_zeros, salt=salt
+    )
 
     if web3.eth.getCode(contract_address).hex() == "0x":
         if no_create:
@@ -171,16 +171,22 @@ def get_or_create(default_account, contract, no_create=False, salt="", construct
     return contract.at(contract_address, default_account)
 
 
-def get_or_create_factory(default_account, salt):
-    return get_or_create(default_account, ArgobytesFactory, salt=salt)
+def get_or_create_factory(default_account, salt=None, leading_zeros=0):
+    return get_or_create(
+        default_account, ArgobytesBrownieProject.ArgobytesFactory19, salt=salt, leading_zeros=leading_zeros
+    )
 
 
-def get_or_create_proxy(default_account, salt):
-    return get_or_create(default_account, ArgobytesProxy, salt=salt)
+def get_or_create_proxy(default_account, salt=None, leading_zeros=1):
+    return get_or_create(
+        default_account, ArgobytesBrownieProject.ArgobytesProxy, salt=salt, leading_zeros=leading_zeros
+    )
 
 
-def get_or_create_flash_borrower(default_account, salt):
-    return get_or_create(default_account, ArgobytesFlashBorrower, salt=salt)
+def get_or_create_flash_borrower(default_account, salt=None, leading_zeros=1):
+    return get_or_create(
+        default_account, ArgobytesBrownieProject.ArgobytesFlashBorrower, salt=salt, leading_zeros=leading_zeros
+    )
 
 
 def lazy_contract(address, owner=None):
@@ -207,7 +213,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
     elif isinstance(token_name_or_address, str) and "." in token_name_or_address:
         # TODO: PR against web3 to take a block argument
         # https://github.com/ethereum/web3.py/issues/1984
-        warn("Looking up {token_name_or_address} against the latest block, not {block}")
+        warn(f"Looking up {token_name_or_address} against the latest block, not {block}")
 
         block = None
 
@@ -286,19 +292,19 @@ def check_for_proxy(contract, block, force=False):
     if not ("Proxy" in contract._name or hasattr(contract, "implementation") or hasattr(contract, "target")):
         return contract
 
-    impl_addr = brownie.ZERO_ADDRESS
+    impl_addr = ZERO_ADDRESS
 
-    if impl_addr == brownie.ZERO_ADDRESS and hasattr(contract, "implementation"):
+    if impl_addr == ZERO_ADDRESS and hasattr(contract, "implementation"):
         try:
             # sometimes even if this function exists, it reverts because we are supposed to look at some random storage slot instead
             impl_addr = contract.implementation.call()
         except Exception:
             pass
 
-    if impl_addr == brownie.ZERO_ADDRESS and hasattr(contract, "target"):
+    if impl_addr == ZERO_ADDRESS and hasattr(contract, "target"):
         impl_addr = contract.target.call()
 
-    if impl_addr == brownie.ZERO_ADDRESS:
+    if impl_addr == ZERO_ADDRESS:
         # maybe its "org.zepplinos.proxy.implementation"
         impl_addr = web3.eth.getStorageAt(
             contract.address,
@@ -308,9 +314,9 @@ def check_for_proxy(contract, block, force=False):
         try:
             impl_addr = decode_single("address", impl_addr)
         except Exception:
-            impl_addr = brownie.ZERO_ADDRESS
+            impl_addr = ZERO_ADDRESS
 
-    if impl_addr == brownie.ZERO_ADDRESS:
+    if impl_addr == ZERO_ADDRESS:
         # or maybe its https://eips.ethereum.org/EIPS/eip-1967 Unstructured Storage Proxies
         impl_addr = web3.eth.getStorageAt(
             contract.address,
@@ -320,9 +326,9 @@ def check_for_proxy(contract, block, force=False):
         try:
             impl_addr = decode_single("address", impl_addr)
         except Exception:
-            impl_addr = brownie.ZERO_ADDRESS
+            impl_addr = ZERO_ADDRESS
 
-    if impl_addr == brownie.ZERO_ADDRESS:
+    if impl_addr == ZERO_ADDRESS:
         # or maybe they are using EIP-1967 beacon address
         beacon_addr = web3.eth.getStorageAt(
             contract.address,
@@ -334,7 +340,7 @@ def check_for_proxy(contract, block, force=False):
         except Exception:
             pass
         else:
-            if beacon_addr != brownie.ZERO_ADDRESS:
+            if beacon_addr != ZERO_ADDRESS:
                 if force:
                     beacon = Contract.from_explorer(beacon_addr)
                 else:
@@ -342,15 +348,15 @@ def check_for_proxy(contract, block, force=False):
 
                 impl_addr = beacon.implementation.call()
 
-    if impl_addr == brownie.ZERO_ADDRESS and contract._name == "Proxy":
+    if impl_addr == ZERO_ADDRESS and contract._name == "Proxy":
         # TODO: this might catch more than we want! lots of contracts use storage slot 0!
         impl_addr = web3.eth.getStorageAt(contract.address, 0, block)
         try:
             impl_addr = decode_single("address", impl_addr)
         except Exception:
-            impl_addr = brownie.ZERO_ADDRESS
+            impl_addr = ZERO_ADDRESS
 
-    if impl_addr == brownie.ZERO_ADDRESS:
+    if impl_addr == ZERO_ADDRESS:
         # logger.debug(f"Could not detect implementation contract for {contract}")
         return contract
 
@@ -368,6 +374,7 @@ def check_for_proxy(contract, block, force=False):
         impl_name = impl._name
 
     # create a new contract object with the implementation's abi but the proxy's address
+    # TODO: contract.abi + impl.abi, but do overrides properly
     contract = Contract.from_abi(contract._name, contract.address, impl.abi)
 
     if contract._name == impl_name or not impl_name:
@@ -378,6 +385,42 @@ def check_for_proxy(contract, block, force=False):
     contract._full_name = full_name
     contract._impl_contract = impl
     return contract
+
+
+def find_create2_salt(sender: str, initcode_hash: str, leading_zeros: int = 1, salt: int = None) -> bytes:
+    """Find a salt that creates an address with leading zero bytes.
+
+    :param salt: the first salt to try
+
+    TODO: persistent cache for these
+    """
+    assert isinstance(leading_zeros, int)
+
+    if not leading_zeros:
+        if salt is None:
+            return to_bytes32(text="")
+
+        return to_bytes(salt)
+
+    if salt is None:
+        # start scanning at a random address
+        salt = random.randint(0, 2 ** 256)
+
+    prefix = b'\x00' * leading_zeros
+
+    sender = to_bytes(hexstr=str(sender))
+
+    # TODO: GPU accelerated awesomess
+    while True:
+        salt_bytes = to_bytes32(salt)
+
+        found_address_bytes, _ = mk_contract_address2_bytes(sender, salt_bytes, initcode_hash)
+
+        # TODO: check found_address_bytes and return if theres a match
+        if found_address_bytes.startswith(prefix):
+            return salt_bytes
+
+        salt += 1
 
 
 def mk_contract_address(sender: str, nonce: int) -> str:
@@ -392,30 +435,43 @@ def mk_contract_address(sender: str, nonce: int) -> str:
     return to_checksum_address(address_bytes)
 
 
-def mk_contract_address2(sender: str, salt: str, initcode: str) -> str:
+def mk_contract_address2_bytes(sender: bytes, salt: bytes, initcode_hash: bytes) -> bytes:
     """Create2 a contract address.
 
     keccak256 (0xff ++ sender ++ salt ++ keccak256 (init_code)) [-20:]
-
-    # TODO: this is not correct
     """
-    if not salt.startswith("0x"):
-        salt = to_hex32(text=salt)
-
-    raw = b"".join(
-        [
-            to_bytes(hexstr="0xff"),
-            to_bytes(hexstr=sender),
-            to_bytes(hexstr=salt),
-            keccak(to_bytes(hexstr=initcode)),
-        ]
-    )
+    raw = b"\xff" + sender + salt + initcode_hash
 
     assert len(raw) == 85, "incorrect length of inputs!"
 
     address_bytes = keccak(raw)[-20:]
 
-    return to_checksum_address(address_bytes)
+    return address_bytes
+
+
+def hash_initcode(initcode: str) -> bytes:
+    return keccak(to_bytes(hexstr=initcode))
+
+
+def mk_contract_address2(sender: str, initcode: str, leading_zeros: int = 0, salt: str = None):
+    sender = to_bytes(hexstr=sender)
+
+    initcode_hash = hash_initcode(initcode)
+
+    if salt is None:
+        salt = find_create2_salt(sender, initcode_hash, leading_zeros=leading_zeros, salt=salt)
+    elif isinstance(salt, bytes):
+        pass
+    elif salt.startswith("0x"):
+        salt = to_bytes32(hexstr=salt)
+    elif isinstance(salt, str):
+        salt = to_bytes32(text=salt)
+    else:
+        raise ValueError("Unrecognized type for salt")
+
+    address_bytes = mk_contract_address2_bytes(sender, salt, initcode_hash)
+
+    return to_checksum_address(address_bytes), salt
 
 
 def poke_contracts(contracts):
@@ -446,3 +502,6 @@ SingletonFactory = lazy_contract("0xce0042B868300000d44A59004Da54A005ffdcf9f")
 DyDxFlashLender = lazy_contract("0x6bdC1FCB2F13d1bA9D26ccEc3983d5D4bf318693")
 
 OneSplit = lazy_contract("1proto.eth")
+
+ArgobytesBrownieProject = lazy(lambda: project.ArgobytesBrownieProject)
+ArgobytesInterfaces = lazy(lambda: ArgobytesBrownieProject.interface)

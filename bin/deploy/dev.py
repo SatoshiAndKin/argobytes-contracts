@@ -2,6 +2,7 @@
 # rather than call this directly, you probably want to use `./scripts/test-deploy.sh` or `./scripts/staging-deploy.sh`
 # TODO: refactor to use argobytes_utils helpers
 
+from argobytes.contracts import get_or_create_factory, get_or_create_flash_borrower
 import json
 import os
 
@@ -49,7 +50,7 @@ def main():
     # TODO: WARNING! SKI_METAMASK_1 is an admin role only for staging. this should be SKI_HARDWARE_1
     argobytes_tip_address = web3.ens.resolve("tip.satoshiandkin.eth")
 
-    argobytes_proxy_arbitragers = [
+    argobytes_flash_borrower_arbitragers = [
         accounts[0],
         accounts[1],
         accounts[2],
@@ -69,7 +70,7 @@ def main():
     ds_proxy_factory.build()
 
     # deploy ArgobytesFactory
-    argobytes_factory = get_or_create(accounts[0], ArgobytesFactory)
+    argobytes_factory = get_or_create_factory(accounts[0])
 
     quick_save_contract(argobytes_factory)
 
@@ -79,13 +80,13 @@ def main():
     quick_save_contract(argobytes_authority)
 
     # deploy ArgobytesFlashBorrower for cloning
-    argobytes_proxy = get_or_create(accounts[0], ArgobytesFlashBorrower)
+    argobytes_flash_borrower = get_or_create_flash_borrower(accounts[0])
 
-    quick_save_contract(argobytes_proxy)
+    quick_save_contract(argobytes_flash_borrower)
 
     # clone ArgobytesFlashBorrower for accounts[0]
-    argobytes_proxy_clone = get_or_clone(
-        accounts[0], argobytes_factory, argobytes_proxy
+    argobytes_flash_borrower_clone = get_or_clone(
+        accounts[0], argobytes_factory, argobytes_flash_borrower
     )
 
     # TODO: setup auth for the proxy
@@ -125,7 +126,7 @@ def main():
             0,  # 0=CALL
             False,
             argobytes_authority.allow.encode_input(
-                argobytes_proxy_arbitragers,
+                argobytes_flash_borrower_arbitragers,
                 argobytes_trader,
                 0,  # 0=CALL
                 argobytes_trader.atomicArbitrage.signature,
@@ -141,7 +142,7 @@ def main():
         # TODO: gas_token.buyAndFree or gas_token.free depending on off-chain balance/price checks
     ]
 
-    argobytes_proxy_clone.executeMany(
+    argobytes_flash_borrower_clone.executeMany(
         bulk_actions, {"gasPrice": expected_mainnet_gas_price}
     )
 
@@ -187,7 +188,7 @@ def main():
     quick_save("WETH9", WETH9Address)
     quick_save("yvyCRV", YVYCRVAddress)
 
-    # give the argobytes_proxy a bunch of coins. it will forward them when deploying the diamond
+    # give the argobytes_flash_borrower a bunch of coins. it will forward them when deploying the diamond
     accounts[1].transfer(DevHardwareAddress, 50 * 1e18)
     accounts[2].transfer(DevHardwareAddress, 50 * 1e18)
     accounts[3].transfer(DevHardwareAddress, 50 * 1e18)
@@ -199,13 +200,13 @@ def main():
     # TODO: gas golf createClone function that uses msg.sender instead of owner in the calldata?
     # TODO: free gas token
     deploy_tx = argobytes_factory.createClone(
-        argobytes_proxy.address,
+        argobytes_flash_borrower.address,
         salt,
         accounts[5],
         {"from": accounts[5], "gas_price": expected_mainnet_gas_price,},
     )
 
-    argobytes_proxy_clone_5 = ArgobytesFlashBorrower.at(
+    argobytes_flash_borrower_clone_5 = ArgobytesFlashBorrower.at(
         deploy_tx.return_value, accounts[5]
     )
 
@@ -217,7 +218,7 @@ def main():
             0,  # 0=Call
             False,
             argobytes_authority.allow.encode_input(
-                argobytes_proxy_arbitragers,
+                argobytes_flash_borrower_arbitragers,
                 argobytes_trader,
                 1,  # 1=delegatecall
                 argobytes_trader.atomicArbitrage.signature,
@@ -226,7 +227,7 @@ def main():
         # TODO: gas_token.buyAndFree or gas_token.free depending on off-chain balance/price checks
     ]
 
-    argobytes_proxy_clone_5.executeMany(
+    argobytes_flash_borrower_clone_5.executeMany(
         bulk_actions, {"gasPrice": expected_mainnet_gas_price}
     )
 
@@ -242,7 +243,7 @@ def main():
 
     # TODO: optionally free gas token
     deploy_tx = argobytes_factory.createClone(
-        argobytes_proxy.address,
+        argobytes_flash_borrower.address,
         salt,
         accounts[6],
         {"from": accounts[6], "gas_price": expected_mainnet_gas_price,},

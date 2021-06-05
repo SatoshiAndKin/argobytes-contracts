@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LGPL-3.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // https://0x.org/docs/guides/v3-forwarder-specification#marketsellorderswitheth
 // https://0x.org/docs/guides/introduction-to-using-0x-liquidity-in-smart-contracts#introduction-to-using-0x-liquidity-in-smart-contracts
 // https://0x.org/docs/guides/use-0x-api-liquidity-in-your-smart-contracts

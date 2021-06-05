@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LGPL-3.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // Store profits and provide them for flash lending
 // Burns LiquidGasToken (or compatible contracts)
 // TODO: finish ArgobytesProxy refactor

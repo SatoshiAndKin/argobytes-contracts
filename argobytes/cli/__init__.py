@@ -1,5 +1,5 @@
-from logging import debug
 import os
+from logging import debug
 
 import click
 import click_log

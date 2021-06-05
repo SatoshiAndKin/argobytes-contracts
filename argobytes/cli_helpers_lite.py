@@ -141,7 +141,7 @@ class CommandWithProxySalts(CommandWithAccount):
             click.core.Option(
                 ("--factory-salt",),
                 type=SALT,
-                help="ArgobytesFactory deploy salt",
+                help="ArgobytesFactory19 deploy salt",
                 default="",
                 show_default=True,
             ),

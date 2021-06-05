@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LGPL-3.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // don't call this contract directly! use a proxy like DSProxy or ArgobytesProxy!
 // TODO: use a generic flash loan contract instead of hard coding dydx?
 // TODO: consistent revert strings

@@ -5,4 +5,4 @@
 
 # Can users own multiple proxies/clones?
 
-Yes. They just need to set different salts when deploying their clone from the ArgobytesFactory contract.
+Yes. They just need to set different salts when deploying their clone from the ArgobytesFactory19 contract.

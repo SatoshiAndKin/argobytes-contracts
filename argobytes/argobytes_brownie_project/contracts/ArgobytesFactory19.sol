@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LGPL-3.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // Deploy contracts using CREATE2.
 pragma solidity 0.8.4;
 
@@ -163,7 +163,7 @@ contract ArgobytesFactory19 {
 
         if (!Address.isContract(deployed)) {
             // deployed doesn't exist. create it
-            require(Create2.deploy(msg.value, salt, bytecode) == deployed, "ArgobytesFactory !checkedCreateContract");
+            require(Create2.deploy(msg.value, salt, bytecode) == deployed, "ArgobytesFactory19 !checkedCreateContract");
         }
     }
 }

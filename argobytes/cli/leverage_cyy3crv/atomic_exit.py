@@ -10,12 +10,12 @@ from brownie.network.web3 import _resolve_address
 from argobytes.contracts import (
     ArgobytesAction,
     ArgobytesActionCallType,
-    ArgobytesFactory,
-    ArgobytesFlashBorrower,
+    get_or_create_factory,
     DyDxFlashLender,
     ExitCYY3CRVAction,
     get_or_clone,
     get_or_create,
+    get_or_create_flash_borrower,
     lazy_contract,
     poke_contracts,
 )
@@ -45,8 +45,8 @@ def atomic_exit(account, tip_eth, tip_3crv):
     # TODO: use salts for the contracts once we figure out a way to store them. maybe 3box?
 
     # deploy our contracts if necessary
-    argobytes_factory = get_or_create(account, ArgobytesFactory)
-    argobytes_flash_borrower = get_or_create(account, ArgobytesFlashBorrower)
+    argobytes_factory = get_or_create_factory(account)
+    argobytes_flash_borrower = get_or_create_flash_borrower(account)
     exit_cyy3crv_action = get_or_create(account, ExitCYY3CRVAction)
 
     # get the clone for the account

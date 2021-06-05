@@ -13,15 +13,18 @@ from argobytes.cli_helpers import logger
 from argobytes.contracts import (
     ArgobytesAction,
     ArgobytesActionCallType,
-    ArgobytesFactory,
+    ArgobytesFactory19,
     ArgobytesFlashBorrower,
+    ArgobytesBrownieProject,
     ArgobytesInterfaces,
     DyDxFlashLender,
     EnterCYY3CRVAction,
     get_or_clone,
     get_or_create,
+    get_or_create_flash_borrower,
     lazy_contract,
     poke_contracts,
+    get_or_create_factory,
 )
 from argobytes.tokens import get_balances, get_claimable_3crv, print_token_balances, safe_token_approve
 
@@ -48,14 +51,14 @@ def atomic_enter(account, min_3crv_to_claim):
     logger.info(f"Hello, {account}")
 
     # deploy our contracts if necessary
-    argobytes_factory = get_or_create(account, ArgobytesFactory)
-    argobytes_flash_borrower = get_or_create(account, ArgobytesFlashBorrower)
+    argobytes_factory = get_or_create_factory(account)
+    argobytes_flash_borrower = get_or_create_flash_borrower(account)
     enter_cyy3crv_action = get_or_create(account, EnterCYY3CRVAction)
 
     # get the clone for the account
     argobytes_clone = get_or_clone(account, argobytes_factory, argobytes_flash_borrower)
 
-    logger.info(f"clone: {argobytes_clone}")
+    logger.info("clone: %s", argobytes_clone)
 
     assert account == argobytes_clone.owner(), "Wrong owner detected!"
 

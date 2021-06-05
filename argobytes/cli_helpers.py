@@ -10,23 +10,16 @@ import IPython
 
 # from ape_safe import ApeSafe
 from brownie import network as brownie_network
-from brownie import project
 from hexbytes import HexBytes
-from lazy_load import lazy
 
 from argobytes.cli_helpers_lite import logger
-from argobytes.contracts import load_contract
+from argobytes.contracts import ArgobytesBrownieProject, ArgobytesInterfaces, load_contract
 from argobytes.tokens import load_token, load_token_or_contract
 from argobytes.transactions import get_event_address, get_event_contract, get_transaction, sync_tx_cache
 
-
-ArgobytesBrownieProject = lazy(lambda: project.ArgobytesBrownieProject)
-ArgobytesInterfaces = lazy(lambda: ArgobytesBrownieProject.interface)
-
-
 COMMON_HELPERS = {
-    "ArgobytesInterfaces": ArgobytesInterfaces,
     "ArgobytesBrownieProject": ArgobytesBrownieProject,
+    "ArgobytesInterfaces": ArgobytesInterfaces,
     # "ApeSafe": ApeSafe,
     "brownie": brownie,
     "brownie_history": brownie_network.history,
@@ -50,9 +43,15 @@ def debug_shell(extra_locals, banner="Argobytes debug time.", exitmsg=""):
 
     TODO: use ipython
     """
+    if banner:
+        print(banner)
+
     extra_locals.update(COMMON_HELPERS)
 
     IPython.start_ipython(argv=[], user_ns=extra_locals)
+
+    if exitmsg:
+        print(exitmsg)
 
 
 def get_project_root() -> Path:
@@ -61,6 +60,7 @@ def get_project_root() -> Path:
 
 
 def prompt_loud_confirmation(account):
+    """Wait for the user to press [enter] or abort."""
     print()
     print("*" * 80)
 

@@ -1,11 +1,18 @@
 import pytest
-from brownie import accounts, network, project, web3
+from brownie import accounts, network, project, web3, ZERO_ADDRESS
 from brownie.test.fixtures import PytestBrownieFixtures
 from click.testing import CliRunner
 
 from argobytes.addresses import *
 from argobytes.cli_helpers import get_project_root
-from argobytes.contracts import get_or_clone, get_or_create, load_contract
+from argobytes.contracts import (
+    get_or_clone,
+    get_or_create,
+    get_or_create_factory,
+    get_or_create_flash_borrower,
+    get_or_create_proxy,
+    load_contract,
+)
 from argobytes.tokens import load_token_or_contract
 from argobytes.web3_helpers import to_hex32
 
@@ -52,18 +59,15 @@ def argobytes_authority(ArgobytesAuthority):
 
 
 @pytest.fixture(scope="function")
-def argobytes_factory(ArgobytesFactory):
-    return get_or_create(accounts[0], ArgobytesFactory)
+def argobytes_factory():
+    return get_or_create_factory(accounts[0])
 
 
 @pytest.fixture(scope="function")
 def argobytes_proxy(ArgobytesProxy):
     # on mainnet we use the (bytes32) salt to generate custom addresses with lots of zero bytes
     # for our tests, we just need an address with the first byte being a zero
-    # TODO: cache this
-    salt = NotImplemented
-
-    return get_or_create(accounts[0], ArgobytesProxy, salt=salt)
+    return get_or_create_proxy(accounts[0])
 
 
 @pytest.fixture(scope="function")
@@ -73,13 +77,10 @@ def argobytes_proxy_clone(argobytes_factory, argobytes_proxy):
 
 
 @pytest.fixture(scope="function")
-def argobytes_flash_borrower(ArgobytesFlashBorrower):
+def argobytes_flash_borrower():
     # on mainnet we use the (bytes32) salt to generate custom addresses with lots of zero bytes
     # for our tests, we just need an address with the first byte being a zero
-    # TODO: cache this
-    salt = NotImplemented
-
-    return get_or_create(accounts[0], ArgobytesFlashBorrower, salt=salt)
+    return get_or_create_flash_borrower(accounts[0])
 
 
 @pytest.fixture(scope="function")

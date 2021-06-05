@@ -8,8 +8,6 @@ from brownie.network.web3 import _resolve_address
 from argobytes.contracts import (
     ArgobytesAction,
     ArgobytesActionCallType,
-    ArgobytesFactory,
-    ArgobytesFlashBorrower,
     ArgobytesInterfaces,
     DyDxFlashLender,
     ExitCYY3CRVAction,

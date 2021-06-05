@@ -1,4 +1,4 @@
-from brownie import accounts, Contract
+from brownie import Contract, accounts
 
 
 # TODO: parameterize this

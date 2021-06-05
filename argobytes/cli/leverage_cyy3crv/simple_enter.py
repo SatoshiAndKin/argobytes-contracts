@@ -8,8 +8,6 @@ from eth_utils import to_int
 from argobytes.contracts import (
     ArgobytesAction,
     ArgobytesActionCallType,
-    ArgobytesFactory,
-    ArgobytesFlashBorrower,
     ArgobytesInterfaces,
     DyDxFlashLender,
     EnterCYY3CRVAction,

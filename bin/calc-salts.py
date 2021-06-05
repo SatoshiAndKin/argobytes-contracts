@@ -21,9 +21,9 @@ def main():
         deployer = Account.at(deployer)
 
     #
-    # ArgobytesFactory
+    # ArgobytesFactory19
     #
-    print("Deploying ArgobytesFactory via", LiquidGasTokenAddress, "as", deployer)
+    print("Deploying ArgobytesFactory19 via", LiquidGasTokenAddress, "as", deployer)
 
     # initcode is deployment bytecode + constructor params
     # lots of people using different terms here, but i think calling this "initcode" makes the most sense
@@ -44,8 +44,8 @@ def main():
 
     # TODO: count the zero bytes?
 
-    proxy_factory_address = mk_contract_address2(
-        LiquidGasTokenAddress, proxy_factory_salt, proxy_factory_initcode
+    proxy_factory_address, proxy_factory_salt = mk_contract_address2(
+        LiquidGasTokenAddress, proxy_factory_initcode, salt=proxy_factory_salt,
     )
 
     print("Calculated ArgobytesFactory address:", proxy_factory_address, "\n")
@@ -69,4 +69,4 @@ def calculate_one_salt():
     # then we use ERADICATE2 to find a salt that gives all the other contract addresses lots of zeros when deployed from ArgobytesOwnedVault
     assert False
 
-    mk_contract_address2(argobytes_factory, loupe_salt, loupe_initcode)
+    mk_contract_address2(argobytes_factory, loupe_initcode, salt=loupe_salt)

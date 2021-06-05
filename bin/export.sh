@@ -50,8 +50,8 @@ function export_interface() {
 export_argobytes_contract ArgobytesMulticall
 export_argobytes_contract ArgobytesAuthority
 export_argobytes_contract ArgobytesLiquidGasTokenUser
-export_argobytes_contract ArgobytesProxy
-export_argobytes_contract ArgobytesFactory
+export_argobytes_contract ArgobytesFactory19
+export_argobytes_contract ArgobytesFlashBorrower
 export_argobytes_contract ArgobytesTrader
 
 export_argobytes_contract ILiquidGasToken

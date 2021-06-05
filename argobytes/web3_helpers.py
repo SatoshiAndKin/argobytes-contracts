@@ -2,7 +2,7 @@
 
 from brownie import Contract
 from brownie.network import web3
-from eth_utils import to_hex
+from eth_utils import to_bytes, to_hex
 
 
 def find_block_at(search_timestamp, average_block_time=None):
@@ -96,6 +96,10 @@ def reset_block_time():
 
     # TODO: instead of last update time, just go back in time 10 years. no need to query SNX
     web3.testing.mine(last_update_time)
+
+
+def to_bytes32(primitive=None, hexstr=None, text=None):
+    return to_bytes(primitive, hexstr, text).ljust(32, b"\x00")
 
 
 def to_hex32(primitive=None, hexstr=None, text=None):

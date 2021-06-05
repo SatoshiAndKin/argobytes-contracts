@@ -6,7 +6,7 @@ What's an Argobytes? It's a non-sense word that makes searching easy. I'll proba
 
 The initial use of these contracts was atomic arbitrage, but they can be used for combining all sorts of ethereum smart contract functions.
 
-There are many components: ArgobytesProxy, ArgobytesMulticall, ArgobytesTrader, ArgobytesAuthority, ArgobytesFactory, and a bunch Actions.
+There are many components: ArgobytesProxy, ArgobytesMulticall, ArgobytesTrader, ArgobytesAuthority, ArgobytesFactory19, and a bunch Actions.
 
 
 ## ArgobytesProxy
@@ -36,11 +36,13 @@ A surprisingly simple, but hopefully powerful way to authorize other addresses t
 For each authorization, you specify an addresses to call a specific function on a specific contract. Approval can be revoked at any time. Given a properly designed contract this should allow you to safely delegate permissions to others without them having custody of your funds.
 
 
-## ArgobytesFactory
+## ArgobytesFactory19
 
 The Factory contract can be used to deploy any other contract as well as clones of the Proxy contract.
 
-Every user needs their own proxy contract, but deploying it requires 672k gas. So instead of every user spending that gas, the proxy contract is deployed once. Then, the Factory's `cloneProxy` function is called to deploy a modified EIP-1167 proxy for only 69k gas. This proxy is hard coded to use the `ArgobytesProxy` contract for all its logic.
+For a gas optimization, the address of the target contract must begin with at least one zero byte (0x00...)
+
+Every user needs their own proxy contract, but deploying it requires 672k gas. So instead of every user spending that gas, the proxy contract is deployed once. Then, the Factory's `cloneProxy` function is called to deploy a modified EIP-1167 proxy for only ~70k gas. This proxy is hard coded to use the `ArgobytesProxy` contract for all its logic.
 
 The clones and their owner cannot be changed. If a new ArgobytesProxy is released, a new clone will need to be created. Because this is cheap, I think it is far preferable to the complexity of upgradable contracts.
 
