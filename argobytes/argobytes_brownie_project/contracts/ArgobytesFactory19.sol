@@ -12,7 +12,7 @@ contract ArgobytesFactory19 {
         return createClone19(target, salt, msg.sender);
     }
 
-    function _code(address target, bytes32 salt, address immutable_owner) internal pure returns (bytes memory code) {
+    function _code(address target, address immutable_owner) internal pure returns (bytes memory code) {
         assembly {
             // start of the contract (20 bytes)
             // the first 10 of these bytes are for setup. the contract bytecode is 10 bytes shorter
@@ -59,7 +59,7 @@ contract ArgobytesFactory19 {
         bytes32 salt,
         address immutable_owner
     ) public returns (address clone) {
-        bytes memory code = _code(target, salt, immutable_owner);
+        bytes memory code = _code(target, immutable_owner);
 
         assembly {
             // deploy it
@@ -94,7 +94,7 @@ contract ArgobytesFactory19 {
         bytes32 salt,
         address immutable_owner
     ) public view returns (bool exists, address cloneAddr) {
-        bytes memory code = _code(target, salt, immutable_owner);
+        bytes memory code = _code(target, immutable_owner);
 
         bytes32 bytecodeHash = keccak256(code);
 
@@ -105,34 +105,31 @@ contract ArgobytesFactory19 {
     }
 
     // openzeppelin and optionality do this differently. what is cheaper?
-    function isClone(address target, address query) public view returns (bool result, address owner) {
+    function isClone(address target, address query) public view returns (bool is_clone) {
+        bytes memory query_code;
+
         assembly {
-            let other := mload(0x40)
+            // TODO: do extcodesize check to make sure its 64
 
             // right now our contract is 44 bytes + 20 bytes for the owner address, but this will change if we use shorter addresses
-            extcodecopy(query, other, 0, 64)
+            extcodecopy(query, query_code, 0, 64)
 
             // the last 20 bytes of the contract is the owner's address
             // the whole contract is 64 bytes long (64-32=32 bytes to load)
             // we have to load 32 bytes at a time (the first 12 of the bytes will be ignored. the last 20 are the address)
-            owner := mload(add(other, 32))
+            // TODO: this is wrong. i think we need to shift it?
+            // owner := mload(add(query_code, 32))
+        }
 
-            // other is 64 bytes long. store clone right after it in memory
-            // TODO: use mload(0x40) instead?
-            let clone := add(other, 64)
-            mstore(clone, 0x363d3d373d3d3d363d7200000000000000000000000000000000000000000000)
-            // target is a 19 byte address. (32-19) * 8 = 104
-            mstore(add(clone, 10), shl(104, target))
-            mstore(add(clone, 29), 0x5af43d82803e903d91602a57fd5bf30000000000000000000000000000000000)
-            // we could copy the owner, but theres no real need
-            // mstore(add(clone, 44), owner)
+        bytes memory expected_code = _code(target, address(0));
 
-            result := and(
+        assembly {
+            is_clone := and(
                 // check bytes 0 through 31
-                eq(mload(clone), mload(other)),
+                eq(mload(expected_code), mload(query_code)),
                 // check bytes 12 through 43
                 // we don't care about checking the owner bytes (44 through 64) because they are immutable and part of the target's address
-                eq(mload(add(clone, 12)), mload(add(other, 12)))
+                eq(mload(add(expected_code, 12)), mload(add(query_code, 12)))
             )
         }
     }

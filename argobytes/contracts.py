@@ -406,7 +406,10 @@ def find_create2_salt(sender: bytes, initcode_hash: bytes, leading_zeros: int = 
         return to_bytes32(text="")
 
     # start scanning at a random address
-    salt = random.randint(0, 2 ** 256)
+    # salt = random.randint(0, 2 ** 256)
+    # start scanning at the start
+    # TODO: we could do a lot more efficient things with the salts, but that doesn't matter for hits quick and dirty function. 
+    salt = 0
 
     prefix = b'\x00' * leading_zeros
 

@@ -16,7 +16,7 @@ def test_deploy_clone(argobytes_factory, argobytes_proxy):
     assert event["clone"] == tx.return_value
 
     # TODO: moving to solc 0.8 made our gas costs a little bit higher. investigate why
-    assert tx.gas_used < 70100
+    assert tx.gas_used < 69900
 
 
 def test_deploy_clones(argobytes_factory, argobytes_proxy):
