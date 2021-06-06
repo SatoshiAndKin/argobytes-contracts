@@ -7,7 +7,6 @@ from argobytes.contracts import load_contract
 
 
 def test_simple_scripts(
-    setup_brownie_mainnet_fork,
     click_test_runner,
     exit_cyy3crv_action,
     unlocked_uniswap_v2,

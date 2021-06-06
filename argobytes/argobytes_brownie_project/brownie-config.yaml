@@ -4,10 +4,10 @@ compiler:
   solc:
     optimizer:
       # TODO: optimizer has broken revert trace line number reporting in the past. make sure that is fixed before setting to true
-      enabled: false
+      enabled: true
       runs: 1000000
     remappings:
-      - "@OpenZeppelin=OpenZeppelin/openzeppelin-contracts@4.0.0/contracts"
+      - "@OpenZeppelin=OpenZeppelin/openzeppelin-contracts@4.1.0/contracts"
 
 dependencies:
-  - OpenZeppelin/openzeppelin-contracts@4.0.0
+  - OpenZeppelin/openzeppelin-contracts@4.1.0

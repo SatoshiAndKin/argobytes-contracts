@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: You can't license an interface
 pragma solidity 0.8.4;
 
-import {CompleteIERC20} from "../erc20/IERC20.sol";
+import {IERC20Metadata} from "../erc20/IERC20.sol";
 
-interface ICERC20 is CompleteIERC20 {
+interface ICERC20 is IERC20Metadata {
     /**
      * @notice Sender borrows assets from the protocol to their own address
      * @param borrowAmount The amount of the underlying asset to borrow
