@@ -5,6 +5,8 @@ pragma solidity 0.8.4;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
+error Create2Failed();
+
 contract ArgobytesFactory19 {
     event NewClone(address indexed target, bytes32 salt, address indexed immutable_owner, address clone);
 
@@ -67,7 +69,8 @@ contract ArgobytesFactory19 {
         }
 
         // revert if the contract was already deployed
-        require(clone != address(0), "create2 failed");
+        if (clone == address(0))
+            revert Create2Failed();
 
         emit NewClone(target, salt, immutable_owner, clone);
     }
@@ -104,7 +107,9 @@ contract ArgobytesFactory19 {
         exists = Address.isContract(cloneAddr);
     }
 
-    // openzeppelin and optionality do this differently. what is cheaper?
+    /**
+     * @dev Check if the query address is a clone for the given target.
+     */
     function isClone(address target, address query) public view returns (bool is_clone) {
         bytes memory query_code;
 
@@ -121,6 +126,7 @@ contract ArgobytesFactory19 {
             // owner := mload(add(query_code, 32))
         }
 
+        // set the owner to address 0 and then don't compare those bytes
         bytes memory expected_code = _code(target, address(0));
 
         assembly {
@@ -143,7 +149,7 @@ contract ArgobytesFactory19 {
 
         if (!Address.isContract(deployed)) {
             // deployed doesn't exist. create it
-            require(Create2.deploy(msg.value, salt, bytecode) == deployed, "ArgobytesFactory19 !checkedCreateContract");
+            Create2.deploy(msg.value, salt, bytecode);
         }
     }
 }
