@@ -3,14 +3,16 @@ pragma solidity 0.8.4;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
-/// @title Collection of openzepplin's unreleased functions related to the address type
+error BadCall(address target, bytes data, bytes errordata);
+error BadDelegateCall(address target, bytes data, bytes errordata);
+
+/// @title Similar to OpenZepplin's functions related to the address type
 library AddressLib {
     /// @dev make sure to check Address.isContract(target) first, because this function does not!
     function uncheckedCall(
         address target,
         bool forward_value,
-        bytes memory data,
-        string memory errorMessage
+        bytes memory data
     ) internal returns (bytes memory) {
         bool success;
         bytes memory returndata;
@@ -23,42 +25,23 @@ library AddressLib {
             (success, returndata) = target.call(data);
         }
 
-        return _verifyCallResult(success, returndata, errorMessage);
-    }
-
-    /// @dev make sure to check Address.isContract(target) first, because this function does not!
-    function uncheckedDelegateCall(
-        address target,
-        bytes memory data,
-        string memory errorMessage
-    ) internal returns (bytes memory) {
-        // doing this all in assembly is a lot more efficient
-        // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.delegatecall(data);
-        return _verifyCallResult(success, returndata, errorMessage);
-    }
-
-    /// @dev If success, return data. Else revert.
-    function _verifyCallResult(
-        bool success,
-        bytes memory returndata,
-        string memory errorMessage
-    ) private pure returns (bytes memory) {
         if (success) {
             return returndata;
         } else {
-            // Look for revert reason and bubble it up if present
-            if (returndata.length > 0) {
-                // The easiest way to bubble the revert reason is using memory via assembly
+            revert BadCall(target, data, returndata);
+        }
+    }
 
-                // solhint-disable-next-line no-inline-assembly
-                assembly {
-                    let returndata_size := mload(returndata)
-                    revert(add(32, returndata), returndata_size)
-                }
-            } else {
-                revert(errorMessage);
-            }
+    /// @dev make sure to check Address.isContract(target) first, because this function does not!
+    function uncheckedDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
+        // doing this all in assembly is a lot more efficient
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, bytes memory returndata) = target.delegatecall(data);
+
+        if (success) {
+            return returndata;
+        } else {
+            revert BadDelegateCall(target, data, returndata);
         }
     }
 }

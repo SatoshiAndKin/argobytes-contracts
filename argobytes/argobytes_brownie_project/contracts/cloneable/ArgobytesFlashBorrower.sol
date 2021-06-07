@@ -13,9 +13,13 @@ import {BytesLib} from "contracts/library/BytesLib.sol";
 import {IERC3156FlashBorrower} from "contracts/external/erc3156/IERC3156FlashBorrower.sol";
 import {IERC3156FlashLender} from "contracts/external/erc3156/IERC3156FlashLender.sol";
 
-import {ArgobytesProxy} from "./ArgobytesProxy.sol";
+import {ArgobytesProxy, InvalidTarget} from "./ArgobytesProxy.sol";
 
-error AccessDenied();
+error LenderDenied();
+error Reentrancy();
+error NoPendingLoan();
+error InvalidLender();
+error InvalidInitiator();
 
 abstract contract ArgobytesFlashBorrowerEvents {
     event Lender(address indexed sender, address indexed lender, bool allowed);
@@ -25,7 +29,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
     /// @dev diamond storage
     struct FlashBorrowerStorage {
         mapping(IERC3156FlashLender => bool) allowed_lenders;
-        bool pending_flashloan;
+        bool block_flashloan_callback;
         address pending_lender;
         Action pending_action;
         bytes pending_return;
@@ -42,7 +46,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         }
     }
 
-    // TODO: gas golf this
+    /// @dev in addition to allowing the lender, you must also allow the caller with ArgobytesAuth/ArgobytesAuthority
     function allowLender(IERC3156FlashLender lender) external auth(ActionTypes.Call.ADMIN) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
@@ -70,33 +74,40 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
 
         // check auth (owner is always allowed to use any lender and any action)
         if (msg.sender != owner()) {
+            if (!s.allowed_lenders[lender]) revert LenderDenied();
             requireAuth(action.target, action.call_type, BytesLib.toBytes4(action.target_calldata));
+        }
 
-            if (!s.allowed_lenders[lender]) revert AccessDenied();
+        if (s.block_flashloan_callback == false) {
+            // TODO: do we need this check?
+            revert Reentrancy();
         }
 
         // we could pass the calldata to the lender and have them pass it back, but that seems less safe
-        // use storage so that no one can change it
-        s.pending_flashloan = true;
-
+        // instead, use storage so that no one can change it
+        s.block_flashloan_callback = false;
         s.pending_lender = address(lender);
         s.pending_action = action;
 
         // uint256 max_loan = lender.maxFlashLoan(token);
 
+        // call the lender who will send us tokens and then call this.onFlashLoan
+        // we don't give them any calldata because we keep our action in state
+        // state is expensive, but it is also safest
         lender.flashLoan(this, token, amount, "");
-        // s.pending_loan is now `false`
+
+        s.block_flashloan_callback = true;
 
         // copy the call's returned value to return it from this function
         returned = s.pending_return;
 
-        // clear the pending values (pending_flashloan is already `false`)
+        // clear the pending values
         delete s.pending_lender;
         delete s.pending_action;
         delete s.pending_return;
     }
 
-    /// @dev ERC-3156 Flash loan callback
+    /// @notice ERC-3156 Flash loan callback
     function onFlashLoan(
         address initiator,
         address token,
@@ -106,33 +117,33 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
     ) external override returns (bytes32) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
-        // auth
-        // pending_loan is like the opposite of a re-entrancy guard
-        require(s.pending_flashloan, "FlashBorrower.onFlashLoan !pending_loan");
-        require(msg.sender == s.pending_lender, "FlashBorrower.onFlashLoan !pending_lender");
-        require(initiator == address(this), "FlashBorrower.onFlashLoan !initiator");
-        require(Address.isContract(s.pending_action.target), "FlashBorrower.onFlashLoan !target");
-
-        // clear pending_loan now in case the delegatecall tries to do something sneaky
-        // though i think storing things in state will protect things better
-        s.pending_flashloan = false;
+        // auth checks
+        if (s.block_flashloan_callback) {
+            // block_flashloan_callback works as authentication since only the flashBorrow function will set this to false
+            revert NoPendingLoan();
+        }
+        if (msg.sender != s.pending_lender) {
+            revert InvalidLender();
+        }
+        if (initiator != address(this)) {
+            revert InvalidInitiator();
+        }
+        if (!Address.isContract(s.pending_action.target)) {
+            revert InvalidTarget();
+        }
 
         // uncheckedDelegateCall is safe because we just checked that `target` is a contract
         bytes memory returned;
         if (s.pending_action.call_type == ActionTypes.Call.DELEGATE) {
-            returned = AddressLib.uncheckedDelegateCall(
-                s.pending_action.target,
-                s.pending_action.target_calldata,
-                "FlashLoanBorrower.onFlashLoan !delegatecall"
-            );
+            returned = AddressLib.uncheckedDelegateCall(s.pending_action.target, s.pending_action.target_calldata);
         } else {
             returned = AddressLib.uncheckedCall(
                 s.pending_action.target,
                 s.pending_action.forward_value,
-                s.pending_action.target_calldata,
-                "FlashLoanBorrower.onFlashLoan !call"
+                s.pending_action.target_calldata
             );
         }
+        // TODO: what if call_type is ADMIN?
 
         // since we can't return the call's return from here, we store it in state
         s.pending_return = returned;

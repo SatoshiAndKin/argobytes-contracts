@@ -8,10 +8,11 @@ error FancyError(bool is_true, uint256 amount, string message);
 contract ExampleAction {
     using UniversalERC20 for IERC20;
 
-    // some simple storage used for burning gas
+    /// @dev some simple storage used for burning gas
     uint256 public c = 1;
 
-    // https://github.com/matnad/liquid-gas-token/blob/35638bad1fab0064575913f0e7130d9b5f37332a/contracts/LgtHelper.sol#L15
+    /// @notice waste gas
+    /// @dev https://github.com/matnad/liquid-gas-token/blob/35638bad1fab0064575913f0e7130d9b5f37332a/contracts/LgtHelper.sol#L15
     function burnGas(uint256 burn) public returns (uint256 burned) {
         uint256 start = gasleft();
         assert(start > burn + 200);
