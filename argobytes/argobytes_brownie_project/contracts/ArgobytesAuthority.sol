@@ -1,19 +1,15 @@
 // SPDX-License-Identifier: MPL-2.0
-/*
-A shared registry for storing authorizations.
-
-This is a seperate contract from the proxy so that there's no chance of delegatecalls changing storage.
-
-The key includes msg.sender which should prevent most shinanengans.
-*/
 pragma solidity 0.8.4;
 
 import {ActionTypes} from "contracts/abstract/ActionTypes.sol";
 
+/// @title A shared registry for storing authorizations
+/// @dev This is a seperate contract from the proxy so that there's no chance of delegatecalls changing storage
 contract ArgobytesAuthority {
-    // key is from `createKey`
+    /// @dev key is from `createKey`
     mapping(bytes => bool) authorizations;
 
+    /// @dev the key includes msg.sender which should prevent most shinanengans.
     function createKey(
         address proxy,
         address sender,
@@ -26,6 +22,7 @@ contract ArgobytesAuthority {
         key = abi.encodePacked(proxy, sender, target, call_type, sig);
     }
 
+    /// @notice Check that sender is allowed to call the given function
     // TODO: i can see some use-cases for not hard coding msg.sender here, but we don't need it now
     function canCall(
         address sender,
@@ -38,7 +35,8 @@ contract ArgobytesAuthority {
         return authorizations[key];
     }
 
-    // SECURITY! If `target` is upgradable, the function at `sig` could be changed and a `sender` may be able to do something malicious!
+    /// @notice Allow an address to call a function
+    /// @notice SECURITY! If `target` is upgradable, the function at `sig` could be changed and a `sender` may be able to do something malicious!
     function allow(
         address[] calldata senders,
         address target,
