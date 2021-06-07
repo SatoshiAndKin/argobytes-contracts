@@ -3,6 +3,8 @@ pragma solidity 0.8.4;
 
 import {IERC20, UniversalERC20} from "contracts/library/UniversalERC20.sol";
 
+error FancyError(bool is_true, uint256 amount, string message);
+
 contract ExampleAction {
     using UniversalERC20 for IERC20;
 
@@ -26,6 +28,10 @@ contract ExampleAction {
 
     function fail() public payable {
         revert("ExampleAction: fail function always reverts");
+    }
+
+    function failFancy() public payable {
+        revert FancyError(true, 1, "ExampleAction: fail function always reverts");
     }
 
     function noop() public payable returns (bool) {

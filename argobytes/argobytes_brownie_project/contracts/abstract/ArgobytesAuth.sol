@@ -15,13 +15,13 @@ import {ImmutablyOwnedClone} from "./ImmutablyOwnedClone.sol";
 // TODO: should this be able to receive a flash loan?
 abstract contract ArgobytesAuth is ImmutablyOwnedClone {
     /// @dev diamond storage
-    bytes32 constant ARGOBYTES_AUTH_POSITION = keccak256("argobytes.storage.ArgobytesAuth");
-
-    /// @dev diamond storage
     /// TODO: how can we be sure that a sneaky delegatecall doesn't change this.
     struct ArgobytesAuthStorage {
         ArgobytesAuthority authority;
     }
+
+    /// @dev diamond storage
+    bytes32 constant ARGOBYTES_AUTH_POSITION = keccak256("argobytes.storage.ArgobytesAuth");
 
     /// @dev diamond storage
     function argobytesAuthStorage() internal pure returns (ArgobytesAuthStorage storage s) {

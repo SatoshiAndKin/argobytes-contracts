@@ -74,8 +74,7 @@ contract ArgobytesFactory19 {
         }
 
         // revert if the contract was already deployed
-        if (clone == address(0))
-            revert Create2Failed();
+        if (clone == address(0)) revert Create2Failed();
 
         emit NewClone(target, salt, immutable_owner, clone);
     }

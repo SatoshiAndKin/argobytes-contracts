@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: You can't license an interface
 pragma solidity 0.8.4;
 
-import {SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
+import {IERC20, SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
 import {IERC20Metadata} from "@OpenZeppelin/token/ERC20/extensions/IERC20Metadata.sol";
 
-
-// this does not extend IERC20 because the Transfer event would conflict
+/// @dev this does not extend IERC20 because the Transfer event would conflict
 interface UnindexedIERC20 {
     function decimals() external view returns (uint256);
 

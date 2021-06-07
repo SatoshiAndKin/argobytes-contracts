@@ -19,10 +19,9 @@ abstract contract ArgobytesFlashBorrowerEvents {
     event Lender(address indexed sender, address indexed lender, bool allowed);
 }
 
-contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents, IERC3156FlashBorrower {
-    /// @dev diamond storage
-    bytes32 constant FLASH_BORROWER_POSITION = keccak256("argobytes.storage.FlashBorrower.lender");
+error AccessDenied();
 
+contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents, IERC3156FlashBorrower {
     /// @dev diamond storage
     struct FlashBorrowerStorage {
         mapping(IERC3156FlashLender => bool) allowed_lenders;
@@ -31,6 +30,9 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         Action pending_action;
         bytes pending_return;
     }
+
+    /// @dev diamond storage
+    bytes32 constant FLASH_BORROWER_POSITION = keccak256("argobytes.storage.FlashBorrower.lender");
 
     /// @dev diamond storage
     function flashBorrowerStorage() internal pure returns (FlashBorrowerStorage storage s) {
@@ -69,7 +71,8 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         // check auth (owner is always allowed to use any lender and any action)
         if (msg.sender != owner()) {
             requireAuth(action.target, action.call_type, BytesLib.toBytes4(action.target_calldata));
-            require(s.allowed_lenders[lender], "FlashBorrower.flashBorrow !lender");
+
+            if (!s.allowed_lenders[lender]) revert AccessDenied();
         }
 
         // we could pass the calldata to the lender and have them pass it back, but that seems less safe
@@ -80,7 +83,6 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         s.pending_action = action;
 
         // uint256 max_loan = lender.maxFlashLoan(token);
-        // revert(Strings.toString(max_loan));
 
         lender.flashLoan(this, token, amount, "");
         // s.pending_loan is now `false`
