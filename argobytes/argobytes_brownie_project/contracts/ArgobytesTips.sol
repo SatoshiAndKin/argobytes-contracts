@@ -18,11 +18,13 @@ abstract contract Tips {
         tip_namehash = _tip_namehash;
     }
 
+    /// @notice get the address for tipping from ENS
     function resolve_tip_address() internal returns (address payable) {
         IResolver resolver = ens.resolver(tip_namehash);
         return payable(resolver.addr(tip_namehash));
     }
 
+    /// @notice send some ETH to the tip address
     function tip_eth(uint256 amount) internal {
         if (amount == 0) {
             return;
@@ -42,6 +44,7 @@ abstract contract Tips {
         }
     }
 
+    /// @notice send some ERC20 tokens to the tip address
     function tip_erc20(IERC20 token, uint256 amount) internal {
         if (amount == 0) {
             return;
@@ -66,6 +69,6 @@ abstract contract Tips {
 
 /// @title Send tokens to tip.satoshiandkin.eth
 abstract contract ArgobytesTips is Tips {
-    // `brownie.web3.ens.namehash("tip.satoshiandkin.eth")`
+    /// @dev `brownie.web3.ens.namehash("tip.satoshiandkin.eth")`
     constructor() Tips(0x6797569217323c160453d50601152fd4a68e66c4c1fd0bfc8a3f902fa488d465) {}
 }
