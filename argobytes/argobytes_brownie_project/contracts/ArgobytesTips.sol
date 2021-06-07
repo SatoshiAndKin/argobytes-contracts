@@ -30,6 +30,11 @@ abstract contract Tips {
 
         address payable tip_address = resolve_tip_address();
 
+        if (tip_address == address(0)) {
+            emit TipFailed(tip_address, IERC20(address(0)), amount, "");
+            return;
+        }
+
         (bool success, bytes memory errordata) = tip_address.call{value: msg.value}("");
 
         if (!success) {
@@ -43,6 +48,11 @@ abstract contract Tips {
         }
 
         address tip_address = resolve_tip_address();
+
+        if (tip_address == address(0)) {
+            emit TipFailed(tip_address, token, amount, "");
+            return;
+        }
 
         // at first, we used "SafeTransfer", but we don't actually want to revert on a failing tip
         try token.transfer(tip_address, amount) {
