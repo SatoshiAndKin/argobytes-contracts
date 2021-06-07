@@ -12,7 +12,7 @@ abstract contract Tips {
     bytes32 public immutable tip_namehash;
 
     /// @dev we don't want to revert if tipping fails. instead we just emit an event
-    event TipFailed(address indexed to, IERC20 token, uint256 amount);
+    event TipFailed(address indexed to, IERC20 token, uint256 amount, bytes errordata);
 
     constructor(bytes32 _tip_namehash) {
         tip_namehash = _tip_namehash;
@@ -30,10 +30,10 @@ abstract contract Tips {
 
         address payable tip_address = resolve_tip_address();
 
-        (bool success, ) = tip_address.call{value: msg.value}("");
+        (bool success, bytes memory errordata) = tip_address.call{value: msg.value}("");
 
         if (!success) {
-            emit TipFailed(tip_address, IERC20(address(0)), amount);
+            emit TipFailed(tip_address, IERC20(address(0)), amount, errordata);
         }
     }
 
@@ -48,8 +48,8 @@ abstract contract Tips {
         try token.transfer(tip_address, amount) {
             // don't bother checking the return bool
             // we don't want to revert on a failing tip
-        } catch (bytes memory /*lowLevelData*/) {
-            emit TipFailed(tip_address, token, amount);
+        } catch (bytes memory errordata) {
+            emit TipFailed(tip_address, token, amount, errordata);
         }
     }
 }
