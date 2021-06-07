@@ -7,13 +7,18 @@ import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
 error Create2Failed();
 
+/// @title A factory for proxy contracts with immutable owners and targets with 19 bytes addresses.
+/// @author Satoshi & Kin, Inc.
+/// @dev Use ERADICATE2 or similar for finding salts
 contract ArgobytesFactory19 {
     event NewClone(address indexed target, bytes32 salt, address indexed immutable_owner, address clone);
 
+    /// @notice Create a proxy contract for `msg.sender`
     function createClone19(address target, bytes32 salt) public returns (address clone) {
         return createClone19(target, salt, msg.sender);
     }
 
+    /// @dev Build the bytecode for a EIP-1167 proxy contract.
     function _code(address target, address immutable_owner) internal pure returns (bytes memory code) {
         assembly {
             // start of the contract (20 bytes)
@@ -35,13 +40,13 @@ contract ArgobytesFactory19 {
         }
     }
 
-    /*
-    Create a very lightweight "clone" contract that delegates all calls to the `target` contract.
+    /// @notice Create a very lightweight "clone" or "proxy" contract that delegates all calls to the `target` contract.
+    /// @param target This address MUST start with a zero byte (like 0x00...)! Why? To get the proxy byetcode to 64 bytes.
+    /// @param immutable_owner The unchangable owner for this proxy
+    /** @dev
+    If target were 20 bytes, this function would cost more gas to deploy.
 
-    The target's address MUST start with a zero byte (like 0x00...)! Why? To get the proxy byetcode to 64 bytes.
-    If it were larger by 1 byte, this function would cost more gas.
-
-    Additionally, you should get as many zero bytes in the target address as possible.
+    You should generate  a salt with as many zero bytes in the target address as possible.
     Each zero byte will slightly reduce the call cost.
 
     If the target contract uses ArgobytesAuth (or compatible) for authentication, then ownership of this clone *cannot* be transferred.
@@ -75,10 +80,12 @@ contract ArgobytesFactory19 {
         emit NewClone(target, salt, immutable_owner, clone);
     }
 
+    /// @notice Create multiple clone contracts for `msg.sender`.
     function createClone19s(address target, bytes32[] calldata salts) public {
         createClone19s(target, salts, msg.sender);
     }
 
+    /// @notice Create multiple clone contracts.
     function createClone19s(
         address target,
         bytes32[] calldata salts,
@@ -89,9 +96,7 @@ contract ArgobytesFactory19 {
         }
     }
 
-    /**
-     * @dev Check if a clone has already been created for the given arguments.
-     */
+    /// @notice Check if a clone has already been created for the given arguments.
     function clone19Exists(
         address target,
         bytes32 salt,
@@ -107,23 +112,22 @@ contract ArgobytesFactory19 {
         exists = Address.isContract(cloneAddr);
     }
 
-    /**
-     * @dev Check if the query address is a clone for the given target.
-     */
+    /// @notice Check if the `query` address is a clone for the given `target`.
+    /// @dev because the owner is in the bytecode, it is part of the query address' generation and we don't need a param for it.
     function isClone(address target, address query) public view returns (bool is_clone) {
-        bytes memory query_code;
-
+        uint256 query_size;
         assembly {
-            // TODO: do extcodesize check to make sure its 64
+            query_size := extcodesize(query)
+        }
 
+        if (query_size != 64) {
+            return false;
+        }
+
+        bytes memory query_code;
+        assembly {
             // right now our contract is 44 bytes + 20 bytes for the owner address, but this will change if we use shorter addresses
             extcodecopy(query, query_code, 0, 64)
-
-            // the last 20 bytes of the contract is the owner's address
-            // the whole contract is 64 bytes long (64-32=32 bytes to load)
-            // we have to load 32 bytes at a time (the first 12 of the bytes will be ignored. the last 20 are the address)
-            // TODO: this is wrong. i think we need to shift it?
-            // owner := mload(add(query_code, 32))
         }
 
         // set the owner to address 0 and then don't compare those bytes
@@ -140,10 +144,8 @@ contract ArgobytesFactory19 {
         }
     }
 
-    /**
-     * @dev deploy a contract if it doesn't already exist
-     * @dev if you want to simply deploy a contract, use the SingletonFactory (eip-2470)
-     */
+    /// @notice Deploy a contract if it doesn't already exist
+    /// @dev If you want to simply deploy a contract, use the SingletonFactory (eip-2470)
     function checkedCreateContract(bytes32 salt, bytes memory bytecode) external payable returns (address deployed) {
         deployed = Create2.computeAddress(salt, keccak256(bytecode));
 
