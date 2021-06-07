@@ -5,12 +5,18 @@ pragma abicoder v2;
 
 import {ArgobytesTips} from "contracts/ArgobytesTips.sol";
 
-import {LeverageCYY3CRVConstants} from "./Constants.sol";
+import {ICERC20, IERC20, LeverageCYY3CRVConstants} from "./Constants.sol";
 
+error CreamBorrowFailed(uint256 error_code, ICERC20 token, uint256 amount);
+error CreamMintFailed(uint256 error_code, IERC20 token);
+error CreamError(uint256 error_code);
+error CreamLiquidity(uint256 liquidity);
+error CreamShortfall(uint256 shortfall);
+error NoBalance(IERC20 token);
+error TransferFailed(IERC20 token);
+
+/// @title Leverage cyy3crv
 contract EnterCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
-    // TODO: debug event. remove this before deploying
-    event ArgobytesLogUint(address indexed proxy, uint8 id, uint256 data);
-
     // this function takes a lot of inputs so we put them into a struct
     // this isn't as gas efficient, but it compiles without "stack too deep" errors
     struct EnterData {
@@ -30,7 +36,7 @@ contract EnterCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
 
     /// @notice stablecoins -> 3crv -> y3crv -> leveraged cyy3crv
     /// @dev Delegatecall this from ArgobytesFlashBorrower.flashBorrow
-    function enter(EnterData calldata data) external payable returns (uint256) {
+    function enter(EnterData calldata data) external payable {
         // TODO: we don't need auth here anymore. this is only used via delegatecall that already has auth. but think about it more
 
         uint256 temp; // we are going to be checking a lot of balances
@@ -38,15 +44,8 @@ contract EnterCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
         // we should already have DAI from the flash loan
         uint256 flash_dai_amount = DAI.balanceOf(address(this));
 
-        emit ArgobytesLogUint(address(this), 0, flash_dai_amount);
-
         // send any ETH as a tip to the developer
-        if (msg.value > 0) {
-            address payable tip_address = resolve_tip_address();
-
-            (bool success, ) = tip_address.call{value: msg.value}("");
-            require(success, "!tip");
-        }
+        tip_eth(msg.value);
 
         // transfer stablecoins and trade them to 3crv
         {
@@ -64,7 +63,9 @@ contract EnterCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
 
             // grab the data.sender's USDC
             if (data.usdc > 0) {
-                require(USDC.transferFrom(data.sender, address(this), data.usdc), "EnterCYY3CRVAction !USDC");
+                if (!USDC.transferFrom(data.sender, address(this), data.usdc)) {
+                    revert TransferFailed(USDC);
+                }
 
                 // approve the exchange
                 USDC.approve(address(THREE_CRV_POOL), data.usdc);
@@ -96,75 +97,70 @@ contract EnterCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
         // grab the data.sender's 3crv
         temp = data.threecrv + claimed_3crv;
         if (temp > 0) {
-            require(THREE_CRV.transferFrom(data.sender, address(this), temp), "EnterCYY3CRVAction !THREE_CRV");
+            if (!THREE_CRV.transferFrom(data.sender, address(this), temp)) {
+                revert TransferFailed(THREE_CRV);
+            }
         }
 
         // optionally tip the developer
-        if (data.tip_3crv > 0) {
-            address payable tip_address = resolve_tip_address();
-
-            require(THREE_CRV.transfer(tip_address, data.tip_3crv), "EnterCYY3CRVAction !tip_3crv");
-        }
+        tip_erc20(THREE_CRV, data.tip_3crv);
 
         // deposit 3crv for y3crv
         temp = THREE_CRV.balanceOf(address(this));
 
-        emit ArgobytesLogUint(address(this), 1, temp);
-
         THREE_CRV.approve(address(Y_THREE_CRV), temp);
         Y_THREE_CRV.deposit(temp);
 
-        emit ArgobytesLogUint(address(this), 2, temp);
-
         // grab the data.sender's y3crv
         if (data.y3crv > 0) {
-            require(
-                Y_THREE_CRV.transferFrom(data.sender, address(this), data.y3crv),
-                "EnterCYY3CRVAction !Y_THREE_CRV"
-            );
+            if (!Y_THREE_CRV.transferFrom(data.sender, address(this), data.y3crv)) {
+                revert TransferFailed(Y_THREE_CRV);
+            }
         }
 
         // setup cream
         address[] memory markets = new address[](1);
         markets[0] = address(CY_Y_THREE_CRV);
-        // TODO: do we need cydai?
-        // markets[1] = address(CY_DAI);
 
         CREAM.enterMarkets(markets);
 
         // deposit y3crv for cyy3crv
         temp = Y_THREE_CRV.balanceOf(address(this));
 
-        emit ArgobytesLogUint(address(this), 3, temp);
-
         Y_THREE_CRV.approve(address(CY_Y_THREE_CRV), temp);
-        require(CY_Y_THREE_CRV.mint(temp) == 0, "EnterCYY3CRVAction !CYY3CRV.mint");
+
+        temp = CY_Y_THREE_CRV.mint(temp);
+        if (temp != 0) {
+            revert CreamMintFailed(temp, IERC20(CY_Y_THREE_CRV));
+        }
 
         temp = CY_Y_THREE_CRV.balanceOf(address(this));
-        require(temp > 0, "!CY_Y_THREE_CRV mint balance");
-
-        emit ArgobytesLogUint(address(this), 4, temp);
-
-        // TODO: optionally grab the user's cyy3crv. this will revert if they already have borrows. they should probably just exit first
+        if (temp == 0) {
+            revert NoBalance(CY_Y_THREE_CRV);
+        }
 
         flash_dai_amount += data.dai_flash_fee;
 
-        emit ArgobytesLogUint(address(this), 5, flash_dai_amount);
-
-        // make sure we can borrow enough DAI from cream
-        (uint256 error, uint256 liquidity, uint256 shortfall) =
+        // make sure we can borrow DAI from cream and still have a healthy collateralization
+        (uint256 error_code, uint256 liquidity, uint256 shortfall) =
             CREAM.getHypotheticalAccountLiquidity(address(this), address(CY_DAI), 0, flash_dai_amount);
-        require(error == 0, "EnterCYY3CRVAction CREAM error");
-        require(shortfall == 0, "EnterCYY3CRVAction CREAM shortfall");
-        require(liquidity >= data.min_cream_liquidity, "EnterCYY3CRVAction !min_cream_liquidity");
+
+        if (error_code != 0) {
+            revert CreamError(error_code);
+        }
+        if (shortfall != 0) {
+            revert CreamShortfall(shortfall);
+        }
+        if (liquidity < data.min_cream_liquidity) {
+            revert CreamLiquidity(liquidity);
+        }
 
         // TODO: do something if liquidity is really large?
 
-        emit ArgobytesLogUint(address(this), 6, liquidity);
-
         // borrow DAI from cream to pay back the flash loan
-        require(CY_DAI.borrow(flash_dai_amount) == 0, "EnterCYY3CRVAction !cydai.borrow");
-
-        return liquidity;
+        temp = CY_DAI.borrow(flash_dai_amount);
+        if (temp != 0) {
+            revert CreamBorrowFailed(temp, CY_DAI, flash_dai_amount);
+        }
     }
 }

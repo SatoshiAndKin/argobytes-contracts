@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: MPL-2.0
-// Store profits and provide them for flash lending
-// Burns LiquidGasToken (or compatible contracts)
 // TODO: finish ArgobytesProxy refactor
 // TODO: rewrite this to use the FlashLoan EIP instead of dydx. this allows lots more tokens
 pragma solidity 0.8.4;
@@ -10,8 +8,10 @@ import {IERC20, SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
 import {ArgobytesAuth} from "contracts/abstract/ArgobytesAuth.sol";
 import {ArgobytesMulticall} from "contracts/ArgobytesMulticall.sol";
 
+error NoBalance(IERC20 token);
+
+/// @title Trade ERC20 tokens
 contract ArgobytesTrader {
-    // TODO: use this event
     event SetArgobytesMulticall(address indexed old_addr, address indexed new_addr);
 
     struct Borrow {
@@ -20,8 +20,10 @@ contract ArgobytesTrader {
         address dest;
     }
 
-    // diamond storage
-    // TODO: use this
+    /**
+     * @dev diamond storage
+     * @dev TODO: use this
+     */
     struct ArgobytesTraderStorage {
         mapping(ArgobytesMulticall => bool) approved_argobytes_multicalls;
     }
@@ -94,7 +96,7 @@ contract ArgobytesTrader {
      * @notice Transfer `first_amount` `tokens[0]`, call some functions, and return tokens to msg.sender.
      * @notice this might as well be called `function rugpull` with the transfers for anything. be careful with approvals here!
      * @notice You'll need to call this from another smart contract that has authentication!
-     * @dev Dangerous ArgobytesProxy execute target
+     * @notice Dangerous ArgobytesProxy execute target
      */
     function atomicTrade(
         address withdraw_from,
@@ -119,7 +121,7 @@ contract ArgobytesTrader {
         // TODO: refund excess ETH?
     }
 
-    /// @dev safety check for the end of your atomicTrade or atomicArbitrage actions
+    /// @notice safety check for the end of your atomicTrade or atomicArbitrage actions
     function requireERC20Balance(
         IERC20 token,
         address who,
@@ -128,16 +130,13 @@ contract ArgobytesTrader {
         require(token.balanceOf(who) >= min_balance, "ArgobytesTrader !balance");
     }
 
-    /// @dev safety check for the end of your atomicTrade or atomicArbitrage actions
+    /// @notice safety check for the end of your atomicTrade or atomicArbitrage actions
     function requireBalance(address who, uint256 min_balance) public {
         require(who.balance >= min_balance, "ArgobytesTrader !balance");
     }
 
-    /**
-     * @dev Like atomicArbitrage, but makes sure that `argobytes_multicall` is an approved contract.
-     *
-     * This should be safe to approve bots to use. At least thats the plan. Need an audit.
-     */
+    /// @notice Like atomicArbitrage, but makes sure that `argobytes_multicall` is an approved contract.
+    /// @notice This should be safe to approve bots to use. At least thats the plan. Need an audit.
     function safeAtomicArbitrage(
         address borrow_from,
         Borrow[] calldata borrows,

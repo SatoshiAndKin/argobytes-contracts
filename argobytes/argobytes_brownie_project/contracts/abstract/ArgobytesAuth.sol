@@ -10,12 +10,14 @@ import {AddressLib} from "contracts/library/AddressLib.sol";
 import {BytesLib} from "contracts/library/BytesLib.sol";
 
 import {ActionTypes} from "./ActionTypes.sol";
-import {ImmutablyOwnedClone} from "./ImmutablyOwnedClone.sol";
+import {ImmutablyOwned} from "./ImmutablyOwned.sol";
 
-// TODO: should this be able to receive a flash loan?
-abstract contract ArgobytesAuth is ImmutablyOwnedClone {
+error AccessDenied();
+
+/// @title Access control with an immutable owner
+abstract contract ArgobytesAuth is ImmutablyOwned {
     /// @dev diamond storage
-    /// TODO: how can we be sure that a sneaky delegatecall doesn't change this.
+    /// @notice be sure that a sneaky delegatecall doesn't change this!
     struct ArgobytesAuthStorage {
         ArgobytesAuthority authority;
     }
@@ -36,21 +38,21 @@ abstract contract ArgobytesAuth is ImmutablyOwnedClone {
     modifier auth(ActionTypes.Call call_type) {
         // do auth first. that is safest
         // theres some cases where it may be possible to do the auth check last, but it is too risky for me
-        // TODO: i can see cases where msg.data could be used, but i think thats more complex than we need
         if (msg.sender != owner()) {
             requireAuth(address(this), call_type, msg.sig);
         }
         _;
     }
 
-    /*
-    Check if the `sender` is authorized to delegatecall the `sig` on a `target` contract.
-
+    /// @notice Check if the `sender` is authorized to delegatecall the `sig` on a `target` contract.
+    /** @dev
     This should allow for some pretty powerful delegation. With great power comes great responsibility!
 
     Other contracts I've seen that work similarly to our auth allow `sender == address(this)`
     That makes me uncomfortable. Essentially no one is checking their calldata.
     A malicious site could slip a setAuthority call into the middle of some other set of actions.
+
+    I can see cases where msg.data could be used, but i think thats more complex than we need
     */
     function isAuthorized(
         address sender,
@@ -60,19 +62,21 @@ abstract contract ArgobytesAuth is ImmutablyOwnedClone {
     ) internal view returns (bool authorized) {
         ArgobytesAuthStorage storage s = argobytesAuthStorage();
 
-        // this reverts without a reason if authority isn't set and the caller is not the owner. is that okay?
+        // TODO: this reverts without a reason if authority isn't set and the caller is not the owner. is that okay?
         // we could check != address(0) and do authority.canCall in a try/catch, but that costs more gas
         authorized = s.authority.canCall(sender, target, call_type, sig);
     }
 
+    /// @notice revert if authorization is denied
     function requireAuth(
         address target,
         ActionTypes.Call call_type,
         bytes4 sig
     ) internal view {
-        require(isAuthorized(msg.sender, call_type, target, sig), "ArgobytesAuth: 403");
+        if (!isAuthorized(msg.sender, call_type, target, sig)) revert AccessDenied();
     }
 
+    /// @notice Set the contract used for checking authentication
     function setAuthority(ArgobytesAuthority new_authority) public auth(ActionTypes.Call.ADMIN) {
         ArgobytesAuthStorage storage s = argobytesAuthStorage();
 

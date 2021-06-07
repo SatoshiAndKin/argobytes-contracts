@@ -2,8 +2,12 @@
 pragma solidity 0.8.4;
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
+
+import {IERC20} from "contracts/external/erc20/IERC20.sol";
 import {IKyberNetworkProxy} from "contracts/external/kyber/IKyberNetworkProxy.sol";
-import {IERC20} from "contracts/library/UniversalERC20.sol";
+
+error AccessDenied();
+error FailedTrade();
 
 contract KyberAction is AbstractERC20Exchange {
     // TODO: document MAX_QTY
@@ -27,7 +31,9 @@ contract KyberAction is AbstractERC20Exchange {
     This could have fancier auth on it, but I don't think its worth the
     */
     function setPlatformWallet(address payable platform_wallet) public {
-        require(msg.sender == _platform_wallet, "KyberAction.setPlatformWallet: 403");
+        if (msg.sender != _platform_wallet) {
+            revert AccessDenied();
+        }
 
         _platform_wallet = platform_wallet;
     }
@@ -40,8 +46,6 @@ contract KyberAction is AbstractERC20Exchange {
         bytes calldata hint
     ) public payable {
         uint256 src_amount = address(this).balance;
-
-        // require(src_amount > 0, "KyberAction.tradeEtherToToken: no src_amount");
 
         uint256 received =
             IKyberNetworkProxy(network_proxy).tradeWithHintAndFee{value: src_amount}(
@@ -71,8 +75,6 @@ contract KyberAction is AbstractERC20Exchange {
         // Use the full balance of tokens transferred from the trade executor
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
 
-        // require(src_amount > 0, "KyberAction.tradeTokenToToken: no src_amount");
-
         // Approve the exchange to transfer tokens from this contract to the reserve
         IERC20(src_token).approve(network_proxy, src_amount);
 
@@ -90,7 +92,9 @@ contract KyberAction is AbstractERC20Exchange {
             );
 
         // TODO: set minConversionRate instead?
-        require(received >= dest_min_tokens, "KyberAction.tradeTokenToToken: FAILED_TRADE");
+        if (received < dest_min_tokens) {
+            revert FailedTrade();
+        }
     }
 
     function tradeTokenToEther(

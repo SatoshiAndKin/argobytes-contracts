@@ -3,10 +3,9 @@ pragma solidity 0.8.4;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
-/**
- * @dev Collection of openzepplin's unreleased functions related to the address type
- */
+/// @title Collection of openzepplin's unreleased functions related to the address type
 library AddressLib {
+    /// @dev make sure to check Address.isContract(target) first, because this function does not!
     function uncheckedCall(
         address target,
         bool forward_value,
@@ -27,7 +26,7 @@ library AddressLib {
         return _verifyCallResult(success, returndata, errorMessage);
     }
 
-    /// @dev make sure to check Address.isContract(target) first!
+    /// @dev make sure to check Address.isContract(target) first, because this function does not!
     function uncheckedDelegateCall(
         address target,
         bytes memory data,
@@ -39,6 +38,7 @@ library AddressLib {
         return _verifyCallResult(success, returndata, errorMessage);
     }
 
+    /// @dev If success, return data. Else revert.
     function _verifyCallResult(
         bool success,
         bytes memory returndata,

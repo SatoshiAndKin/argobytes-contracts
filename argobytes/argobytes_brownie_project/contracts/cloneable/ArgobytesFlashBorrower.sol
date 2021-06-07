@@ -15,11 +15,11 @@ import {IERC3156FlashLender} from "contracts/external/erc3156/IERC3156FlashLende
 
 import {ArgobytesProxy} from "./ArgobytesProxy.sol";
 
+error AccessDenied();
+
 abstract contract ArgobytesFlashBorrowerEvents {
     event Lender(address indexed sender, address indexed lender, bool allowed);
 }
-
-error AccessDenied();
 
 contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents, IERC3156FlashBorrower {
     /// @dev diamond storage
