@@ -11,7 +11,7 @@ from .compilers import compilers
 from .tx import tx
 
 
-@with_plugins(entry_points()["argobytes.plugins"])
+@with_plugins(entry_points().select(group="argobytes.plugins"))
 @click.group()
 @click_log.simple_verbosity_option(logger)
 @click.option("--etherscan-token", default="", envvar="ETHERSCAN_TOKEN")
