@@ -233,8 +233,9 @@ def safe_token_approve(
         elif reset:
             # TODO: we should have a list of tokens that need this behavior instead of taking a kwarg
             print(f"Clearing {token_symbol} ({token.address}) approval...")
+            # gas estimators get confused if you do 0 here
             approve_tx = token.approve(
-                spender, 0, {"from": account, "required_confs": required_confs, "gas_buffer": 1.3}
+                spender, 0, {"from": account, "required_confs": required_confs or 1, "gas_buffer": 1.3}
             )
 
             pending_txs.append(approve_tx)
@@ -256,7 +257,7 @@ def safe_token_approve(
         # approve_tx.info()
 
     if required_confs == 0:
-        wait_for_confirmation(pending_txs)
+        wait_for_confirmation(pending_txs, required_confs=1)
 
 
 def transfer_token(from_address, to, token, decimal_amount):

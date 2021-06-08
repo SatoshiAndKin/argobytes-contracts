@@ -223,7 +223,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
 
         block = None
 
-    cache_key = (token_name_or_address, owner, block)
+    cache_key = (token_name_or_address, block)
 
     if cache_key in _contract_cache:
         contract = _contract_cache[cache_key]
@@ -256,6 +256,8 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
         # TODO: we need this to work on other chains like BSC and Matic
         contract = EthContract()
 
+        # TODO: attach owner?
+
         _contract_cache[cache_key] = contract
 
         return contract
@@ -280,6 +282,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
 
     # check if this is a proxy contract
     contract = check_for_proxy(contract, block, force=force)
+
     contract._owner = owner
 
     _contract_cache[cache_key] = contract

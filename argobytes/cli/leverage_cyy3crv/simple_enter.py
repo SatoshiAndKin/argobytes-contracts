@@ -1,17 +1,9 @@
 import os
-
-import click
-from brownie import Contract, accounts
-from brownie.network.web3 import _resolve_address
-from eth_utils import to_int
+from decimal import Decimal
 
 from argobytes.contracts import (
-    ArgobytesAction,
-    ArgobytesActionCallType,
     ArgobytesBrownieProject,
     ArgobytesInterfaces,
-    DyDxFlashLender,
-    get_or_clone,
     get_or_create,
     load_contract,
     poke_contracts,
@@ -31,20 +23,22 @@ def simple_enter(account):
 
     print("Preparing contracts...")
     # TODO: use multicall to get all the addresses?
-    dai = load_contract(enter_cyy3crv_action.DAI())
-    usdc = load_contract(enter_cyy3crv_action.USDC())
-    usdt = load_contract(enter_cyy3crv_action.USDT())
-    threecrv = load_contract(enter_cyy3crv_action.THREE_CRV())
-    threecrv_pool = ArgobytesInterfaces.ICurvePool(enter_cyy3crv_action.THREE_CRV_POOL())
-    y3crv = ArgobytesInterfaces.IYVault(enter_cyy3crv_action.Y_THREE_CRV())
-    cyy3crv = ArgobytesInterfaces.ICERC20(enter_cyy3crv_action.CY_Y_THREE_CRV())
-    cydai = ArgobytesInterfaces.ICERC20(enter_cyy3crv_action.CY_DAI())
-    fee_distribution = ArgobytesInterfaces.ICurveFeeDistribution(enter_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION())
-    cream = ArgobytesInterfaces.IComptroller(enter_cyy3crv_action.CREAM())
+    dai = load_contract(enter_cyy3crv_action.DAI(), account)
+    usdc = load_contract(enter_cyy3crv_action.USDC(), account)
+    usdt = load_contract(enter_cyy3crv_action.USDT(), account)
+    threecrv = load_contract(enter_cyy3crv_action.THREE_CRV(), account)
+    threecrv_pool = load_contract(enter_cyy3crv_action.THREE_CRV_POOL(), account)
+    y3crv = load_contract(enter_cyy3crv_action.Y_THREE_CRV(), account)
+    cyy3crv = load_contract(enter_cyy3crv_action.CY_Y_THREE_CRV(), account)
+    cydai = load_contract(enter_cyy3crv_action.CY_DAI(), account)
+    fee_distribution = load_contract(enter_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION(), account)
+    cream = load_contract(enter_cyy3crv_action.CREAM(), account)
 
     tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv, cydai]
 
     poke_contracts(tokens + [threecrv_pool, fee_distribution, cream])
+
+    # TODO: compare all these contracts with our own implementations
 
     balances = get_balances(account, tokens)
     print_token_balances(balances, f"{account} balances")
@@ -117,7 +111,7 @@ def simple_enter(account):
     # mint_tx.info()
 
     # TODO: need to use actual prices of 3crv and dai
-    borrow_amount = int(balances_for_y3crv[threecrv] * threecrv_pool.get_virtual_price() / 1e18 * 0.9 * 0.9)
+    borrow_amount = int(balances_for_y3crv[threecrv] * Decimal(threecrv_pool.get_virtual_price() / 1e18 * 0.9 * 0.9))
     print(f"borrow_amount: {borrow_amount}")
 
     assert borrow_amount > 0

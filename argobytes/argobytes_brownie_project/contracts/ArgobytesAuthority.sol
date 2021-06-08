@@ -23,13 +23,13 @@ contract ArgobytesAuthority {
     }
 
     /// @notice Check that sender is allowed to call the given function
-    // TODO: i can see some use-cases for not hard coding msg.sender here, but we don't need it now
     function canCall(
         address sender,
         address target,
         ActionTypes.Call call_type,
         bytes4 sig
     ) external view returns (bool) {
+        // TODO: i can see some use-cases for not hard coding msg.sender here, but we don't need it now
         bytes memory key = createKey(msg.sender, sender, target, call_type, sig);
 
         return authorizations[key];
