@@ -10,6 +10,7 @@ from argobytes.contracts import (
     ArgobytesInterfaces,
     DyDxFlashLender,
     get_or_clone,
+    get_or_clone_flash_borrower,
     get_or_create,
     get_or_create_flash_borrower,
     lazy_contract,
@@ -41,12 +42,16 @@ def atomic_enter(account, min_3crv_to_claim):
     logger.info(f"Hello, {account}")
 
     # deploy our contracts if necessary
-    argobytes_factory = get_or_create_factory(account)
-    argobytes_flash_borrower = get_or_create_flash_borrower(account)
     enter_cyy3crv_action = get_or_create(account, ArgobytesBrownieProject.EnterCYY3CRVAction)
+    argobytes_clone = get_or_clone_flash_borrower(
+        account,
+        borrower_salt=None,
+        clone_salt="",
+        factory_salt="",
+        leading_zeros=1,
+    )
 
-    # get the clone for the account
-    argobytes_clone = get_or_clone(account, argobytes_factory, argobytes_flash_borrower)
+    assert False, "WIP"
 
     logger.info("clone: %s", argobytes_clone)
 

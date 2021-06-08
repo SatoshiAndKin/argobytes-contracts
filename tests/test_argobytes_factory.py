@@ -1,7 +1,22 @@
+from argobytes.contracts import get_or_clone, get_or_create_factory, get_or_create_flash_borrower
 from brownie import accounts
 
 
-def test_deploy_clone(argobytes_factory, argobytes_proxy):
+def test_get_or_clone():
+    account = accounts[0]
+
+    argobytes_factory = get_or_create_factory(account)
+
+    argobytes_proxy = get_or_create_flash_borrower(account)
+
+    argobytes_clone = get_or_clone(account, argobytes_factory, argobytes_proxy)
+
+    print(argobytes_clone)
+
+    assert False, "WIP"
+
+
+def test_create_clone(argobytes_factory, argobytes_proxy):
     tx = argobytes_factory.createClone19(argobytes_proxy, "")
 
     # tx.info()
@@ -19,7 +34,7 @@ def test_deploy_clone(argobytes_factory, argobytes_proxy):
     assert tx.gas_used < 69900
 
 
-def test_deploy_clones(argobytes_factory, argobytes_proxy):
+def test_create_clones(argobytes_factory, argobytes_proxy):
     salts = [
         0,
         1,

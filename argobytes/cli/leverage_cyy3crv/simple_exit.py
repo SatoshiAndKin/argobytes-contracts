@@ -79,7 +79,7 @@ def simple_exit(account):
         # TODO: skip this if its a small amount?
         # TODO: why do we need "from" here?
         repay_borrow_tx = cydai.repayBorrow(start_balances[dai], {"from": account})
-        
+
         repay_borrow_tx.info()
 
     # we need more DAI!
@@ -121,7 +121,7 @@ def simple_exit(account):
     print(f"one_cyy3crv_in_y3crv: {one_cyy3crv_in_y3crv}")
 
     # TODO: this calculation is wrong
-    available_cyy3crv = (available_cyy3crv_in_y3crv // one_cyy3crv_in_y3crv)
+    available_cyy3crv = available_cyy3crv_in_y3crv // one_cyy3crv_in_y3crv
 
     print(f"available_cyy3crv: {available_cyy3crv}")
 
@@ -143,5 +143,3 @@ def simple_exit(account):
     print_token_balances(end_balances, f"{account} end balances")
 
     assert end_balances[threecrv] > start_balances[threecrv]
-
-    assert False, "WIP"

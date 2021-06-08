@@ -76,20 +76,17 @@ def get_deterministic_contract(default_account, contract, salt="", constructor_a
     return contract.at(contract_address, default_account)
 
 
-def get_or_clone(owner, argobytes_factory, deployed_contract, salt=""):
+def get_or_clone(owner, argobytes_factory, target_contract, salt=""):
     """Fetches an existing clone or creates a new clone."""
-    try:
-        clone_address = argobytes_factory.createClone19.call(deployed_contract, salt, owner)
-    except Exception as e:
-        # clone already exists
-        clone_address = decode_single('address', e.return_value)
-    else:
-        # clone does not exist
-        deploy_tx = argobytes_factory.createClone19(deployed_contract, salt, owner)
+    (clone_address, is_new) = argobytes_factory.createClone19.call(target_contract, salt, owner)
+
+    if is_new:
+        # send the transaction to craete the contract
+        deploy_tx = argobytes_factory.createClone19(target_contract.address, salt, owner, {"from": owner})
 
         deploy_tx.info()
 
-    return Contract.from_abi(deployed_contract._name, clone_address, deployed_contract.abi, owner)
+    return Contract.from_abi(target_contract._name, clone_address, target_contract.abi, owner)
 
 
 def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
@@ -130,12 +127,12 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
     return [_contract(address) for address in my_proxys_proxies]
 
 
-def get_or_clone_flash_borrower(account, borrower_salt="", clone_salt="", factory_salt="", leading_zeros=1):
+def get_or_clone_flash_borrower(account, borrower_salt=None, clone_salt="", factory_salt="", leading_zeros=1):
     factory = get_or_create_factory(account, factory_salt)
 
     # we don't actually want the proxy. flash_borrower does more
     # proxy = get_or_create_proxy(account, salt)
-    flash_borrower = get_or_create_flash_borrower(account, borrower_salt, leading_zeros=leading_zeros)
+    flash_borrower = get_or_create_flash_borrower(account, borrower_salt, leading_zeros=leading_zeros or 1)
 
     clone = get_or_clone(account, factory, flash_borrower, salt=clone_salt)
 
@@ -411,10 +408,10 @@ def find_create2_salt(sender: bytes, initcode_hash: bytes, leading_zeros: int = 
     # start scanning at a random address
     # salt = random.randint(0, 2 ** 256)
     # start scanning at the start
-    # TODO: we could do a lot more efficient things with the salts, but that doesn't matter for hits quick and dirty function. 
+    # TODO: we could do a lot more efficient things with the salts, but that doesn't matter for hits quick and dirty function.
     salt = 0
 
-    prefix = b'\x00' * leading_zeros
+    prefix = b"\x00" * leading_zeros
 
     # TODO: GPU accelerated awesomess
     while True:

@@ -35,6 +35,11 @@ def setup_brownie_mainnet_fork(pytestconfig):
 
     brownie.reverts = RevertContextManager
 
+    yield
+
+    network.disconnect()
+
+
 
 @pytest.fixture(autouse=True, scope="function")
 def isolation(fn_isolation, monkeypatch):

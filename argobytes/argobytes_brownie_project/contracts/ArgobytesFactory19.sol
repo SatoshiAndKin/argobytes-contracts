@@ -5,7 +5,7 @@ pragma solidity 0.8.4;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
-error Create2Failed();
+error CloneError(address target, bytes32 salt);
 
 /// @title A factory for proxy contracts with immutable owners and targets with 19 bytes addresses.
 /// @author Satoshi & Kin, Inc.
@@ -13,13 +13,8 @@ error Create2Failed();
 contract ArgobytesFactory19 {
     event NewClone(address indexed target, bytes32 salt, address indexed immutable_owner, address clone);
 
-    /// @notice Create a proxy contract for `msg.sender`
-    function createClone19(address target, bytes32 salt) public returns (address clone) {
-        return createClone19(target, salt, msg.sender);
-    }
-
     /// @dev Build the bytecode for a EIP-1167 proxy contract.
-    function _code(address target, address immutable_owner) internal pure returns (bytes memory code) {
+    function _clone_bytecode(address target, address immutable_owner) internal pure returns (bytes memory code) {
         assembly {
             // start of the contract (20 bytes)
             // the first 10 of these bytes are for setup. the contract bytecode is 10 bytes shorter
@@ -38,6 +33,11 @@ contract ArgobytesFactory19 {
             // addresses are 20 bytes and everything is accessed in 32 byte chunks, so we need to shift it by 32-(20) bytes (96 bits)
             mstore(add(code, 54), shl(96, immutable_owner))
         }
+    }
+
+    /// @notice Create a proxy contract for `msg.sender`
+    function createClone19(address target, bytes32 salt) public returns (address clone, bool is_new) {
+        return createClone19(target, salt, msg.sender);
     }
 
     /// @notice Create a very lightweight "clone" or "proxy" contract that delegates all calls to the `target` contract.
@@ -65,18 +65,22 @@ contract ArgobytesFactory19 {
         address target,
         bytes32 salt,
         address immutable_owner
-    ) public returns (address clone) {
-        bytes memory code = _code(target, immutable_owner);
+    ) public returns (address clone, bool is_new) {
+        bytes memory bytecode = _clone_bytecode(target, immutable_owner);
 
         assembly {
             // deploy it
-            clone := create2(0, code, 74, salt)
+            clone := create2(0, bytecode, 74, salt)
         }
 
-        // revert if the contract was already deployed
-        if (clone == address(0)) revert Create2Failed();
-
-        emit NewClone(target, salt, immutable_owner, clone);
+        // don't revert if the contract is already deployed. instead, return the address
+        if (clone == address(0)) {
+            is_new = false;
+            clone = Create2.computeAddress(salt, keccak256(bytecode));
+        } else {
+            is_new = true;
+            emit NewClone(target, salt, immutable_owner, clone);
+        }
     }
 
     /// @notice Create multiple clone contracts for `msg.sender`.
@@ -85,30 +89,17 @@ contract ArgobytesFactory19 {
     }
 
     /// @notice Create multiple clone contracts.
+    // TODO: return all the addresses
     function createClone19s(
         address target,
         bytes32[] calldata salts,
         address immutable_owner
     ) public {
-        for (uint256 i = 0; i < salts.length; i++) {
+        uint256 num_clones = salts.length;
+        for (uint256 i = 0; i < num_clones; i++) {
+            // TODO: return the addresses
             createClone19(target, salts[i], immutable_owner);
         }
-    }
-
-    /// @notice Check if a clone has already been created for the given arguments.
-    function clone19Exists(
-        address target,
-        bytes32 salt,
-        address immutable_owner
-    ) public view returns (bool exists, address cloneAddr) {
-        bytes memory code = _code(target, immutable_owner);
-
-        bytes32 bytecodeHash = keccak256(code);
-
-        // TODO: do this all here in assembly? the compiler should be smart enough to not have any savings doing that
-        cloneAddr = Create2.computeAddress(salt, bytecodeHash);
-
-        exists = Address.isContract(cloneAddr);
     }
 
     /// @notice Check if the `query` address is a clone for the given `target`.
@@ -130,7 +121,7 @@ contract ArgobytesFactory19 {
         }
 
         // set the owner to address 0 and then don't compare those bytes
-        bytes memory expected_code = _code(target, address(0));
+        bytes memory expected_code = _clone_bytecode(target, address(0));
 
         assembly {
             is_clone := and(
