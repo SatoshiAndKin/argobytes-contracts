@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-/* https://github.com/KyberNetwork/smart-contracts/blob/master/contracts/KyberNetworkProxy.sol */
+/* https://github.com/KyberNetwork/smart-contracts/blob/master/contracts/sol6/IKyberNetworkProxy.sol */
 
 /* https://developer.kyber.network/docs/DappsGuide/ */
 

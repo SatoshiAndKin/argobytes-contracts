@@ -42,7 +42,7 @@ The Factory contract can be used to deploy any other contract as well as clones 
 
 For a gas optimization, the address of the target contract must begin with at least one zero byte (0x00...)
 
-Every user needs their own proxy contract, but deploying it requires 672k gas. So instead of every user spending that gas, the proxy contract is deployed once. Then, the Factory's `cloneProxy` function is called to deploy a modified EIP-1167 proxy for only ~70k gas. This proxy is hard coded to use the `ArgobytesProxy` contract for all its logic.
+Every user needs their own proxy contract, but deploying it requires 672k gas. So instead of every user spending that gas, the proxy contract is deployed once. Then, the Factory's `cloneProxy` function is called to deploy a modified EIP-1167 proxy for <70k gas. This proxy is hard coded to use the `ArgobytesProxy` contract for all its logic.
 
 The clones and their owner cannot be changed. If a new ArgobytesProxy is released, a new clone will need to be created. Because this is cheap, I think it is far preferable to the complexity of upgradable contracts.
 

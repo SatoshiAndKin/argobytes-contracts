@@ -1,6 +1,6 @@
 import brownie
 import pytest
-from brownie import accounts, network, project, web3, ZERO_ADDRESS
+from brownie import ZERO_ADDRESS, accounts, network, project, web3
 from brownie.test.fixtures import PytestBrownieFixtures
 from brownie.test.managers.runner import RevertContextManager
 from click.testing import CliRunner
@@ -38,7 +38,6 @@ def setup_brownie_mainnet_fork(pytestconfig):
     yield
 
     network.disconnect()
-
 
 
 @pytest.fixture(autouse=True, scope="function")

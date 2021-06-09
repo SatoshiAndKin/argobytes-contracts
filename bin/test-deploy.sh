@@ -4,11 +4,11 @@
 
 set -eux
 
-[ -d contracts ]
+cd argobytes/argobytes_brownie_project
 
 # we could let run compile for us, but the error messages (if any) aren't as easy to read
-./venv/bin/brownie compile
+../../venv/bin/brownie compile
 
 export EXPORT_ARTIFACTS=0
 
-./venv/bin/brownie run deploy/dev --network mainnet-fork "$@"
+../../venv/bin/brownie run deploy/dev --network mainnet-fork "$@"

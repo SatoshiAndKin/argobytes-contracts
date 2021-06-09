@@ -5,7 +5,7 @@ pragma solidity 0.8.4;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {Create2} from "@OpenZeppelin/utils/Create2.sol";
 
-error CloneError(address target, bytes32 salt);
+error CloneError(bytes32 salt);
 
 /// @title A factory for proxy contracts with immutable owners and targets with 19 bytes addresses.
 /// @author Satoshi & Kin, Inc.
@@ -13,8 +13,8 @@ error CloneError(address target, bytes32 salt);
 contract ArgobytesFactory19 {
     event NewClone(address indexed target, bytes32 salt, address indexed immutable_owner, address clone);
 
-    /// @dev Build the bytecode for a EIP-1167 proxy contract.
-    function _clone_bytecode(address target, address immutable_owner) internal pure returns (bytes memory code) {
+    /// @dev Build the bytecode for a EIP-1167 proxy contract with a 19 byte target address
+    function _cloneBytecode(address target19, address immutable_owner) internal pure returns (bytes memory code) {
         assembly {
             // start of the contract (20 bytes)
             // the first 10 of these bytes are for setup. the contract bytecode is 10 bytes shorter
@@ -23,7 +23,7 @@ contract ArgobytesFactory19 {
             // addresses are 20 bytes, but we require the use of create2 salts to get a 19 byte address
             // everything is accessed in 32 byte chunks, so we need to shift it by 32-(20-1) bytes (104 bits)
             // lots of devs use hex, but I just don't think quickly in hex so I use decimal.
-            mstore(add(code, 20), shl(104, target))
+            mstore(add(code, 20), shl(104, target19))
             // end of the contract (39+15 bytes = 54)
             // TODO: document the "2a" in here
             mstore(add(code, 39), 0x5af43d82803e903d91602a57fd5bf30000000000000000000000000000000000)
@@ -35,13 +35,31 @@ contract ArgobytesFactory19 {
         }
     }
 
-    /// @notice Create a proxy contract for `msg.sender`
-    function createClone19(address target, bytes32 salt) public returns (address clone, bool is_new) {
-        return createClone19(target, salt, msg.sender);
+    /// @notice Check if a clone is already deployed
+    function checkClone19(
+        address target19,
+        bytes32 salt,
+        address immutable_owner
+    ) public view returns (address clone, bool exists) {
+        bytes memory bytecode = _cloneBytecode(target19, immutable_owner);
+
+        bytes32 bytecode_hash;
+        assembly {
+            bytecode_hash := keccak256(bytecode, 74)
+        }
+
+        clone = Create2.computeAddress(salt, bytecode_hash, address(this));
+
+        exists = Address.isContract(clone);
     }
 
-    /// @notice Create a very lightweight "clone" or "proxy" contract that delegates all calls to the `target` contract.
-    /// @param target This address MUST start with a zero byte (like 0x00...)! Why? To get the proxy byetcode to 64 bytes.
+    /// @notice Create a proxy contract for `msg.sender`
+    function createClone19(address target19, bytes32 salt) public returns (address clone) {
+        return createClone19(target19, salt, msg.sender);
+    }
+
+    /// @notice Create a very lightweight "clone" or "proxy" contract that delegates all calls to the `target19` contract.
+    /// @param target19 This address MUST start with a zero byte (like 0x00...)! Why? To get the proxy byetcode to 64 bytes.
     /// @param immutable_owner The unchangable owner for this proxy
     /** @dev
     If target were 20 bytes, this function would cost more gas to deploy.
@@ -62,25 +80,23 @@ contract ArgobytesFactory19 {
     It may cost slightly more, but a user will have to send a second transaction if they want to set an authority.
     */
     function createClone19(
-        address target,
+        address target19,
         bytes32 salt,
         address immutable_owner
-    ) public returns (address clone, bool is_new) {
-        bytes memory bytecode = _clone_bytecode(target, immutable_owner);
+    ) public returns (address clone) {
+        bytes memory bytecode = _cloneBytecode(target19, immutable_owner);
 
         assembly {
             // deploy it
             clone := create2(0, bytecode, 74, salt)
         }
 
-        // don't revert if the contract is already deployed. instead, return the address
         if (clone == address(0)) {
-            is_new = false;
-            clone = Create2.computeAddress(salt, keccak256(bytecode));
-        } else {
-            is_new = true;
-            emit NewClone(target, salt, immutable_owner, clone);
+            // the salt isn't so helpful in this function, but from createClone19s it is helpful.
+            revert CloneError(salt);
         }
+
+        emit NewClone(target19, salt, immutable_owner, clone);
     }
 
     /// @notice Create multiple clone contracts for `msg.sender`.
@@ -121,7 +137,7 @@ contract ArgobytesFactory19 {
         }
 
         // set the owner to address 0 and then don't compare those bytes
-        bytes memory expected_code = _clone_bytecode(target, address(0));
+        bytes memory expected_code = _cloneBytecode(target, address(0));
 
         assembly {
             is_clone := and(
@@ -137,7 +153,7 @@ contract ArgobytesFactory19 {
     /// @notice Deploy a contract if it doesn't already exist
     /// @dev If you want to simply deploy a contract, use the SingletonFactory (eip-2470)
     function checkedCreateContract(bytes32 salt, bytes memory bytecode) external payable returns (address deployed) {
-        deployed = Create2.computeAddress(salt, keccak256(bytecode));
+        deployed = Create2.computeAddress(salt, keccak256(bytecode), address(this));
 
         if (!Address.isContract(deployed)) {
             // deployed doesn't exist. create it

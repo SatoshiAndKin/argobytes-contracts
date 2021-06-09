@@ -8,12 +8,11 @@ import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {IERC20} from "contracts/external/erc20/IERC20.sol";
 
 import {ActionTypes} from "contracts/abstract/ActionTypes.sol";
-import {AddressLib} from "contracts/library/AddressLib.sol";
 import {BytesLib} from "contracts/library/BytesLib.sol";
 import {IERC3156FlashBorrower} from "contracts/external/erc3156/IERC3156FlashBorrower.sol";
 import {IERC3156FlashLender} from "contracts/external/erc3156/IERC3156FlashLender.sol";
 
-import {ArgobytesProxy, InvalidTarget} from "./ArgobytesProxy.sol";
+import {ActionReverted, ArgobytesProxy, InvalidTarget} from "./ArgobytesProxy.sol";
 
 error LenderDenied();
 error Reentrancy();
@@ -113,7 +112,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         address token,
         uint256 amount,
         uint256 fee,
-        bytes calldata data
+        bytes calldata /*data*/
     ) external override returns (bytes32) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
@@ -128,25 +127,29 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         if (initiator != address(this)) {
             revert InvalidInitiator();
         }
-        if (!Address.isContract(s.pending_action.target)) {
+
+        Action memory action = s.pending_action;
+
+        if (!Address.isContract(action.target)) {
             revert InvalidTarget();
         }
 
-        // uncheckedDelegateCall is safe because we just checked that `target` is a contract
-        bytes memory returned;
+        bool success;
+        bytes memory action_returned;
         if (s.pending_action.call_type == ActionTypes.Call.DELEGATE) {
-            returned = AddressLib.uncheckedDelegateCall(s.pending_action.target, s.pending_action.target_calldata);
+            (success, action_returned) = action.target.delegatecall(action.target_calldata);
         } else {
-            returned = AddressLib.uncheckedCall(
-                s.pending_action.target,
-                s.pending_action.forward_value,
-                s.pending_action.target_calldata
-            );
+            // action.forward_value is ignored
+            (success, action_returned) = action.target.call(action.target_calldata);
         }
         // TODO: what if call_type is ADMIN?
 
+        if (!success) {
+            revert ActionReverted(action.target, action.target_calldata, action_returned);
+        }
+
         // since we can't return the call's return from here, we store it in state
-        s.pending_return = returned;
+        s.pending_return = action_returned;
 
         // approve paying back the loan
         IERC20(token).approve(s.pending_lender, amount + fee);

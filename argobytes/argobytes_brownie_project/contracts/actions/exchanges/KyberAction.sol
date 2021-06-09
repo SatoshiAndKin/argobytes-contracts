@@ -5,6 +5,7 @@ import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
 import {IERC20} from "contracts/external/erc20/IERC20.sol";
 import {IKyberNetworkProxy} from "contracts/external/kyber/IKyberNetworkProxy.sol";
+import {IKyberRegisterWallet} from "contracts/external/kyber/IKyberRegisterWallet.sol";
 
 error AccessDenied();
 error FailedTrade();
@@ -13,6 +14,7 @@ contract KyberAction is AbstractERC20Exchange {
     // TODO: document MAX_QTY
     uint256 internal constant MAX_QTY = 10**28;
 
+    IKyberRegisterWallet internal constant KYBER_REGISTER_WALLET = IKyberRegisterWallet(0xECa04bB23612857650D727B8ed008f80952654ee);
     IERC20 internal constant ETH_ON_KYBER = IERC20(address(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee));
 
     // TODO: do we really want this in state?
@@ -22,6 +24,8 @@ contract KyberAction is AbstractERC20Exchange {
     address payable _platform_wallet;
 
     constructor(address payable platform_wallet) {
+        KYBER_REGISTER_WALLET.registerWallet(platform_wallet);
+
         _platform_wallet = platform_wallet;
     }
 
@@ -34,6 +38,8 @@ contract KyberAction is AbstractERC20Exchange {
         if (msg.sender != _platform_wallet) {
             revert AccessDenied();
         }
+
+        KYBER_REGISTER_WALLET.registerWallet(platform_wallet);
 
         _platform_wallet = platform_wallet;
     }

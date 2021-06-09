@@ -12,10 +12,10 @@ from argobytes.contracts import (
     get_or_clone,
     get_or_clone_flash_borrower,
     get_or_create,
+    get_or_create_factory,
     get_or_create_flash_borrower,
     lazy_contract,
     poke_contracts,
-    get_or_create_factory,
 )
 from argobytes.tokens import get_balances, get_claimable_3crv, print_token_balances, safe_token_approve
 
@@ -43,15 +43,7 @@ def atomic_enter(account, min_3crv_to_claim):
 
     # deploy our contracts if necessary
     enter_cyy3crv_action = get_or_create(account, ArgobytesBrownieProject.EnterCYY3CRVAction)
-    argobytes_clone = get_or_clone_flash_borrower(
-        account,
-        borrower_salt=None,
-        clone_salt="",
-        factory_salt="",
-        leading_zeros=1,
-    )
-
-    assert False, "WIP"
+    (argobytes_factory, argobytes_flash_borrower, argobytes_clone) = get_or_clone_flash_borrower(account)
 
     logger.info("clone: %s", argobytes_clone)
 
@@ -63,7 +55,7 @@ def atomic_enter(account, min_3crv_to_claim):
     usdc = lazy_contract(enter_cyy3crv_action.USDC())
     usdt = lazy_contract(enter_cyy3crv_action.USDT())
     threecrv = lazy_contract(enter_cyy3crv_action.THREE_CRV())
-    threecrv_pool = ArgobytesInterfaces.ICurvePool(enter_cyy3crv_action.THREE_CRV_POOL())
+    threecrv_pool = lazy_contract(enter_cyy3crv_action.THREE_CRV_POOL())
     y3crv = lazy_contract(enter_cyy3crv_action.Y_THREE_CRV())
     cyy3crv = lazy_contract(enter_cyy3crv_action.CY_Y_THREE_CRV())
     fee_distribution = lazy_contract(enter_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION())

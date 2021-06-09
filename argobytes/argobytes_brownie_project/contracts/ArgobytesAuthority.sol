@@ -18,7 +18,7 @@ contract ArgobytesAuthority {
         bytes4 sig
     ) internal pure returns (bytes memory key) {
         // encodePacked should be safe because address and enums and bytes4 are fixed size types
-        // no need to hash this here. mappings already hash their keys
+        // TODO: should we hash this or not? it works without since mapping keys are hashed anyway
         key = abi.encodePacked(proxy, sender, target, call_type, sig);
     }
 

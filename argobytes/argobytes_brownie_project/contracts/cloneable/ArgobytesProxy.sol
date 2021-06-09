@@ -4,8 +4,9 @@ pragma solidity 0.8.4;
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
 import {ArgobytesAuth, ActionTypes} from "contracts/abstract/ArgobytesAuth.sol";
-import {AddressLib} from "contracts/library/AddressLib.sol";
 import {BytesLib} from "contracts/library/BytesLib.sol";
+
+error ActionReverted(address target, bytes target_calldata, bytes errordata);
 
 /// @dev The target address is not a valid contract
 error InvalidTarget();
@@ -14,7 +15,7 @@ error InvalidTarget();
 /// @dev contains a very powerful "execute" function! The owner is in full control!
 contract ArgobytesProxy is ArgobytesAuth {
     struct Action {
-        address target;
+        address payable target;
         ActionTypes.Call call_type;
         bool forward_value;
         bytes target_calldata;
@@ -32,7 +33,7 @@ contract ArgobytesProxy is ArgobytesAuth {
      * @dev The owner is allowed to call anything. This is helpful in case funds get somehow stuck
      * @dev The owner can authorize other contracts to cll this contract
      */
-    function execute(Action calldata action) public payable returns (bytes memory response) {
+    function execute(Action calldata action) public payable returns (bytes memory action_returned) {
         // check auth
         if (msg.sender != owner()) {
             requireAuth(action.target, action.call_type, BytesLib.toBytes4(action.target_calldata));
@@ -40,16 +41,24 @@ contract ArgobytesProxy is ArgobytesAuth {
 
         // re-entrancy protection?
 
+        // TODO: do we really care about this check? calling a non-contract will give "success" even though thats probably not what people wanted to do
+        // however, this would make it possible to send ETH to an arbitrary address
         if (!Address.isContract(action.target)) {
             revert InvalidTarget();
         }
 
-        // we use the "unchecked" functions because we just checked that `action.target` is a contract
+        bool success;
+
         if (action.call_type == ActionTypes.Call.DELEGATE) {
-            response = AddressLib.uncheckedDelegateCall(action.target, action.target_calldata);
+            (success, action_returned) = action.target.delegatecall(action.target_calldata);
+        } else if (action.forward_value) {
+            (success, action_returned) = action.target.call{value: msg.value}(action.target_calldata);
         } else {
-            // call_type is CALL (or maybe ADMIN)
-            response = AddressLib.uncheckedCall(action.target, action.forward_value, action.target_calldata);
+            (success, action_returned) = action.target.call(action.target_calldata);
+        }
+
+        if (!success) {
+            revert ActionReverted(action.target, action.target_calldata, action_returned);
         }
     }
 

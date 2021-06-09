@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
-// base class for clone targets
-// contains a very powerful "execute" function! The owner is in full control!
 pragma solidity 0.8.4;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
 import {ArgobytesAuthority} from "contracts/ArgobytesAuthority.sol";
-import {AddressLib} from "contracts/library/AddressLib.sol";
 import {BytesLib} from "contracts/library/BytesLib.sol";
 
 import {ActionTypes} from "./ActionTypes.sol";
@@ -15,6 +12,7 @@ import {ImmutablyOwned} from "./ImmutablyOwned.sol";
 error AccessDenied();
 
 /// @title Access control with an immutable owner
+/// @dev clone targets for ArgobytesFactory19 need to use this (or something like it)
 abstract contract ArgobytesAuth is ImmutablyOwned {
     /// @dev diamond storage
     /// @notice be sure that a sneaky delegatecall doesn't change this!

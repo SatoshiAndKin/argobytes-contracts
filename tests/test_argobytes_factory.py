@@ -1,5 +1,6 @@
-from argobytes.contracts import get_or_clone, get_or_create_factory, get_or_create_flash_borrower
 from brownie import accounts
+
+from argobytes.contracts import get_or_clone, get_or_create_factory, get_or_create_flash_borrower
 
 
 def test_get_or_clone():
@@ -13,8 +14,6 @@ def test_get_or_clone():
 
     print(argobytes_clone)
 
-    assert False, "WIP"
-
 
 def test_create_clone(argobytes_factory, argobytes_proxy):
     tx = argobytes_factory.createClone19(argobytes_proxy, "")
@@ -25,12 +24,11 @@ def test_create_clone(argobytes_factory, argobytes_proxy):
 
     event = tx.events["NewClone"]
 
-    assert event["target"] == argobytes_proxy
+    assert event["target19"] == argobytes_proxy
     assert event["salt"] == "0x0"
     assert event["immutable_owner"] == accounts[0]
     assert event["clone"] == tx.return_value
 
-    # TODO: moving to solc 0.8 made our gas costs a little bit higher. investigate why
     assert tx.gas_used < 69900
 
 
@@ -50,7 +48,7 @@ def test_create_clones(argobytes_factory, argobytes_proxy):
 
     event_0 = tx.events["NewClone"][0]
 
-    assert event_0["target"] == argobytes_proxy
+    assert event_0["target19"] == argobytes_proxy
     assert event_0["salt"] == "0x0"
     assert event_0["immutable_owner"] == accounts[0]
     # assert event_0['clone'] == tx.return_value

@@ -1,6 +1,5 @@
 """Handle Ethereum smart Contracts."""
 import multiprocessing
-import random
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import IntFlag
@@ -78,9 +77,9 @@ def get_deterministic_contract(default_account, contract, salt="", constructor_a
 
 def get_or_clone(owner, argobytes_factory, target_contract, salt=""):
     """Fetches an existing clone or creates a new clone."""
-    (clone_address, is_new) = argobytes_factory.createClone19.call(target_contract, salt, owner)
+    (clone_address, clone_exists) = argobytes_factory.checkClone19.call(target_contract, salt, owner)
 
-    if is_new:
+    if not clone_exists:
         # send the transaction to craete the contract
         deploy_tx = argobytes_factory.createClone19(target_contract.address, salt, owner, {"from": owner})
 
@@ -142,7 +141,9 @@ def get_or_clone_flash_borrower(account, borrower_salt=None, clone_salt="", fact
 
 
 # TODO: rename to get_or_deterministic_create?
-def get_or_create(default_account, contract, no_create=False, salt=None, constructor_args=None, leading_zeros=0):
+def get_or_create(
+    default_account, contract, no_create=False, salt=None, constructor_args=None, leading_zeros=0
+) -> Contract:
     """Use eip-2470 to create a contract with deterministic addresses."""
     if constructor_args is None:
         constructor_args = []
