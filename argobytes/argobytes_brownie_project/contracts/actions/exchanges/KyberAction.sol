@@ -14,7 +14,8 @@ contract KyberAction is AbstractERC20Exchange {
     // TODO: document MAX_QTY
     uint256 internal constant MAX_QTY = 10**28;
 
-    IKyberRegisterWallet internal constant KYBER_REGISTER_WALLET = IKyberRegisterWallet(0xECa04bB23612857650D727B8ed008f80952654ee);
+    IKyberRegisterWallet internal constant KYBER_REGISTER_WALLET =
+        IKyberRegisterWallet(0xECa04bB23612857650D727B8ed008f80952654ee);
     IERC20 internal constant ETH_ON_KYBER = IERC20(address(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee));
 
     // TODO: do we really want this in state?
