@@ -3,7 +3,7 @@ pragma solidity 0.8.4;
 pragma abicoder v2;
 
 import {IENS, IResolver} from "contracts/external/ens/ENS.sol";
-import {IERC20, SafeERC20} from "contracts/external/erc20/IERC20.sol";
+import {IERC20} from "contracts/external/erc20/IERC20.sol";
 
 /// @title Send tokens to an ENS name
 abstract contract Tips {

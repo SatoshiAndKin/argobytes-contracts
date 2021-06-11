@@ -17,15 +17,8 @@ contract ArgobytesProxy is ArgobytesAuth {
     struct Action {
         address payable target;
         ActionTypes.Call call_type;
-        bool forward_value;
         bytes target_calldata;
     }
-
-    /**
-     * @notice Don't store ETH here outside a transaction!
-     * @dev but we do want to be able to receive it in one call and return in another
-     */
-    receive() external payable {}
 
     /**
      * @notice Call or delegatecall a function on another contract
@@ -51,9 +44,8 @@ contract ArgobytesProxy is ArgobytesAuth {
 
         if (action.call_type == ActionTypes.Call.DELEGATE) {
             (success, action_returned) = action.target.delegatecall(action.target_calldata);
-        } else if (action.forward_value) {
-            (success, action_returned) = action.target.call{value: msg.value}(action.target_calldata);
         } else {
+            // TODO: option to send ETH value?
             (success, action_returned) = action.target.call(action.target_calldata);
         }
 

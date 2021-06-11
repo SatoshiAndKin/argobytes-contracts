@@ -1,6 +1,6 @@
 from brownie import chain, network
 
-from argobytes.cli_helpers import COMMON_HELPERS, brownie_connect, debug_shell, logger
+from argobytes.cli_helpers import COMMON_HELPERS, debug_shell, logger
 from argobytes.contracts import load_contract
 
 
@@ -28,7 +28,7 @@ def print_tx_info(tx, call_trace=False):
 
     # sometimes logs don't parse
     # TODO: brownie should probably handle this for us
-    if len(tx.events) != len(tx.logs):
+    if tx.events and tx.logs and len(tx.events) != len(tx.logs):
         for log in tx.logs:
             try:
                 load_contract(log.address)

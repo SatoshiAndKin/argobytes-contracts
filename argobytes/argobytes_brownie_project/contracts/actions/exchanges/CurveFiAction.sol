@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: LGPL-3.0-or-later
 pragma solidity 0.8.4;
 
 import {IERC20, SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
@@ -23,7 +23,7 @@ contract CurveFiAction is AbstractERC20Exchange {
         // Use the full balance of tokens
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
 
-        // require(src_amount > 0, "CurveFiAction.trade: no src_amount");
+        require(src_amount > 0, "CurveFiAction.trade: no src_amount");
 
         IERC20(src_token).approve(exchange, src_amount);
 
@@ -49,7 +49,7 @@ contract CurveFiAction is AbstractERC20Exchange {
         // Use the full balance of tokens
         uint256 src_amount = IERC20(src_token).balanceOf(address(this));
 
-        // require(src_amount > 0, "CurveFiAction.tradeUnderlying: no src_amount");
+        require(src_amount > 0, "CurveFiAction.tradeUnderlying: no src_amount");
 
         IERC20(src_token).approve(exchange, src_amount);
 

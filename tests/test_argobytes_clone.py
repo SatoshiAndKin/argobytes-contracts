@@ -7,7 +7,6 @@ def test_argobytes_arbitrage_access_control(argobytes_proxy_clone, example_actio
     action = (
         example_action,
         1,  # 1=Call
-        False,  # do not sweep ETH
         example_action.sweep.encode_input(ZERO_ADDRESS, ZERO_ADDRESS, 0),
     )
 
@@ -31,34 +30,15 @@ def test_argobytes_arbitrage_access_control(argobytes_proxy_clone, example_actio
 
 
 def test_simple_execute(argobytes_proxy_clone, example_action):
-    value = 1e18
-
-    # make sure the arbitrage contract has no funds
-    assert argobytes_proxy_clone.balance() == 0
-    assert example_action.balance() == 0
-
-    starting_balance = accounts[0].balance()
-
-    # call the sweep contract when its empty
+    # call the noop function on ExampleAction
     action = (
         example_action,
         1,  # 1=Call
-        True,  # do sweep ETH
-        example_action.sweep.encode_input(accounts[0], ZERO_ADDRESS, 0),
+        example_action.noop.encode_input(),
     )
 
-    atomic_arbitrage_tx = argobytes_proxy_clone.execute(
-        action,
-        {
-            "value": value,
-            "gasPrice": 0,
-        },
-    )
+    atomic_arbitrage_tx = argobytes_proxy_clone.execute(action)
 
     # atomic_arbitrage_tx.info()
 
-    assert argobytes_proxy_clone.balance() == 0
-    assert example_action.balance() == 0
-    assert accounts[0].balance() == starting_balance
-
-    # TODO: check event logs to know profits
+    assert atomic_arbitrage_tx.status == 1

@@ -28,14 +28,14 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
     /// @dev diamond storage
     struct FlashBorrowerStorage {
         mapping(IERC3156FlashLender => bool) allowed_lenders;
-        bool block_flashloan_callback;
+        bool pending_flashloan_callback;
         address pending_lender;
         Action pending_action;
         bytes pending_return;
     }
 
     /// @dev diamond storage
-    bytes32 constant FLASH_BORROWER_POSITION = keccak256("argobytes.storage.FlashBorrower.lender");
+    bytes32 constant FLASH_BORROWER_POSITION = keccak256("argobytes.storage.ArgobytesFlashBorrower");
 
     /// @dev diamond storage
     function flashBorrowerStorage() internal pure returns (FlashBorrowerStorage storage s) {
@@ -77,14 +77,18 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
             requireAuth(action.target, action.call_type, BytesLib.toBytes4(action.target_calldata));
         }
 
-        if (s.block_flashloan_callback == false) {
+        if (s.pending_flashloan_callback == true) {
             // TODO: do we need this check?
             revert Reentrancy();
         }
 
+        if (!Address.isContract(action.target)) {
+            revert InvalidTarget();
+        }
+
         // we could pass the calldata to the lender and have them pass it back, but that seems less safe
         // instead, use storage so that no one can change it
-        s.block_flashloan_callback = false;
+        s.pending_flashloan_callback = true;
         s.pending_lender = address(lender);
         s.pending_action = action;
 
@@ -95,7 +99,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         // state is expensive, but it is also safest
         lender.flashLoan(this, token, amount, "");
 
-        s.block_flashloan_callback = true;
+        s.pending_flashloan_callback = false;
 
         // copy the call's returned value to return it from this function
         returned = s.pending_return;
@@ -117,8 +121,8 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
         // auth checks
-        if (s.block_flashloan_callback) {
-            // block_flashloan_callback works as authentication since only the flashBorrow function will set this to false
+        if (!s.pending_flashloan_callback) {
+            // pending_flashloan_callback works as authentication since only the flashBorrow function (which has auth) will set this to false
             revert NoPendingLoan();
         }
         if (msg.sender != s.pending_lender) {
@@ -130,16 +134,11 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
 
         Action memory action = s.pending_action;
 
-        if (!Address.isContract(action.target)) {
-            revert InvalidTarget();
-        }
-
         bool success;
         bytes memory action_returned;
         if (s.pending_action.call_type == ActionTypes.Call.DELEGATE) {
             (success, action_returned) = action.target.delegatecall(action.target_calldata);
         } else {
-            // action.forward_value is ignored
             (success, action_returned) = action.target.call(action.target_calldata);
         }
         // TODO: what if call_type is ADMIN?

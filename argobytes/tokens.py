@@ -103,9 +103,9 @@ def get_token_decimals(token_contract):
         # this is a proxy to a proxy to a gnosis safe
         decimals = 18
     elif hasattr(token_contract, "decimals"):
-        decimals = token_contract.decimals.call()
+        decimals = token_contract.decimals()
     elif hasattr(token_contract, "DECIMALS"):
-        decimals = token_contract.DECIMALS.call()
+        decimals = token_contract.DECIMALS()
     else:
         raise ValueError
 

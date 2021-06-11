@@ -142,7 +142,7 @@ def cusdc_erc20():
 
 
 @pytest.fixture(scope="function")
-def curve_fi_action(CurveFiAction, curve_fi_compound):
+def curve_fi_action(CurveFiAction):
     return get_or_create(accounts[0], CurveFiAction)
 
 
@@ -184,74 +184,6 @@ def kyber_network_proxy():
 
 
 @pytest.fixture(scope="session")
-def onesplit():
-    return load_contract("1split.eth")
-
-
-@pytest.fixture(scope="session")
-def onesplit_helper(onesplit, interface):
-    def inner_onesplit_helper(eth_amount, dest_token, to):
-        # TODO: actual ERC20 interface
-        dest_token = load_contract(dest_token)
-        parts = 1
-        # TODO: enable multipaths
-        flags = 0
-
-        # not sure why, but uniswap v2 is not working well. i think its a ganache-core bug
-        # flags += 0x1E000000  # FLAG_DISABLE_UNISWAP_V2_ALL
-
-        expected_return = onesplit.getExpectedReturn.call(ZERO_ADDRESS, dest_token, eth_amount, parts, flags)
-
-        expected_return_amount = expected_return[0]
-        distribution = expected_return[1]
-
-        assert expected_return_amount > 1
-
-        onesplit.swap(
-            ZERO_ADDRESS,
-            dest_token,
-            eth_amount,
-            1,
-            distribution,
-            flags,
-            {"from": accounts[0], "value": eth_amount},
-        )
-
-        actual_return_amount = dest_token.balanceOf.call(accounts[0])
-
-        if expected_return_amount != actual_return_amount:
-            # TODO: actual warning?
-            # TODO: why is this happening?
-            print(
-                f"WARNING! expected_return_amount ({expected_return_amount}) != actual_return_amount ({actual_return_amount})"
-            )
-
-            assert actual_return_amount > 0
-
-        dest_token.transfer(to, actual_return_amount, {"from": accounts[0]})
-
-        actual_transfer_amount = dest_token.balanceOf.call(to)
-
-        # some tokens take fees or otherwise have unexpected changes to the amount. this isn't necessarily something to raise over, but we should warn about it
-        if actual_return_amount != actual_transfer_amount:
-            # TODO: actual warning?
-            print(
-                f"WARNING! actual_return_amount ({actual_return_amount}) != actual_transfer_amount ({actual_transfer_amount})"
-            )
-
-            assert actual_transfer_amount > 0
-
-        return actual_transfer_amount
-
-    return inner_onesplit_helper
-
-
-@pytest.fixture(scope="function")
-def onesplit_offchain_action(OneSplitOffchainAction):
-    return get_or_create(accounts[0], OneSplitOffchainAction)
-
-
-@pytest.fixture(scope="session")
 def susd_erc20(synthetix_address_resolver):
     # The AddressResolver is not populated with everything right now, only those internal contract addresses that do not change. ProxyERC20 (SNX) and ProxyERC20sUSD (sUSD) are static addresses you can simply hard code in if you need
     # proxy = synthetix_address_resolver.requireAndGetAddress(to_hex32(text="ProxyERC20sUSD"), "No Proxy")
@@ -259,7 +191,7 @@ def susd_erc20(synthetix_address_resolver):
 
 
 @pytest.fixture(scope="session")
-def synthetix_address_resolver(interface):
+def synthetix_address_resolver():
     # this is actually the ReadProxyAddressResolver
     return load_contract(SynthetixAddressResolverAddress)
 
@@ -293,44 +225,10 @@ def uniswap_v2_router():
     return load_contract(UniswapV2RouterAddress)
 
 
-@pytest.fixture(scope="session")
-def uniswap_v1_helper(uniswap_v1_factory, interface):
-
-    # TODO: this is reverting with an unhelpful error about JUMP
-    def inner_uniswap_v1_helper(src_amount, dest_token, to):
-        # get the uniswap exchange
-        exchange = uniswap_v1_factory.getExchange(dest_token)
-
-        exchange = load_contract(exchange)
-
-        # # put some ETH into the uniswap action so we can buy some DAI
-        # accounts[0].transfer(uniswap_v1_action, 1e18)
-
-        # uniswap_v1_action.tradeEtherToToken(curve_fi_action, cdai_erc20, 1, "")
-
-        deadline = 9000000000
-
-        tx = exchange.ethToTokenTransferInput(
-            src_amount,
-            deadline,
-            to,
-            {
-                "value": src_amount,
-                "from": accounts[0],
-            },
-        )
-
-        return tx.return_value
-
-    return inner_uniswap_v1_helper
-
-
 @pytest.fixture(scope="function")
-def unlocked_uniswap_v2():
-    router = load_contract("0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D")
-
-    factory = load_contract(router.factory())
-    weth = load_contract(router.WETH())
+def unlocked_uniswap_v2(uniswap_v2_router):
+    factory = load_contract(uniswap_v2_router.factory())
+    weth = load_contract(uniswap_v2_router.WETH())
 
     def _free_money(token_a, token_a_amount, to, token_b=weth):
         pair = factory.getPair(token_a.address, token_b.address)

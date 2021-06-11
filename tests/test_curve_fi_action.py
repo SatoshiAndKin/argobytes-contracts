@@ -1,26 +1,22 @@
 from brownie import Contract, accounts
 
+from argobytes.contracts import load_contract
+from argobytes.tokens import get_token_symbol
+
 
 # TODO: parameterize this
-def test_3pool_trade(curve_fi_action, curve_fi_3pool, onesplit_helper):
+def test_3pool_trade(curve_fi_action, curve_fi_3pool, unlocked_uniswap_v2):
     a_id = 0
     b_id = 1
 
-    token_a = Contract(curve_fi_3pool.coins(a_id))
+    token_a = load_contract(curve_fi_3pool.coins(a_id))
+    token_b = load_contract(curve_fi_3pool.coins(b_id))
 
-    if hasattr(token_a, "target"):
-        token_a = Contract(token_a, as_proxy_of=token_a.target())
+    assert get_token_symbol(token_a) == "DAI"
+    assert get_token_symbol(token_b) == "USDC"
 
-    token_b = Contract(curve_fi_3pool.coins(b_id))
-
-    if hasattr(token_b, "target"):
-        token_b = Contract(token_b, as_proxy_of=token_b.target())
-
-    # buy some DAI for the curve_fi_action
-    balance_a = onesplit_helper(1e18, token_a, curve_fi_action)
-
-    # TODO: check balances
-    assert balance_a > 0
+    # send some DAI to the curve_fi_action
+    unlocked_uniswap_v2(token_a, 100, curve_fi_action)
 
     curve_fi_action.trade(curve_fi_3pool, a_id, b_id, curve_fi_action, token_a, token_b, 1)
 
@@ -33,24 +29,21 @@ def test_3pool_trade(curve_fi_action, curve_fi_3pool, onesplit_helper):
 
 
 # TODO: this is failing but 3pool works. ganache-bug?
-def test_compound_trade(cdai_erc20, cusdc_erc20, curve_fi_action, curve_fi_compound, onesplit_helper):
+def test_compound_trade(curve_fi_action, curve_fi_compound, unlocked_uniswap_v2):
     a_id = 0
     b_id = 1
 
-    token_a = Contract(curve_fi_compound.coins(a_id))
+    token_a = load_contract(curve_fi_compound.coins(a_id))
+    token_b = load_contract(curve_fi_compound.coins(b_id))
 
-    if hasattr(token_a, "target"):
-        token_a = Contract(token_a, as_proxy_of=token_a.target())
+    assert get_token_symbol(token_a) == "cDAI"
+    assert get_token_symbol(token_b) == "cUSDC"
 
-    token_b = Contract(curve_fi_compound.coins(b_id))
+    # send some cDAI to the curve_fi_action
+    # TODO: this is cDAI aand not DAI. how much should we send?
+    unlocked_uniswap_v2(token_a, 100, curve_fi_action)
 
-    if hasattr(token_b, "target"):
-        token_b = Contract(token_b, as_proxy_of=token_b.target())
-
-    # buy some DAI for the curve_fi_action
-    onesplit_helper(1e18, token_a, curve_fi_action)
-
-    # TODO: check balances
+    assert token_a.balanceOf(curve_fi_action) == 100 * 1e8
 
     # TODO: compound has some issues with ganache-cli. calling mint(0) brings in some state that might fix things
     # cdai_erc20.mint(0, {"from": accounts[0]})
@@ -66,24 +59,20 @@ def test_compound_trade(cdai_erc20, cusdc_erc20, curve_fi_action, curve_fi_compo
     # TODO: actually assert things
 
 
-def test_compound_trade_underlying(curve_fi_action, curve_fi_compound, onesplit_helper):
+def test_compound_trade_underlying(curve_fi_action, curve_fi_compound, unlocked_uniswap_v2):
     a_id = 0
     b_id = 1
 
-    token_a = Contract(curve_fi_compound.underlying_coins(a_id))
+    token_a = load_contract(curve_fi_compound.underlying_coins(a_id))
+    token_b = load_contract(curve_fi_compound.underlying_coins(b_id))
 
-    if hasattr(token_a, "target"):
-        token_a = Contract(token_a, as_proxy_of=token_a.target())
+    assert get_token_symbol(token_a) == "DAI"
+    assert get_token_symbol(token_b) == "USDC"
 
-    token_b = Contract(curve_fi_compound.underlying_coins(b_id))
+    # send some DAI to the curve_fi_action
+    unlocked_uniswap_v2(token_a, 100, curve_fi_action)
 
-    if hasattr(token_b, "target"):
-        token_b = Contract(token_b, as_proxy_of=token_b.target())
-
-    # buy some DAI for the curve_fi_action
-    onesplit_helper(1e18, token_a, curve_fi_action)
-
-    # TODO: check balances
+    assert token_a.balanceOf(curve_fi_action) == 100 * 1e18
 
     curve_fi_action.tradeUnderlying(curve_fi_compound, a_id, b_id, curve_fi_action, token_a, token_b, 1)
 
@@ -93,23 +82,3 @@ def test_compound_trade_underlying(curve_fi_action, curve_fi_compound, onesplit_
 
     # TODO: check balances
     # TODO: actually assert things
-
-
-# TODO: test trading on other pools
-
-
-# # TODO: parametrize this
-# @pytest.mark.xfail(reason="bug in ganache-cli? tradeUnderlying works, so this should, too")
-# def test_compound_action(curve_fi_action, curve_fi_compound, cdai_erc20, cusdc_erc20, onesplit_helper):
-#     # buy some cDAI for the curve_fi_action
-#     cdai_balance = onesplit_helper(1e18, cdai_erc20, curve_fi_action)
-
-#     # TODO: get i/j from the token addresses
-
-#     curve_fi_action.trade(CurveFiCompoundAddress, 0, 1, curve_fi_action, cdai_erc20, cusdc_erc20, 1)
-
-#     # TODO: check balance of cusdc and cdai
-
-#     curve_fi_action.trade(CurveFiCompoundAddress, 1, 0, curve_fi_action, cusdc_erc20, cdai_erc20, 1)
-#     # TODO: check balance of cusdc and cdai
-#     # TODO: actually assert things

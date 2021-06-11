@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: MPL-2.0
-// TODO: finish ArgobytesProxy refactor
-// TODO: rewrite this to use the FlashLoan EIP instead of dydx. this allows lots more tokens
 pragma solidity 0.8.4;
 
 import {IERC20, SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
@@ -8,33 +6,14 @@ import {IERC20, SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
 import {ArgobytesAuth} from "contracts/abstract/ArgobytesAuth.sol";
 import {ArgobytesMulticall} from "contracts/ArgobytesMulticall.sol";
 
-error NoBalance(IERC20 token);
+error BadArbitrage(IERC20 token, uint256 start_amount, uint256 end_amount);
 
 /// @title Trade ERC20 tokens
 contract ArgobytesTrader {
-    event SetArgobytesMulticall(address indexed old_addr, address indexed new_addr);
-
     struct Borrow {
         uint256 amount;
         IERC20 token;
         address dest;
-    }
-
-    /**
-     * @dev diamond storage
-     * @dev TODO: use this
-     */
-    struct ArgobytesTraderStorage {
-        mapping(ArgobytesMulticall => bool) approved_argobytes_multicalls;
-    }
-
-    bytes32 constant ARGOBYTES_TRADER_STORAGE = keccak256("argobytes.storage.ArgobytesTrader");
-
-    function argobytesTraderStorage() internal pure returns (ArgobytesTraderStorage storage s) {
-        bytes32 position = ARGOBYTES_TRADER_STORAGE;
-        assembly {
-            s.slot := position
-        }
     }
 
     /**
@@ -47,46 +26,43 @@ contract ArgobytesTrader {
         ArgobytesMulticall argobytes_multicall,
         ArgobytesMulticall.Action[] calldata actions
     ) public payable {
-        uint256[] memory start_balances = new uint256[](borrows.length);
+        uint256 num_borrows = borrows.length;
+        uint256[] memory start_balances = new uint256[](num_borrows);
 
         // record starting token balances to check for increases
-        // transfer tokens from msg.sender to arbitrary destinations
+        // transfer tokens to arbitrary destinations
         // TODO: what about ETH balances?
-        for (uint256 i = 0; i < borrows.length; i++) {
-            start_balances[i] = borrows[i].token.balanceOf(borrow_from);
-
-            // TODO: think about this and approvals more
+        for (uint256 i = 0; i < num_borrows; i++) {
             // TODO: do we want this address(0) check? i think it will be helpful in the case where the clone is holding the coins
             if (borrow_from == address(0)) {
+                start_balances[i] = borrows[i].token.balanceOf(address(this));
                 SafeERC20.safeTransfer(borrows[i].token, borrows[i].dest, borrows[i].amount);
             } else {
+                start_balances[i] = borrows[i].token.balanceOf(borrow_from);
                 SafeERC20.safeTransferFrom(borrows[i].token, borrow_from, borrows[i].dest, borrows[i].amount);
             }
         }
 
         // we call this as a seperate contract because we don't want any sneaky transferFroms
-        // TODO: make sure this actually does what we want by doing a "transferFrom" in the actions!
-        // this contract (or the actions) MUST return all borrowed tokens to msg.sender
+        // this contract (or the actions) MUST return all borrowed tokens to `borrow_from` (or this contract)
         // TODO: pass ETH along? this might be helpful for exchanges like 0x. maybe better to borrow WETH9 for the action
-        // TODO: msg.value or address(this).balance?!
-        // TODO: limit argobytes_multicall to a known mapping of contracts?
-        argobytes_multicall.callActions{value: msg.value}(actions);
+        argobytes_multicall.callActions(actions);
 
-        // make sure the source's balances did not decrease
+        // make sure the borrowed balances did not decrease
         // we allow it to be equal because it's possible that we got our profits on another token or from LP fees
-        // TODO: we do this in the opposite order that we started in. does that matter?
-        for (uint256 i = borrows.length; i > 0; i--) {
-            uint256 j = i - 1;
+        for (uint256 i = 0; i < num_borrows; i++) {
+            uint256 end_balance = borrows[i].token.balanceOf(address(this));
 
-            // return any tokens that the actions didn't already return
-            uint256 this_balance = borrows[j].token.balanceOf(address(this));
+            if (borrow_from != address(0)) {
+                // return any tokens that the actions didn't already return
+                SafeERC20.safeTransfer(borrows[i].token, borrow_from, end_balance);
 
-            SafeERC20.safeTransfer(borrows[j].token, borrow_from, this_balance);
+                end_balance = borrows[i].token.balanceOf(borrow_from);
+            }
 
-            uint256 end_balance = borrows[j].token.balanceOf(borrow_from);
-
-            // make sure the balance increased
-            require(end_balance >= start_balances[j], "ArgobytesTrader: BAD_ARBITRAGE");
+            if (end_balance < start_balances[i]) {
+                revert BadArbitrage(borrows[i].token, start_balances[i], end_balance);
+            }
         }
 
         // TODO: refund excess ETH?

@@ -37,14 +37,12 @@ def test_uniswap_arbitrage(
         # trade ETH to USDC
         (
             uniswap_v1_action,
-            1,
             # uniswap_v1_action.tradeEtherToToken(address to, address exchange, address dest_token, uint dest_min_tokens)
             uniswap_v1_action.tradeEtherToToken.encode_input(uniswap_v1_action, usdc_exchange, usdc_erc20, 1),
         ),
         # trade USDC to DAI
         (
             uniswap_v1_action,
-            0,
             # uniswap_v1_action.tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint dest_min_tokens)
             uniswap_v1_action.tradeTokenToToken.encode_input(
                 uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1
@@ -53,7 +51,6 @@ def test_uniswap_arbitrage(
         # trade DAI to ETH
         (
             uniswap_v1_action,
-            0,
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens)
             uniswap_v1_action.tradeTokenToEther.encode_input(argobytes_proxy_clone, dai_exchange, dai_erc20, 1),
         ),
@@ -63,7 +60,6 @@ def test_uniswap_arbitrage(
         (
             argobytes_trader,
             0,
-            True,
             argobytes_trader.atomicArbitrage.encode_input(
                 accounts[0],
                 borrows,
@@ -75,7 +71,7 @@ def test_uniswap_arbitrage(
 
     owner = argobytes_proxy_clone.owner()
 
-    assert owner == brownie.accounts[0]
+    assert owner == accounts[0]
 
     arbitrage_tx = argobytes_proxy_clone.executeMany(
         proxy_actions,

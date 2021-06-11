@@ -42,13 +42,14 @@ def fetch_transaction(txid, force=False):
         # not all contracts have verified source code. we'll have to make due
         pass
 
-    for l in tx.logs:
-        # get more contracts for parsing events from logs
-        try:
-            load_contract(l.address, force=force, block=tx.block_number)
-        except Exception:
-            # not all contracts have verified source code. we'll have to make due
-            pass
+    if tx.logs:
+        for l in tx.logs:
+            # get more contracts for parsing events from logs
+            try:
+                load_contract(l.address, force=force, block=tx.block_number)
+            except Exception:
+                # not all contracts have verified source code. we'll have to make due
+                pass
 
     # TODO: if (unknown) events, try loading contracts for all subcalls?
 
