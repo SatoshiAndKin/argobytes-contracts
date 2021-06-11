@@ -1,8 +1,7 @@
-// SPDX-License-Identifier: LGPL-3.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 pragma solidity 0.8.5;
 
-import {IERC20, SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
-
+import {IERC20, SafeERC20} from "contracts/external/erc20/SafeERC20.sol";
 import {ICurvePool} from "contracts/external/curvefi/ICurvePool.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
@@ -12,53 +11,64 @@ contract CurveFiAction is AbstractERC20Exchange {
 
     // trade wrapped stablecoins
     function trade(
-        address exchange,
+        ICurvePool exchange,
         int128 i,
         int128 j,
         address to,
-        address src_token,
-        address dest_token,
+        IERC20 src_token,
+        IERC20 dest_token,
         uint256 dest_min_tokens
     ) external {
         // Use the full balance of tokens
-        uint256 src_amount = IERC20(src_token).balanceOf(address(this));
+        uint256 src_amount = src_token.balanceOf(address(this));
 
-        require(src_amount > 0, "CurveFiAction.trade: no src_amount");
+        // require(src_amount > 0, "CurveFiAction.trade: no src_amount");
+        // require(exchange.coins(uint256(int256(i))) == src_token, "bad i token");
+        // require(exchange.coins(uint256(int256(j))) == dest_token, "bad j token");
+        // require(exchange.coins(i) == src_token, "bad i token");
+        // require(exchange.coins(j) == dest_token, "bad j token");
 
-        IERC20(src_token).approve(exchange, src_amount);
+        src_token.approve(address(exchange), src_amount);
 
         // do the trade
-        ICurvePool(exchange).exchange(i, j, src_amount, dest_min_tokens);
+        exchange.exchange(i, j, src_amount, dest_min_tokens);
 
-        uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
+        uint256 dest_balance = dest_token.balanceOf(address(this));
 
-        // forward the tokens that we bought
-        IERC20(dest_token).safeTransfer(to, dest_balance);
+        // require(dest_balance >= dest_min_tokens, "CurveFiAction.trade: no dest_balance");
+
+        if (to != address(this)) {
+            // forward the tokens that we bought
+            // we NEED this check because some tokens (like compound's cUSDC) revert if to == msg.sender
+            dest_token.safeTransfer(to, dest_balance);
+        }
     }
 
     // trade stablecoins
     function tradeUnderlying(
-        address exchange,
+        ICurvePool exchange,
         int128 i,
         int128 j,
         address to,
-        address src_token,
-        address dest_token,
+        IERC20 src_token,
+        IERC20 dest_token,
         uint256 dest_min_tokens
     ) external {
         // Use the full balance of tokens
-        uint256 src_amount = IERC20(src_token).balanceOf(address(this));
+        uint256 src_amount = src_token.balanceOf(address(this));
 
-        require(src_amount > 0, "CurveFiAction.tradeUnderlying: no src_amount");
-
-        IERC20(src_token).approve(exchange, src_amount);
+        src_token.approve(address(exchange), src_amount);
 
         // do the trade
-        ICurvePool(exchange).exchange_underlying(i, j, src_amount, dest_min_tokens);
+        exchange.exchange_underlying(i, j, src_amount, dest_min_tokens);
 
-        uint256 dest_balance = IERC20(dest_token).balanceOf(address(this));
+        uint256 dest_balance = dest_token.balanceOf(address(this));
 
-        // forward the tokens that we bought
-        IERC20(dest_token).safeTransfer(to, dest_balance);
+        require(dest_balance >= dest_min_tokens, "CurveFiAction.tradeUnderlying: no dest_balance");
+
+        if (to != address(this)) {
+            // forward the tokens that we bought
+            dest_token.safeTransfer(to, dest_balance);
+        }
     }
 }

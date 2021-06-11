@@ -1,6 +1,7 @@
 import brownie
 import pytest
 from brownie import ZERO_ADDRESS, accounts, network, project, web3
+from brownie._config import CONFIG
 from brownie.test.fixtures import PytestBrownieFixtures
 from brownie.test.managers.runner import RevertContextManager
 from click.testing import CliRunner
@@ -26,6 +27,9 @@ def setup_brownie_mainnet_fork(pytestconfig):
     # setup the project and network the same way brownie's run helper does
     brownie_project = project.load(project_root)
     brownie_project.load_config()
+
+    # override some config
+    CONFIG.argv["revert"] = True
 
     network.connect("mainnet-fork")
 

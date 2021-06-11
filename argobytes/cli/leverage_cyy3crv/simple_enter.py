@@ -27,7 +27,7 @@ def simple_enter(account):
     usdc = load_contract(enter_cyy3crv_action.USDC(), account)
     usdt = load_contract(enter_cyy3crv_action.USDT(), account)
     threecrv = load_contract(enter_cyy3crv_action.THREE_CRV(), account)
-    threecrv_pool = load_contract(enter_cyy3crv_action.THREE_CRV_POOL(), account)
+    threecrv_pool = load_contract(enter_cyy3crv_action.THREE_CRV_POOL(), account, force=True)
     y3crv = load_contract(enter_cyy3crv_action.Y_THREE_CRV(), account)
     cyy3crv = load_contract(enter_cyy3crv_action.CY_Y_THREE_CRV(), account)
     cydai = load_contract(enter_cyy3crv_action.CY_DAI(), account)
@@ -61,7 +61,7 @@ def simple_enter(account):
 
     safe_token_approve(account, balances_for_3crv_pool, threecrv_pool)
 
-    threecrv_add_liquidity_tx = threecrv_pool.add_liquidity(
+    threecrv_add_liquidity_tx = threecrv_pool.add_liquidity['uint[3],uint'](
         [
             balances_for_3crv_pool[dai],
             balances_for_3crv_pool[usdc],

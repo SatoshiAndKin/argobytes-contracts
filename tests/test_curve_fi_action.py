@@ -40,7 +40,7 @@ def test_compound_trade(curve_fi_action, curve_fi_compound, unlocked_uniswap_v2)
     assert get_token_symbol(token_b) == "cUSDC"
 
     # send some cDAI to the curve_fi_action
-    # TODO: this is cDAI aand not DAI. how much should we send?
+    # TODO: this is cDAI and not DAI. how much should we send?
     unlocked_uniswap_v2(token_a, 100, curve_fi_action)
 
     assert token_a.balanceOf(curve_fi_action) == 100 * 1e8
@@ -51,11 +51,16 @@ def test_compound_trade(curve_fi_action, curve_fi_compound, unlocked_uniswap_v2)
 
     curve_fi_action.trade(curve_fi_compound, a_id, b_id, curve_fi_action, token_a, token_b, 1)
 
-    # TODO: check balances
+    # TODO: check balances more specifically
+    assert token_a.balanceOf(curve_fi_action) == 0
+    assert token_b.balanceOf(curve_fi_action) > 0
 
     curve_fi_action.trade(curve_fi_compound, b_id, a_id, curve_fi_action, token_b, token_a, 1)
 
-    # TODO: check balances
+    # TODO: check balances more specifically
+    assert token_a.balanceOf(curve_fi_action) > 0
+    assert token_b.balanceOf(curve_fi_action) == 0
+
     # TODO: actually assert things
 
 

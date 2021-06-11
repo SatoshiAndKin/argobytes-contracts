@@ -56,7 +56,7 @@ def atomic_exit(account, tip_eth, tip_3crv):
     usdc = lazy_contract(exit_cyy3crv_action.USDC(), account)
     usdt = lazy_contract(exit_cyy3crv_action.USDT(), account)
     threecrv = lazy_contract(exit_cyy3crv_action.THREE_CRV(), account)
-    threecrv_pool = lazy_contract(exit_cyy3crv_action.THREE_CRV_POOL(), account)
+    threecrv_pool = lazy_contract(exit_cyy3crv_action.THREE_CRV_POOL(), account, force=True)
     y3crv = lazy_contract(exit_cyy3crv_action.Y_THREE_CRV(), account)
     cyy3crv = lazy_contract(exit_cyy3crv_action.CY_Y_THREE_CRV(), account)
     cydai = lazy_contract(exit_cyy3crv_action.CY_DAI(), account)

@@ -7,13 +7,9 @@ from argobytes.contracts import (
     ArgobytesAction,
     ArgobytesActionCallType,
     ArgobytesBrownieProject,
-    ArgobytesInterfaces,
     DyDxFlashLender,
-    get_or_clone,
     get_or_clone_flash_borrower,
     get_or_create,
-    get_or_create_factory,
-    get_or_create_flash_borrower,
     lazy_contract,
     poke_contracts,
 )
@@ -135,7 +131,6 @@ def atomic_enter(account, min_3crv_to_claim):
         ArgobytesAction(
             enter_cyy3crv_action,
             ArgobytesActionCallType.DELEGATE,
-            False,
             "enter",
             enter_data,
         ).tuple,

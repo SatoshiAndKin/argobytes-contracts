@@ -191,7 +191,7 @@ def get_or_create_flash_borrower(default_account, salt=None, leading_zeros=1):
     )
 
 
-def lazy_contract(address, owner=None):
+def lazy_contract(address, owner=None, force=False):
     def _owner(owner):
         if owner:
             return owner
@@ -203,7 +203,7 @@ def lazy_contract(address, owner=None):
 
         return click_ctx.obj.get("lazy_contract_default_account", None)
 
-    return lazy(lambda: load_contract(address, _owner(owner)))
+    return lazy(lambda: load_contract(address, _owner(owner), force=force))
 
 
 _contract_cache = {}

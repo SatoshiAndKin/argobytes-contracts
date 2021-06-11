@@ -13,10 +13,9 @@ import {IERC3156FlashLender} from "contracts/external/erc3156/IERC3156FlashLende
 
 import {ArgobytesProxy} from "./ArgobytesProxy.sol";
 
-error LenderDenied();
 error Reentrancy();
 error NoPendingLoan();
-error InvalidLender();
+error UnexpectedLender();
 error InvalidInitiator();
 
 contract ArgobytesFlashBorrower is ArgobytesProxy, IERC3156FlashBorrower {
@@ -70,7 +69,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, IERC3156FlashBorrower {
 
         // check auth (owner is always allowed to use any lender and any action)
         if (msg.sender != owner()) {
-            if (!s.allowed_lenders[lender]) revert LenderDenied();
+            if (!s.allowed_lenders[lender]) revert UnexpectedLender();
             requireAuth(action.target, action.call_type, bytes4(action.data[0:4]));
         }
 
@@ -123,7 +122,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, IERC3156FlashBorrower {
             revert NoPendingLoan();
         }
         if (msg.sender != s.pending_lender) {
-            revert InvalidLender();
+            revert UnexpectedLender();
         }
         if (initiator != address(this)) {
             revert InvalidInitiator();

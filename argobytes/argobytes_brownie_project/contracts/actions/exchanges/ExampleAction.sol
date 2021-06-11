@@ -46,7 +46,9 @@ contract ExampleAction {
     ) public payable {
         uint256 balance = token.universalBalanceOf(address(this));
 
-        token.universalTransfer(to, balance);
+        if (to != address(this)) {
+            token.universalTransfer(to, balance);
+        }
 
         burnGas(extra_gas);
     }

@@ -71,12 +71,13 @@ library AddressLib {
     }
 
     /// @dev call a function and discard the returndata
-    function functionCall(address target, bytes memory data) internal {
+    function functionCall(address target, bytes memory data) internal returns (bytes memory returndata) {
         if (!isContract(target)) {
             revert InvalidTarget(target);
         }
 
-        (bool success, bytes memory returndata) = target.call(data);
+        bool success;
+        (success, returndata) = target.call(data);
 
         if (!success) {
             revert CallReverted(target, data, returndata);
