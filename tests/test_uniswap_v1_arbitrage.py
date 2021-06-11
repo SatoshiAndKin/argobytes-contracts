@@ -33,6 +33,7 @@ def test_uniswap_arbitrage(
     # TODO: do a test with weth9 and approvals instead
     borrows = []
 
+    # TODO: this needs to be rewritten to handle WETH since we are aaxing all the msg.value stuff
     trade_actions = [
         # trade ETH to USDC
         (
@@ -56,10 +57,11 @@ def test_uniswap_arbitrage(
         ),
     ]
 
+    # TODO: use namedtuples and enum ints
     proxy_actions = [
         (
             argobytes_trader,
-            0,
+            0,  # 0 = delegatecall, 1 = call, 2 = admin
             argobytes_trader.atomicArbitrage.encode_input(
                 accounts[0],
                 borrows,
@@ -67,7 +69,7 @@ def test_uniswap_arbitrage(
                 trade_actions,
             ),
         )
-    ]  # delegatecall  # pass ETH
+    ]
 
     owner = argobytes_proxy_clone.owner()
 

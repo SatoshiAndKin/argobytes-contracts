@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.8.4;
+pragma solidity 0.8.5;
 
 import {IERC20} from "contracts/external/erc20/IERC20.sol";
 import {IUniswapV2Router02} from "contracts/external/uniswap/IUniswapV2Router02.sol";

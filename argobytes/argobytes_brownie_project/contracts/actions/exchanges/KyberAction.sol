@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.8.4;
+pragma solidity 0.8.5;
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
@@ -54,18 +54,17 @@ contract KyberAction is AbstractERC20Exchange {
     ) public payable {
         uint256 src_amount = address(this).balance;
 
-        uint256 received =
-            IKyberNetworkProxy(network_proxy).tradeWithHintAndFee{value: src_amount}(
-                ETH_ON_KYBER,
-                src_amount,
-                IERC20(dest_token),
-                to,
-                MAX_QTY,
-                1, // minConversionRate of 1 will execute the trade according to market price
-                _platform_wallet,
-                0,
-                hint
-            );
+        uint256 received = IKyberNetworkProxy(network_proxy).tradeWithHintAndFee{value: src_amount}(
+            ETH_ON_KYBER,
+            src_amount,
+            IERC20(dest_token),
+            to,
+            MAX_QTY,
+            1, // minConversionRate of 1 will execute the trade according to market price
+            _platform_wallet,
+            0,
+            hint
+        );
 
         // TODO: set minConversionRate instead?
         require(received >= dest_min_tokens, "KyberAction.tradeEtherToToken: FAILED_TRADE");
@@ -85,18 +84,17 @@ contract KyberAction is AbstractERC20Exchange {
         // Approve the exchange to transfer tokens from this contract to the reserve
         IERC20(src_token).approve(network_proxy, src_amount);
 
-        uint256 received =
-            IKyberNetworkProxy(network_proxy).tradeWithHintAndFee(
-                IERC20(src_token),
-                src_amount,
-                IERC20(dest_token),
-                to,
-                MAX_QTY,
-                1, // minConversionRate of 1 will execute the trade according to market price
-                _platform_wallet,
-                0,
-                hint
-            );
+        uint256 received = IKyberNetworkProxy(network_proxy).tradeWithHintAndFee(
+            IERC20(src_token),
+            src_amount,
+            IERC20(dest_token),
+            to,
+            MAX_QTY,
+            1, // minConversionRate of 1 will execute the trade according to market price
+            _platform_wallet,
+            0,
+            hint
+        );
 
         // TODO: set minConversionRate instead?
         if (received < dest_min_tokens) {
@@ -119,18 +117,17 @@ contract KyberAction is AbstractERC20Exchange {
         // Approve the exchange to transfer tokens from this contract to the reserve
         IERC20(src_token).approve(network_proxy, src_amount);
 
-        uint256 received =
-            IKyberNetworkProxy(network_proxy).tradeWithHintAndFee(
-                IERC20(src_token),
-                src_amount,
-                ETH_ON_KYBER,
-                to,
-                MAX_QTY,
-                1, // minConversionRate of 1 will execute the trade according to market price
-                _platform_wallet,
-                0,
-                hint
-            );
+        uint256 received = IKyberNetworkProxy(network_proxy).tradeWithHintAndFee(
+            IERC20(src_token),
+            src_amount,
+            ETH_ON_KYBER,
+            to,
+            MAX_QTY,
+            1, // minConversionRate of 1 will execute the trade according to market price
+            _platform_wallet,
+            0,
+            hint
+        );
 
         // TODO: set minConversionRate instead?
         require(received >= dest_min_tokens, "KyberAction.tradeTokenToEther: FAILED_TRADE");

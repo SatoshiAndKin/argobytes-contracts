@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 // TODO: consistent revert strings
-pragma solidity 0.8.4;
+pragma solidity 0.8.5;
 pragma abicoder v2;
 
 import {ArgobytesTips} from "contracts/ArgobytesTips.sol";
@@ -142,8 +142,12 @@ contract EnterCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
         flash_dai_amount += data.dai_flash_fee;
 
         // make sure we can borrow DAI from cream and still have a healthy collateralization
-        (uint256 error_code, uint256 liquidity, uint256 shortfall) =
-            CREAM.getHypotheticalAccountLiquidity(address(this), address(CY_DAI), 0, flash_dai_amount);
+        (uint256 error_code, uint256 liquidity, uint256 shortfall) = CREAM.getHypotheticalAccountLiquidity(
+            address(this),
+            address(CY_DAI),
+            0,
+            flash_dai_amount
+        );
 
         if (error_code != 0) {
             revert CreamError(error_code);

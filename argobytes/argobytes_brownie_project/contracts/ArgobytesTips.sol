@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.8.4;
+pragma solidity 0.8.5;
 pragma abicoder v2;
 
 import {IENS, IResolver} from "contracts/external/ens/ENS.sol";

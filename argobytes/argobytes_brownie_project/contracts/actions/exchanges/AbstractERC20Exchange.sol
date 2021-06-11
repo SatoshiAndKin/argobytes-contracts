@@ -6,7 +6,7 @@
  *
  * Rewrite this to use UniversalERC20? I'm not sure its worth it. this is pretty easy to follow.
  */
-pragma solidity 0.8.4;
+pragma solidity 0.8.5;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 

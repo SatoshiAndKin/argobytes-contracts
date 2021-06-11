@@ -15,7 +15,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@solidity-parser/parser@npm:^0.13.0":
+"@solidity-parser/parser@npm:^0.13.2":
   version: 0.13.2
   resolution: "@solidity-parser/parser@npm:0.13.2"
   dependencies:
@@ -41,9 +41,9 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*":
-  version: 15.9.0
-  resolution: "@types/node@npm:15.9.0"
-  checksum: 09399100eae55644ac56c554b456444ab157696aba9d73bab7ce52a16151260d70297beffd3bdfdca94e9ab840474da7d45a8d4d5acbea0c3bfd68868774c1e8
+  version: 15.12.2
+  resolution: "@types/node@npm:15.12.2"
+  checksum: 26b9170eb825656751955e919dcea7963d1be4d1eba361c67e41b51a55436c51d69d63f49ee98aaf4fe2e0e5eb3c0038408a8f542316b7583e9badf4fdd10024
   languageName: node
   linkType: hard
 
@@ -140,9 +140,11 @@ __metadata:
   linkType: hard
 
 "antlr4ts@npm:^0.5.0-alpha.4":
-  version: 0.5.0-alpha.4
-  resolution: "antlr4ts@npm:0.5.0-alpha.4"
-  checksum: 61d5414f88b53abf7b352beb526a1466298f75663de5297af66a04a72b4330e68097a9bbcbb9996b56d8db90c8ff83138a8c2f4d393aff277674c7756143cdc7
+  version: 0.5.0-dev
+  resolution: "antlr4ts@npm:0.5.0-dev"
+  dependencies:
+    source-map-support: ^0.5.16
+  checksum: 0f206ef5ef5793456de66545a1bf6d8d52343bc6c6689d941cc16ea3f0b6b18a7710b4cc3946a61d021fda51f93b89adcd7c5d7fe249ea1739b0459e7a85b42c
   languageName: node
   linkType: hard
 
@@ -453,13 +455,6 @@ __metadata:
   version: 1.1.2
   resolution: "depd@npm:1.1.2"
   checksum: f45566ff7019a346852f095768a380778ed544de24e103b479fd5d3e61982d670efbb5234c09d0588d7fdb09c26c48283d7150e4be5e6ce5d3d37cd268d75c4d
-  languageName: node
-  linkType: hard
-
-"dir-to-object@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "dir-to-object@npm:2.0.0"
-  checksum: 068d215ae05bd5d2f4b86ea2e05fa256c5d1793b8a5fc5da886c96924691195e9e7783accc9ea3c4be88a48149dddeaaa1caa99e03aeeecb51d8c9f2c7949f40
   languageName: node
   linkType: hard
 
@@ -1385,27 +1380,27 @@ __metadata:
   linkType: hard
 
 "prettier-plugin-solidity@npm:^1.0.0-beta.11":
-  version: 1.0.0-beta.11
-  resolution: "prettier-plugin-solidity@npm:1.0.0-beta.11"
+  version: 1.0.0-beta.13
+  resolution: "prettier-plugin-solidity@npm:1.0.0-beta.13"
   dependencies:
-    "@solidity-parser/parser": ^0.13.0
-    dir-to-object: ^2.0.0
+    "@solidity-parser/parser": ^0.13.2
     emoji-regex: ^9.2.2
     escape-string-regexp: ^4.0.0
-    prettier: ^2.2.1
     semver: ^7.3.5
     solidity-comments-extractor: ^0.0.7
     string-width: ^4.2.2
-  checksum: ce46bdd1565e199da0b6113fd0dbb4c7f04da8c9dd3bae082573eef3f9bf53f64cf36ff991faa73c5788d3ff42098ed4051cdfa30858e8a8b2ce6fe701440f3e
+  peerDependencies:
+    prettier: ^2.3.0
+  checksum: 266ea99c0fdda1c7336767695df6c263c8166e81b418b382fc55d35a5faa54f4d2b6969a955f48134c9d127c112e2282f2c553d4dbec85796e0331ad973b3ea2
   languageName: node
   linkType: hard
 
-"prettier@npm:^2.2.1, prettier@npm:^2.3.0":
-  version: 2.3.0
-  resolution: "prettier@npm:2.3.0"
+"prettier@npm:^2.3.0":
+  version: 2.3.1
+  resolution: "prettier@npm:2.3.1"
   bin:
     prettier: bin-prettier.js
-  checksum: 652640cc8b71bc5277cfb8bf6f161783ca588efcf683c3d630837b39da8d57fef35c9e00ae5855a8e3c75136c42274046c913cc2b2d2968558315f31c6a26981
+  checksum: 9b4a695b87ce5f510fc20feec01cce7371f0fa0b92ffe79d543f6be52e2004c532861629de4d7ab1c577e1f649dce3cfccd62cb2ca6526b1da8d9c63eb84bf36
   languageName: node
   linkType: hard
 
@@ -1556,7 +1551,7 @@ __metadata:
     ganache-cli: ^6.12.2
     prettier: ^2.3.0
     prettier-plugin-solidity: ^1.0.0-beta.11
-    solc: 0.8.4
+    solc: 0.8.5
   languageName: unknown
   linkType: soft
 
@@ -1697,9 +1692,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"solc@npm:0.8.4":
-  version: 0.8.4
-  resolution: "solc@npm:0.8.4"
+"solc@npm:0.8.5":
+  version: 0.8.5
+  resolution: "solc@npm:0.8.5"
   dependencies:
     command-exists: ^1.2.8
     commander: 3.0.2
@@ -1712,7 +1707,7 @@ __metadata:
     tmp: 0.0.33
   bin:
     solcjs: solcjs
-  checksum: a2ceb6765cf02773fbf8529bd3cf1e370288eb45fa8dd219fa514cd0954d2ef4ff0fd9ac132960b225072368057b3ce69ff52292ce4606cab39f4835cb5c2c60
+  checksum: b0372e8527d7cac3f38ee4ff47af6c11bab25b3eadad88e39cf99fdf96e6a2cfbe9a1b32e9dfa37d47d1c0f42b23e7e8c6a00f3ec65f06ffe1b0519276253dad
   languageName: node
   linkType: hard
 
@@ -1730,6 +1725,16 @@ __metadata:
     buffer-from: ^1.0.0
     source-map: ^0.6.0
   checksum: 4832e717e1c3fcd295c1ef4b3cc6620ebbed502c10d60955f2e1cbc7097d3134c1cb95ee0d2bc90681e942024a4960264d5038db180fe2ed31804b708c59badc
+  languageName: node
+  linkType: hard
+
+"source-map-support@npm:^0.5.16":
+  version: 0.5.19
+  resolution: "source-map-support@npm:0.5.19"
+  dependencies:
+    buffer-from: ^1.0.0
+    source-map: ^0.6.0
+  checksum: 59d4efaae97755155b078413ecba63517e3ef054cc7ab767bbd30e6f3054be2ae8e8f5cce7eef53b7eb93e98fe27a58dd8f5e7abfb13144ba420ddaf5267bbb2
   languageName: node
   linkType: hard
 

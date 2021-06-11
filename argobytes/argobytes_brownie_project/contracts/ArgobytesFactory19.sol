@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 // Deploy contracts using CREATE2.
-pragma solidity 0.8.4;
+pragma solidity 0.8.5;
 
-import {Address} from "@OpenZeppelin/utils/Address.sol";
-import {Create2} from "@OpenZeppelin/utils/Create2.sol";
-
-error CloneError(bytes32 salt);
+import {AddressLib, Create2Failed} from "contracts/library/AddressLib.sol";
 
 /// @title A factory for proxy contracts with immutable owners and targets with 19 bytes addresses.
 /// @author Satoshi & Kin, Inc.
@@ -48,9 +45,9 @@ contract ArgobytesFactory19 {
             bytecode_hash := keccak256(bytecode, 74)
         }
 
-        clone = Create2.computeAddress(salt, bytecode_hash, address(this));
+        clone = AddressLib.deployAddress(salt, bytecode_hash, address(this));
 
-        exists = Address.isContract(clone);
+        exists = AddressLib.isContract(clone);
     }
 
     /// @notice Create a proxy contract for `msg.sender`
@@ -93,7 +90,7 @@ contract ArgobytesFactory19 {
 
         if (clone == address(0)) {
             // the salt isn't so helpful in this function, but from createClone19s it is helpful.
-            revert CloneError(salt);
+            revert Create2Failed(salt);
         }
 
         emit NewClone(target19, salt, immutable_owner, clone);
@@ -153,11 +150,11 @@ contract ArgobytesFactory19 {
     /// @notice Deploy a contract if it doesn't already exist
     /// @dev If you want to simply deploy a contract, use the SingletonFactory (eip-2470)
     function checkedCreateContract(bytes32 salt, bytes memory bytecode) external payable returns (address deployed) {
-        deployed = Create2.computeAddress(salt, keccak256(bytecode), address(this));
+        deployed = AddressLib.deployAddress(salt, keccak256(bytecode), address(this));
 
-        if (!Address.isContract(deployed)) {
+        if (!AddressLib.isContract(deployed)) {
             // deployed doesn't exist. create it
-            Create2.deploy(msg.value, salt, bytecode);
+            AddressLib.deploy(salt, bytecode);
         }
     }
 }

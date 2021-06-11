@@ -2,17 +2,16 @@
 /**
  * ArgobytesFlashBorrower is an extension to ArgobytesProxy that is also an IERC3156 Flash Loan Borrower.
  */
-pragma solidity 0.8.4;
+pragma solidity 0.8.5;
 
-import {Address} from "@OpenZeppelin/utils/Address.sol";
+import {AddressLib, CallReverted, InvalidTarget} from "contracts/library/AddressLib.sol";
 import {IERC20} from "contracts/external/erc20/IERC20.sol";
 
 import {ActionTypes} from "contracts/abstract/ActionTypes.sol";
-import {BytesLib} from "contracts/library/BytesLib.sol";
 import {IERC3156FlashBorrower} from "contracts/external/erc3156/IERC3156FlashBorrower.sol";
 import {IERC3156FlashLender} from "contracts/external/erc3156/IERC3156FlashLender.sol";
 
-import {ActionReverted, ArgobytesProxy, InvalidTarget} from "./ArgobytesProxy.sol";
+import {ArgobytesProxy} from "./ArgobytesProxy.sol";
 
 error LenderDenied();
 error Reentrancy();
@@ -20,11 +19,9 @@ error NoPendingLoan();
 error InvalidLender();
 error InvalidInitiator();
 
-abstract contract ArgobytesFlashBorrowerEvents {
+contract ArgobytesFlashBorrower is ArgobytesProxy, IERC3156FlashBorrower {
     event Lender(address indexed sender, address indexed lender, bool allowed);
-}
 
-contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents, IERC3156FlashBorrower {
     /// @dev diamond storage
     struct FlashBorrowerStorage {
         mapping(IERC3156FlashLender => bool) allowed_lenders;
@@ -74,7 +71,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         // check auth (owner is always allowed to use any lender and any action)
         if (msg.sender != owner()) {
             if (!s.allowed_lenders[lender]) revert LenderDenied();
-            requireAuth(action.target, action.call_type, BytesLib.toBytes4(action.target_calldata));
+            requireAuth(action.target, action.call_type, bytes4(action.data[0:4]));
         }
 
         if (s.pending_flashloan_callback == true) {
@@ -82,8 +79,8 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
             revert Reentrancy();
         }
 
-        if (!Address.isContract(action.target)) {
-            revert InvalidTarget();
+        if (!AddressLib.isContract(action.target)) {
+            revert InvalidTarget(action.target);
         }
 
         // we could pass the calldata to the lender and have them pass it back, but that seems less safe
@@ -137,14 +134,14 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, ArgobytesFlashBorrowerEvents,
         bool success;
         bytes memory action_returned;
         if (s.pending_action.call_type == ActionTypes.Call.DELEGATE) {
-            (success, action_returned) = action.target.delegatecall(action.target_calldata);
+            (success, action_returned) = action.target.delegatecall(action.data);
         } else {
-            (success, action_returned) = action.target.call(action.target_calldata);
+            (success, action_returned) = action.target.call(action.data);
         }
         // TODO: what if call_type is ADMIN?
 
         if (!success) {
-            revert ActionReverted(action.target, action.target_calldata, action_returned);
+            revert CallReverted(action.target, action.data, action_returned);
         }
 
         // since we can't return the call's return from here, we store it in state

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // TODO: rewrite this to be a target for ArgobytesFlashBorrower
 // TODO: consistent revert strings
-pragma solidity 0.8.4;
+pragma solidity 0.8.5;
 pragma abicoder v2;
 
 import {Strings} from "@OpenZeppelin/utils/Strings.sol";
@@ -89,7 +89,9 @@ contract ExitCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
 
         // add the fee
         // flash loaning max DAI is likely impossible, but even if this rolls over, things revert
-        unchecked {flash_dai_amount += dai_flash_fee;}
+        unchecked {
+            flash_dai_amount += dai_flash_fee;
+        }
 
         // burn enough 3crv to get back enough DAI to pay back the flash loan
         // we could allow exiting to DAI, USDC, or USDT here, but i think exiting with 3crv makes the most sense
@@ -126,7 +128,9 @@ contract ExitCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
                 require(THREE_CRV.transfer(tip_address, tip_3crv), "ExitCYY3CRVAction !tip_3crv");
 
                 // no need for checked math since we do a comparison just before this
-                unchecked {temp -= tip_3crv;}
+                unchecked {
+                    temp -= tip_3crv;
+                }
             }
         }
 

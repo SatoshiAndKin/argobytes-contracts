@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.8.4;
+pragma solidity 0.8.5;
 
-import {IERC20Metadata} from "contracts/external/erc20/IERC20.sol";
+import {IERC20} from "contracts/external/erc20/IERC20.sol";
 
-interface IYVault is IERC20Metadata {
+interface IYVault is IERC20 {
     function deposit(uint256 amount) external;
 
     function getPricePerFullShare() external returns (uint256);
