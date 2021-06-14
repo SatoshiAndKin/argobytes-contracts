@@ -102,12 +102,19 @@ def get_token_decimals(token_contract):
     elif token_contract.address == "0xC011A72400E58ecD99Ee497CF89E3775d4bd732F":
         # this is a proxy to a proxy to a gnosis safe
         decimals = 18
-    elif hasattr(token_contract, "decimals"):
-        decimals = token_contract.decimals()
-    elif hasattr(token_contract, "DECIMALS"):
-        decimals = token_contract.DECIMALS()
     else:
-        raise ValueError
+        if hasattr(token_contract, "decimals"):
+            decimals_fn = token_contract.decimals
+        elif hasattr(token_contract, "DECIMALS"):
+            decimals_fn = token_contract.DECIMALS
+        else:
+            raise ValueError
+
+        if hasattr(decimals_fn, "call"):
+            # some contracts forgot to add "view" to their functions and so we need to call
+            decimals = decimals_fn.call()
+        else:
+            decimals = decimals_fn()
 
     decimals = Decimal(decimals)
 
@@ -122,12 +129,20 @@ def get_token_symbol(token_contract, weth_to_eth=True):
 
     if token_contract in [brownie.ETH_ADDRESS, brownie.ZERO_ADDRESS]:
         symbol = "ETH"
-    elif hasattr(token_contract, "symbol"):
-        symbol = token_contract.symbol()
-    elif hasattr(token_contract, "SYMBOL"):
-        symbol = token_contract.SYMBOL()
     else:
-        raise ValueError
+        if hasattr(token_contract, "symbol"):
+            symbol_fn = token_contract.symbol
+        elif hasattr(token_contract, "SYMBOL"):
+            symbol_fn = token_contract.SYMBOL
+        else:
+            raise ValueError
+
+        if hasattr(symbol_fn, "call"):
+            # some contracts forgot to add "view" to their functions and so we need to call
+            # TODO: maybe we should patch brownie to add the "call" function to call-only functions
+            symbol = symbol_fn.call()
+        else:
+            symbol = symbol_fn()
 
     if symbol == "WETH":
         if weth_to_eth:
@@ -264,7 +279,7 @@ def transfer_token(from_address, to, token, decimal_amount):
     """Transfer tokens from an account that we don't actually control."""
     token = load_token_or_contract(token)
 
-    decimals = token.decimals()
+    decimals = get_token_decimals(token)
 
     amount = int(decimal_amount * 10 ** decimals)
 

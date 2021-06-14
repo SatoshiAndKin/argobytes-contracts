@@ -23,10 +23,13 @@ interface ICurvePool {
 
     /// @dev vyper upgrade changed this on us
     function coins(int128 arg0) external view returns (address out);
+
     /// @dev vyper upgrade changed this on us
     function coins(uint256 arg0) external view returns (address out);
+
     /// @dev vyper upgrade changed this on us
     function underlying_coins(int128 arg0) external view returns (address out);
+
     /// @dev vyper upgrade changed this on us
     function underlying_coins(uint256 arg0) external view returns (address out);
 

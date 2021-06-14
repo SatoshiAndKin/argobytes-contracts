@@ -57,6 +57,7 @@ contract CurveFiAction is AbstractERC20Exchange {
         // Use the full balance of tokens
         uint256 src_amount = src_token.balanceOf(address(this));
 
+        // TODO: get src_token and dest_token with coins_underlying
         src_token.approve(address(exchange), src_amount);
 
         // do the trade

@@ -61,7 +61,7 @@ def simple_enter(account):
 
     safe_token_approve(account, balances_for_3crv_pool, threecrv_pool)
 
-    threecrv_add_liquidity_tx = threecrv_pool.add_liquidity['uint[3],uint'](
+    threecrv_add_liquidity_tx = threecrv_pool.add_liquidity(
         [
             balances_for_3crv_pool[dai],
             balances_for_3crv_pool[usdc],

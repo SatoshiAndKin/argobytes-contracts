@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 pragma solidity 0.8.5;
 
-import {IERC20, SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
-
 import {ArgobytesAuth} from "contracts/abstract/ArgobytesAuth.sol";
+import {IERC20, SafeERC20} from "contracts/external/erc20/SafeERC20.sol";
 import {ArgobytesMulticall} from "contracts/ArgobytesMulticall.sol";
 
 error BadArbitrage(IERC20 token, uint256 start_amount, uint256 end_amount);

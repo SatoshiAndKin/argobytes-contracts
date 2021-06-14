@@ -35,8 +35,8 @@ library UniversalERC20 {
 
         if (isETH(token)) {
             // https://diligence.consensys.net/blog/2019/09/stop-using-soliditys-transfer-now/
-            // TODO: use OpenZepplin's sendValue
-            Address.sendValue(payable(to), amount);
+            (bool success, ) = to.call{value: amount}("");
+            require(success, "UniversalERC20.universalTransfer: ETH transfer failed");
         } else {
             token.safeTransfer(to, amount);
         }
@@ -60,7 +60,6 @@ library UniversalERC20 {
             // send ETH to "to"
             if (to != address(this)) {
                 // https://diligence.consensys.net/blog/2019/09/stop-using-soliditys-transfer-now/
-                // TODO: use OpenZepplin's sendValue
                 (bool success, ) = to.call{value: amount}("");
                 require(success, "UniversalERC20.universalTransferFrom: ETH transfer failed");
             }

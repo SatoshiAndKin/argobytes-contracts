@@ -19,7 +19,6 @@ error TransferFailed(address token, bytes data);
  * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
  */
 library SafeERC20 {
-
     function safeTransfer(
         IERC20 token,
         address to,

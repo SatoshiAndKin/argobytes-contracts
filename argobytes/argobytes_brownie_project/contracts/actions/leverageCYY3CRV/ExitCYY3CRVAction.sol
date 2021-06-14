@@ -4,8 +4,6 @@
 pragma solidity 0.8.5;
 pragma abicoder v2;
 
-import {Strings} from "@OpenZeppelin/utils/Strings.sol";
-
 import {ArgobytesTips} from "contracts/ArgobytesTips.sol";
 
 import {LeverageCYY3CRVConstants} from "./Constants.sol";

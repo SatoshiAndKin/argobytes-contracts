@@ -20,10 +20,8 @@ contract AbstractERC20Exchange {
     // this contract must be able to receive ether if it is expected to return it
     receive() external payable {}
 
-    /* just in case some token approve gets stuck non-zero and needs to be reset.
-    
-    I'll write a blog post about this one day, but all the tokens doing fancy things for front-running prevention have made this annoying.
-    */
+    /// @notice if a token approval gets stuck non-zero and needs to be reset.
+    /// @dev I'll write a blog post about this one day, but all the tokens doing fancy things for front-running prevention have made this annoying.
     function clearApproval(address token, address who) external {
         IERC20(token).approve(who, 0);
     }
