@@ -5,17 +5,15 @@ import {AddressLib} from "contracts/library/AddressLib.sol";
 
 /// @title Call multiple contraacts
 /** @dev
-Calling just one function on another contract isn't very exciting; you can already do that with your EOA.
-The ArgobytesMulticall contract's `callActions` function takes a list of multiple contract addresses and functions.
-If any fail, the whole thing reverts.
-
-This contract is a key part of some action contracts.
-
-This is similar to [MakerDAO's multicall](https://github.com/makerdao/multicall) but it discards the result
-
-If you need more complex ways to call multiple actions and move ETH around, you probably just want to write an action contract.
-
-TODO: think about this more. make it re-use code in ArgobytesProxy? do we even need it anymore?
+ *  Calling just one function on another contract isn't very exciting; you can already do that with your EOA.
+ *  The ArgobytesMulticall contract's `callActions` function takes a list of multiple contract addresses and functions.
+ *  If any fail, the whole thing reverts.
+ *
+ *  This contract is a key part of some action contracts. (See ArgobytesTrader.sol)
+ *
+ *  This is similar to [MakerDAO's multicall](https://github.com/makerdao/multicall) but it discards the result
+ *
+ *  If you need more complex ways to call multiple actions and move ETH around, you probably just want to write an action contract.
  */
 contract ArgobytesMulticall {
     /// @notice a target contract and its calldata

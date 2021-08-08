@@ -51,7 +51,7 @@ contract ArgobytesProxy is ArgobytesAuth {
 
     /// @notice Call or delegatecall functions on multiple contracts
     // TODO: do we care about the return data?
-    function executeMany(Action[] calldata actions) public payable returns (bytes[] memory responses) {
+    function executeMany(Action[] calldata actions) external payable returns (bytes[] memory responses) {
         uint256 num_actions = actions.length;
 
         responses = new bytes[](num_actions);

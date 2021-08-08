@@ -51,7 +51,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
             1,
             block.timestamp,
             to,
-            address(dest_token)
+            dest_token
         );
     }
 

@@ -39,6 +39,10 @@ contract ExampleAction {
         return true;
     }
 
+    function payMiner(uint256 amount) public payable {
+        revert("WIP");
+    }
+
     function sweep(
         address payable to,
         IERC20 token,
