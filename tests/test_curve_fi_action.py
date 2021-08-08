@@ -1,5 +1,3 @@
-from brownie import Contract, accounts
-
 from argobytes.contracts import load_contract
 from argobytes.tokens import get_token_symbol
 

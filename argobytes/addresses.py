@@ -1,4 +1,4 @@
-from brownie import ETH_ADDRESS, ZERO_ADDRESS
+from brownie import ZERO_ADDRESS
 
 # TODO: use lazy_contract for all of these annd move them to contracts.py?
 CurveFi3poolAddress = "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7"

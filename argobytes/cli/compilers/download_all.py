@@ -1,6 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import click
 from click_spinner import spinner
 from solcx import get_installable_solc_versions, install_solc
 from vvm import get_installable_vyper_versions, install_vyper
