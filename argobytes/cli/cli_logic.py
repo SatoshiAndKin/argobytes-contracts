@@ -18,7 +18,7 @@ from brownie import network as brownie_network
 from brownie import project, web3
 from brownie.network import gas_price
 from brownie.network.gas.strategies import GasNowScalingStrategy
-from flashbots import flashbot
+# from flashbots import flashbot
 
 from argobytes.cli_helpers import get_project_root
 from argobytes.cli_helpers_lite import logger
@@ -61,7 +61,8 @@ def cli(
 
             if flashbot_account:
                 print(f"Using {flashbot_account} for signing flashbot bundles.")
-                flashbot(web3, flashbot_account)
+                # flashbot(web3, flashbot_account)
+                raise NotImplementedError
 
             if network in ["mainnet", "mainnet-fork"]:
                 # TODO: write my own strategy
