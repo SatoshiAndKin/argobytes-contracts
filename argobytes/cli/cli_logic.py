@@ -78,7 +78,7 @@ def cli(
                 gas_strategy = "5010000000"  # 5.01 gwei
                 gas_price(gas_strategy)
                 logger.info(f"Default gas price: {gas_strategy}")
-            elif network in ["polygon", "polygon-fork"]:
+            elif network in ["polygon-main", "polygon-fork"]:
                 gas_strategy = "1010000000"  # "1.01 gwei"
                 gas_price(gas_strategy)
                 logger.info(f"Default gas price: {gas_strategy}")
