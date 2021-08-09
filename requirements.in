@@ -8,7 +8,7 @@ eth-abi
 importlib_metadata
 ipython
 lazy_load
-web3==5.18.0
+web3<6,>=5.22.0
 
 # TODO: this is no longer compatible with brownie (web3 version conflict)
 # ape-safe
@@ -16,6 +16,7 @@ web3==5.18.0
 # TODO: get this from pypi
 # TODO: this does not like being installed with '-e'
 # TODO: this is no longer compatible with brownie (web3 version conflict)
+# TODO: try out eden
 # git+https://github.com/flashbots/web3-flashbots.git#egg=flashbots
 
 git+https://git.argobytes.com/git/brownie.git#egg=eth-brownie
