@@ -171,8 +171,8 @@ Run:
 Run:
 
     isort .
-    autoflake -r --in-place --remove-all-unused-imports argobytes scripts setup.py tests
-    black --line-length 120 argobytes scripts setup.py tests
+    autoflake -r --in-place --remove-all-unused-imports argobytes setup.py tests
+    black --line-length 120 argobytes setup.py tests
     yarn run prettier
 
 TODO: automate this
