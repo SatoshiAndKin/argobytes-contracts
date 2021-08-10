@@ -43,11 +43,17 @@ def cli(
     # TODO: set brownie autofetch_sources
 
     def brownie_connect():
+        from brownie.project.main import _install_dependencies
+
         # this allows later click commands to set the default. there might be a better way
         network = ctx.obj["brownie_network"] or ctx.obj.get("default_brownie_network")
 
+        project_root = get_project_root()
+
+        _install_dependencies(project_root)
+
         # setup the project and network the same way brownie's run helper does
-        brownie_project = project.load(get_project_root(), "ArgobytesBrownieProject")
+        brownie_project = project.load(project_root, "ArgobytesBrownieProject")
         brownie_project.load_config()
 
         ctx.obj["brownie_project"] = brownie_project
