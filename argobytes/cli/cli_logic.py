@@ -85,10 +85,9 @@ def cli(
                 gas_price(gas_strategy)
                 logger.info(f"Default gas price: {gas_strategy}")
             elif network in ["polygon-main", "polygon-fork"]:
-                # gas_strategy = "1010000000"  # "1.01 gwei"
-                # gas_price(gas_strategy)
-                # logger.info(f"Default gas price: {gas_strategy}")
-                print("setting gas price on polygon is causing errors")
+                gas_strategy = "1010000000"  # "1.01 gwei"
+                gas_price(gas_strategy)
+                logger.info(f"Default gas price: {gas_strategy}")
             else:
                 logger.warning("No default gas price or gas strategy has been set!")
 
