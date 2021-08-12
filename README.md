@@ -161,7 +161,7 @@ Run:
 
     pipx install pip-tools
 
-    pip-compile --upgrade
+    pip-compile --upgrade requirements.in
     pip install -U -r requirements.txt
     yarn upgrade
 
