@@ -67,7 +67,7 @@ def get_deterministic_contract(default_account, contract, salt="", constructor_a
 
     contract_address, salt = mk_contract_address2(SingletonFactory.address, contract_initcode, salt=salt)
 
-    if web3.eth.getCode(contract_address).hex() == "0x":
+    if web3.eth.get_code(contract_address).hex() == "0x":
         raise ValueError(f"Contract {contract.name} not deployed!")
 
     return contract.at(contract_address, default_account)
@@ -152,7 +152,7 @@ def get_or_create(
         str(SingletonFactory.address), contract_initcode, leading_zeros=leading_zeros, salt=salt
     )
 
-    if web3.eth.getCode(contract_address).hex() == "0x":
+    if web3.eth.get_code(contract_address).hex() == "0x":
         if no_create:
             raise Exception(f"{contract} is not yet deployed. This is likely an issue with configuration.")
 

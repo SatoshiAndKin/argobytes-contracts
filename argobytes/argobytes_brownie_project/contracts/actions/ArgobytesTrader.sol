@@ -31,6 +31,7 @@ contract ArgobytesTrader {
         // record starting token balances to check for increases
         // transfer tokens to arbitrary destinations
         // TODO: what about ETH balances?
+        // TODO: the common thing is going to be send tokens to the first action. make that a default destination?
         for (uint256 i = 0; i < num_borrows; i++) {
             // TODO: do we want this address(0) check? i think it will be helpful in the case where the clone is holding the coins
             if (borrow_from == address(0)) {
