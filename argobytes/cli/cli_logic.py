@@ -72,6 +72,7 @@ def cli(
 
             if network in ["mainnet", "mainnet-fork"]:
                 # TODO: write my own strategy
+                # TODO: use EIP1559
                 gas_strategy = GasNowScalingStrategy(
                     initial_speed=gas_speed,
                     max_speed=gas_max_speed,
