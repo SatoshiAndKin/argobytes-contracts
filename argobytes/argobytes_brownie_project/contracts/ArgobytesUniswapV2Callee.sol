@@ -48,7 +48,6 @@ contract ArgobytesUniswapV2Callee is IUniswapV2Callee {
         // TODO: remove these
         require(keccak256(bytes(token.symbol())) == keccak256("CRV"), "bad token");
         require(amount >= 100e18, "bad initial amount");
-
         require(token.balanceOf(address(this)) >= amount, "bad balance");
 
         // TODO: trace steps are off by 1. balanceOf is fine. its the decode that is failing
@@ -59,14 +58,12 @@ contract ArgobytesUniswapV2Callee is IUniswapV2Callee {
         token.safeTransfer(decoded.actions[0].target, amount);
 
         // do arbitrary things with the tokens
-        // the actions to be sure to send enough token0 back to pay the flash loan
+        // the actions must send enough token back here to pay the flash loan
         decoded.multicall.callActions(decoded.actions);
 
         uint amountReceived = token.balanceOf(address(this));
-        require(amountReceived > amount, "bad amount received");
-
         uint amountRequired = UniswapV2Library.getAmountsIn(factory, amount, path)[0];
-        require(amountReceived > amountRequired, "bad amount required"); // fail if we didn't get enough tokens back to repay our flash loan
+        require(amountReceived > amountRequired, "bad actions"); // fail if we didn't get enough tokens back to repay our flash loan
 
         // pay back the flash loan
         token.safeTransfer(msg.sender, amountRequired);
