@@ -92,7 +92,7 @@ contract ArgobytesTrader {
         }
 
         // if you want to ensure that there was a gain in some token, add a requireERC20Balance or requireBalance action
-        argobytes_multicall.callActions{value: msg.value}(actions);
+        argobytes_multicall.callActions(actions);
 
         // TODO: refund excess ETH?
     }

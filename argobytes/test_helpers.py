@@ -24,12 +24,12 @@ from argobytes.web3_helpers import to_hex32
 def setup_brownie_mainnet_fork(pytestconfig):
     project_root = get_project_root()
 
+    # override some config
+    CONFIG.argv["revert"] = True
+
     # setup the project and network the same way brownie's run helper does
     brownie_project = project.load(project_root)
     brownie_project.load_config()
-
-    # override some config
-    CONFIG.argv["revert"] = True
 
     network.connect("mainnet-fork")
 

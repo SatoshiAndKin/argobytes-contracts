@@ -50,6 +50,8 @@ contract ExampleAction {
     ) public payable {
         uint256 balance = token.universalBalanceOf(address(this));
 
+        require(balance > 0, "nothing to sweep");
+
         if (to != address(this)) {
             token.universalTransfer(to, balance);
         }

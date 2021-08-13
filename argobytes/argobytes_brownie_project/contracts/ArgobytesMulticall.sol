@@ -15,7 +15,8 @@ import {AddressLib} from "contracts/library/AddressLib.sol";
  *
  *  If you need more complex ways to call multiple actions and move ETH around, you probably just want to write an action contract.
  */
-contract ArgobytesMulticall {
+
+contract ArgobytesMulticallInternal {
     /// @notice a target contract and its calldata
     struct Action {
         address target;
@@ -24,10 +25,18 @@ contract ArgobytesMulticall {
 
     /// @notice Call arbitrary actions
     /// @dev setup approvals or transfer tokens to the actions before calling this function
-    function callActions(Action[] memory actions) external payable {
+    function _callActions(Action[] memory actions) internal {
         // an action can do whatever it wants (liquidate, swap, refinance, etc.)
         for (uint256 i = 0; i < actions.length; i++) {
             AddressLib.functionCall(actions[i].target, actions[i].data);
         }
+    }
+}
+
+contract ArgobytesMulticall is ArgobytesMulticallInternal {
+    /// @notice Call arbitrary actions
+    /// @dev setup approvals or transfer tokens to the actions before calling this function
+    function callActions(Action[] memory actions) public {
+        _callActions(actions);
     }
 }
