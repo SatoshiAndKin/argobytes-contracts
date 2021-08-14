@@ -5,7 +5,7 @@ import {ActionTypes} from "contracts/abstract/ActionTypes.sol";
 
 /// @title A shared registry for storing authorizations
 /// @dev This is a seperate contract from the proxy so that there's no chance of delegatecalls changing storage
-contract ArgobytesAuthority {
+contract ArgobytesAuthority is ActionTypes {
     /// @dev key is from `createKey`
     mapping(bytes => bool) authorizations;
 
@@ -14,7 +14,7 @@ contract ArgobytesAuthority {
         address proxy,
         address sender,
         address target,
-        ActionTypes.Call call_type,
+        CallType call_type,
         bytes4 sig
     ) internal pure returns (bytes memory key) {
         // encodePacked should be safe because address and enums and bytes4 are fixed size types
@@ -26,7 +26,7 @@ contract ArgobytesAuthority {
     function canCall(
         address sender,
         address target,
-        ActionTypes.Call call_type,
+        CallType call_type,
         bytes4 sig
     ) external view returns (bool) {
         // TODO: i can see some use-cases for not hard coding msg.sender here, but we don't need it now
@@ -40,7 +40,7 @@ contract ArgobytesAuthority {
     function allow(
         address[] calldata senders,
         address target,
-        ActionTypes.Call call_type,
+        CallType call_type,
         bytes4 sig
     ) external {
         bytes memory key;
@@ -55,7 +55,7 @@ contract ArgobytesAuthority {
     function deny(
         address[] calldata senders,
         address target,
-        ActionTypes.Call call_type,
+        CallType call_type,
         bytes4 sig
     ) external {
         bytes memory key;

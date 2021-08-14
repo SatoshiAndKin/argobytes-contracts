@@ -10,31 +10,18 @@ error AccessDenied();
 
 /// @title Access control with an immutable owner
 /// @dev clone targets for ArgobytesFactory19 need to use this (or something like it)
-abstract contract ArgobytesAuth is ImmutablyOwned {
-    /// @dev diamond storage
-    /// @notice be sure that a sneaky delegatecall doesn't change this!
-    struct ArgobytesAuthStorage {
-        ArgobytesAuthority authority;
-    }
-
-    /// @dev diamond storage
-    bytes32 constant ARGOBYTES_AUTH_POSITION = keccak256("argobytes.storage.ArgobytesAuth");
-
-    /// @dev diamond storage
-    function argobytesAuthStorage() internal pure returns (ArgobytesAuthStorage storage s) {
-        bytes32 position = ARGOBYTES_AUTH_POSITION;
-        assembly {
-            s.slot := position
-        }
-    }
+abstract contract ArgobytesAuth is ActionTypes, ImmutablyOwned {
+    // TODO: diamond storage?
+    ArgobytesAuthority authority;
 
     event AuthorityTransferred(address indexed previous_authority, address indexed new_authority);
 
-    modifier auth(ActionTypes.Call call_type) {
+    /// @dev standard auth check
+    modifier auth(address sender, CallType call_type) {
         // do auth first. that is safest
         // theres some cases where it may be possible to do the auth check last, but it is too risky for me
-        if (msg.sender != owner()) {
-            requireAuth(address(this), call_type, msg.sig);
+        if (sender != owner()) {
+            requireAuth(sender, address(this), call_type, msg.sig);
         }
         _;
     }
@@ -51,32 +38,30 @@ abstract contract ArgobytesAuth is ImmutablyOwned {
     */
     function isAuthorized(
         address sender,
-        ActionTypes.Call call_type,
+        CallType call_type,
         address target,
         bytes4 sig
-    ) internal view returns (bool authorized) {
-        ArgobytesAuthStorage storage s = argobytesAuthStorage();
-
-        // TODO: this reverts without a reason if authority isn't set and the caller is not the owner. is that okay?
-        // we could check != address(0) and do authority.canCall in a try/catch, but that costs more gas
-        authorized = s.authority.canCall(sender, target, call_type, sig);
+    ) internal view returns (bool) {
+        if (address(authority) == address(0)) {
+            return false;
+        }
+        return authority.canCall(sender, target, call_type, sig);
     }
 
     /// @notice revert if authorization is denied
     function requireAuth(
+        address sender,
         address target,
-        ActionTypes.Call call_type,
+        CallType call_type,
         bytes4 sig
     ) internal view {
-        if (!isAuthorized(msg.sender, call_type, target, sig)) revert AccessDenied();
+        if (!isAuthorized(sender, call_type, target, sig)) revert AccessDenied();
     }
 
     /// @notice Set the contract used for checking authentication
-    function setAuthority(ArgobytesAuthority new_authority) public auth(ActionTypes.Call.ADMIN) {
-        ArgobytesAuthStorage storage s = argobytesAuthStorage();
+    function setAuthority(ArgobytesAuthority new_authority) public auth(msg.sender, CallType.ADMIN) {
+        emit AuthorityTransferred(address(authority), address(new_authority));
 
-        emit AuthorityTransferred(address(s.authority), address(new_authority));
-
-        s.authority = new_authority;
+        authority = new_authority;
     }
 }
