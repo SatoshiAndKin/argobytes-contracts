@@ -73,7 +73,7 @@ contract ArgobytesAaveFlashloan {
         returns (bool)
     {
         require(msg.sender == lender, "bad lender"); // make sure Aave is calling us
-        require(initiator == owner, "bad initiator"); // very basic calldata stealing protection. weak auth 
+        require(initiator == owner, "bad initiator"); // TODO: do we care? profits always go to owner
 
         // decode data for multicall
         Action[] memory actions = abi.decode(params, (Action[]));
@@ -100,8 +100,6 @@ contract ArgobytesAaveFlashloan {
             // Approve the LendingPool contract to *pull* the owed amount
             asset.approve(msg.sender, amount_owed);
             // keep the rest as profit
-            // TODO: tips?
-            // TODO: should profits go to owner or initiator?
             asset.safeTransfer(owner, balance - amount_owed);
         }
     }
