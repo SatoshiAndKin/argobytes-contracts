@@ -26,6 +26,9 @@ interface IAaveLendingPoolAddressesProvider {
 contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
     using SafeERC20 for IERC20;
 
+    event AddLendingPool(address pool);
+    event RemoveLendingPool(address pool);
+
     ILendingPoolAddressesProviderRegistry immutable lender_provider_registry;
 
     /// TODO: diamond storage?
@@ -37,18 +40,18 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
 
     /// @notice update the lender
     function updateLendingPools() external auth(msg.sender, CallType.ADMIN) {
-        IAaveLendingPoolAddressesProvider[] memory lending_pool_list = lender_provider_registry.getAddressesProvidersList();
-        uint num_lending_pools = lending_pool_list.length;
+        IAaveLendingPoolAddressesProvider[] memory lending_pool_providers = lender_provider_registry.getAddressesProvidersList();
+        uint num_lending_pools = lending_pool_providers.length;
         for (uint i = 0; i < num_lending_pools; i++) {
-            // TODO: events?
-            address lending_pool = lending_pool_list[i].getLendingPool();
+            address lending_pool = lending_pool_providers[i].getLendingPool();
             lending_pools[lending_pool] = true;
+            emit AddLendingPool(lending_pool);
         }
     }
 
     function removeLendingPool(address lending_pool) external auth(msg.sender, CallType.ADMIN) {
         delete lending_pools[lending_pool];
-        // TODO: events?
+        emit RemoveLendingPool(lending_pool);
     }
 
     // TODO: this is not the right action. we might want dellegate calls
