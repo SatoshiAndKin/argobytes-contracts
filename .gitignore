@@ -8,6 +8,7 @@ report.*.json
 .hypothesis/
 .pytest_cache/
 build/
+cache/
 reports/
 node_modules/
 venv/
