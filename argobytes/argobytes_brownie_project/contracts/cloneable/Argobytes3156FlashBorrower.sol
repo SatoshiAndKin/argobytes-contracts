@@ -44,7 +44,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, IERC3156FlashBorrower {
 
     /// @dev in addition to allowing the lender, you must also allow the caller with ArgobytesAuth/ArgobytesAuthority
     /// @dev The owner is always allowed to use any lender. This is just for approved callers
-    function allowLender(IERC3156FlashLender lender) external auth(msg.sender, CallType.ADMIN) {
+    function allowLender(IERC3156FlashLender lender) external auth(CallType.ADMIN) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
         s.allowed_lenders[lender] = true;
@@ -53,7 +53,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, IERC3156FlashBorrower {
     }
 
     /// @dev The owner is always allowed to use any lender. This is just for approved callers
-    function denyLender(IERC3156FlashLender lender) external auth(msg.sender, CallType.ADMIN) {
+    function denyLender(IERC3156FlashLender lender) external auth(CallType.ADMIN) {
         FlashBorrowerStorage storage s = flashBorrowerStorage();
 
         delete s.allowed_lenders[lender];

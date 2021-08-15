@@ -32,7 +32,7 @@ def brownie_mainnet_fork(pytestconfig):
     brownie_project = project.load(project_root)
     brownie_project.load_config()
 
-    network.connect("mainnet-fork")
+    network.connect("hardhat-fork")
 
     # TODO: brownie does some other setup for hypothesis and multiple-processes
     fixtures = PytestBrownieFixtures(pytestconfig, brownie_project)

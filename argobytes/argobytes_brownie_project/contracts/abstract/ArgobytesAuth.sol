@@ -17,11 +17,11 @@ abstract contract ArgobytesAuth is ActionTypes, ImmutablyOwned {
     event AuthorityTransferred(address indexed previous_authority, address indexed new_authority);
 
     /// @dev standard auth check
-    modifier auth(address sender, CallType call_type) {
+    modifier auth(CallType call_type) {
         // do auth first. that is safest
         // theres some cases where it may be possible to do the auth check last, but it is too risky for me
-        if (sender != owner()) {
-            requireAuth(sender, address(this), call_type, msg.sig);
+        if (msg.sender != owner()) {
+            requireAuth(msg.sender, address(this), call_type, msg.sig);
         }
         _;
     }
@@ -59,7 +59,7 @@ abstract contract ArgobytesAuth is ActionTypes, ImmutablyOwned {
     }
 
     /// @notice Set the contract used for checking authentication
-    function setAuthority(ArgobytesAuthority new_authority) public auth(msg.sender, CallType.ADMIN) {
+    function setAuthority(ArgobytesAuthority new_authority) public auth(CallType.ADMIN) {
         emit AuthorityTransferred(address(authority), address(new_authority));
 
         authority = new_authority;

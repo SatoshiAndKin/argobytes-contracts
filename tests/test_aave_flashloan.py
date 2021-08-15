@@ -6,7 +6,7 @@ from argobytes.tokens import load_token
 
 
 # TODO: this fixture doesn't work because its part of eth-brownie and that isn't loaded
-@pytest.mark.require_network("mainnet-fork")
+# @pytest.mark.require_network("hardhat-fork")
 def test_fake_aave_flash_loan():
     account = accounts[0]
 
@@ -18,6 +18,8 @@ def test_fake_aave_flash_loan():
 
     factory, flash_borrower, clone = get_or_clone_flash_borrower(account, [aave_provider_registry])
     example_action = get_or_create(account, ArgobytesBrownieProject.ExampleAction)
+
+    clone.updateLendingPools()
 
     crv = load_token("crv", owner=account)
 
@@ -44,16 +46,26 @@ def test_fake_aave_flash_loan():
     # TODO: enum int types instead of ints
     trade_actions.append((example_action.address, 1, calldata))
 
-    receiver_address = example_action.address
+    receiver_address = clone
     assets = [crv]
     amounts = [trading_crv]
     modes = [0]
+    # TODO: how does on_behalf work?
     on_behalf = clone
     # TODO: do this without a web3 call?
     flash_params = clone.encodeFlashParams(trade_actions)
     referral_code = 0
 
-    flash_tx = aave_lender.flashLoan(receiver_address, assets, amounts, modes, on_behalf, flash_params, referral_code)
+    flash_tx = aave_lender.flashLoan(
+        receiver_address,
+        assets, amounts,
+        modes, on_behalf,
+        flash_params,
+        referral_code,
+        {
+            "from": account,
+        }
+    )
     flash_tx.info()
 
     end_crv = crv.balanceOf(account)

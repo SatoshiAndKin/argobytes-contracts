@@ -48,7 +48,8 @@ contract ExampleAction {
         IERC20 token,
         uint256 extra_gas
     ) public payable {
-        uint256 balance = token.universalBalanceOf(address(this));
+        // leave 1 wei behind for gasa savings
+        uint256 balance = token.universalBalanceOf(address(this)) - 1;
 
         require(balance > 0, "nothing to sweep");
 

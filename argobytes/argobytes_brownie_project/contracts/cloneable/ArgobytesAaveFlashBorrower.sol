@@ -39,7 +39,7 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
     }
 
     /// @notice update the lender
-    function updateLendingPools() external auth(msg.sender, CallType.ADMIN) {
+    function updateLendingPools() external auth(CallType.ADMIN) {
         IAaveLendingPoolAddressesProvider[] memory lending_pool_providers = lender_provider_registry.getAddressesProvidersList();
         uint num_lending_pools = lending_pool_providers.length;
         for (uint i = 0; i < num_lending_pools; i++) {
@@ -49,7 +49,7 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
         }
     }
 
-    function removeLendingPool(address lending_pool) external auth(msg.sender, CallType.ADMIN) {
+    function removeLendingPool(address lending_pool) external auth(CallType.ADMIN) {
         delete lending_pools[lending_pool];
         emit RemoveLendingPool(lending_pool);
     }
@@ -66,7 +66,7 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
         uint256[] calldata premiums,
         address initiator,
         bytes calldata params
-    ) external auth(initiator, CallType.CALL) returns (bool) {
+    ) external returns (bool) {
         // make sure Aave is calling us
         if (!lending_pools[msg.sender]) {
             revert BadLender(msg.sender);
