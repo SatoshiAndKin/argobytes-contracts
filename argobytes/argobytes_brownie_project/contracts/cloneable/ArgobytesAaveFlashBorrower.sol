@@ -121,5 +121,7 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
             amount = asset.balanceOf(address(this)) - amount;
             asset.safeTransfer(owner, amount);
         }
+
+        return true;
     }
 }

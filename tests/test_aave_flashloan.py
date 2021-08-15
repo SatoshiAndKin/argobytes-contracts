@@ -29,7 +29,8 @@ def test_fake_aave_flash_loan():
     trading_crv = 1e18
 
     # take some CRV from the veCRV contract. simulates arb profits
-    fake_arb_profits = trading_crv * 9 // 1000
+    # fake_arb_profits = trading_crv * 9 // 1000
+    fake_arb_profits = trading_crv
     vecrv = "0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2"
     unlocked = accounts.at(vecrv, force=True)
     crv.transfer(example_action, fake_arb_profits, {"from": unlocked})
