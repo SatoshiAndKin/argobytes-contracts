@@ -33,14 +33,12 @@ contract CurveFiAction is AbstractERC20Exchange {
         src_token.approve(address(exchange), src_amount);
 
         // do the trade
-        // TODO: newer exchanges have a "exchange" function that takes the receiver as a final argument
         exchange.exchange(i, j, src_amount, dest_min_tokens);
 
-        uint256 dest_balance = dest_token.balanceOf(address(this));
-
-        // require(dest_balance >= dest_min_tokens, "CurveFiAction.trade: no dest_balance");
-
         if (to != address(this)) {
+            // leave 1 wei behind
+            uint256 dest_balance = dest_token.balanceOf(address(this)) - 1;
+
             // forward the tokens that we bought
             // we NEED this check because some tokens (like compound's cUSDC) revert if to == msg.sender
             dest_token.safeTransfer(to, dest_balance);
@@ -95,7 +93,8 @@ contract CurveFiAction is AbstractERC20Exchange {
         // do the trade
         exchange.exchange_underlying(i, j, src_amount, dest_min_tokens);
 
-        uint256 dest_balance = dest_token.balanceOf(address(this));
+        // leave 1 wei behind
+        uint256 dest_balance = dest_token.balanceOf(address(this)) - 1;
 
         // require(dest_balance >= dest_min_tokens, "CurveFiAction.trade: no dest_balance");
 

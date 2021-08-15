@@ -28,8 +28,8 @@ def test_action(uniswap_v2_router, uniswap_v2_action, dai_erc20, usdc_erc20, wet
     # tradeTokenToToken(address to, address router, address[] calldata path, uint256 dest_min_tokens)
     uniswap_v2_action.tradeTokenToToken(uniswap_v2_action, [usdc_erc20, dai_erc20], 1)
 
-    # make sure USDC balance on the action is zero
-    assert usdc_erc20.balanceOf(uniswap_v2_action) == 0
+    # make sure USDC balance on the action is just 1 wei
+    assert usdc_erc20.balanceOf(uniswap_v2_action) == 1
 
     # make sure DAI balance is non-zero
     assert dai_erc20.balanceOf(uniswap_v2_action) > 0
@@ -43,8 +43,8 @@ def test_action(uniswap_v2_router, uniswap_v2_action, dai_erc20, usdc_erc20, wet
     # tradeTokenToEther(address payable to, address exchange, address src_token, uint256 dest_min_tokens)
     uniswap_v2_action.tradeTokenToEther(accounts[0], [dai_erc20, weth9_erc20], 1)
 
-    # make sure DAI balance on the action is zero (i think it will be swept back to accounts[0])
-    assert dai_erc20.balanceOf(uniswap_v2_action) == 0
+    # make sure DAI balance on the action is just 1 wei
+    assert dai_erc20.balanceOf(uniswap_v2_action) == 1
 
     # TODO: what should we assert? this is going to fail now because we don't do the sweep anymore
     assert starting_eth_balance < accounts[0].balance()

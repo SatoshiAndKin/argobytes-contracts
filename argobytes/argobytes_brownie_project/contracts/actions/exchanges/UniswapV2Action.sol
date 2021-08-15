@@ -7,11 +7,19 @@ import {IUniswapV2Router02} from "contracts/external/uniswap/IUniswapV2Router02.
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
 contract UniswapV2Action is AbstractERC20Exchange {
-    /*
-    // we don't need this. just use router.swapExactETHForTokens as your action
+
+    // this function must be able to receive ether if it is expected to wrap it
+    receive() external payable {}
+
+    // TODO: copy/paste the router logic here and have this be the factory instead
+    IUniswapV2Router02 public immutable router;
+
+    constructor(IUniswapV2Router02 _router) {
+        router = _router;
+    }
+
     function tradeEtherToToken(
         address to,
-        address router,
         address[] calldata path,
         uint256 dest_min_tokens
     ) external payable {
@@ -20,17 +28,9 @@ contract UniswapV2Action is AbstractERC20Exchange {
         //     payable
         //     returns (uint[] memory amounts);
         // solium-disable-next-line security/no-block-members
-        IUniswapV2Router02(router).swapExactETHForTokens{
-            value: address(this).balance
+        router.swapExactETHForTokens{
+            value: address(this).balance - 1
         }(dest_min_tokens, path, to, block.timestamp);
-    }
-    */
-
-    // TODO: copy/paste the router logic here and have this be the factory instead
-    IUniswapV2Router02 public immutable router;
-
-    constructor(IUniswapV2Router02 _router) {
-        router = _router;
     }
 
     function tradeTokenToToken(

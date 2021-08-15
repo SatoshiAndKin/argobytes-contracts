@@ -50,19 +50,3 @@ def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action,
     assert arbitrage_tx.status == 1
 
     # TODO: check logs for profits
-
-
-def test_simple_dydx_flashloan():
-    assert False
-
-
-def test_simple_atomic_trade():
-    assert False
-
-
-def test_check_balance():
-    assert False
-
-
-def test_check_erc20_balance():
-    assert False

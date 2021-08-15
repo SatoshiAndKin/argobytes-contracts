@@ -21,6 +21,9 @@ contract KyberAction is AbstractERC20Exchange {
     IKyberNetworkProxy immutable network_proxy;
     address payable immutable platform_wallet;
 
+    // this function must be able to receive ether if it is expected to trade it
+    receive() external payable {}
+
     constructor(IKyberNetworkProxy _network_proxy, address payable _platform_wallet) {
         network_proxy = _network_proxy;        
 
