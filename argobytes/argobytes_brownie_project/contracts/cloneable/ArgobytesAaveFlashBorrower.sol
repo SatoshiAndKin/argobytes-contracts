@@ -55,32 +55,8 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
     }
 
     // TODO: this is not the right action. we might want dellegate calls
-    function encodeData(Action[] calldata actions) external view returns (bytes memory data) {
+    function encodeFlashParams(Action[] calldata actions) external view returns (bytes memory data) {
         data = abi.encode(actions);
-    }
-
-    /// @dev delegate call or call another contract. be especially careful with delegate calls!
-    function _flashExecute(Action memory action) private {
-        // TODO: do we really care about this check? calling a non-contract will give "success" even though thats probably not what we want
-        // if (!AddressLib.isContract(action.target)) {
-        //     revert InvalidTarget(action.target);
-        // }
-
-        bool success;
-        bytes memory action_returned;
-
-        if (action.call_type == CallType.DELEGATE) {
-            (success, action_returned) = action.target.delegatecall(action.data);
-        } else {
-            // TODO: option to send ETH value?
-            (success, action_returned) = action.target.call(action.data);
-        }
-
-        if (!success) {
-            revert CallReverted(action.target, action.data, action_returned);
-        }
-
-        // TODO: return action_returned?
     }
 
     /// @dev This function is called by the lender after your contract has received the flash loaned amount
@@ -117,7 +93,19 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
                     requireAuth(initiator, action.target, action.call_type, bytes4(action.data));
                 }
 
-                _flashExecute(action);
+                bool success;
+                bytes memory action_returned;
+
+                if (action.call_type == CallType.DELEGATE) {
+                    (success, action_returned) = action.target.delegatecall(action.data);
+                } else {
+                    // TODO: option to send ETH value?
+                    (success, action_returned) = action.target.call(action.data);
+                }
+
+                if (!success) {
+                    revert CallReverted(action.target, action.data, action_returned);
+                }
             }
         }
 

@@ -8,55 +8,12 @@
  */
 pragma solidity 0.8.5;
 
-import {Address} from "@OpenZeppelin/utils/Address.sol";
-
-import {IERC20, UniversalERC20, SafeERC20} from "contracts/library/UniversalERC20.sol";
+import {IERC20} from "contracts/external/erc20/IERC20.sol";
 
 contract AbstractERC20Exchange {
-    using Address for address;
-    using SafeERC20 for IERC20;
-    using UniversalERC20 for IERC20;
-
-    // this contract must be able to receive ether if it is expected to return it
-    receive() external payable {}
-
     /// @notice if a token approval gets stuck non-zero and needs to be reset.
     /// @dev I'll write a blog post about this one day, but all the tokens doing fancy things for front-running prevention have made this annoying.
     function clearApproval(address token, address who) external {
         IERC20(token).approve(who, 0);
-    }
-
-    // TODO: i dont think we actually need these modifiers. i think we always trade all the source token
-    /// @dev after the function, send any remaining ether back to msg.sender
-    modifier returnLeftoverEther() {
-        _;
-
-        uint256 balance = address(this).balance;
-
-        if (balance > 0) {
-            Address.sendValue(payable(msg.sender), balance);
-        }
-    }
-
-    /// @dev after the function, send any remaining tokens to an address
-    modifier returnLeftoverToken(address token) {
-        _;
-
-        uint256 balance = IERC20(token).balanceOf(address(this));
-
-        if (balance > 0) {
-            IERC20(token).safeTransfer(msg.sender, balance);
-        }
-    }
-
-    /// @dev after the function, send any remaining ether or tokens to an address
-    modifier returnLeftoverUniversal(address token) {
-        _;
-
-        uint256 balance = IERC20(token).universalBalanceOf(address(this));
-
-        if (balance > 0) {
-            IERC20(token).universalTransfer(msg.sender, balance);
-        }
     }
 }

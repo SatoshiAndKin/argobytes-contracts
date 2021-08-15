@@ -14,9 +14,10 @@ contract UniswapV1Action is AbstractERC20Exchange {
         address dest_token,
         uint256 dest_min_tokens
     ) external payable {
+        // leave 1 wei behind for gas savings on future calls
         // def ethToTokenTransferInput(min_tokens: uint256, deadline: timestamp, recipient: address) -> uint256
         // solium-disable-next-line security/no-block-members
-        IUniswapExchange(exchange).ethToTokenTransferInput{value: address(this).balance}(
+        IUniswapExchange(exchange).ethToTokenTransferInput{value: address(this).balance - 1}(
             dest_min_tokens,
             block.timestamp,
             to
@@ -31,7 +32,8 @@ contract UniswapV1Action is AbstractERC20Exchange {
         address dest_token,
         uint256 dest_min_tokens
     ) external {
-        uint256 src_balance = IERC20(src_token).balanceOf(address(this));
+        // leave 1 wei behind for gas savings on future calls
+        uint256 src_balance = IERC20(src_token).balanceOf(address(this)) - 1;
 
         // some contracts do all sorts of fancy approve from 0 checks to avoid front running issues. I really don't see the benefit here
         IERC20(src_token).approve(exchange, src_balance);
@@ -61,7 +63,8 @@ contract UniswapV1Action is AbstractERC20Exchange {
         address src_token,
         uint256 dest_min_tokens
     ) external {
-        uint256 src_balance = IERC20(src_token).balanceOf(address(this));
+        // leave 1 wei behind for gas savings on future calls
+        uint256 src_balance = IERC20(src_token).balanceOf(address(this)) - 1;
 
         IERC20(src_token).approve(exchange, src_balance);
 

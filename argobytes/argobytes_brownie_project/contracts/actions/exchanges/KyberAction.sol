@@ -18,50 +18,35 @@ contract KyberAction is AbstractERC20Exchange {
         IKyberRegisterWallet(0xECa04bB23612857650D727B8ed008f80952654ee);
     IERC20 internal constant ETH_ON_KYBER = IERC20(address(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee));
 
-    // TODO: do we really want this in state?
-    // generally i prefer not to have any state, but if someone uses my contract, i'd like some credit
-    // TODO: does setting wallet_id but not setting a platform fee do anything? i think we still get something
-    // TODO: should we set a platform fee? we aren't adding much value here
-    address payable _platform_wallet;
+    IKyberNetworkProxy immutable network_proxy;
+    address payable immutable platform_wallet;
 
-    constructor(address payable platform_wallet) {
-        KYBER_REGISTER_WALLET.registerWallet(platform_wallet);
+    constructor(IKyberNetworkProxy _network_proxy, address payable _platform_wallet) {
+        network_proxy = _network_proxy;        
 
-        _platform_wallet = platform_wallet;
+        KYBER_REGISTER_WALLET.registerWallet(_platform_wallet);
+
+        platform_wallet = _platform_wallet;
     }
 
     // TODO: helpers for creating "hints"
-
-    /*
-    This could have fancier auth on it, but I don't think its worth the
-    */
-    function setPlatformWallet(address payable platform_wallet) public {
-        if (msg.sender != _platform_wallet) {
-            revert AccessDenied();
-        }
-
-        KYBER_REGISTER_WALLET.registerWallet(platform_wallet);
-
-        _platform_wallet = platform_wallet;
-    }
-
     function tradeEtherToToken(
-        address network_proxy,
         address payable to,
         address dest_token,
         uint256 dest_min_tokens,
         bytes calldata hint
     ) public payable {
-        uint256 src_amount = address(this).balance;
+        // leave 1 wei behind for gas savings on future calls
+        uint256 src_amount = address(this).balance - 1;
 
-        uint256 received = IKyberNetworkProxy(network_proxy).tradeWithHintAndFee{value: src_amount}(
+        uint256 received = network_proxy.tradeWithHintAndFee{value: src_amount}(
             ETH_ON_KYBER,
             src_amount,
             IERC20(dest_token),
             to,
             MAX_QTY,
             1, // minConversionRate of 1 will execute the trade according to market price
-            _platform_wallet,
+            platform_wallet,
             0,
             hint
         );
@@ -71,7 +56,6 @@ contract KyberAction is AbstractERC20Exchange {
     }
 
     function tradeTokenToToken(
-        address network_proxy,
         address payable to,
         address src_token,
         address dest_token,
@@ -79,19 +63,20 @@ contract KyberAction is AbstractERC20Exchange {
         bytes calldata hint
     ) external {
         // Use the full balance of tokens transferred from the trade executor
-        uint256 src_amount = IERC20(src_token).balanceOf(address(this));
+        // leave 1 wei behind for gas savings on future calls
+        uint256 src_amount = IERC20(src_token).balanceOf(address(this)) - 1;
 
         // Approve the exchange to transfer tokens from this contract to the reserve
-        IERC20(src_token).approve(network_proxy, src_amount);
+        IERC20(src_token).approve(address(network_proxy), src_amount);
 
-        uint256 received = IKyberNetworkProxy(network_proxy).tradeWithHintAndFee(
+        uint256 received = network_proxy.tradeWithHintAndFee(
             IERC20(src_token),
             src_amount,
             IERC20(dest_token),
             to,
             MAX_QTY,
             1, // minConversionRate of 1 will execute the trade according to market price
-            _platform_wallet,
+            platform_wallet,
             0,
             hint
         );
@@ -103,28 +88,28 @@ contract KyberAction is AbstractERC20Exchange {
     }
 
     function tradeTokenToEther(
-        address network_proxy,
         address payable to,
         address src_token,
         uint256 dest_min_tokens,
         bytes calldata hint
-    ) external returnLeftoverToken(src_token) {
+    ) external {
         // Use the full balance of tokens transferred from the trade executor
-        uint256 src_amount = IERC20(src_token).balanceOf(address(this));
+        // leave 1 wei behind for gas savings on future calls
+        uint256 src_amount = IERC20(src_token).balanceOf(address(this)) - 1;
 
         // require(src_amount > 0, "KyberAction.tradeTokenToEther: no src_amount");
 
         // Approve the exchange to transfer tokens from this contract to the reserve
-        IERC20(src_token).approve(network_proxy, src_amount);
+        IERC20(src_token).approve(address(network_proxy), src_amount);
 
-        uint256 received = IKyberNetworkProxy(network_proxy).tradeWithHintAndFee(
+        uint256 received = network_proxy.tradeWithHintAndFee(
             IERC20(src_token),
             src_amount,
             ETH_ON_KYBER,
             to,
             MAX_QTY,
             1, // minConversionRate of 1 will execute the trade according to market price
-            _platform_wallet,
+            platform_wallet,
             0,
             hint
         );

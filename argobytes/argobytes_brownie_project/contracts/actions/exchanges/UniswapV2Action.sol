@@ -26,16 +26,23 @@ contract UniswapV2Action is AbstractERC20Exchange {
     }
     */
 
+    // TODO: copy/paste the router logic here and have this be the factory instead
+    IUniswapV2Router02 public immutable router;
+
+    constructor(IUniswapV2Router02 _router) {
+        router = _router;
+    }
+
     function tradeTokenToToken(
         address to,
-        address router,
         address[] calldata path,
         uint256 dest_min_tokens
     ) external {
-        uint256 src_balance = IERC20(path[0]).balanceOf(address(this));
+        // leave 1 wei behind for gas savings on future calls
+        uint256 src_balance = IERC20(path[0]).balanceOf(address(this)) - 1;
 
         // some contracts do all sorts of fancy approve from 0 checks to avoid front running issues. I really don't see the benefit here
-        IERC20(path[0]).approve(router, src_balance);
+        IERC20(path[0]).approve(address(router), src_balance);
 
         /*
         function swapExactTokensForTokens(
@@ -47,18 +54,18 @@ contract UniswapV2Action is AbstractERC20Exchange {
         ) external returns (uint[] memory amounts);
         */
         // solium-disable-next-line security/no-block-members
-        IUniswapV2Router02(router).swapExactTokensForTokens(src_balance, dest_min_tokens, path, to, block.timestamp);
+        router.swapExactTokensForTokens(src_balance, dest_min_tokens, path, to, block.timestamp);
     }
 
     function tradeTokenToEther(
         address payable to,
-        address router,
         address[] calldata path,
         uint256 dest_min_tokens
     ) external {
-        uint256 src_balance = IERC20(path[0]).balanceOf(address(this));
+        // leave 1 wei behind for gas savings on future calls
+        uint256 src_balance = IERC20(path[0]).balanceOf(address(this)) - 1;
 
-        IERC20(path[0]).approve(router, src_balance);
+        IERC20(path[0]).approve(address(router), src_balance);
 
         /*
         function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
@@ -66,6 +73,6 @@ contract UniswapV2Action is AbstractERC20Exchange {
             returns (uint[] memory amounts);
         */
         // solium-disable-next-line security/no-block-members
-        IUniswapV2Router02(router).swapExactTokensForETH(src_balance, dest_min_tokens, path, to, block.timestamp);
+        router.swapExactTokensForETH(src_balance, dest_min_tokens, path, to, block.timestamp);
     }
 }
