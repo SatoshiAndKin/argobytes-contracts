@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "ganache-cli": "^6.12.2",
+    "hardhat": "^2.6.0",
     "prettier": "^2.3.0",
     "prettier-plugin-solidity": "^1.0.0-beta.11",
     "solc": "0.8.5"
@@ -10,5 +10,6 @@
   },
   "scripts": {
     "prettier": "prettier --write 'argobytes/**/contracts/**/*.sol' --print-width 120"
-  }
+  },
+  "packageManager": "yarn@3.0.0"
 }
