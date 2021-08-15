@@ -12,7 +12,6 @@ contract Weth9Action {
     // this function must be able to receive ether if it is expected to wrap it
     receive() external payable {}
 
-    // TODO: constructor that saves weth as an immutable?
     constructor(IWETH9 _weth) {
         weth = _weth;
     }

@@ -10,7 +10,7 @@ contract ActionTypes {
     }
 
     struct Action {
-        address payable target;
+        address target;
         CallType call_type;
         bytes data;
     }

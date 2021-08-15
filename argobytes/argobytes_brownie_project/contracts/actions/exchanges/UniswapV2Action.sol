@@ -2,7 +2,7 @@
 pragma solidity 0.8.5;
 
 import {IERC20} from "contracts/external/erc20/IERC20.sol";
-import {IUniswapV2Router02} from "contracts/external/uniswap/IUniswapV2Router02.sol";
+import {IUniswapV2Router01} from "contracts/external/uniswap/IUniswapV2Router01.sol";
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
@@ -11,17 +11,11 @@ contract UniswapV2Action is AbstractERC20Exchange {
     // this function must be able to receive ether if it is expected to wrap it
     receive() external payable {}
 
-    // TODO: copy/paste the router logic here and have this be the factory instead
-    IUniswapV2Router02 public immutable router;
-
-    constructor(IUniswapV2Router02 _router) {
-        router = _router;
-    }
-
     function tradeEtherToToken(
-        address to,
-        address[] calldata path,
-        uint256 dest_min_tokens
+        IUniswapV2Router01 router,
+      address[] calldata path,
+        uint256 dest_min_tokens,
+        address to
     ) external payable {
         // function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)
         //     external
@@ -34,10 +28,11 @@ contract UniswapV2Action is AbstractERC20Exchange {
     }
 
     function tradeTokenToToken(
-        address to,
+        IUniswapV2Router01 router,
         address[] calldata path,
-        uint256 dest_min_tokens
-    ) external {
+        uint256 dest_min_tokens,
+        address to
+   ) external {
         // leave 1 wei behind for gas savings on future calls
         uint256 src_balance = IERC20(path[0]).balanceOf(address(this)) - 1;
 
@@ -58,9 +53,10 @@ contract UniswapV2Action is AbstractERC20Exchange {
     }
 
     function tradeTokenToEther(
-        address payable to,
+        IUniswapV2Router01 router,
         address[] calldata path,
-        uint256 dest_min_tokens
+        uint256 dest_min_tokens,
+        address payable to
     ) external {
         // leave 1 wei behind for gas savings on future calls
         uint256 src_balance = IERC20(path[0]).balanceOf(address(this)) - 1;

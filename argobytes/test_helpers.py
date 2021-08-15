@@ -32,7 +32,7 @@ def brownie_mainnet_fork(pytestconfig):
     brownie_project = project.load(project_root)
     brownie_project.load_config()
 
-    network.connect("hardhat-fork")
+    network.connect("mainnet-fork")
 
     # TODO: brownie does some other setup for hypothesis and multiple-processes
     fixtures = PytestBrownieFixtures(pytestconfig, brownie_project)
@@ -226,7 +226,7 @@ def uniswap_v1_factory(brownie_mainnet_fork):
 
 @pytest.fixture()
 def uniswap_v2_action(UniswapV2Action, uniswap_v2_router):
-    return get_or_create(accounts[0], UniswapV2Action, constructor_args=[uniswap_v2_router])
+    return get_or_create(accounts[0], UniswapV2Action)
 
 
 @pytest.fixture(scope="session")

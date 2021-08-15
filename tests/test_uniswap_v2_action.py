@@ -26,7 +26,7 @@ def test_action(uniswap_v2_router, uniswap_v2_action, dai_erc20, usdc_erc20, wet
 
     # trade USDC to DAI
     # tradeTokenToToken(address to, address router, address[] calldata path, uint256 dest_min_tokens)
-    uniswap_v2_action.tradeTokenToToken(uniswap_v2_action, [usdc_erc20, dai_erc20], 1)
+    uniswap_v2_action.tradeTokenToToken(uniswap_v2_router, [usdc_erc20, dai_erc20], 1, uniswap_v2_action)
 
     # make sure USDC balance on the action is just 1 wei
     assert usdc_erc20.balanceOf(uniswap_v2_action) == 1
@@ -41,7 +41,7 @@ def test_action(uniswap_v2_router, uniswap_v2_action, dai_erc20, usdc_erc20, wet
 
     # trade DAI to ETH
     # tradeTokenToEther(address payable to, address exchange, address src_token, uint256 dest_min_tokens)
-    uniswap_v2_action.tradeTokenToEther(accounts[0], [dai_erc20, weth9_erc20], 1)
+    uniswap_v2_action.tradeTokenToEther(uniswap_v2_router, [dai_erc20, weth9_erc20], 1, accounts[0])
 
     # make sure DAI balance on the action is just 1 wei
     assert dai_erc20.balanceOf(uniswap_v2_action) == 1

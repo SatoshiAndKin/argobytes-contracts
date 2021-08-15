@@ -32,7 +32,7 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
     ILendingPoolAddressesProviderRegistry immutable lender_provider_registry;
 
     /// TODO: diamond storage?
-    mapping(address => bool) lending_pools;
+    mapping(address => bool) public lending_pools;
 
     constructor(ILendingPoolAddressesProviderRegistry _lender_provider_registry) {
         lender_provider_registry = _lender_provider_registry;
