@@ -94,7 +94,7 @@ def argobytes_proxy_clone(argobytes_factory, argobytes_proxy):
 
 
 @pytest.fixture(scope="session")
-def argobytes_flash_borrower(brownie_mainnet_fork):
+def argobytes_flash_borrower(argobytes_factory, argobytes_proxy, brownie_mainnet_fork):
     # on mainnet we use the (bytes32) salt to generate custom addresses with lots of zero bytes
     # for our tests, we just need an address with the first byte being a zero
     return get_or_create_flash_borrower(accounts[0], constructor_args=[aave_provider_registry])
@@ -181,8 +181,8 @@ def exit_cyy3crv_action(ExitCYY3CRVAction):
 
 
 @pytest.fixture(scope="session")
-def kyber_action(KyberAction):
-    return get_or_create(accounts[0], KyberAction, constructor_args=[accounts[0]])
+def kyber_action(KyberAction, kyber_network_proxy):
+    return get_or_create(accounts[0], KyberAction, constructor_args=[kyber_network_proxy, accounts[0]])
 
 
 @pytest.fixture(scope="session")
@@ -225,8 +225,8 @@ def uniswap_v1_factory():
 
 
 @pytest.fixture(scope="session")
-def uniswap_v2_action(UniswapV2Action):
-    return get_or_create(accounts[0], UniswapV2Action)
+def uniswap_v2_action(UniswapV2Action, uniswap_v2_router):
+    return get_or_create(accounts[0], UniswapV2Action, constructor_args=[uniswap_v2_router])
 
 
 @pytest.fixture(scope="session")
@@ -256,7 +256,7 @@ def usdc_erc20():
 
 @pytest.fixture(scope="session")
 def weth9_action(Weth9Action):
-    return get_or_create(accounts[0], Weth9Action)
+    return get_or_create(accounts[0], Weth9Action, constructor_args=[weth9_erc20])
 
 
 @pytest.fixture(scope="session")
