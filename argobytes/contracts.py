@@ -129,7 +129,7 @@ def get_or_clone_flash_borrower(account, constructor_args=None, borrower_salt=No
 
     # we don't actually want the proxy. flash_borrower does more
     # proxy = get_or_create_proxy(account, salt)
-    flash_borrower = get_or_create_flash_borrower(account, borrower_salt, constructor_args=constructor_args, leading_zeros=leading_zeros or 1)
+    flash_borrower = get_or_create_flash_borrower(account, constructor_args=constructor_args, salt=borrower_salt, leading_zeros=leading_zeros or 1)
 
     clone = get_or_clone(account, factory, flash_borrower, salt=clone_salt)
 

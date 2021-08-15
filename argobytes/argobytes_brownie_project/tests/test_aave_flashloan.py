@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 import pytest
 from brownie import accounts
 
@@ -9,17 +7,16 @@ from argobytes.tokens import load_token
 
 # TODO: this fixture doesn't work because its part of eth-brownie and that isn't loaded
 @pytest.mark.require_network("mainnet-fork")
-def test_fake_aave_flash_loan(
-    aave_registry,
-    unlocked_uniswap_v2,
-):
+def test_fake_aave_flash_loan():
     account = accounts[0]
 
-    aave_provider = load_contract(aave_registry.getAddressesProvidersList()[0])
+    aave_provider_registry = load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413")
 
-    aave_lender = load_contract(aave_provider.getLendingPool())
+    aave_provider = load_contract(aave_provider_registry.getAddressesProvidersList()[0])
 
-    factory, flash_borrower, clone = get_or_clone_flash_borrower(account, [aave_registry])
+    aave_lender = load_contract(aave_provider.getLendingPool(), account)
+
+    factory, flash_borrower, clone = get_or_clone_flash_borrower(account, [aave_provider_registry])
     example_action = get_or_create(account, ArgobytesBrownieProject.ExampleAction)
 
     crv = load_token("crv", owner=account)
@@ -28,12 +25,14 @@ def test_fake_aave_flash_loan(
 
     # TODO: what amount?
     trading_crv = 1e18
+
+    # take some CRV from the veCRV contract. simulates arb profits
     fake_arb_profits = trading_crv * 9 // 1000
+    vecrv = "0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2"
+    unlocked = accounts.at(vecrv, force=True)
+    crv.transfer(example_action, fake_arb_profits, {"from": unlocked})
 
-    # take some tokens from uniswap
-    unlocked_uniswap_v2(crv, fake_arb_profits, example_action)
-
-    # TODO: class with useful functions to make this easier
+    # TODO: class with useful functions to make creating transactions easier
     trade_actions = []
 
     # sweep curve to the clone

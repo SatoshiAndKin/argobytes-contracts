@@ -61,7 +61,7 @@ def session_defaults():
 
 
 @pytest.fixture(scope="session")
-def aave_provider_registry():
+def aave_provider_registry(brownie_mainnet_fork):
     return load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413", accounts[0])
 
 
@@ -243,6 +243,8 @@ def unlocked_uniswap_v2(uniswap_v2_router):
         pair = factory.getPair(token_a.address, token_b.address)
 
         unlocked = accounts.at(pair, force=True)
+
+        assert token_a.balanceOf(unlocked) >= token_a_amount
 
         return transfer_token(unlocked, to, token_a, token_a_amount)
 
