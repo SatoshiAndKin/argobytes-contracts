@@ -11,7 +11,6 @@ contract CurveFiAction is AbstractERC20Exchange {
 
     // trade wrapped stablecoins
     function trade(
-        bool new_exchange,
         ICurvePool exchange,
         int128 i,
         int128 j,
@@ -21,7 +20,7 @@ contract CurveFiAction is AbstractERC20Exchange {
         uint256 dest_min_tokens
     ) external {
         // Use the full balance of tokens
-        // leave 1 wei behind for gas savings on future calls
+        // TODO: leave 1 wei behind for gas savings on future calls
         uint256 src_amount = src_token.balanceOf(address(this)) - 1;
 
         // debug requires
@@ -48,10 +47,8 @@ contract CurveFiAction is AbstractERC20Exchange {
         }
     }
 
-
-    // trade wrapped stablecoins
+    // trade stablecoins on a newer pool that accepts a recipient address
     function trade2(
-        bool new_exchange,
         ICurvePool exchange,
         int128 i,
         int128 j,
@@ -61,7 +58,7 @@ contract CurveFiAction is AbstractERC20Exchange {
         uint256 dest_min_tokens
     ) external {
         // Use the full balance of tokens
-        // leave 1 wei behind for gas savings on future calls
+        // TODO: leave 1 wei behind for gas savings on future calls
         uint256 src_amount = src_token.balanceOf(address(this)) - 1;
 
         // debug requires
@@ -78,7 +75,7 @@ contract CurveFiAction is AbstractERC20Exchange {
         exchange.exchange(i, j, src_amount, dest_min_tokens, to);
     }
 
-    // trade stablecoins
+    // trade wrapped stablecoins
     function tradeUnderlying(
         ICurvePool exchange,
         int128 i,
@@ -89,39 +86,22 @@ contract CurveFiAction is AbstractERC20Exchange {
         uint256 dest_min_tokens
     ) external {
         // Use the full balance of tokens
-        // leave 1 wei behind for gas savings on future calls
+        // TODO: leave 1 wei behind for gas savings on future calls
         uint256 src_amount = src_token.balanceOf(address(this)) - 1;
 
         // TODO: get src_token and dest_token with coins_underlying
         src_token.approve(address(exchange), src_amount);
 
         // do the trade
-        uint256 dest_balance = exchange.exchange_underlying(i, j, src_amount, dest_min_tokens);
+        exchange.exchange_underlying(i, j, src_amount, dest_min_tokens);
+
+        uint256 dest_balance = dest_token.balanceOf(address(this));
+
+        // require(dest_balance >= dest_min_tokens, "CurveFiAction.trade: no dest_balance");
 
         if (to != address(this)) {
             // forward the tokens that we bought
             dest_token.safeTransfer(to, dest_balance);
         }
-    }
-
-    // trade stablecoins
-    function tradeUnderlying2(
-        ICurvePool exchange,
-        int128 i,
-        int128 j,
-        address to,
-        IERC20 src_token,
-        IERC20 dest_token,
-        uint256 dest_min_tokens
-    ) external {
-        // Use the full balance of tokens
-        // leave 1 wei behind for gas savings on future calls
-        uint256 src_amount = src_token.balanceOf(address(this)) - 1;
-
-        // TODO: get src_token and dest_token with coins_underlying
-        src_token.approve(address(exchange), src_amount);
-
-        // do the trade
-        exchange.exchange_underlying(i, j, src_amount, dest_min_tokens, to);
     }
 }

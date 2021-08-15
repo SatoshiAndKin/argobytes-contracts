@@ -38,8 +38,9 @@ interface ICurvePool {
         int128 j,
         uint256 dx,
         uint256 min_dy
-    ) external returns (uint);
+    ) external;
 
+    // newer pools have this improved version of exchange_underlying
     function exchange(
         int128 i,
         int128 j,
@@ -53,15 +54,7 @@ interface ICurvePool {
         int128 j,
         uint256 dx,
         uint256 min_dy
-    ) external returns (uint);
-
-    function exchange_underlying(
-        int128 i,
-        int128 j,
-        uint256 dx,
-        uint256 min_dy,
-        address receiver
-    ) external returns (uint);
+    ) external;
 
     function fee() external view returns (uint256 out);
 

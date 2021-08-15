@@ -10,18 +10,16 @@ from argobytes.tokens import load_token
 # TODO: this fixture doesn't work because its part of eth-brownie and that isn't loaded
 @pytest.mark.require_network("mainnet-fork")
 def test_fake_aave_flash_loan(
+    aave_registry,
     unlocked_uniswap_v2,
 ):
     account = accounts[0]
-
-    # LendingPoolAddressesProviderRegistry
-    aave_registry = load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413")
 
     aave_provider = load_contract(aave_registry.getAddressesProvidersList()[0])
 
     aave_lender = load_contract(aave_provider.getLendingPool())
 
-    factory, flash_borrower, clone = get_or_clone_flash_borrower(account, aave_registry)
+    factory, flash_borrower, clone = get_or_clone_flash_borrower(account, [aave_registry])
     example_action = get_or_create(account, ArgobytesBrownieProject.ExampleAction)
 
     crv = load_token("crv", owner=account)

@@ -186,6 +186,7 @@ def get_or_create_proxy(default_account, salt=None, leading_zeros=1):
 
 
 def get_or_create_flash_borrower(default_account, constructor_args=None, salt=None, leading_zeros=1):
+    assert constructor_args, "need address of AaveProviderRegistry"
     return get_or_create(
         default_account, ArgobytesBrownieProject.ArgobytesAaveFlashBorrower, constructor_args=constructor_args, salt=salt, leading_zeros=leading_zeros
     )

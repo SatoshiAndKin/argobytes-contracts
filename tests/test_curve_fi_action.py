@@ -50,14 +50,14 @@ def test_compound_trade(curve_fi_action, curve_fi_compound, unlocked_uniswap_v2)
     curve_fi_action.trade(curve_fi_compound, a_id, b_id, curve_fi_action, token_a, token_b, 1)
 
     # TODO: check balances more specifically
-    assert token_a.balanceOf(curve_fi_action) == 0
+    assert token_a.balanceOf(curve_fi_action) == 1
     assert token_b.balanceOf(curve_fi_action) > 0
 
     curve_fi_action.trade(curve_fi_compound, b_id, a_id, curve_fi_action, token_b, token_a, 1)
 
     # TODO: check balances more specifically
     assert token_a.balanceOf(curve_fi_action) > 0
-    assert token_b.balanceOf(curve_fi_action) == 0
+    assert token_b.balanceOf(curve_fi_action) == 1
 
     # TODO: actually assert things
 

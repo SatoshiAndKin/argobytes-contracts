@@ -1,14 +1,15 @@
+from argobytes.test_helpers import aave_provider_registry
 from brownie import accounts
 
 from argobytes.contracts import get_or_clone, get_or_create_factory, get_or_create_flash_borrower
 
 
-def test_get_or_clone():
+def test_get_or_clone(aave_provider_registry):
     account = accounts[0]
 
     argobytes_factory = get_or_create_factory(account)
 
-    argobytes_proxy = get_or_create_flash_borrower(account)
+    argobytes_proxy = get_or_create_flash_borrower(account, [aave_provider_registry])
 
     argobytes_clone = get_or_clone(account, argobytes_factory, argobytes_proxy)
 

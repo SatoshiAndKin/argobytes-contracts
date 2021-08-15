@@ -21,7 +21,7 @@ from argobytes.web3_helpers import to_hex32
 
 
 # TODO: don't autouse, so that we can test multiple networks
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(scope="session")
 def brownie_mainnet_fork(pytestconfig):
     project_root = get_project_root()
 
@@ -46,7 +46,7 @@ def brownie_mainnet_fork(pytestconfig):
 
 
 @pytest.fixture(autouse=True, scope="function")
-def isolation(fn_isolation, monkeypatch):
+def always(brownie_mainnet_fork, fn_isolation, monkeypatch):
     # test isolation, always use!
     fn_isolation
 
@@ -65,48 +65,48 @@ def aave_provider_registry():
     return load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413", accounts[0])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def argobytes_multicall(ArgobytesMulticall):
     return get_or_create(accounts[0], ArgobytesMulticall)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def argobytes_authority(ArgobytesAuthority):
     return get_or_create(accounts[0], ArgobytesAuthority)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def argobytes_factory():
     return get_or_create_factory(accounts[0])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def argobytes_proxy(ArgobytesProxy):
     # on mainnet we use the (bytes32) salt to generate custom addresses with lots of zero bytes
     # for our tests, we just need an address with the first byte being a zero
     return get_or_create_proxy(accounts[0], leading_zeros=1)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def argobytes_proxy_clone(argobytes_factory, argobytes_proxy):
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
     return get_or_clone(accounts[0], argobytes_factory, argobytes_proxy)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def argobytes_flash_borrower(argobytes_factory, argobytes_proxy, brownie_mainnet_fork):
     # on mainnet we use the (bytes32) salt to generate custom addresses with lots of zero bytes
     # for our tests, we just need an address with the first byte being a zero
     return get_or_create_flash_borrower(accounts[0], constructor_args=[aave_provider_registry])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def argobytes_flash_clone(argobytes_factory, argobytes_flash_borrower):
     # on mainnet we use the (bytes32) salt to generate custom addresses, but we dont need that in our tests
     return get_or_clone(accounts[0], argobytes_factory, argobytes_flash_borrower)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def argobytes_trader(ArgobytesTrader):
     return get_or_create(accounts[0], ArgobytesTrader)
 
@@ -136,77 +136,77 @@ def click_test_runner():
 
 
 @pytest.fixture(scope="session")
-def curve_fi_3pool():
+def curve_fi_3pool(brownie_mainnet_fork):
     return load_contract(CurveFi3poolAddress)
 
 
 @pytest.fixture(scope="session")
-def curve_fi_compound():
+def curve_fi_compound(brownie_mainnet_fork):
     return load_contract(CurveFiCompoundAddress)
 
 
 @pytest.fixture(scope="session")
-def cusdc_erc20():
+def cusdc_erc20(brownie_mainnet_fork):
     return load_contract(cUSDCAddress)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def curve_fi_action(CurveFiAction):
     return get_or_create(accounts[0], CurveFiAction)
 
 
 @pytest.fixture(scope="session")
-def dai_erc20():
+def dai_erc20(brownie_mainnet_fork):
     return load_token_or_contract("DAI")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def example_action(ExampleAction):
     return get_or_create(accounts[0], ExampleAction)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def example_action_2(ExampleAction):
     return get_or_create(accounts[0], ExampleAction, salt=2)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def enter_cyy3crv_action(EnterCYY3CRVAction):
     return get_or_create(accounts[0], EnterCYY3CRVAction)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def exit_cyy3crv_action(ExitCYY3CRVAction):
     return get_or_create(accounts[0], ExitCYY3CRVAction)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def kyber_action(KyberAction, kyber_network_proxy):
     return get_or_create(accounts[0], KyberAction, constructor_args=[kyber_network_proxy, accounts[0]])
 
 
 @pytest.fixture(scope="session")
-def kyber_network_proxy():
+def kyber_network_proxy(brownie_mainnet_fork):
     # TODO: they have an "info" method and that is a reserved keyword
     # TODO: `return load_contract(KyberNetworkProxyAddress)`
     return KyberNetworkProxyAddress
 
 
 @pytest.fixture(scope="session")
-def susd_erc20(synthetix_address_resolver):
+def susd_erc20(brownie_mainnet_fork, synthetix_address_resolver):
     # The AddressResolver is not populated with everything right now, only those internal contract addresses that do not change. ProxyERC20 (SNX) and ProxyERC20sUSD (sUSD) are static addresses you can simply hard code in if you need
     # proxy = synthetix_address_resolver.requireAndGetAddress(to_hex32(text="ProxyERC20sUSD"), "No Proxy")
     return load_contract(sUSDAddress)
 
 
 @pytest.fixture(scope="session")
-def synthetix_address_resolver():
+def synthetix_address_resolver(brownie_mainnet_fork):
     # this is actually the ReadProxyAddressResolver
     return load_contract(SynthetixAddressResolverAddress)
 
 
 @pytest.fixture(scope="session")
-def synthetix_exchange_rates(synthetix_address_resolver):
+def synthetix_exchange_rates(brownie_mainnet_fork, synthetix_address_resolver):
     rates = synthetix_address_resolver.getAddress(to_hex32(text="ExchangeRates"))
 
     assert rates != ZERO_ADDRESS
@@ -214,23 +214,23 @@ def synthetix_exchange_rates(synthetix_address_resolver):
     return load_contract(rates)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def uniswap_v1_action(UniswapV1Action):
     return get_or_create(accounts[0], UniswapV1Action)
 
 
 @pytest.fixture(scope="session")
-def uniswap_v1_factory():
+def uniswap_v1_factory(brownie_mainnet_fork):
     return load_contract(UniswapV1FactoryAddress)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def uniswap_v2_action(UniswapV2Action, uniswap_v2_router):
     return get_or_create(accounts[0], UniswapV2Action, constructor_args=[uniswap_v2_router])
 
 
 @pytest.fixture(scope="session")
-def uniswap_v2_router():
+def uniswap_v2_router(brownie_mainnet_fork):
     return load_contract(UniswapV2RouterAddress)
 
 
@@ -250,15 +250,15 @@ def unlocked_uniswap_v2(uniswap_v2_router):
 
 
 @pytest.fixture(scope="session")
-def usdc_erc20():
+def usdc_erc20(brownie_mainnet_fork):
     return load_token_or_contract("USDC")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def weth9_action(Weth9Action):
     return get_or_create(accounts[0], Weth9Action, constructor_args=[weth9_erc20])
 
 
 @pytest.fixture(scope="session")
-def weth9_erc20():
+def weth9_erc20(brownie_mainnet_fork):
     return load_contract(WETH9Address)
