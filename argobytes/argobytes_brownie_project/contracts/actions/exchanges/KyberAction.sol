@@ -25,7 +25,7 @@ contract KyberAction is AbstractERC20Exchange {
     receive() external payable {}
 
     constructor(IKyberNetworkProxy _network_proxy, address payable _platform_wallet) {
-        network_proxy = _network_proxy;        
+        network_proxy = _network_proxy;
 
         KYBER_REGISTER_WALLET.registerWallet(_platform_wallet);
 

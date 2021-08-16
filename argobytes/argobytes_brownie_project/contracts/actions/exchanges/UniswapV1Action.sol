@@ -8,7 +8,6 @@ import {IUniswapExchange} from "contracts/external/uniswap/IUniswapExchange.sol"
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
 contract UniswapV1Action is AbstractERC20Exchange {
-
     // this function must be able to receive ether if it is expected to trade it
     receive() external payable {}
 
@@ -21,11 +20,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
         // leave 1 wei behind for gas savings on future calls
         // def ethToTokenTransferInput(min_tokens: uint256, deadline: timestamp, recipient: address) -> uint256
         // solium-disable-next-line security/no-block-members
-        exchange.ethToTokenTransferInput{value: address(this).balance - 1}(
-            dest_min_tokens,
-            block.timestamp,
-            to
-        );
+        exchange.ethToTokenTransferInput{value: address(this).balance - 1}(dest_min_tokens, block.timestamp, to);
     }
 
     // TODO: allow trading between 2 factories?
@@ -54,7 +49,7 @@ contract UniswapV1Action is AbstractERC20Exchange {
         IUniswapExchange(exchange).tokenToTokenTransferInput(
             src_balance,
             dest_min_tokens,
-            1,  // TODO: do we care about min eth bought?
+            1, // TODO: do we care about min eth bought?
             block.timestamp,
             to,
             dest_token

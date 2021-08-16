@@ -129,12 +129,16 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
     return [_contract(address) for address in my_proxys_proxies]
 
 
-def get_or_clone_flash_borrower(account, constructor_args=None, borrower_salt=None, clone_salt="", factory_salt="", leading_zeros=1):
+def get_or_clone_flash_borrower(
+    account, constructor_args=None, borrower_salt=None, clone_salt="", factory_salt="", leading_zeros=1
+):
     factory = get_or_create_factory(account, factory_salt)
 
     # we don't actually want the proxy. flash_borrower does more
     # proxy = get_or_create_proxy(account, salt)
-    flash_borrower = get_or_create_flash_borrower(account, constructor_args=constructor_args, salt=borrower_salt, leading_zeros=leading_zeros or 1)
+    flash_borrower = get_or_create_flash_borrower(
+        account, constructor_args=constructor_args, salt=borrower_salt, leading_zeros=leading_zeros or 1
+    )
 
     clone = get_or_clone(account, factory, flash_borrower, salt=clone_salt)
 
@@ -193,7 +197,11 @@ def get_or_create_proxy(default_account, salt=None, leading_zeros=1):
 def get_or_create_flash_borrower(default_account, constructor_args=None, salt=None, leading_zeros=1):
     assert constructor_args, "need address of AaveProviderRegistry"
     return get_or_create(
-        default_account, ArgobytesBrownieProject.ArgobytesAaveFlashBorrower, constructor_args=constructor_args, salt=salt, leading_zeros=leading_zeros
+        default_account,
+        ArgobytesBrownieProject.ArgobytesAaveFlashBorrower,
+        constructor_args=constructor_args,
+        salt=salt,
+        leading_zeros=leading_zeros,
     )
 
 

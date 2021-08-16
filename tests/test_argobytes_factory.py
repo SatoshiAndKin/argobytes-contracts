@@ -1,4 +1,3 @@
-from argobytes.test_helpers import aave_provider_registry
 from brownie import accounts
 
 from argobytes.contracts import get_or_clone, get_or_create_factory, get_or_create_flash_borrower

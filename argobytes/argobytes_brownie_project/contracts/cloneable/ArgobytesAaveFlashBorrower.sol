@@ -14,7 +14,7 @@ import {ArgobytesProxy} from "./ArgobytesProxy.sol";
 error BadLender(address);
 
 interface ILendingPoolAddressesProviderRegistry {
-  function getAddressesProvidersList() external view returns (IAaveLendingPoolAddressesProvider[] memory);
+    function getAddressesProvidersList() external view returns (IAaveLendingPoolAddressesProvider[] memory);
 }
 
 interface IAaveLendingPoolAddressesProvider {
@@ -40,9 +40,10 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
 
     /// @notice update the lender
     function updateLendingPools() external auth(CallType.ADMIN) {
-        IAaveLendingPoolAddressesProvider[] memory lending_pool_providers = lender_provider_registry.getAddressesProvidersList();
-        uint num_lending_pools = lending_pool_providers.length;
-        for (uint i = 0; i < num_lending_pools; i++) {
+        IAaveLendingPoolAddressesProvider[] memory lending_pool_providers = lender_provider_registry
+        .getAddressesProvidersList();
+        uint256 num_lending_pools = lending_pool_providers.length;
+        for (uint256 i = 0; i < num_lending_pools; i++) {
             address lending_pool = lending_pool_providers[i].getLendingPool();
             lending_pools[lending_pool] = true;
             emit AddLendingPool(lending_pool);

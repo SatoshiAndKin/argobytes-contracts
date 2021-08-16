@@ -7,13 +7,12 @@ import {IUniswapV2Router01} from "contracts/external/uniswap/IUniswapV2Router01.
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
 contract UniswapV2Action is AbstractERC20Exchange {
-
     // this function must be able to receive ether if it is expected to wrap it
     receive() external payable {}
 
     function tradeEtherToToken(
         IUniswapV2Router01 router,
-      address[] calldata path,
+        address[] calldata path,
         uint256 dest_min_tokens,
         address to
     ) external payable {
@@ -22,9 +21,7 @@ contract UniswapV2Action is AbstractERC20Exchange {
         //     payable
         //     returns (uint[] memory amounts);
         // solium-disable-next-line security/no-block-members
-        router.swapExactETHForTokens{
-            value: address(this).balance - 1
-        }(dest_min_tokens, path, to, block.timestamp);
+        router.swapExactETHForTokens{value: address(this).balance - 1}(dest_min_tokens, path, to, block.timestamp);
     }
 
     function tradeTokenToToken(
@@ -32,7 +29,7 @@ contract UniswapV2Action is AbstractERC20Exchange {
         address[] calldata path,
         uint256 dest_min_tokens,
         address to
-   ) external {
+    ) external {
         // leave 1 wei behind for gas savings on future calls
         uint256 src_balance = IERC20(path[0]).balanceOf(address(this)) - 1;
 

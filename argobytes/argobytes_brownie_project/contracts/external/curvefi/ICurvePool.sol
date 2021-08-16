@@ -47,7 +47,7 @@ interface ICurvePool {
         uint256 dx,
         uint256 min_dy,
         address receiver
-    ) external returns (uint);
+    ) external returns (uint256);
 
     function exchange_underlying(
         int128 i,

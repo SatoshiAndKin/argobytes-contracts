@@ -7,7 +7,7 @@ import {Address} from "@OpenZeppelin/utils/Address.sol";
 import {IWETH9} from "contracts/external/weth9/IWETH9.sol";
 
 contract Weth9Action {
-    IWETH9 immutable public weth;
+    IWETH9 public immutable weth;
 
     // this function must be able to receive ether if it is expected to wrap it
     receive() external payable {}

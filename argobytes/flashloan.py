@@ -1,15 +1,12 @@
 # TODO: make a class that does atomic transactions via the flash loaner smart contract
-from brownie import accounts, chain, network, web3
+from brownie import chain, network, web3
 from brownie._config import CONFIG
-from brownie.network.main import gas_limit
 
-from argobytes.contracts import get_or_clone_flash_borrower, load_contract, get_or_create, ArgobytesBrownieProject
-from argobytes.tokens import load_token
+from argobytes.contracts import get_or_clone_flash_borrower, load_contract
 
 
 # TODO: option to borrow from owner instead of Aave
-class ArgobytesFlashManager():
-
+class ArgobytesFlashManager:
     def __init__(
         self,
         owner,
@@ -57,8 +54,9 @@ class ArgobytesFlashManager():
         )
 
         # make sure the clone's Aave lending pool address is up-to-date
+        # TODO: why are the froms required?
         if self.clone.tx:
-            tx = self.clone.updateLendingPools()
+            tx = self.clone.updateLendingPools({"from": self.owner})
             tx.info()
         else:
             try:
@@ -66,7 +64,7 @@ class ArgobytesFlashManager():
                 if not self.clone.lending_pools(self.aave_lender):
                     raise ValueError
             except ValueError:
-                tx = self.clone.updateLendingPools()
+                tx = self.clone.updateLendingPools({"from": self.owner})
                 tx.info()
                 # TODO: remove old pools?
 
@@ -84,7 +82,7 @@ class ArgobytesFlashManager():
         # snapshot here. so we can revert to before any non-atomic transactions are sent
         chain.snapshot()
 
-        # clear history. everything in history at exit will be rolled into 
+        # clear history. everything in history at exit will be rolled into
         network.history.clear()
 
         return self
@@ -134,14 +132,7 @@ class ArgobytesFlashManager():
 
         # TODO: how does on_behalf work?
         self.flash_tx = self.aave_lender.flashLoan(
-            self.clone,
-            assets,
-            amounts,
-            modes,
-            self.clone,
-            flash_params,
-            0,
-            {"from": self.owner}
+            self.clone, assets, amounts, modes, self.clone, flash_params, 0, {"from": self.owner}
         )
 
     def send_for_real(self):
@@ -159,7 +150,7 @@ class ArgobytesFlashManager():
         for required_contract in self.required_contracts:
             if required_contract.tx:
                 print(f"Deploying {required_contract._name} to {required_contract.address}...")
-                # TODO: this seems wrong. only do this if 
+                # TODO: this seems wrong. only do this if
                 # tx is set, so the contract was deployed by this instance of brownie
                 # TODO: required_confs = 0
                 tx = self.owner.transfer(
