@@ -73,8 +73,11 @@ def get_deterministic_contract(default_account, contract, salt="", constructor_a
     return contract.at(contract_address, default_account)
 
 
-def get_or_clone(owner, argobytes_factory, target_contract, salt=""):
+def get_or_clone(owner, argobytes_factory, target_contract, salt=None):
     """Fetches an existing clone or creates a new clone."""
+    if not salt:
+        salt = ""
+
     (clone_address, clone_exists) = argobytes_factory.checkClone19.call(target_contract, salt, owner)
 
     if not clone_exists:
@@ -91,6 +94,8 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
     my_proxys_proxies = []
 
     for salt in salts:
+        salt = salt or ""
+
         (proxy_exists, proxy_address) = argobytes_factory.clone19Exists(deployed_contract, salt, owner)
 
         my_proxys_proxies.append(proxy_address)
@@ -312,7 +317,7 @@ def check_for_proxy(contract, block, force=False):
 
     if impl_addr == ZERO_ADDRESS:
         # maybe its "org.zepplinos.proxy.implementation"
-        impl_addr = web3.eth.getStorageAt(
+        impl_addr = web3.eth.get_storage_at(
             contract.address,
             "0x7050c9e0f4ca769c69bd3a8ef740bc37934f8e2c036e5a723fd8ee048ed3f8c3",
             block,
@@ -324,7 +329,7 @@ def check_for_proxy(contract, block, force=False):
 
     if impl_addr == ZERO_ADDRESS:
         # or maybe its https://eips.ethereum.org/EIPS/eip-1967 Unstructured Storage Proxies
-        impl_addr = web3.eth.getStorageAt(
+        impl_addr = web3.eth.get_storage_at(
             contract.address,
             "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
             block,
@@ -336,7 +341,7 @@ def check_for_proxy(contract, block, force=False):
 
     if impl_addr == ZERO_ADDRESS:
         # or maybe they are using EIP-1967 beacon address
-        beacon_addr = web3.eth.getStorageAt(
+        beacon_addr = web3.eth.get_storage_at(
             contract.address,
             "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50",
             block,
@@ -356,7 +361,7 @@ def check_for_proxy(contract, block, force=False):
 
     if impl_addr == ZERO_ADDRESS and contract._name == "Proxy":
         # TODO: this might catch more than we want! lots of contracts use storage slot 0!
-        impl_addr = web3.eth.getStorageAt(contract.address, 0, block)
+        impl_addr = web3.eth.get_storage_at(contract.address, 0, block)
         try:
             impl_addr = decode_single("address", impl_addr)
         except Exception:

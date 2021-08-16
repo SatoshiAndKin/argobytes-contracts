@@ -1,14 +1,25 @@
 # TODO: make a class that does atomic transactions via the flash loaner smart contract
 from brownie import accounts, chain, network, web3
 from brownie._config import CONFIG
+from brownie.network.main import gas_limit
 
 from argobytes.contracts import get_or_clone_flash_borrower, load_contract, get_or_create, ArgobytesBrownieProject
 from argobytes.tokens import load_token
 
 
+# TODO: option to borrow from owner instead of Aave
 class ArgobytesFlashManager():
 
-    def __init__(self, owner, asset_amounts, required_contracts=None, host_private="https://api.edennetwork.io/v1/rpc"):
+    def __init__(
+        self,
+        owner,
+        asset_amounts,
+        borrower_salt=None,
+        clone_salt=None,
+        factory_salt=None,
+        required_contracts=None,
+        host_private="https://api.edennetwork.io/v1/rpc",
+    ):
         active_network = CONFIG.active_network
 
         assert active_network["id"].endswith("-fork")
@@ -21,6 +32,9 @@ class ArgobytesFlashManager():
         self.host_private = host_private
         self.owner = owner
         self.asset_amounts = asset_amounts
+        self.borrower_salt = borrower_salt
+        self.clone_salt = clone_salt
+        self.factory_salt = factory_salt
         self.required_contracts = required_contracts or []
 
         self.aave_provider_registry = load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413")
@@ -34,17 +48,19 @@ class ArgobytesFlashManager():
         self.ignore_txids = []
 
     def setup(self):
-        print("Setup")
         self.factory, self.flash_borrower, self.clone = get_or_clone_flash_borrower(
             self.owner,
-            [self.aave_provider_registry],
+            constructor_args=[self.aave_provider_registry],
+            borrower_salt=self.borrower_salt,
+            clone_salt=self.clone_salt,
+            factory_salt=self.factory_salt,
         )
 
+        # make sure the clone's Aave lending pool address is up-to-date
         if self.clone.tx:
             tx = self.clone.updateLendingPools()
             tx.info()
         else:
-            # TODO: check this
             try:
                 # TODO: does this raise or return false?
                 if not self.clone.lending_pools(self.aave_lender):
@@ -53,18 +69,6 @@ class ArgobytesFlashManager():
                 tx = self.clone.updateLendingPools()
                 tx.info()
                 # TODO: remove old pools?
-
-        # deploy required contracts
-        for required_contract in self.required_contracts:
-            if required_contract.tx:
-                # tx is set, so the contract was deployed by this instance of brownie
-                tx = self.owner.transfer(
-                    to=required_contract.tx.receiver,
-                    data=required_contract.tx.input,
-                )
-                tx.info()
-        
-        print("Setup complete")
 
     def __enter__(self):
         assert not self.pending, "cannot nest flash loans"
@@ -141,6 +145,7 @@ class ArgobytesFlashManager():
         )
 
     def send_for_real(self):
+        print("Sending the transaction for real!")
         assert self.flash_tx, "no pending transaction"
 
         # save history
@@ -148,7 +153,22 @@ class ArgobytesFlashManager():
 
         # do some initial setup on public mainnet
         web3.provider.endpoint_uri = self.host_main
+
+        # deploy required contracts
         self.setup()
+        for required_contract in self.required_contracts:
+            if required_contract.tx:
+                print(f"Deploying {required_contract._name} to {required_contract.address}...")
+                # TODO: this seems wrong. only do this if 
+                # tx is set, so the contract was deployed by this instance of brownie
+                # TODO: required_confs = 0
+                tx = self.owner.transfer(
+                    to=required_contract.tx.receiver,
+                    data=required_contract.tx.input,
+                    gas_limit=required_contract.tx.gas_limit,
+                    allow_revert=False,
+                )
+                tx.info()
 
         if self.host_private:
             # if set, send the atomic transaction from the private relay
@@ -159,6 +179,8 @@ class ArgobytesFlashManager():
         tx = self.owner.transfer(
             to=self.flash_tx.receiver,
             data=self.flash_tx.input,
+            gas_limit=self.flash_tx.gas_limit,
+            allow_revert=False,
         )
         tx.info()
 
