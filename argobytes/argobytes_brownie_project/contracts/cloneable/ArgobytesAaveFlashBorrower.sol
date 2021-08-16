@@ -59,6 +59,9 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
         data = abi.encode(actions);
     }
 
+    event DebugHello();
+    event DebugCall(address target);
+
     /// @dev This function is called by the lender after your contract has received the flash loaned amount
     function executeOperation(
         address[] calldata assets,
@@ -67,17 +70,25 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
         address initiator,
         bytes calldata params
     ) external returns (bool) {
+        emit DebugHello();
+
         // make sure Aave is calling us
         if (!lending_pools[msg.sender]) {
             revert BadLender(msg.sender);
         }
 
+        emit DebugHello();
+
         address owner = owner();
 
         {
+            emit DebugHello();
+
             // scope to avoid stack too deep errors
             // decode data for multicall
             Action[] memory actions = abi.decode(params, (Action[]));
+
+            emit DebugHello();
 
             // do things with the tokens
             // the actions **must** send enough token back here to pay the flash loan
@@ -86,6 +97,8 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
             Action memory action;
             for (uint256 i = 0; i < num_actions; i++) {
                 action = actions[i];
+
+                emit DebugCall(action.target);
 
                 // auth individual actions
                 // a common pattern is delegate calling a known safe contract that doesn't call arbitrary actions
