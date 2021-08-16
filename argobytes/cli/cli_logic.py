@@ -74,14 +74,15 @@ def cli(
             if network in ["mainnet", "mainnet-fork"]:
                 # TODO: write my own strategy
                 # TODO: use EIP1559
-                gas_strategy = GasNowScalingStrategy(
-                    initial_speed=gas_speed,
-                    max_speed=gas_max_speed,
-                    increment=gas_increment,
-                    block_duration=gas_block_duration,
-                )
-                gas_price(gas_strategy)
-                logger.info(f"Default gas strategy: {gas_strategy}")
+                # gas_strategy = GasNowScalingStrategy(
+                #     initial_speed=gas_speed,
+                #     max_speed=gas_max_speed,
+                #     increment=gas_increment,
+                #     block_duration=gas_block_duration,
+                # )
+                # gas_price(gas_strategy)
+                # logger.info(f"Default gas strategy: {gas_strategy}")
+                logger.info(f"Using default brownie gas calculations")
             elif network in ["bsc-main", "bsc-main-fork"]:
                 gas_strategy = "5010000000"  # 5.01 gwei
                 gas_price(gas_strategy)

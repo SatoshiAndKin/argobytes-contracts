@@ -107,7 +107,7 @@ class ArgobytesFlashManager:
             if tx.txid in self.ignore_txids:
                 continue
 
-            tx.info()
+            # TODO: log this action
 
             # TODO: figure out delegate calls and address replacement
             action = (tx.receiver, 1, tx.input)
