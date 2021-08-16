@@ -138,6 +138,7 @@ class ArgobytesFlashManager:
         self.flash_tx = self.aave_lender.flashLoan(
             self.clone, assets, amounts, modes, self.clone, flash_params, 0, {"from": self.owner}
         )
+        self.flash_tx.info()
 
     def send_for_real(self):
         print("Sending the transaction for real!")
