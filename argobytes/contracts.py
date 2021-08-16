@@ -196,6 +196,7 @@ def get_or_create_proxy(default_account, salt=None, leading_zeros=1):
 
 def get_or_create_flash_borrower(default_account, constructor_args=None, salt=None, leading_zeros=1):
     assert constructor_args, "need address of AaveProviderRegistry"
+    assert leading_zeros, 'need >=1 leading zero'
     return get_or_create(
         default_account,
         ArgobytesBrownieProject.ArgobytesAaveFlashBorrower,
@@ -474,8 +475,11 @@ def mk_contract_address2(sender: str, initcode: str, leading_zeros: int = 0, sal
 
     initcode_hash = hash_initcode(initcode)
 
-    if salt is None:
-        salt = find_create2_salt(sender_bytes, initcode_hash, leading_zeros=leading_zeros)
+    if not salt:
+        if not leading_zeros:
+            salt = to_bytes32(text="")
+        else:
+            salt = find_create2_salt(sender_bytes, initcode_hash, leading_zeros=leading_zeros)
     elif isinstance(salt, bytes):
         pass
     elif salt.startswith("0x"):

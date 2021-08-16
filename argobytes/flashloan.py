@@ -69,6 +69,8 @@ class ArgobytesFlashManager:
                 # TODO: remove old pools?
 
     def __enter__(self):
+        print("Starting dry run!")
+
         assert not self.pending, "cannot nest flash loans"
         self.pending = True
 
@@ -91,6 +93,8 @@ class ArgobytesFlashManager:
         self.ignore_txids.append(tx.txid)
 
     def __exit__(self, exc_type, value, traceback):
+        print("Dry run complete!")
+
         if exc_type != None:
             # we got an exception
             return False
