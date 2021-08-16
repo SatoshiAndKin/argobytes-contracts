@@ -6,9 +6,6 @@ pragma abicoder v2;
 import {AddressLib, CallReverted, InvalidTarget} from "contracts/library/AddressLib.sol";
 import {IERC20, SafeERC20} from "contracts/external/erc20/SafeERC20.sol";
 
-import {IERC3156FlashBorrower} from "contracts/external/erc3156/IERC3156FlashBorrower.sol";
-import {IERC3156FlashLender} from "contracts/external/erc3156/IERC3156FlashLender.sol";
-
 import {ArgobytesProxy} from "./ArgobytesProxy.sol";
 
 error BadLender(address);
