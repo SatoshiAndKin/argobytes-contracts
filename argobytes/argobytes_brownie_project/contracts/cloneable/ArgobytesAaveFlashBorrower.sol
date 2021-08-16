@@ -22,7 +22,6 @@ interface IAaveLendingPoolAddressesProvider {
 }
 
 /// @title Target for Aave's LendingPool.flashLoan
-/// @dev DO NOT approve this contract to take your tokens!
 contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
     using SafeERC20 for IERC20;
 
@@ -92,6 +91,7 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
 
                 // auth individual actions
                 // a common pattern is delegate calling a known safe contract that doesn't call arbitrary actions
+                // do NOT do things like authorizing calls to token transfers!
                 if (initiator_not_owner) {
                     requireAuth(initiator, action.target, action.call_type, bytes4(action.data));
                 }
