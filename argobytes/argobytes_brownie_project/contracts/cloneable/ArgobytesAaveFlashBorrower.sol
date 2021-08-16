@@ -51,7 +51,7 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
         emit RemoveLendingPool(lending_pool);
     }
 
-    // TODO: this is not the right action. we might want dellegate calls
+    // TODO: do the encoding offchain
     function encodeFlashParams(Action[] calldata actions) external view returns (bytes memory data) {
         data = abi.encode(actions);
     }
