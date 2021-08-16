@@ -1,4 +1,3 @@
-import pytest
 from brownie import accounts
 
 from argobytes.contracts import ArgobytesBrownieProject, get_or_create
@@ -6,7 +5,6 @@ from argobytes.flashloan import ArgobytesFlashManager
 from argobytes.tokens import load_token
 
 
-@pytest.mark.require_network("mainnet-fork")
 def test_aave_flash_loan():
     account = accounts[0]
 
