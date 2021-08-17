@@ -84,8 +84,6 @@ contract ArgobytesAaveFlashBorrower is ArgobytesProxy {
             for (uint256 i = 0; i < num_actions; i++) {
                 action = actions[i];
 
-                emit DebugCall(action.target);
-
                 // auth individual actions
                 // a common pattern is delegate calling a known safe contract that doesn't call arbitrary actions
                 // do NOT do things like authorizing calls to token transfers!

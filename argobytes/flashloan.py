@@ -1,6 +1,7 @@
 # TODO: make a class that does atomic transactions via the flash loaner smart contract
-from brownie import chain, network, web3
+from brownie import chain, network, rpc, web3
 from brownie._config import CONFIG
+from brownie.network import history
 
 from argobytes.contracts import get_or_clone_flash_borrower, load_contract
 
@@ -14,7 +15,7 @@ class ArgobytesFlashManager:
         borrower_salt=None,
         clone_salt=None,
         factory_salt=None,
-        required_contracts=None,
+        setup_transactions=None,
         host_private="https://api.edennetwork.io/v1/rpc",
     ):
         active_network = CONFIG.active_network
@@ -32,7 +33,7 @@ class ArgobytesFlashManager:
         self.borrower_salt = borrower_salt
         self.clone_salt = clone_salt
         self.factory_salt = factory_salt
-        self.required_contracts = required_contracts or []
+        self.setup_transactions = setup_transactions or []
 
         self.aave_provider_registry = load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413")
 
@@ -41,8 +42,62 @@ class ArgobytesFlashManager:
         self.aave_lender = load_contract(self.aave_provider.getLendingPool(), self.owner)
 
         self.pending = False
-        self.factory = self.flash_borrower = self.clone = None
+        self.factory = self.flash_borrower = self.clone = self.flash_tx = None
         self.ignore_txids = []
+
+    def reset_network_fork(self):
+        self.set_network_fork()
+        rpc.kill()
+        network.connect()
+
+    def set_network_private(self):
+        history.clear()
+        web3.provider.endpoint_uri = self.host_private
+
+    def set_network_fork(self):
+        history.clear()
+        web3.provider.endpoint_uri = self.host_fork
+
+    def set_network_main(self):
+        history.clear()
+        web3.provider.endpoint_uri = self.host_main
+
+    def safe_run(self, action_func, prompt_confirmation=True):
+        """Do a dry run, prompt, send the transaction for real."""
+        # TODO: this could be a nice flow. think about this some more and then make it part of the class that arb_eth and arb_crv use
+
+        self.set_network_fork()  # just in case
+
+        # deploy contracts and run any other setup transactions on the forked network
+        setup_did_something = self.setup()
+
+        # do the thing that we want to be atomic.
+        # the __exit__ funcion compiles everything and sets self.flash_tx
+        with self:
+            action_func()
+        
+        if prompt_confirmation:
+            # TODO: print expected gas costs
+            click.confirm("Are you sure you want to spend ETH?", abort=True)
+
+        self.set_network_main()
+
+        # deploy the contracts for real
+        if setup_did_something:
+            self.setup()
+
+            # several blocks may have passed waiting for contract deployment confirmtions. reset the forked node
+            self.reset_network_fork()
+
+            # rebuild the atomic transaction
+            with self:
+                action_func()
+        
+            # prepare to send the transaction for real
+            self.set_network_main()
+
+        raise NotImplementedError("send for real")
+        # self.send_for_real()
 
     def setup(self):
         self.factory, self.flash_borrower, self.clone = get_or_clone_flash_borrower(
@@ -68,14 +123,31 @@ class ArgobytesFlashManager:
                 tx.info()
                 # TODO: remove old pools?
 
+        # run any extra setup transactions
+        for setup_tx in self.setup_transactions:
+            if not setup_tx:
+                continue
+
+            # TODO: this seems wrong. only do this if
+            # tx is set, so the contract was deployed by this instance of brownie
+            # TODO: required_confs = 0
+            tx = self.owner.transfer(
+                to=required_contract.tx.receiver,
+                data=required_contract.tx.input,
+                gas_limit=required_contract.tx.gas_limit,
+                allow_revert=False,
+            )
+            # TODO: get the actual Contract for this so brownie's info is better?
+            # TODO: run all these in parallel
+            tx.info()
+
     def __enter__(self):
         print("Starting dry run!")
 
         assert not self.pending, "cannot nest flash loans"
         self.pending = True
 
-        # deploy atomic helpers
-        # TODO: we will need to deploy these
+        # deploy necessary contract and any other setup transactions
         self.setup()
 
         # save history
@@ -84,7 +156,7 @@ class ArgobytesFlashManager:
         # snapshot here. so we can revert to before any non-atomic transactions are sent
         chain.snapshot()
 
-        # clear history. everything in history at exit will be rolled into
+        # clear history. everything in history at exit will be rolled into a single transaction
         network.history.clear()
 
         return self
@@ -93,35 +165,38 @@ class ArgobytesFlashManager:
         self.ignore_txids.append(tx.txid)
 
     def __exit__(self, exc_type, value, traceback):
-        print("Dry run complete!")
+        print("Multiple transaction dry run complete!")
 
         if exc_type != None:
             # we got an exception
             return False
 
-        self.pending = False
+        self._atomic_transaction_from_history()
 
-        # TODO: build atomic transaction out of history
+        self.pending = False
+        self.ignore_txids.clear()
+
+    def _atomic_transaction_from_history(self):
+        # send atomic transaction (on forked network)
+        assert web3.provider.endpoint_uri == self.host_fork, "oh no!"
+
+        # build atomic transaction out of history
+        print("Compiling atomic transcation...")
         flash_actions = []
         for tx in network.history:
             if tx.txid in self.ignore_txids:
                 continue
 
-            # TODO: log this action
+            # TODO: logging
 
-            # TODO: figure out delegate calls and address replacement
+            # TODO: figure out delegate calls (code 0 instead of 1) and address replacement
             action = (tx.receiver, 1, tx.input)
 
             flash_actions.append(action)
 
-        self.ignore_txids.clear()
-
         # reset history
         chain.revert()
         network.history = self.old_history
-
-        # send atomic transaction (on forked network)
-        assert web3.provider.endpoint_uri == self.host_fork, "oh no!"
 
         # TODO: do this without a web3 call?
         flash_params = self.flash_borrower.encodeFlashParams(flash_actions)
@@ -134,7 +209,6 @@ class ArgobytesFlashManager:
             amounts.append(amount)
             modes.append(0)
 
-        # TODO: how does on_behalf work?
         self.flash_tx = self.aave_lender.flashLoan(
             self.clone, assets, amounts, modes, self.clone, flash_params, 0, {"from": self.owner}
         )
@@ -150,21 +224,7 @@ class ArgobytesFlashManager:
         # do some initial setup on public mainnet
         web3.provider.endpoint_uri = self.host_main
 
-        # deploy required contracts
-        self.setup()
-        for required_contract in self.required_contracts:
-            if required_contract.tx:
-                print(f"Deploying {required_contract._name} to {required_contract.address}...")
-                # TODO: this seems wrong. only do this if
-                # tx is set, so the contract was deployed by this instance of brownie
-                # TODO: required_confs = 0
-                tx = self.owner.transfer(
-                    to=required_contract.tx.receiver,
-                    data=required_contract.tx.input,
-                    gas_limit=required_contract.tx.gas_limit,
-                    allow_revert=False,
-                )
-                tx.info()
+        # TODO: do something to make sure setup was already run?
 
         if self.host_private:
             # if set, send the atomic transaction from the private relay
