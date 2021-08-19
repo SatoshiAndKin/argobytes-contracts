@@ -157,6 +157,7 @@ class ArgobytesFlashManager:
             with self:
                 self.the_transactions()
 
+            # TODO: pass starting balances to this
             self.additional_safety_checks()
 
             # prepare to send the transaction for real
