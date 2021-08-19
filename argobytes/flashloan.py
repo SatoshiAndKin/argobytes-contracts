@@ -3,6 +3,7 @@ import click
 import eth_abi
 from brownie import chain, history, network, rpc, web3
 from brownie._config import CONFIG
+from eth_utils.address import is_address
 from hexbytes import HexBytes
 
 from argobytes.contracts import ArgobytesBrownieProject, get_or_clone_flash_borrower, load_contract
@@ -26,6 +27,7 @@ class ArgobytesFlashManager:
         factory_salt=None,
         host_private="https://api.edennetwork.io/v1/rpc",
         setup_transactions=None,
+        delegate_callable=None,
     ):
         active_network = CONFIG.active_network
 
@@ -57,19 +59,7 @@ class ArgobytesFlashManager:
         self.pending = False
         self.factory = self.flash_borrower = self.clone = self.flash_tx = None
         self.ignore_txids = []
-
-        delegate_callable = [
-            ArgobytesBrownieProject.CurveFiAction,
-            ArgobytesBrownieProject.KyberAction,
-            ArgobytesBrownieProject.UniswapV1Action,
-            ArgobytesBrownieProject.UniswapV2Action,
-            ArgobytesBrownieProject.Weth9Action,
-            ArgobytesBrownieProject.EnterCYY3CRVAction,
-            ArgobytesBrownieProject.ExitCYY3CRVAction,
-            ArgobytesBrownieProject.EnterUnit3CRVAction,
-            # TODO: ExitUnit3CRVAction
-            # TODO: Enter/ExitAaveTetherShortAction
-        ]
+        self.delegate_callable = [getattr(dc, "address") for dc in delegate_callable]
 
     def __enter__(self):
         """Context manager that captures transactions for bundling."""
@@ -126,6 +116,10 @@ class ArgobytesFlashManager:
         """If you do a transaction during __init__ that you do not want replayed on mainnet, ignore it."""
         self.ignore_txids.append(tx.txid)
 
+    def is_delegate_callable(self, contract):
+        address = contract.getattr("address", contract)
+        return address in self.delegate_callable
+
     def reset_network_fork(self):
         """Kill ganache and start a new one."""
         # TODO: this doesn't work well if we started ganache seperately
@@ -156,6 +150,7 @@ class ArgobytesFlashManager:
 
         # on a forked network, do the transcations that we want to be atomic.
         # the __exit__ funcion compiles everything and sets self.flash_tx
+        # TODO: try several different paths and use the best one
         with self:
             self.the_transactions()
 
@@ -235,7 +230,7 @@ class ArgobytesFlashManager:
         print("Network mode private is disabled!")
         self.set_network_main()
 
-    def setup(self, required_confs=0) -> int:
+    def setup(self) -> int:
         start_history_len = len(history)
 
         # TODO: pass required_confs to these
@@ -263,18 +258,22 @@ class ArgobytesFlashManager:
                 # TODO: remove old pools?
 
         # run any extra setup transactions
-        for setup_tx in self.setup_transactions:
-            if not setup_tx:
+        for tx in self.setup_transactions:
+            if not tx:
+                continue
+
+            if tx.txid in self.ignore_txids:
                 continue
 
             # TODO: get the actual Contract for this so brownie's info is better?
             # TODO: if we set gas_limit and allow_revert=False, how does it check for revert?
+            # TODO: are we suure required_confs=0 is always going to be okay?
             self.owner.transfer(
-                to=setup_tx.receiver,
-                data=setup_tx.input,
-                gas_limit=setup_tx.gas_limit,
+                to=tx.receiver,
+                data=tx.input,
+                gas_limit=tx.gas_limit,
                 allow_revert=False,
-                required_confs=required_confs,
+                required_confs=0,
             )
 
         history.wait()
@@ -296,9 +295,34 @@ class ArgobytesFlashManager:
 
             # TODO: logging
 
-            # TODO: figure out delegate calls (code 0 instead of 1) and address replacement
-            # TODO: pass ETH if tx.value
-            action = (tx.receiver, 1, HexBytes(tx.input))
+            contract = load_contract(tx.receiver)
+
+            signature, input_args = contract.decode_input(tx.input)
+
+            if signature == "transfer(address,uint256)" and self.is_delegate_callable(input_args[0]):
+                # skip transfers to an action if we are going to delegate call the action
+                continue
+
+            # replace any addresses of delegate callable contracts with self.clone
+            # TODO: do this more efficiently
+            new_input_args = []
+            for i in input_args:
+                if is_address(i) and self.is_delegate_callable(i):
+                    new_input_args.append(self.clone)
+                else:
+                    new_input_args.append(i)
+
+            method = contract.get_method_object(tx.input)
+            new_input = HexBytes(method.encode_input(*new_input_args))
+
+            send_balance = bool(tx.value)
+
+            if self.is_delegate_callable(contract):
+                # 0 == delegatecall
+                action = (tx.receiver, 0, send_balance, new_input)
+            else:
+                # 1 == call
+                action = (tx.receiver, 1, send_balance, new_input)
 
             actions.append(action)
 

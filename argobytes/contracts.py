@@ -60,7 +60,7 @@ class EthContract:
 
 
 def get_deterministic_contract(default_account, contract, salt="", constructor_args=None):
-    """Use eip-2470 to create a contract with deterministic addresses."""
+    """Use eip-2470 to load a contract with a deterministic address."""
     if constructor_args is None:
         constructor_args = []
 
@@ -71,7 +71,12 @@ def get_deterministic_contract(default_account, contract, salt="", constructor_a
     if web3.eth.get_code(contract_address).hex() == "0x":
         raise ValueError(f"Contract {contract.name} not deployed!")
 
-    return contract.at(contract_address, default_account)
+    c = contract.at(contract_address, default_account)
+
+    # cache the contracts
+    _contract_cache[(contract_address, None)] = c
+
+    return c
 
 
 def get_or_clone(owner, argobytes_factory, target_contract, salt=None):
@@ -87,7 +92,12 @@ def get_or_clone(owner, argobytes_factory, target_contract, salt=None):
 
         deploy_tx.info()
 
-    return Contract.from_abi(target_contract._name, clone_address, target_contract.abi, owner)
+    c = Contract.from_abi(target_contract._name, clone_address, target_contract.abi, owner)
+
+    # cache the contracts
+    _contract_cache[(clone_address, None)] = c
+
+    return c
 
 
 def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
@@ -125,7 +135,13 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
         # we already calculated the address above. just use that
         # my_proxys_proxies.extend([event['clone'] for event in sybil_tx.events["NewClone"]])
 
-    _contract = lambda address: Contract.from_abi(deployed_contract._name, address, deployed_contract.abi, owner)
+    def _contract(address):
+        c = Contract.from_abi(deployed_contract._name, address, deployed_contract.abi, owner)
+
+        # cache the contracts
+        _contract_cache[(address, None)] = c
+
+        return c
 
     return [_contract(address) for address in my_proxys_proxies]
 
@@ -148,7 +164,6 @@ def get_or_clone_flash_borrower(
     return (factory, flash_borrower, clone)
 
 
-# TODO: rename to get_or_deterministic_create?
 def get_or_create(
     default_account, contract, no_create=False, salt=None, constructor_args=None, leading_zeros=0
 ) -> Contract:
@@ -180,7 +195,12 @@ def get_or_create(
     else:
         print(f"Found {contract._name} at {contract_address}\n")
 
-    return contract.at(contract_address, default_account)
+    c = contract.at(contract_address, default_account)
+
+    # cache the contracts
+    _contract_cache[(contract_address, None)] = c
+
+    return c
 
 
 def get_or_create_factory(default_account, salt=None, leading_zeros=0):
