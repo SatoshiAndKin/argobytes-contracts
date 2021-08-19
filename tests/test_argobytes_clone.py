@@ -8,7 +8,7 @@ def test_argobytes_arbitrage_access_control(argobytes_proxy_clone, example_actio
         example_action,
         1,  # 1=Call
         False,  # do not forward ETH
-        example_action.sweep.encode_input(ZERO_ADDRESS, ZERO_ADDRESS, 0),
+        example_action.noop.encode_input(),
     )
 
     assert argobytes_proxy_clone.owner() == accounts[0]
@@ -17,7 +17,7 @@ def test_argobytes_arbitrage_access_control(argobytes_proxy_clone, example_actio
     argobytes_proxy_clone.execute(action, {"from": accounts[0]})
 
     # check that accounts[1] is NOT allowed
-    # TODO: this used to revert with "ArgobytesProxy: 403" but we don't bother checking authority before calling anymore to save gas
+    # TODO: get brownie to understand typed errors in solidity 0.8
     with brownie.reverts(""):
         argobytes_proxy_clone.execute(action, {"from": accounts[1]})
 

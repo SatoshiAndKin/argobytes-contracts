@@ -16,30 +16,51 @@ contract Weth9Action {
         weth = _weth;
     }
 
-    function wrap_all_to(address to) external payable {
+    function unwrapAll(address payable to) external {
         // leave 1 wei behind for gas savings on future calls
-        uint256 balance = address(this).balance - 1;
+        uint256 amount = weth.balanceOf(address(this)) - 1;
 
-        // require(balance > 0, "Weth9Action:wrap_all_to: no balance");
+        // require(balance > 0, "Weth9Action:unwrapAllTo: no amount");
+
+        // convert all WETH into ETH
+        weth.withdraw(amount);
+    }
+
+    function unwrapAllTo(address payable to) external {
+        // leave 1 wei behind for gas savings on future calls
+        uint256 amount = weth.balanceOf(address(this)) - 1;
+
+        // require(amount > 0, "Weth9Action:unwrapAllTo: no amount");
+
+        // convert all WETH into ETH
+        weth.withdraw(amount);
+
+        // send ETH to the next contract
+        Address.sendValue(to, amount);
+    }
+
+    /// @dev you must delegatecall this
+    function wrapAll() external payable {
+        // leave 1 wei behind for gas savings on future calls
+        uint256 amount = address(this).balance - 1;
+
+        // require(balance > 0, "Weth9Action:wrapAllTo: no balance");
 
         // convert all ETH into WETH
-        weth.deposit{value: balance}();
+        weth.deposit{value: amount}();
+    }
+
+    function wrapAllTo(address to) external payable {
+        // leave 1 wei behind for gas savings on future calls
+        uint256 amount = address(this).balance - 1;
+
+        // require(balance > 0, "Weth9Action:wrapAllTo: no balance");
+
+        // convert all ETH into WETH
+        weth.deposit{value: amount}();
 
         // send WETH to the next contract
         // we know _WETH9 returns a bool, so no need to use safeTransfer
-        require(weth.transfer(to, balance), "Weth9Action.wrap_all_to: transfer failed");
-    }
-
-    function unwrap_all_to(address payable to) external {
-        // leave 1 wei behind for gas savings on future calls
-        uint256 balance = weth.balanceOf(address(this)) - 1;
-
-        // require(balance > 0, "Weth9Action:unwrap_all_to: no balance");
-
-        // convert all WETH into ETH
-        weth.withdraw(balance);
-
-        // send ETH to the next contract
-        Address.sendValue(to, balance);
+        require(weth.transfer(to, amount), "Weth9Action.wrapAllTo: transfer failed");
     }
 }

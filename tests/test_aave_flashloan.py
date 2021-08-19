@@ -6,6 +6,7 @@ from argobytes.tokens import load_token
 
 
 def test_aave_flash_loan():
+    # TODO: rewrite this to 
     account = accounts[0]
 
     crv = load_token("crv", owner=account)
@@ -29,7 +30,7 @@ def test_aave_flash_loan():
     flash_manager = ArgobytesFlashManager(
         accounts[0],
         {crv: trading_crv},
-        required_contracts=[example_action],
+        setup_transactions=[example_action],
     )
 
     with flash_manager:

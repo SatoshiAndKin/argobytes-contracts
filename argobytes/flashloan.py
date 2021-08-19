@@ -299,10 +299,6 @@ class ArgobytesFlashManager:
 
             signature, input_args = contract.decode_input(tx.input)
 
-            if signature == "transfer(address,uint256)" and self.is_delegate_callable(input_args[0]):
-                # skip transfers to an action if we are going to delegate call the action
-                continue
-
             # replace any addresses of delegate callable contracts with self.clone
             # TODO: do this more efficiently
             new_input_args = []
@@ -312,7 +308,41 @@ class ArgobytesFlashManager:
                 else:
                     new_input_args.append(i)
 
+            # TODO: do this in a more general way. hard coding special cases is really fragile
+            # if we are going to transfer from ourselves TO ourselves, so we can just skip it
+            if signature == "transfer(address,uint256)" and new_input_args[0] == self.clone:
+                # an action like this is usually part of setup that is only needed on a forked network
+                continue
+
+            # TODO: is this the right way to cover transferFrom? need tests!
+            if signature == "transferFrom(address,address,uint256)" and new_input_args[0] == new_input_args[1]:
+                # TODO: i'm not actually sure we will ever do this
+                # an action like this is usually part of setup that is only needed on a forked network
+                continue
+
             method = contract.get_method_object(tx.input)
+
+            # sometimes instead of skipping, we want to modify the functions
+            # TODO: is this the right way to cover transferFrom? need tests!
+            if signature == "transferFrom(address,address,uint256)" and new_input_args[0] == self.clone:
+                # TODO: i'm not actually sure we will ever do this
+                signature = "transfer(address,uint256)"
+                new_input_args = (new_input_args[1], new_input_args[2])
+                method = getattr(contract, "transfer")
+
+            # TODO: is this the right way to handle the WethAction? need tests!
+            if self.is_delegate_callable(contract) and signature == "unwrapAllTo(address)" and new_input_args[0] == self.clone:
+                # if we are going to delegate call WethAction.unwrapAllTo to ourselves, unwrapAll instead
+                signature = "unwrapAll()"
+                new_input_args = ()
+                method = getattr(contract, "unwrapAll")
+
+            if self.is_delegate_callable(contract) and signature == "wrapAllTo(address)" and new_input_args[0] == self.clone:
+                # if we are going to delegate call WethAction.wrapAllTo to ourselves, wrapAll instead
+                signature = "wrapAll()"
+                new_input_args = ()
+                method = getattr(contract, "wrapAll")
+
             new_input = HexBytes(method.encode_input(*new_input_args))
 
             send_balance = bool(tx.value)

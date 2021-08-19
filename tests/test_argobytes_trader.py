@@ -43,6 +43,7 @@ def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action,
         # sweep WETH
         (
             example_action,
+            False,
             example_action.sweep.encode_input(accounts[0], weth9_erc20, 0),
         ),
     ]
