@@ -45,7 +45,9 @@ def main():
     # TODO: count the zero bytes?
 
     proxy_factory_address, proxy_factory_salt = mk_contract_address2(
-        LiquidGasTokenAddress, proxy_factory_initcode, salt=proxy_factory_salt,
+        LiquidGasTokenAddress,
+        proxy_factory_initcode,
+        salt=proxy_factory_salt,
     )
 
     print("Calculated ArgobytesFactory address:", proxy_factory_address, "\n")

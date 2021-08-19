@@ -30,6 +30,7 @@ contract CurveFiAction is AbstractERC20Exchange {
         // require(exchange.coins(i) == src_token, "bad i token");
         // require(exchange.coins(j) == dest_token, "bad j token");
 
+        // TODO: efficient way to do infinite approvals?
         src_token.approve(address(exchange), src_amount);
 
         // do the trade

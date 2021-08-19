@@ -2,8 +2,8 @@
 set -eux
 
 isort .
-black --line-length 120 argobytes setup.py tests 
+black --line-length 120 argobytes bin setup.py tests
 
-cd argobytes/argobytes_brownie_project
-
-yarn run prettier
+# TODO: fix this
+# cd argobytes/argobytes_brownie_project
+# yarn run prettier
