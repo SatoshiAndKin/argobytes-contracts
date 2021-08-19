@@ -5,12 +5,17 @@ from brownie import chain, history, network, rpc, web3
 from brownie._config import CONFIG
 from hexbytes import HexBytes
 
-from argobytes.contracts import get_or_clone_flash_borrower, load_contract
+from argobytes.contracts import ArgobytesBrownieProject, get_or_clone_flash_borrower, load_contract
 
 
-# TODO: rename to ArgobytesAtomicTransaction and have it be smart about flash loans or borrowing from owner
 class ArgobytesFlashManager:
-    """Extend this, do setup in __init__, override `the_transactions`, ``,"""
+    """
+    Safely send flash loans.
+
+    Extend this, do setup in __init__, and override `the_transactions` function to do whatever you want
+
+    # TODO: rename to ArgobytesAtomicTransaction and have it be smart about flash loans or borrowing from owner
+    """
 
     def __init__(
         self,
@@ -53,24 +58,36 @@ class ArgobytesFlashManager:
         self.factory = self.flash_borrower = self.clone = self.flash_tx = None
         self.ignore_txids = []
 
+        delegate_callable = [
+            ArgobytesBrownieProject.CurveFiAction,
+            ArgobytesBrownieProject.KyberAction,
+            ArgobytesBrownieProject.UniswapV1Action,
+            ArgobytesBrownieProject.UniswapV2Action,
+            ArgobytesBrownieProject.Weth9Action,
+            ArgobytesBrownieProject.EnterCYY3CRVAction,
+            ArgobytesBrownieProject.ExitCYY3CRVAction,
+            ArgobytesBrownieProject.EnterUnit3CRVAction,
+            # TODO: ExitUnit3CRVAction
+            # TODO: Enter/ExitAaveTetherShortAction
+        ]
+
     def __enter__(self):
+        """Context manager that captures transactions for bundling."""
         print("Starting multi-transacation dry run!")
 
         assert not self.pending, "cannot nest flash loans"
         self.pending = True
 
-        # save history
-        self.old_history = network.history.copy()
+        # save the index that we start at
+        self.old_history = len(history)
 
         # snapshot here. so we can revert to before any non-atomic transactions are sent
         chain.snapshot()
 
-        # clear history. everything in history at exit will be rolled into a single transaction
-        network.history.clear()
-
         return self
 
     def __exit__(self, exc_type, value, traceback):
+        """Context manager that captures transactions for bundling."""
         print("Multiple transaction dry run complete!")
 
         if exc_type != None:
@@ -83,6 +100,7 @@ class ArgobytesFlashManager:
         self.ignore_txids.clear()
 
     def backup_history(self):
+        # TODO: test this!
         if web3.provider.endpoint_uri == self.host_fork:
             if self.backup_history_fork:
                 history = self.backup_history_fork.copy()
@@ -109,12 +127,15 @@ class ArgobytesFlashManager:
         self.ignore_txids.append(tx.txid)
 
     def reset_network_fork(self):
+        """Kill ganache and start a new one."""
         # TODO: this doesn't work well if we started ganache seperately
         self.set_network_fork()
+        # TODO: hide scary error messages
         rpc.kill()
         network.connect()
 
     def restore_history(self):
+        # TODO: test this. do we even need it? is it fine to just clear history whenever we switch?
         if web3.provider.endpoint_uri == self.host_fork:
             self.backup_history_fork = history.clone()
         elif web3.provider.endpoint_uri == self.host_main:
@@ -141,6 +162,7 @@ class ArgobytesFlashManager:
         if prompt_confirmation:
             # TODO: print expected gas costs
             # TODO: safety check on gas costs
+            # TODO: different chains have different token names.
             click.confirm("Are you sure you want to spend ETH?", abort=True)
 
         self.set_network_main()
@@ -157,8 +179,7 @@ class ArgobytesFlashManager:
             with self:
                 self.the_transactions()
 
-            # TODO: pass starting balances to this
-            self.additional_safety_checks()
+            # self.safety_checks()  #TODO: figure out how to capture starting balances in a generic way
 
             # prepare to send the transaction for real
             self.set_network_main()
@@ -166,11 +187,10 @@ class ArgobytesFlashManager:
         raise NotImplementedError("send for real")
         # self._send_for_real()
 
-    def safety_checks(self, receiver):
-        # TODO: proper abstract base class
-        pass
-
     def set_network_fork(self):
+        if self.pending:
+            raise RuntimeError
+
         if web3.provider.endpoint_uri == self.host_fork:
             return
 
@@ -182,6 +202,9 @@ class ArgobytesFlashManager:
         self.restore_history()
 
     def set_network_main(self):
+        if self.pending:
+            raise RuntimeError
+
         if web3.provider.endpoint_uri == self.host_fork:
             return
 
@@ -193,6 +216,9 @@ class ArgobytesFlashManager:
         self.restore_history()
 
     def set_network_private(self):
+        if self.pending:
+            raise RuntimeError
+
         if self.host_private:
             if web3.provider.endpoint_uri == self.host_private:
                 return
