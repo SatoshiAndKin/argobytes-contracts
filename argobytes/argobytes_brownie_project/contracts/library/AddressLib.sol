@@ -83,4 +83,18 @@ library AddressLib {
             revert CallReverted(target, data, returndata);
         }
     }
+
+    /// @dev call a function and discard the returndata
+    function functionCallWithBalance(address target, bytes memory data) internal returns (bytes memory returndata) {
+        if (!isContract(target)) {
+            revert InvalidTarget(target);
+        }
+
+        bool success;
+        (success, returndata) = target.call{value: address(this).balance}(data);
+
+        if (!success) {
+            revert CallReverted(target, data, returndata);
+        }
+    }
 }

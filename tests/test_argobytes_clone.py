@@ -7,6 +7,7 @@ def test_argobytes_arbitrage_access_control(argobytes_proxy_clone, example_actio
     action = (
         example_action,
         1,  # 1=Call
+        False,  # do not forward ETH
         example_action.sweep.encode_input(ZERO_ADDRESS, ZERO_ADDRESS, 0),
     )
 
@@ -34,6 +35,7 @@ def test_simple_execute(argobytes_proxy_clone, example_action):
     action = (
         example_action,
         1,  # 1=Call
+        False,  # do no forward ETH balance
         example_action.noop.encode_input(),
     )
 

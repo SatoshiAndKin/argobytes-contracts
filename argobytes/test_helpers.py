@@ -257,7 +257,7 @@ def usdc_erc20(brownie_mainnet_fork):
 
 
 @pytest.fixture()
-def weth9_action(Weth9Action):
+def weth9_action(Weth9Action, weth9_erc20):
     return get_or_create(accounts[0], Weth9Action, constructor_args=[weth9_erc20])
 
 

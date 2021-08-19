@@ -7,8 +7,16 @@ def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action,
     # get some WETH for accounts[1]
     weth9_erc20.deposit({"value": 2 * value, "from": accounts[1]})
 
+    assert weth9_erc20.balanceOf(accounts[0]) == 0
+    assert weth9_erc20.balanceOf(accounts[1]) == 2 * value
+    assert weth9_erc20.balanceOf(example_action) == 0
+
     # send some WETH to accounts[0]
     weth9_erc20.transfer(accounts[0], value, {"from": accounts[1]})
+
+    assert weth9_erc20.balanceOf(accounts[0]) == value
+    assert weth9_erc20.balanceOf(accounts[1]) == value
+    assert weth9_erc20.balanceOf(example_action) == 0
 
     # allow the proxy to use account[0]'s WETH
     weth9_erc20.approve(argobytes_trader, value, {"from": accounts[0]})
@@ -16,8 +24,8 @@ def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action,
     # send some ETH to the action to simulate arbitrage profits
     weth9_erc20.transfer(example_action, value, {"from": accounts[1]})
 
-    # make sure balances match what we expect
     assert weth9_erc20.balanceOf(accounts[0]) == value
+    assert weth9_erc20.balanceOf(accounts[1]) == 0
     assert weth9_erc20.balanceOf(example_action) == value
 
     borrows = [
@@ -30,6 +38,7 @@ def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action,
     ]
 
     # NOTE! Multicall actions do not have CallType! That is just our proxy actions! maybe need different names?
+    # TODO: Multicall actions do not pass ETH. they probably should
     actions = [
         # sweep WETH
         (

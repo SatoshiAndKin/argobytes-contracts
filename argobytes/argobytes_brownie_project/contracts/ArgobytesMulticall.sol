@@ -18,6 +18,7 @@ import {AddressLib} from "contracts/library/AddressLib.sol";
 contract ArgobytesMulticall {
     struct Action {
         address target;
+        bool send_balance;
         bytes data;
     }
 
@@ -26,7 +27,11 @@ contract ArgobytesMulticall {
     function callActions(Action[] memory actions) external {
         // an action can do whatever it wants (liquidate, swap, refinance, etc.)
         for (uint256 i = 0; i < actions.length; i++) {
-            AddressLib.functionCall(actions[i].target, actions[i].data);
+            if (actions[i].send_balance) {
+                AddressLib.functionCallWithBalance(actions[i].target, actions[i].data);
+            } else {
+                AddressLib.functionCall(actions[i].target, actions[i].data);
+            }
         }
     }
 }
