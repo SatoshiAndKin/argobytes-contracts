@@ -131,6 +131,7 @@ def atomic_enter(account, min_3crv_to_claim):
         ArgobytesAction(
             enter_cyy3crv_action,
             ArgobytesActionCallType.DELEGATE,
+            False,
             "enter",
             enter_data,
         ).tuple,

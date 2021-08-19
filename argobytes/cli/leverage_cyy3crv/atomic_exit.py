@@ -132,6 +132,7 @@ def atomic_exit(account, tip_eth, tip_3crv):
             exit_cyy3crv_action,
             ArgobytesActionCallType.DELEGATE,
             False,
+            False,
             "exit",
             *exit_data,
         ).tuple,

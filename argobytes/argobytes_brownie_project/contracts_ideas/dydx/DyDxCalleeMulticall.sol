@@ -1,5 +1,5 @@
 /* Like https://github.com/makerdao/multicall, but compatible with DyDx calls */
-// i thought about adding a helper function to transfer out stuck funds, but callFunction already looks generic enough
+// TODO: i think we can delete this
 
 pragma solidity 0.8.5;
 
@@ -33,6 +33,7 @@ contract DyDxCalleeMulticall is DyDx_IDyDxCallee {
         Call[] memory calls = abi.decode(data, (Call[]));
 
         for (uint256 i = 0; i < calls.length; i++) {
+            // TODO: allow passing ETH?
             (bool success, bytes memory ret) = calls[i].target.call(
                 calls[i].callData
             );

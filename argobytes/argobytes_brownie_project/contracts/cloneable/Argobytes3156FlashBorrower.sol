@@ -138,6 +138,8 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, IERC3156FlashBorrower {
         bytes memory action_returned;
         if (s.pending_action.call_type == CallType.DELEGATE) {
             (success, action_returned) = action.target.delegatecall(action.data);
+        } else if (action.send_balance) {
+            (success, action_returned) = action.target.call{value: address(this).balance}(action.data);
         } else {
             (success, action_returned) = action.target.call(action.data);
         }

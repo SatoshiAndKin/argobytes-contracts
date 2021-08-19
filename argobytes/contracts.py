@@ -35,12 +35,13 @@ class ArgobytesAction:
         self,
         contract,
         call_type: ArgobytesActionCallType,
+        send_balance: bool,
         function_name: str,
         *function_args,
     ):
         data = getattr(contract, function_name).encode_input(*function_args)
 
-        self.tuple = ActionTuple(contract.address, call_type, data)
+        self.tuple = ActionTuple(contract.address, call_type, send_balance, data)
 
 
 class EthContract:

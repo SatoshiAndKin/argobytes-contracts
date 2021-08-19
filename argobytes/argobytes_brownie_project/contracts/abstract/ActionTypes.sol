@@ -12,6 +12,7 @@ contract ActionTypes {
     struct Action {
         address target;
         CallType call_type;
+        bool send_balance;
         bytes data;
     }
 }

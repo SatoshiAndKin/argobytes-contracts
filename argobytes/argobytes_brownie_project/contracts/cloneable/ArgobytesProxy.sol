@@ -32,8 +32,9 @@ contract ArgobytesProxy is ArgobytesAuth {
 
         if (action.call_type == CallType.DELEGATE) {
             (success, action_returned) = action.target.delegatecall(action.data);
+        } else if (action.send_balance) {
+            (success, action_returned) = action.target.call{value: address(this).balance}(action.data);
         } else {
-            // TODO: option to send ETH value?
             (success, action_returned) = action.target.call(action.data);
         }
 
