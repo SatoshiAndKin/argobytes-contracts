@@ -23,6 +23,7 @@ contract ArgobytesFlashBorrower is ArgobytesProxy, IERC3156FlashBorrower {
     event Lender(address indexed sender, address indexed lender, bool allowed);
 
     /// @dev diamond storage
+    // TODO: don't use diamond storage here. that will only be needed if we need some sort of state-dependent upgrade contract
     struct FlashBorrowerStorage {
         mapping(IERC3156FlashLender => bool) allowed_lenders;
         bool pending_flashloan_callback;

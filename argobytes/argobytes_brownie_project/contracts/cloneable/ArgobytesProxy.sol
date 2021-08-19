@@ -8,6 +8,10 @@ import {ArgobytesAuth} from "contracts/abstract/ArgobytesAuth.sol";
 /// @title simple contract for use with a delegatecall proxy
 /// @dev contains a very powerful "execute" function! The owner is in full control!
 contract ArgobytesProxy is ArgobytesAuth {
+
+    // this function must be able to receive ether if it is expected to trade it
+    receive() external payable {}
+
     /**
      * @notice Call or delegatecall a function on another contract
      * @notice WARNING! This is essentially a backdoor that allows for anything to happen. Without fancy auth isn't DeFi; this is a personal wallet
