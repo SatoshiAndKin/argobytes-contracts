@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+import pytest
 from brownie import accounts
 
 from argobytes.cli.leverage_cyy3crv import atomic_enter, atomic_exit

@@ -23,7 +23,11 @@ class ExampleFlashManager(ArgobytesFlashManager):
         # if ExampleAction is already deployed, setup_transactions will be empty
         setup_transactions = history[start_history_index:]
 
+        # Use delegatecall to reduce the amount of transfers.
+        # You must be certain that contract does not use any state though!
+        # All Argobytes Actions in contracts/actions/exchanges/*.sol are specifically designed to be delegate_callable
         delegate_callable = [
+            # example_action_a is holding are simulated arb profits and so should NOT be delegate called!
             self.example_action_b,
         ]
 
@@ -61,7 +65,7 @@ def test_aave_flash_loan(monkeypatch):
 
     print("preparing simulated arbitrage profit...")
     # because this arb is on the exmaple action, we MUST NOT delegate call this action
-    weth.deposit({"value": sim_arb_profit})
+    weth.deposit({"value": sim_arb_profit, "from": owner})
     weth.transfer(example_action_a, sim_arb_profit).info()
 
     # we don't want to test _mainnet_send here
