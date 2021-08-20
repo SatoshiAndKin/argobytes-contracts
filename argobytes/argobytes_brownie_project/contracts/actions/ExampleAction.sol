@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.8.5;
+pragma solidity 0.8.7;
 
 import {IERC20, UniversalERC20} from "contracts/library/UniversalERC20.sol";
 
@@ -39,6 +39,7 @@ contract ExampleAction {
         return true;
     }
 
+    // TODO: make this work for paying flash bots (if we eve want to)
     function payMiner(uint256 amount) public payable {
         revert("WIP");
     }
@@ -48,13 +49,13 @@ contract ExampleAction {
         IERC20 token,
         uint256 extra_gas
     ) public payable {
-        // leave 1 wei behind for gasa savings
-        uint256 balance = token.universalBalanceOf(address(this)) - 1;
+        // leave 1 wei behind for gas savings
+        uint256 balance = token.universalBalanceOf(address(this));
 
-        require(balance > 0, "nothing to sweep");
+        require(balance > 1, "nothing to sweep");
 
         if (to != address(this)) {
-            token.universalTransfer(to, balance);
+            token.universalTransfer(to, balance - 1);
         }
 
         burnGas(extra_gas);

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 // Deploy contracts using CREATE2.
-pragma solidity 0.8.5;
+pragma solidity 0.8.7;
 
 import {AddressLib, Create2Failed} from "contracts/library/AddressLib.sol";
 

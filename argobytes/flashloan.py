@@ -1,12 +1,12 @@
-# TODO: make a class that does atomic transactions via the flash loaner smart contract
+import contextlib
+from pprint import pformat
+
 import click
-import eth_abi
-from brownie import chain, history, network, rpc, web3
+from brownie import accounts, chain, network, rpc, web3
 from brownie._config import CONFIG
 from eth_utils.address import is_address
-from hexbytes import HexBytes
 
-from argobytes.contracts import ArgobytesBrownieProject, get_or_clone_flash_borrower, load_contract
+from argobytes.contracts import get_or_clone_flash_borrower, load_contract
 
 
 class ArgobytesFlashManager:
@@ -14,52 +14,65 @@ class ArgobytesFlashManager:
     Safely send flash loans.
 
     Extend this, do setup in __init__, and override `the_transactions` function to do whatever you want
-
-    # TODO: rename to ArgobytesAtomicTransaction and have it be smart about flash loans or borrowing from owner
     """
 
     def __init__(
         self,
         owner,
-        asset_amounts,
+        aave_market_id=0,
+        assets=None,
         borrower_salt=None,
         clone_salt=None,
+        delegate_callable=None,
         factory_salt=None,
         host_private="https://api.edennetwork.io/v1/rpc",
+        sender=None,
         setup_transactions=None,
-        delegate_callable=None,
     ):
         active_network = CONFIG.active_network
 
-        assert active_network["id"].endswith("-fork")
+        assert active_network["id"].endswith("-fork"), "must be on a forked network"
 
         forked_host = active_network["cmd_settings"]["fork"]
         assert forked_host.startswith("http"), "only http supported for now"
 
+        self.owner = owner
         self.host_fork = web3.provider.endpoint_uri
         self.host_main = forked_host
         self.host_private = host_private
-        self.owner = owner
-        self.asset_amounts = asset_amounts
         self.borrower_salt = borrower_salt
         self.clone_salt = clone_salt
         self.factory_salt = factory_salt
         self.setup_transactions = setup_transactions or []
 
-        self.backup_history_fork = None
-        self.backup_history_main = None
-        self.backup_history_private = None
+        if not sender:
+            self.sender = owner
+        else:
+            self.sender = sender
+            raise NotImplementedError("make sure auth is setup for this sender")
 
         self.aave_provider_registry = load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413")
 
         # #0 is main Aave V2 market. #1 is Aave AMM market
-        self.aave_provider = load_contract(self.aave_provider_registry.getAddressesProvidersList()[0])
-        self.aave_lender = load_contract(self.aave_provider.getLendingPool(), self.owner)
+        self.aave_provider = load_contract(self.aave_provider_registry.getAddressesProvidersList()[aave_market_id])
+        self.aave_lender = load_contract(self.aave_provider.getLendingPool())
 
         self.pending = False
         self.factory = self.flash_borrower = self.clone = self.flash_tx = None
-        self.ignore_txids = []
-        self.delegate_callable = [getattr(dc, "address") for dc in delegate_callable]
+        self.delegate_callable = [getattr(dc, "address", dc) for dc in delegate_callable or []]
+        self.ignored = []
+
+        # TODO: are all the aave funds in one contract, or spread around, or what? how should we pick the right address
+        # TODO: what if we want to have the lender be owner?
+        self.lenders = {}
+        for asset in assets or []:
+            reserve_data = self.aave_lender.getReserveData(asset)
+
+            # unlock the reserve that we are going to be flash loaning from
+            # if this doesn't have enough tokens, nothing will
+            # TODO: right now this always borrows from Aave
+            # TODO: If enough funds are in on the owner (or other accounts that have approved the clone), we should use those instead
+            self.lenders[asset] = accounts.at(reserve_data[7], force=True)
 
     def __enter__(self):
         """Context manager that captures transactions for bundling."""
@@ -68,8 +81,9 @@ class ArgobytesFlashManager:
         assert not self.pending, "cannot nest flash loans"
         self.pending = True
 
-        # save the index that we start at
-        self.old_history = len(history)
+        # ignore any transactions in the history before this
+        # this could be more efficient, but this works for now
+        self.ignored = list(range(0, len(network.history)))
 
         # snapshot here. so we can revert to before any non-atomic transactions are sent
         chain.snapshot()
@@ -80,69 +94,49 @@ class ArgobytesFlashManager:
         """Context manager that captures transactions for bundling."""
         print("Multiple transaction dry run complete!")
 
-        if exc_type != None:
+        if exc_type is not None:
             # we got an exception
             return False
 
-        self._flashloan_from_history()
+        # TODO: automatically decide between flashloan from Aave, from owner, from other accounts
+        # TODO: if we don't even need a flash loan at all, what should we do? should that be a different class?
+        self.flash_tx = self._flashloan_from_history()
+
+        # TODO: do some balance checks here?
+        # TODO: if the balances weren't right, it would have reverted, so i think its actually fine.
+        # TODO: but it just feels safest to check anyways
 
         self.pending = False
-        self.ignore_txids.clear()
 
-    def backup_history(self):
-        # TODO: test this!
-        if web3.provider.endpoint_uri == self.host_fork:
-            if self.backup_history_fork:
-                history = self.backup_history_fork.copy()
-            else:
-                history.clear()
-            self.backup_history_fork = None
-        elif web3.provider.endpoint_uri == self.host_main:
-            if self.backup_history_main:
-                history = self.backup_history_main.copy()
-            else:
-                history.clear()
-            self.backup_history_main = None
-        elif web3.provider.endpoint_uri == self.host_private:
-            if self.backup_history_private:
-                history = self.backup_history_private.copy()
-            else:
-                history.clear()
-            self.backup_history_private = None
-        else:
-            raise ValueError
+    @contextlib.contextmanager
+    def ignore_transactions(self):
+        # TODO: do we still need this?
+        start_history_length = len(network.history)
 
-    def ignore_tx(self, tx):
-        """If you do a transaction during __init__ that you do not want replayed on mainnet, ignore it."""
-        self.ignore_txids.append(tx.txid)
+        yield
+
+        for i in range(start_history_length, len(network.history)):
+            self.ignored.append(i)
 
     def is_delegate_callable(self, contract):
-        address = contract.getattr("address", contract)
+        address = getattr(contract, "address", contract)
         return address in self.delegate_callable
 
     def reset_network_fork(self):
         """Kill ganache and start a new one."""
+        # TODO: is there some way to list all the unlocked accounts?
         # TODO: this doesn't work well if we started ganache seperately
         self.set_network_fork()
         # TODO: hide scary error messages
         rpc.kill()
         network.connect()
+        
+        # unlock the accounts again
+        for lender in self.lenders:
+            accounts.at(lender, force=True)
 
-    def restore_history(self):
-        # TODO: test this. do we even need it? is it fine to just clear history whenever we switch?
-        if web3.provider.endpoint_uri == self.host_fork:
-            self.backup_history_fork = history.clone()
-        elif web3.provider.endpoint_uri == self.host_main:
-            self.backup_history_main = history.clone()
-        elif web3.provider.endpoint_uri == self.host_private:
-            self.backup_history_private = history.clone()
-        else:
-            raise ValueError
-
-    def safe_run(self, prompt_confirmation=True):
-        """Do a dry run, prompt, send the transaction for real."""
-        # TODO: this could be a nice flow. think about this some more and then make it part of the class that arb_eth and arb_crv use
-
+    def careful_send(self, prompt_confirmation=True):
+        """Do a dry run, prompt, send the transaction for real."""    
         assert web3.provider.endpoint_uri == self.host_fork  # just in case
 
         # deploy contracts and run any other setup transactions on the forked network
@@ -179,8 +173,7 @@ class ArgobytesFlashManager:
             # prepare to send the transaction for real
             self.set_network_main()
 
-        raise NotImplementedError("send for real")
-        # self._send_for_real()
+        self._send_for_real()
 
     def set_network_fork(self):
         if self.pending:
@@ -189,12 +182,11 @@ class ArgobytesFlashManager:
         if web3.provider.endpoint_uri == self.host_fork:
             return
 
-        self.backup_history()
-
         print("Setting network mode:", click.style("fork", fg="green"))
         web3.provider.endpoint_uri = self.host_fork
 
-        self.restore_history()
+        # TODO: i'm no sure about this clear
+        network.history.clear()
 
     def set_network_main(self):
         if self.pending:
@@ -203,35 +195,45 @@ class ArgobytesFlashManager:
         if web3.provider.endpoint_uri == self.host_fork:
             return
 
-        self.backup_history()
-
         print("Setting network mode:", click.style("main", fg="red"))
         web3.provider.endpoint_uri = self.host_main
 
-        self.restore_history()
+        network.history.clear()
 
     def set_network_private(self):
         if self.pending:
             raise RuntimeError
 
-        if self.host_private:
-            if web3.provider.endpoint_uri == self.host_private:
-                return
+        if not self.host_private:
+            print("Network mode private is disabled!")
+            return self.set_network_main()
 
-            self.backup_history()
-
-            print("Setting network mode:", click.style("private", fg="yellow"))
-            web3.provider.endpoint_uri = self.host_private
-
-            self.restore_history()
-
+        if web3.provider.endpoint_uri == self.host_private:
             return
 
-        print("Network mode private is disabled!")
-        self.set_network_main()
+        print("Setting network mode:", click.style("private", fg="yellow"))
+        web3.provider.endpoint_uri = self.host_private
+
+        network.history.clear()
 
     def setup(self) -> int:
-        start_history_len = len(history)
+        start_history_len = len(network.history)
+
+        # run any extra setup transactions
+        for tx in self.setup_transactions:
+            if not tx:
+                continue
+
+            # TODO: get the actual Contract for this so brownie's info is better?
+            # TODO: if we set gas_limit and allow_revert=False, how does it check for revert?
+            # TODO: are we suure required_confs=0 is always going to be okay?
+            self.sender.transfer(
+                to=tx.receiver,
+                data=tx.input,
+                gas_limit=tx.gas_limit,
+                allow_revert=False,
+                required_confs=0,
+            )
 
         # TODO: pass required_confs to these
         self.factory, self.flash_borrower, self.clone = get_or_clone_flash_borrower(
@@ -244,41 +246,21 @@ class ArgobytesFlashManager:
 
         # make sure the clone's Aave lending pool address is up-to-date
         # TODO: why are the froms required?
+        # TODO: send from sender if they have permissions
         if self.clone.tx:
-            tx = self.clone.updateLendingPools({"from": self.owner})
-            tx.info()
+            tx = self.clone.updateAaveLendingPools({"from": self.owner}).info()
         else:
             try:
                 # TODO: does this raise or return false?
                 if not self.clone.lending_pools(self.aave_lender):
                     raise ValueError
             except ValueError:
-                tx = self.clone.updateLendingPools({"from": self.owner})
-                tx.info()
+                self.clone.updateAaveLendingPools({"from": self.owner}).info()
                 # TODO: remove old pools?
 
-        # run any extra setup transactions
-        for tx in self.setup_transactions:
-            if not tx:
-                continue
+        network.history.wait()
 
-            if tx.txid in self.ignore_txids:
-                continue
-
-            # TODO: get the actual Contract for this so brownie's info is better?
-            # TODO: if we set gas_limit and allow_revert=False, how does it check for revert?
-            # TODO: are we suure required_confs=0 is always going to be okay?
-            self.owner.transfer(
-                to=tx.receiver,
-                data=tx.input,
-                gas_limit=tx.gas_limit,
-                allow_revert=False,
-                required_confs=0,
-            )
-
-        history.wait()
-
-        return len(history) - start_history_len
+        return len(network.history) - start_history_len
 
     def the_transactions(self):
         """Send a bunch of transactions to be bundled into a flash loan."""
@@ -288,12 +270,15 @@ class ArgobytesFlashManager:
         assert web3.provider.endpoint_uri == self.host_fork, "oh no!"
 
         # pull actions out of history
+        asset_amounts = {}
         actions = []
-        for tx in network.history:
-            if tx.txid in self.ignore_txids:
+        for i, tx in enumerate(network.history):
+            if i in self.ignored:
+                print(f"skipped tx: {tx.txid}")
                 continue
-
-            # TODO: logging
+            else:
+                print(f"processing...")
+                tx.info()
 
             contract = load_contract(tx.receiver)
 
@@ -311,7 +296,13 @@ class ArgobytesFlashManager:
             # TODO: do this in a more general way. hard coding special cases is really fragile
             # if we are going to transfer from ourselves TO ourselves, so we can just skip it
             if signature == "transfer(address,uint256)" and new_input_args[0] == self.clone:
-                # an action like this is usually part of setup that is only needed on a forked network
+                # on the forked network, this is transferred from an unlocked account
+                # on the live network, this is transferred from the flash lender and so we skip this action
+                assert contract not in asset_amounts, f"asset {contract} already added!"
+
+                print(f"funding flash loan with {input_args[1]} {contract}")
+
+                asset_amounts[contract] = input_args[1]
                 continue
 
             # TODO: is this the right way to cover transferFrom? need tests!
@@ -343,7 +334,7 @@ class ArgobytesFlashManager:
                 new_input_args = ()
                 method = getattr(contract, "wrapAll")
 
-            new_input = HexBytes(method.encode_input(*new_input_args))
+            new_input = method.encode_input(*new_input_args)
 
             send_balance = bool(tx.value)
 
@@ -357,43 +348,70 @@ class ArgobytesFlashManager:
             actions.append(action)
 
         # reset history to before we sent the transactions that were bundled into flash_actions
+        # TODO: revert until we hit the block height that we expect?
         chain.revert()
-        network.history = self.old_history
 
-        return actions
+        # TODO: if no asset amounts, do this without a flash loan?
+        assert asset_amounts, "no asset amounts!"
+
+        return actions, asset_amounts
 
     def _flashloan_from_history(self):
         """send atomic transaction (on forked network)"""
-        flash_actions = self._actions_from_history()
+        flash_actions, asset_amounts = self._actions_from_history()
 
         flash_params = self.flash_borrower.encodeFlashParams(flash_actions)
         # TODO: encode an array of structs without a web3 call
         # flash_params_2 = eth_abi.encode_abi(['(address,uint8,bytes)[]'], [flash_actions])
 
+        assert len(flash_actions) == 1, "DEBUGGING!"
+
         # build parameters for flash loan
+        lenders = []
         assets = []
         amounts = []
         modes = []
-        for asset, amount in self.asset_amounts.items():
+        for asset, amount in asset_amounts.items():
+            lenders.append(self.lenders[asset])
             assets.append(asset)
             amounts.append(amount)
+            # TODO: allow taking on debt?
             modes.append(0)
 
-        print("Sending dry run of atomic transaction...")
-        self.flash_tx = self.aave_lender.flashLoan(
-            self.clone, assets, amounts, modes, self.clone, flash_params, 0, {"from": self.owner}
+        print("clone:  ", self.clone)
+        print("lenders:", pformat(lenders))
+        print("assets: ", pformat(assets))
+        print("amounts:", pformat(amounts))
+        print("modes:  ", pformat(modes))
+        print("actions:", pformat(flash_actions))
+
+        # TODO: wth is going on here?
+        assert self.token.balanceOf(self.example_action) > 0, "nothing to sweep here either"
+
+        print("Sending dry run of Aave flash loan transaction...")
+        # TODO: we don't necessarily want to send from the owner. we might have an approved bot account
+        # TODO: if any of the lenders are aave, use an aave flash loan. otherwise call self.clone.flashloanForOwner(...)
+        flash_tx = self.aave_lender.flashLoan(
+            self.clone, assets, amounts, modes, self.clone, flash_params, 0, {"from": self.sender}
         )
-        self.flash_tx.info()
+
+        # TODO: info for reverted trasactions was crashing ganachhe
+        if (flash_tx.status == 1):
+            flash_tx.info()
+            flash_tx.call_trace()
+
+        return flash_tx
 
     def _send_for_real(self):
         print("Sending the transaction for real!")
         assert self.flash_tx, "no pending transaction"
 
+        """
         self.set_network_private()
 
         # send the transaction to be confirmed on the real chain
         # TODO: use the same gas estimate?
-        tx = self.owner.transfer(
+        tx = self.sender.transfer(
             to=self.flash_tx.receiver,
             data=self.flash_tx.input,
             gas_limit=self.flash_tx.gas_limit,
@@ -405,3 +423,6 @@ class ArgobytesFlashManager:
         self.reset_network_fork()
 
         return tx
+        """
+
+        raise NotImplementedError("send for real")

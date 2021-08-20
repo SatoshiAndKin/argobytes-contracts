@@ -2,7 +2,7 @@
 // don't call this contract directly! use a proxy like DSProxy or ArgobytesProxy!
 // TODO: use a generic flash loan contract instead of hard coding dydx?
 // TODO: consistent revert strings
-pragma solidity 0.8.5;
+pragma solidity 0.8.7;
 pragma abicoder v2;
 
 import {IERC20} from "contracts/external/erc20/IERC20.sol";

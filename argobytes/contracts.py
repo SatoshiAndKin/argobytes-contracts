@@ -220,7 +220,7 @@ def get_or_create_flash_borrower(default_account, constructor_args=None, salt=No
     assert leading_zeros, "need >=1 leading zero"
     return get_or_create(
         default_account,
-        ArgobytesBrownieProject.ArgobytesAaveFlashBorrower,
+        ArgobytesBrownieProject.ArogbytesFlashBorrower,
         constructor_args=constructor_args,
         salt=salt,
         leading_zeros=leading_zeros,

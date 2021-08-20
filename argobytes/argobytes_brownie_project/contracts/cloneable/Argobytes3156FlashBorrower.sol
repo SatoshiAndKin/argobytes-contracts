@@ -3,7 +3,7 @@
 /**
  * ArgobytesFlashBorrower is an extension to ArgobytesProxy that is also an IERC3156 Flash Loan Borrower.
  */
-pragma solidity 0.8.5;
+pragma solidity 0.8.7;
 
 import {AddressLib, CallReverted, InvalidTarget} from "contracts/library/AddressLib.sol";
 import {IERC20} from "contracts/external/erc20/IERC20.sol";
@@ -19,7 +19,7 @@ error NoPendingLoan();
 error UnexpectedLender();
 error InvalidInitiator();
 
-contract ArgobytesFlashBorrower is ArgobytesProxy, IERC3156FlashBorrower {
+contract Argobytes3156FlashBorrower is ArgobytesProxy, IERC3156FlashBorrower {
     event Lender(address indexed sender, address indexed lender, bool allowed);
 
     /// @dev diamond storage

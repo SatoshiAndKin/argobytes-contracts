@@ -11,7 +11,7 @@
     limitations under the License.
 */
 
-pragma solidity 0.8.5;
+pragma solidity 0.8.7;
 
 import {DyDx_Types} from "./DyDx_Types.sol";
 

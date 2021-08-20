@@ -1,6 +1,9 @@
+import pytest
+
 from brownie import accounts
 
 
+@pytest.mark.skip(reason="these contracts are being refactored to use ArgobytesFlashBorrower")
 def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action, weth9_erc20):
     value = 1e18
 
@@ -50,13 +53,13 @@ def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action,
 
     arbitrage_tx = argobytes_trader.atomicArbitrage(accounts[0], borrows, argobytes_multicall, actions)
 
-    assert weth9_erc20.balanceOf(example_action) == 0
+    assert weth9_erc20.balanceOf(example_action) == 1
     assert weth9_erc20.balanceOf(argobytes_trader) == 0
     assert weth9_erc20.balanceOf(argobytes_multicall) == 0
-    assert weth9_erc20.balanceOf(accounts[0]) == 2 * value
+    assert weth9_erc20.balanceOf(accounts[0]) == 2 * value - 1
 
     # make sure the transaction succeeded
-    # there should be a revert above if status == 0, but something is wrong
+    # there should be a revert above if status == 0, but something is wrong (ganache had a bug once that got us here)
     assert arbitrage_tx.status == 1
 
     # TODO: check logs for profits

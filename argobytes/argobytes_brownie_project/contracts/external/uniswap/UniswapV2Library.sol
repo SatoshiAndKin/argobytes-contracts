@@ -1,4 +1,5 @@
-pragma solidity =0.8.5;
+// SPDX-License-Identifier: You can't license an interface
+pragma solidity =0.8.7;
 
 import "./IUniswapV2Pair.sol";
 

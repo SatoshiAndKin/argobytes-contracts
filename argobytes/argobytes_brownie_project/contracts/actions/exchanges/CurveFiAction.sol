@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.8.5;
+pragma solidity 0.8.7;
 
 import {IERC20, SafeERC20} from "contracts/external/erc20/SafeERC20.sol";
 import {ICurvePool} from "contracts/external/curvefi/ICurvePool.sol";

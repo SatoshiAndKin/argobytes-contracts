@@ -64,6 +64,7 @@ def test_uniswap_arbitrage(
         (
             argobytes_trader,
             0,  # 0 = delegatecall, 1 = call, 2 = admin
+            False,  # do not forward ETH
             argobytes_trader.atomicArbitrage.encode_input(
                 accounts[0],
                 borrows,

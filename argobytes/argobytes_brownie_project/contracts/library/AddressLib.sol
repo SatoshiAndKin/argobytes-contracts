@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
-pragma solidity 0.8.5;
+pragma solidity 0.8.7;
 
 error CallReverted(address target, bytes data, bytes errordata);
 error Create2Failed(bytes32 salt);

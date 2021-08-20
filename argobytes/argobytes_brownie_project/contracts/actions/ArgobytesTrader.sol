@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 // TODO: rethink this
-pragma solidity 0.8.5;
+pragma solidity 0.8.7;
 
 import {ArgobytesAuth} from "contracts/abstract/ArgobytesAuth.sol";
 import {IERC20, SafeERC20} from "contracts/external/erc20/SafeERC20.sol";

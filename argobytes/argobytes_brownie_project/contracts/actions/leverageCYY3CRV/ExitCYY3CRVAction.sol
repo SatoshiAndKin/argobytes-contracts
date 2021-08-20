@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // TODO: rewrite this to be a target for ArgobytesFlashBorrower
 // TODO: consistent revert strings
-pragma solidity 0.8.5;
+pragma solidity 0.8.7;
 pragma abicoder v2;
 
 import {ArgobytesTips} from "contracts/ArgobytesTips.sol";
