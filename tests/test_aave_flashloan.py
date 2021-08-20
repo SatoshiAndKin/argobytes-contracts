@@ -45,7 +45,7 @@ def example_aave_flash_loan(owner):
         borrowed_assets={weth: trade_size},
         delegate_callable=delegate_callable,
         history_start_index=history_start_index,
-        # TODO: a real flash loan should probably prompt confirmation
+        # a real flash loan should probably prompt confirmation
         prompt_confirmation=False,
     )
 

@@ -257,7 +257,7 @@ class TransactionBundler:
 
             # TODO: get the actual Contract for this so brownie's info is better?
             # TODO: if we set gas_limit and allow_revert=False, how does it check for revert?
-            # TODO: are we suure required_confs=0 is always going to be okay?
+            # TODO: are we sure required_confs=0 is always going to be okay?
             self.sender.transfer(
                 to=tx.receiver,
                 data=tx.input,
