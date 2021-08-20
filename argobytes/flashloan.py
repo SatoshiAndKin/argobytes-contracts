@@ -20,7 +20,7 @@ class ArgobytesFlashManager:
         self,
         owner,
         aave_market_id=0,
-        assets=None,
+        borrowed_assets=None,
         borrower_salt=None,
         clone_salt=None,
         delegate_callable=None,
@@ -65,7 +65,7 @@ class ArgobytesFlashManager:
         # TODO: are all the aave funds in one contract, or spread around, or what? how should we pick the right address
         # TODO: what if we want to have the lender be owner?
         self.lenders = {}
-        for asset in assets or []:
+        for asset in borrowed_assets or []:
             reserve_data = self.aave_lender.getReserveData(asset)
 
             # unlock the reserve that we are going to be flash loaning from
@@ -381,8 +381,6 @@ class ArgobytesFlashManager:
         # TODO: encode an array of structs without a web3 call
         # flash_params_2 = eth_abi.encode_abi(['(address,uint8,bytes)[]'], [flash_actions])
 
-        assert len(flash_actions) == 1, "DEBUGGING!"
-
         # build parameters for flash loan
         lenders = []
         assets = []
@@ -402,11 +400,7 @@ class ArgobytesFlashManager:
         print("modes:  ", pformat(modes))
         print("actions:", pformat(flash_actions))
 
-        # TODO: wth is going on here?
-        assert self.token.balanceOf(self.example_action) > 0, "nothing to sweep here either"
-
         print("Sending dry run of Aave flash loan transaction...")
-        # TODO: we don't necessarily want to send from the owner. we might have an approved bot account
         # TODO: if any of the lenders are aave, use an aave flash loan. otherwise call self.clone.flashloanForOwner(...)
         flash_tx = self.aave_lender.flashLoan(
             self.clone, assets, amounts, modes, self.clone, flash_params, 0, {"from": self.sender}
@@ -423,7 +417,6 @@ class ArgobytesFlashManager:
         print("Sending the transaction for real!")
         assert self.flash_tx, "no pending transaction"
 
-        """
         self.set_network_private()
 
         # send the transaction to be confirmed on the real chain
@@ -440,6 +433,3 @@ class ArgobytesFlashManager:
         self.reset_network_fork()
 
         return tx
-        """
-
-        raise NotImplementedError("send for real")

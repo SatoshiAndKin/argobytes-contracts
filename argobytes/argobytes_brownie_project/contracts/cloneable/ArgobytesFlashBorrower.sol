@@ -165,7 +165,6 @@ contract ArogbytesFlashBorrower is ArgobytesProxy {
                 bytes memory action_returned;
 
                 if (action.call_type == CallType.DELEGATE) {
-                    revert("wip");
                     (success, action_returned) = action.target.delegatecall(action.data);
                 } else if (action.send_balance) {
                     (success, action_returned) = action.target.call{value: address(this).balance}(action.data);

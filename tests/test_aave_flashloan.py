@@ -15,22 +15,29 @@ class ExampleFlashManager(ArgobytesFlashManager):
         start_history_index = len(history)
 
         # deploy action contracts
-        self.example_action = get_or_create(owner, ArgobytesBrownieProject.ExampleAction)
+        self.example_action_a = get_or_create(owner, ArgobytesBrownieProject.ExampleAction)
+        self.example_action_b = get_or_create(owner, ArgobytesBrownieProject.ExampleAction, salt="a")
 
         # collect setup transactions from the history (if any)
         # if ExampleAction is already deployed, setup_transactions will be empty
         setup_transactions = history[start_history_index:]
 
         if use_delegate_call:
-            delegate_callable = [self.example_action]
+            """
+            If a target contract does not depend on state, delegatecall it to save needing to transfer coins to it
+            In most cases, Argobytes' actions are delegate callable.
+            self.example_action_a is not in this case because it is holding our faked arbitrage profits
+            """
+            delegate_callable = [
+                self.example_action_b,
+            ]
         else:
-            delegate_callable = []
+            delegate_callable = None
 
         super().__init__(
             owner,
             borrowed_assets=[self.token],
             setup_transactions=setup_transactions,
-            # if a target contract does not depend on state, delegatecall it to save needing to transfer coins to it
             delegate_callable=delegate_callable,
         )
 
@@ -46,7 +53,9 @@ class ExampleFlashManager(ArgobytesFlashManager):
 
         # sweep the funds from ExampleAction to the clone to simulate profits
         # a real ArgobytesFlashManager would probably call multiple actions like CurveFiAction or UniswapV2Action
-        self.example_action.sweep(self.clone, self.token, 0).info()
+        self.example_action_b.noop().info()
+        self.example_action_a.sweep(self.clone, self.token, 0).info()
+        self.example_action_b.burnGas(10000).info()
 
 
 def test_aave_flash_loan(monkeypatch):
@@ -58,8 +67,8 @@ def test_aave_flash_loan(monkeypatch):
     sim_arb_profit = 9e18
 
     # i think we will always want delegate call in prod. but having a toggle is useful when developing
-    # TODO: if we sset this to true, then the simple arb profit gets ssent to clone. but then the dry run of sweep fails
-    use_delegate_call = False
+    # TODO: if we set this to true, then the simple arb profit gets sent to clone. but then the dry run of sweep fails
+    use_delegate_call = True
 
     factory, flash_borrower, clone = get_or_clone_flash_borrower(
         owner,
@@ -67,16 +76,10 @@ def test_aave_flash_loan(monkeypatch):
     )
     example_action = get_or_create(owner, ArgobytesBrownieProject.ExampleAction)
 
-    if use_delegate_call:
-        # if we are going to use delegate calls, the tokens need to be on the clone
-        sim_arb_to = clone
-    else:
-        # without delegate calls, the tokens need to be on the example action
-        sim_arb_to = example_action
-
     print("sending simulated arbitrage profit...")
+    # because this arb is on the exmaple action, we MUST NOT delegate call this action
     weth.deposit({"value": sim_arb_profit})
-    weth.transfer(sim_arb_to, sim_arb_profit).info()
+    weth.transfer(example_action, sim_arb_profit).info()
 
     # record our starting balance for balance checks at the end
     start_weth = owner.balance() + weth.balanceOf(owner)
