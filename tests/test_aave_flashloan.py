@@ -79,8 +79,8 @@ def test_aave_flash_loan(monkeypatch):
     start_weth = owner.balance() + weth.balanceOf(owner)
 
     # BEHOLD! this is all you need to carefully do a flash loan
-    # a real ArgobytesFlashManager would probably just pass the owner
     flash_manager = ExampleFlashManager(owner)
+    # a real script would probably prompt_confirmation
     flash_manager.careful_send(prompt_confirmation=False)
     # THAT WAS IT!
 
@@ -91,5 +91,5 @@ def test_aave_flash_loan(monkeypatch):
     profit = (end_weth - start_weth) / 1e18
     print(f"weth profit: {profit}")
 
-    # TODO: if token is not weth, use a helper to include gas costs
+    # if token is not weth, be sure to include gas costs in your profit calculations!
     assert start_weth < end_weth, "bad arb!"
