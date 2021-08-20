@@ -13,7 +13,11 @@ class ArgobytesFlashManager:
     """
     Safely send flash loans.
 
-    Extend this, do setup in __init__, and override `the_transactions` function to do whatever you want
+    Extend this, calculate amounts and deploy conracts in __init__,
+    override `the_transactions` function to do whatever you want,
+    then call careful_send.
+
+    TODO: be able to atomically do any trade, not just flash loans
     """
 
     def __init__(
@@ -51,6 +55,8 @@ class ArgobytesFlashManager:
             self.sender = sender
             raise NotImplementedError("make sure auth is setup for this sender")
 
+        # TODO: if host_private, make sure sender has at least 100 EDEN staked
+
         self.aave_provider_registry = load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413")
 
         # #0 is main Aave V2 market. #1 is Aave AMM market
@@ -62,15 +68,12 @@ class ArgobytesFlashManager:
         self.delegate_callable = [getattr(dc, "address", dc) for dc in delegate_callable or []]
         self.ignored = []
 
-        # TODO: are all the aave funds in one contract, or spread around, or what? how should we pick the right address
-        # TODO: what if we want to have the lender be owner?
+        self.borrowed_assets = borrowed_assets or {}
         self.lenders = {}
-        for asset in borrowed_assets or []:
+        for asset in self.borrowed_assets:
             reserve_data = self.aave_lender.getReserveData(asset)
 
             # unlock the reserve that we are going to be flash loaning from
-            # if this doesn't have enough tokens, nothing will
-            # TODO: right now this always borrows from Aave
             # TODO: If enough funds are in on the owner (or other accounts that have approved the clone), we should use those instead
             self.lenders[asset] = accounts.at(reserve_data[7], force=True)
 
@@ -88,6 +91,15 @@ class ArgobytesFlashManager:
         # snapshot here. so we can revert to before any non-atomic transactions are sent
         chain.snapshot()
 
+        # send weth to the clone just like the flash loan would
+        # on a forked network, we transfer from the lender
+        # on mainnet, this transfer is handled by the flash loan function
+        # every flash loan MUST include at least one transfer of each asset in self.borrowed_assets to the clone
+        for asset, amount in self.borrowed_assets.items():
+            assert amount, f"No amount set for {asset}"
+            print("Simulating flash loan of {amount:_} {asset}...")
+            asset.transfer(self.clone, amount, {"from": self.lenders[asset]})
+
         return self
 
     def __exit__(self, exc_type, value, traceback):
@@ -98,13 +110,7 @@ class ArgobytesFlashManager:
             # we got an exception
             return False
 
-        # TODO: automatically decide between flashloan from Aave, from owner, from other accounts
-        # TODO: if we don't even need a flash loan at all, what should we do? should that be a different class?
         self.flash_tx = self._flashloan_from_history()
-
-        # TODO: do some balance checks here?
-        # TODO: if the balances weren't right, it would have reverted, so i think its actually fine.
-        # TODO: but it just feels safest to check anyways
 
         self.pending = False
 

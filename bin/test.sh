@@ -7,7 +7,4 @@ if [ -z "$VIRTUAL_ENV" ]; then
   exit 9
 fi
 
-# run the tests against the proper network with concurrency
-# TODO: run with -n2 when ganache-cli doesn't have so many issues with OOMing
-# argument order matters, so we put "$@" before flags
-brownie test "$@" --network mainnet-fork
+pytest "$@"

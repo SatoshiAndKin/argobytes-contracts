@@ -51,6 +51,7 @@ def always(brownie_mainnet_fork, fn_isolation, monkeypatch):
     fn_isolation
 
     # standalone mode means exceptions bubble up
+    # i would put this on session scope, but monkeypatch doesn't work like that
     monkeypatch.setenv("ARGOBYTES_CLICK_STANDALONE", "0")
 
 
