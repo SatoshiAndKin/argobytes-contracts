@@ -19,14 +19,18 @@ The proxy has an immutable owner. By default, only the owner can use the proxy.
 
 Owners can opt into more advanced authentication that lets them approve other addresses to call specific functions on specific contracts. Done properly, this allows for some very powerful features.
 
-A common pattern will be sending one setup transaction that calls `approve` on an ERC-20 token for the proxy. Then sending a second transaction that calls the Proxy's `execute` function with another contract's address and calldata. The other contract will then transfer that ERC-20 token to make money somehow, and then return the proceeds to the owner.
+A common pattern will be combining a trade and a deposit into a DeFi protocol.
 
 If the owner of the proxy is a smart contract like [Compound's Timelock](https://github.com/compound-finance/compound-protocol/blob/master/contracts/Timelock.sol), then very powerful security should be possible.
 
 
 ## ArgobytesFlashBorrower
 
-An extension to ArgobytesProxy that is compatible with ERC3156 Flash Loans. With this contract you (or someone you authorize) can perform actions with someone else's capital.
+An extension to ArgobytesProxy that can also manage flash loans from Aave or your own funds. With this contract you (or someone you authorize) can perform actions with borrowed capital.
+
+Aave currently charges a 0.09% fee for flash loans.
+
+A common pattern will be sending one setup transaction that calls `approve` on an ERC-20 token for the ArgobytesFlashBorrower. Then send a second transaction that calls ArgobytesFlashBorrower's `flashloanToOwner` to do an arbitrage trade.
 
 
 ## ArgobytesAuthority
@@ -60,17 +64,17 @@ The various "Action" contracts are for taking some sort of action on one or more
     - ExampleAction: This action is just used for tests and isn't for mainnet. It can be a useful starting point when writing a new action.
     - CurveFiAction: Trade tokens on <https://curve.fi>
     - KyberAction: Trade tokens on <https://kyberswap.com>
-    - OneSplitOffchainAction: Split a trade across multiple decentralized exchanges. The route is calculated offchain because doing it onchain takes a lot of gas.
-    - SynthetixDepotAction: Trade ETH for sUSD on <https://synthetix.io>
-    - UniswapV1Action: Trade tokens on <https://v1.uniswap.exchange/>
+    - UniswapV1Action, UniswapV2Action: Trade tokens on <https://app.uniswap.org/>
     - Weth9Action: [Wrap and unwrap ETH](https://weth.io/)
 
 Lots more actions are in development. Anyone can write an action.
 
-If the action uses state, it is important that it use durable storage 
+Actions must be very carefully designed if they use state (most should probably use immutables instead). If the action does not use state, it can be delegate called; this saves gas.
 
 
 ### ArgobytesTrader
+
+**Under construction.**
 
 Most sets of actions will probably involve trading tokens. The Trader's `atomicTrade` function uses ERC-20 approvals and ArgobytesMulticall to transfer and trade tokens. This can be helpful for aggregating trades across multiple exchanges.
 
@@ -80,6 +84,8 @@ When combined with the ArgobytesFlashBorrower, this will allow atomic arbitrage 
 
 
 ### leverageCYY3CRV
+
+**Under construction.**
 
 #### EnterCYY3CRVAction
 

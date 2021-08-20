@@ -10,6 +10,43 @@ from eth_utils.address import is_address
 from argobytes.contracts import get_or_clone_flash_borrower, load_contract
 
 
+def find_lenders(aave_provider_registry, borrowed_assets):
+    # TODO: check owner balances before loading anything about aave
+    aave_provider_registry = load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413")
+
+    aave_providers_list = aave_provider_registry.getAddressesProvidersList()
+
+    # TODO: check all the markets and pick the best one
+    # #0 is main Aave V2 market. #1 is Aave AMM market
+    aave_market_id = 0
+
+    print("aave_market_id:", aave_market_id)
+    print("aave_providers_list:", aave_providers_list)
+
+    aave_provider = aave_providers_list[aave_market_id]
+    print("aave_provider:", aave_provider)
+
+    aave_provider = load_contract(aave_provider)
+
+    aave_lender = load_contract(aave_provider.getLendingPool())
+
+    borrowed_assets = borrowed_assets or {}
+    lenders = {}
+    for asset, amount in borrowed_assets.items():
+        # TODO: if this reverts, try another aave_market_id?
+        reserve_data = aave_lender.getReserveData(asset)
+
+        lender = reserve_data[7]
+
+        # TODO: make sure the lender has enough tokens
+
+        # unlock the reserve that we are going to be flash loaning from
+        # TODO: If enough funds are in on the owner (or other accounts that have approved the clone), we should use those instead
+        lenders[asset] = accounts.at(lender, force=True)
+
+    return lenders
+
+
 class TransactionBundler:
     """
     Safely send flash loans over the Eden network.
@@ -26,7 +63,7 @@ class TransactionBundler:
     def __init__(
         self,
         owner,
-        aave_market_id=0,
+        aave_provider_registry=None,
         borrowed_assets=None,
         borrower_salt=None,
         clone_salt=None,
@@ -47,8 +84,6 @@ class TransactionBundler:
             # default to eden. disable by setting to False
             host_private = "https://api.edennetwork.io/v1/rpc"
 
-        assert owner, "no owner!"
-
         self.owner = owner
         self.host_fork = web3.provider.endpoint_uri
         self.host_main = forked_host
@@ -57,6 +92,10 @@ class TransactionBundler:
         self.clone_salt = clone_salt
         self.factory_salt = factory_salt
         self.setup_transactions = setup_transactions or []
+        self.pending = False
+        self.factory = self.flash_borrower = self.clone = self.flash_tx = None
+        self.delegate_callable = [getattr(dc, "address", dc) for dc in delegate_callable or []]
+        self.ignored = []
 
         if not sender:
             self.sender = owner
@@ -64,36 +103,12 @@ class TransactionBundler:
             self.sender = sender
             raise NotImplementedError("make sure auth is setup for this sender")
 
-        # TODO: if host_private, make sure sender has at least 100 EDEN staked
+        # TODO: if "eden" in host_private, make sure sender has at least 100 EDEN staked
 
-        # TODO: check owner balances before loading anything about aave
-        self.aave_provider_registry = load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413")
+        if aave_provider_registry is None:
+            aave_provider_registry = "0x52D306e36E3B6B02c153d0266ff0f85d18BCD413"
 
-        aave_providers_list = self.aave_provider_registry.getAddressesProvidersList()
-        print("aave_market_id:", aave_market_id)
-        print("aave_providers_list:", aave_providers_list)
-
-        aave_provider = aave_providers_list[aave_market_id]
-        print("aave_provider:", aave_provider)
-
-        # #0 is main Aave V2 market. #1 is Aave AMM market
-        self.aave_provider = load_contract(aave_provider)
-        self.aave_lender = load_contract(self.aave_provider.getLendingPool())
-
-        self.pending = False
-        self.factory = self.flash_borrower = self.clone = self.flash_tx = None
-        self.delegate_callable = [getattr(dc, "address", dc) for dc in delegate_callable or []]
-        self.ignored = []
-
-        self.borrowed_assets = borrowed_assets or {}
-        self.lenders = {}
-        for asset in self.borrowed_assets:
-            # TODO: if this reverts, try another aave_market_id?
-            reserve_data = self.aave_lender.getReserveData(asset)
-
-            # unlock the reserve that we are going to be flash loaning from
-            # TODO: If enough funds are in on the owner (or other accounts that have approved the clone), we should use those instead
-            self.lenders[asset] = accounts.at(reserve_data[7], force=True)
+        self.lenders = find_lenders(aave_provider_registry)
 
     def __enter__(self):
         """Context manager that captures transactions for bundling."""
@@ -479,15 +494,23 @@ class TransactionBundler:
 
         return MyBundler().careful_send(prompt_confirmation)
 
-    """
     @classmethod
     def bundle(
         cls,
-        transaction_fn,
+        owner,
+        transaction_bundle_fn,
         history_start_index=0,
-        delegate_callable=None,
+        prompt_confirmation=True,
+        **kwargs,
     ):
-        setup_transactions = network.history[history_start_index:]
+        if "setup_transactions" not in kwargs:
+            kwargs["setup_transactions"] = network.history[history_start_index:]
 
-        raise NotImplementedError(setup_transactions, delegate_callable)
-    """
+        class MyBundler(cls):
+            def __init__(self):
+                super().__init__(owner, **kwargs)
+
+            def the_transactions(self):
+                transaction_bundle_fn(self)
+
+        return MyBundler().careful_send(prompt_confirmation)
