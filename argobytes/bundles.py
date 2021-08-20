@@ -1,3 +1,4 @@
+"""Bundle multiple transactions into as few as possible."""
 import contextlib
 from pprint import pformat
 
@@ -9,15 +10,17 @@ from eth_utils.address import is_address
 from argobytes.contracts import get_or_clone_flash_borrower, load_contract
 
 
-class ArgobytesFlashManager:
+class TransactionBundler:
     """
-    Safely send flash loans.
+    Safely send flash loans over the Eden network.
 
-    Extend this, calculate amounts and deploy conracts in __init__,
+    You can use this in 2 ways:
+    1) Extend this, calculate amounts and deploy conracts in __init__,
     override `the_transactions` function to do whatever you want,
     then call careful_send.
+    2) 
 
-    TODO: be able to atomically do any trade, not just flash loans
+    TODO: be able to bundle any transactions, not just flash loans
     """
 
     def __init__(
@@ -29,7 +32,7 @@ class ArgobytesFlashManager:
         clone_salt=None,
         delegate_callable=None,
         factory_salt=None,
-        host_private="https://api.edennetwork.io/v1/rpc",
+        host_private=None,
         sender=None,
         setup_transactions=None,
     ):
@@ -39,6 +42,12 @@ class ArgobytesFlashManager:
 
         forked_host = active_network["cmd_settings"]["fork"]
         assert forked_host.startswith("http"), "only http supported for now"
+
+        if host_private is None:
+            # default to eden. disable by setting to False
+            host_private = "https://api.edennetwork.io/v1/rpc"
+
+        assert owner, "no owner!"
 
         self.owner = owner
         self.host_fork = web3.provider.endpoint_uri
@@ -57,10 +66,18 @@ class ArgobytesFlashManager:
 
         # TODO: if host_private, make sure sender has at least 100 EDEN staked
 
+        # TODO: check owner balances before loading anything about aave
         self.aave_provider_registry = load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413")
 
+        aave_providers_list = self.aave_provider_registry.getAddressesProvidersList()
+        print("aave_market_id:", aave_market_id)
+        print("aave_providers_list:", aave_providers_list)
+
+        aave_provider = aave_providers_list[aave_market_id]
+        print("aave_provider:", aave_provider)
+
         # #0 is main Aave V2 market. #1 is Aave AMM market
-        self.aave_provider = load_contract(self.aave_provider_registry.getAddressesProvidersList()[aave_market_id])
+        self.aave_provider = load_contract(aave_provider)
         self.aave_lender = load_contract(self.aave_provider.getLendingPool())
 
         self.pending = False
@@ -71,6 +88,7 @@ class ArgobytesFlashManager:
         self.borrowed_assets = borrowed_assets or {}
         self.lenders = {}
         for asset in self.borrowed_assets:
+            # TODO: if this reverts, try another aave_market_id?
             reserve_data = self.aave_lender.getReserveData(asset)
 
             # unlock the reserve that we are going to be flash loaning from
@@ -186,7 +204,7 @@ class ArgobytesFlashManager:
             # prepare to send the transaction for real
             self.set_network_main()
 
-        self._send_for_real()
+        return self._send_for_real()
 
     def set_network_fork(self):
         if self.pending:
@@ -439,3 +457,38 @@ class ArgobytesFlashManager:
         self.reset_network_fork()
 
         return tx
+
+    @classmethod
+    def flashloan(
+        cls,
+        owner,
+        transaction_bundle_fn,
+        history_start_index=0,
+        prompt_confirmation=True,
+        **kwargs,
+    ):
+        if "setup_transactions" not in kwargs:
+            kwargs["setup_transactions"] = network.history[history_start_index:]
+
+        class MyBundler(cls):
+
+            def __init__(self):
+                super().__init__(owner, **kwargs)
+
+            def the_transactions(self):
+                transaction_bundle_fn(self)
+
+        return MyBundler().careful_send(prompt_confirmation)
+
+    """
+    @classmethod
+    def bundle(
+        cls,
+        transaction_fn,
+        history_start_index=0,
+        delegate_callable=None,
+    ):
+        setup_transactions = network.history[history_start_index:]
+
+        raise NotImplementedError(setup_transactions, delegate_callable)
+    """
