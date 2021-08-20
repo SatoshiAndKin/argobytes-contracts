@@ -91,8 +91,8 @@ class ArgobytesFlashManager:
         # snapshot here. so we can revert to before any non-atomic transactions are sent
         chain.snapshot()
 
-        # send weth to the clone just like the flash loan would
-        # on a forked network, we transfer from the lender
+        # send each asset to the clone just like the flash loan would
+        # on a forked network, we transfer from the unlocked lender
         # on mainnet, this transfer is handled by the flash loan function
         # every flash loan MUST include at least one transfer of each asset in self.borrowed_assets to the clone
         for asset, amount in self.borrowed_assets.items():
