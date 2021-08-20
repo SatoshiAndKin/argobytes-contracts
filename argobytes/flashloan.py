@@ -125,18 +125,22 @@ class ArgobytesFlashManager:
     def reset_network_fork(self):
         """Kill ganache and start a new one."""
         # TODO: is there some way to list all the unlocked accounts?
-        # TODO: this doesn't work well if we started ganache seperately
+
         self.set_network_fork()
+
         # TODO: hide scary error messages
+        # TODO: this doesn't work if we started ganache seperately to fork an old block
         rpc.kill()
+
         network.connect()
-        
+
         # unlock the accounts again
         for lender in self.lenders:
-            accounts.at(lender, force=True)
+            print(f"Unlocking {lender}...")
+            self.lenders[lender] = accounts.at(lender, force=True)
 
     def careful_send(self, prompt_confirmation=True):
-        """Do a dry run, prompt, send the transaction for real."""    
+        """Do a dry run, prompt, send the transaction for real."""
         assert web3.provider.endpoint_uri == self.host_fork  # just in case
 
         # deploy contracts and run any other setup transactions on the forked network
@@ -154,6 +158,9 @@ class ArgobytesFlashManager:
             # TODO: different chains have different token names.
             click.confirm("Are you sure you want to spend ETH?", abort=True)
 
+        return self._mainnet_send(setup_did_something)
+
+    def _mainnet_send(self, setup_did_something):
         self.set_network_main()
 
         if setup_did_something:
@@ -192,7 +199,7 @@ class ArgobytesFlashManager:
         if self.pending:
             raise RuntimeError
 
-        if web3.provider.endpoint_uri == self.host_fork:
+        if web3.provider.endpoint_uri == self.host_main:
             return
 
         print("Setting network mode:", click.style("main", fg="red"))
@@ -298,11 +305,13 @@ class ArgobytesFlashManager:
             if signature == "transfer(address,uint256)" and new_input_args[0] == self.clone:
                 # on the forked network, this is transferred from an unlocked account
                 # on the live network, this is transferred from the flash lender and so we skip this action
-                assert contract not in asset_amounts, f"asset {contract} already added!"
+                if contract in asset_amounts:
+                    print(f"funding flash loan with {input_args[1]} more {contract}")
+                    asset_amounts[contract] += input_args[1]
+                else:
+                    print(f"funding flash loan with {input_args[1]} {contract}")
+                    asset_amounts[contract] = input_args[1]
 
-                print(f"funding flash loan with {input_args[1]} {contract}")
-
-                asset_amounts[contract] = input_args[1]
                 continue
 
             # TODO: is this the right way to cover transferFrom? need tests!
@@ -322,13 +331,21 @@ class ArgobytesFlashManager:
                 method = getattr(contract, "transfer")
 
             # TODO: is this the right way to handle the WethAction? need tests!
-            if self.is_delegate_callable(contract) and signature == "unwrapAllTo(address)" and new_input_args[0] == self.clone:
+            if (
+                self.is_delegate_callable(contract)
+                and signature == "unwrapAllTo(address)"
+                and new_input_args[0] == self.clone
+            ):
                 # if we are going to delegate call WethAction.unwrapAllTo to ourselves, unwrapAll instead
                 signature = "unwrapAll()"
                 new_input_args = ()
                 method = getattr(contract, "unwrapAll")
 
-            if self.is_delegate_callable(contract) and signature == "wrapAllTo(address)" and new_input_args[0] == self.clone:
+            if (
+                self.is_delegate_callable(contract)
+                and signature == "wrapAllTo(address)"
+                and new_input_args[0] == self.clone
+            ):
                 # if we are going to delegate call WethAction.wrapAllTo to ourselves, wrapAll instead
                 signature = "wrapAll()"
                 new_input_args = ()
@@ -396,7 +413,7 @@ class ArgobytesFlashManager:
         )
 
         # TODO: info for reverted trasactions was crashing ganachhe
-        if (flash_tx.status == 1):
+        if flash_tx.status == 1:
             flash_tx.info()
             flash_tx.call_trace()
 

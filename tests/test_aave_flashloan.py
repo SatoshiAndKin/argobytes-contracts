@@ -1,12 +1,12 @@
+import click
 from brownie import accounts, history
 
-from argobytes.contracts import ArgobytesBrownieProject, get_or_create, get_or_clone_flash_borrower
+from argobytes.contracts import ArgobytesBrownieProject, get_or_clone_flash_borrower, get_or_create
 from argobytes.flashloan import ArgobytesFlashManager
 from argobytes.tokens import load_token
 
 
-class FlashManagerTester(ArgobytesFlashManager):
-
+class ExampleFlashManager(ArgobytesFlashManager):
     def __init__(self, owner, token, use_delegate_call):
         # we are going to flash loan some token from Aave
         self.token = token
@@ -28,27 +28,28 @@ class FlashManagerTester(ArgobytesFlashManager):
 
         super().__init__(
             owner,
-            assets=[self.token],
+            borrowed_assets=[self.token],
             setup_transactions=setup_transactions,
             # if a target contract does not depend on state, delegatecall it to save needing to transfer coins to it
             delegate_callable=delegate_callable,
         )
 
     def the_transactions(self):
-        # a real ArgobytesFlashManager would want to calculate optimal trade sizes based on  
+        # a real ArgobytesFlashManager would query the blockchain to calculate the optimal trade size
         trading_amount = 100e18
 
         # send weth to the clone just like the flash loan would
         # on a forked network, we transfer from the lender
         # on mainnet, this transfer is handled by the flash loan function
+        # every flash loan MUST include at least one transfer like this
         self.token.transfer(self.clone, trading_amount, {"from": self.lenders[self.token]}).info()
 
-        # a real flash loan transaction would probably call multiple actions like CurveFiAction or UniswapV2Action
-        # here, we just sweep the funds from ExampleAction to the clone to simulate profits
+        # sweep the funds from ExampleAction to the clone to simulate profits
+        # a real ArgobytesFlashManager would probably call multiple actions like CurveFiAction or UniswapV2Action
         self.example_action.sweep(self.clone, self.token, 0).info()
 
 
-def test_aave_flash_loan():
+def test_aave_flash_loan(monkeypatch):
     owner = accounts[0]
 
     weth = load_token("weth", owner=owner)
@@ -56,13 +57,13 @@ def test_aave_flash_loan():
     # because this is just a test, we need to fake an arbitrage opportunity
     sim_arb_profit = 9e18
 
-    # i think we will always want delegate call in prod. but having a toggle is useful when developing    
+    # i think we will always want delegate call in prod. but having a toggle is useful when developing
     # TODO: if we sset this to true, then the simple arb profit gets ssent to clone. but then the dry run of sweep fails
     use_delegate_call = False
 
     factory, flash_borrower, clone = get_or_clone_flash_borrower(
         owner,
-        constructor_args=['0x52D306e36E3B6B02c153d0266ff0f85d18BCD413'],
+        constructor_args=["0x52D306e36E3B6B02c153d0266ff0f85d18BCD413"],
     )
     example_action = get_or_create(owner, ArgobytesBrownieProject.ExampleAction)
 
@@ -80,8 +81,18 @@ def test_aave_flash_loan():
     # record our starting balance for balance checks at the end
     start_weth = owner.balance() + weth.balanceOf(owner)
 
-    # BEHOLD! this is all you need to call to carefully do the flash loan
-    FlashManagerTester(owner, weth, use_delegate_call).careful_send(prompt_confirmation=False)
+    # we don't want to test _mainnet_send here
+    monkeypatch.setattr(
+        ExampleFlashManager,
+        "_mainnet_send",
+        lambda _self, _setup_did_something: click.secho("skipping mainnet send in tests!", fg="yellow"),
+    )
+
+    # BEHOLD! this is all you need to carefully do a flash loan
+    # a real ArgobytesFlashManager would probably just pass the owner
+    flash_manager = ExampleFlashManager(owner, weth, use_delegate_call)
+    flash_manager.careful_send(prompt_confirmation=False)
+    # THAT WAS IT!
 
     # safety checks
     # these checks won't be needed by your real scripts. the transaction will revert if there are no profits
