@@ -18,7 +18,7 @@ class TransactionBundler:
     1) Extend this, calculate amounts and deploy conracts in __init__,
     override `the_transactions` function to do whatever you want,
     then call careful_send.
-    2) 
+    2) Use the `flashloan` function
 
     TODO: be able to bundle any transactions, not just flash loans
     """
@@ -471,7 +471,6 @@ class TransactionBundler:
             kwargs["setup_transactions"] = network.history[history_start_index:]
 
         class MyBundler(cls):
-
             def __init__(self):
                 super().__init__(owner, **kwargs)
 

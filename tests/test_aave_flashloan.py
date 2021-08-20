@@ -1,8 +1,8 @@
 import click
 from brownie import accounts, network
 
-from argobytes.contracts import ArgobytesBrownieProject, get_or_create
 from argobytes.bundles import TransactionBundler
+from argobytes.contracts import ArgobytesBrownieProject, get_or_create
 from argobytes.tokens import load_token
 
 
@@ -67,7 +67,7 @@ def test_aave_flash_loan(monkeypatch):
     print("preparing simulated arbitrage profit...")
     # because this arb is on the exmaple action, we MUST NOT delegate call this action
     weth.deposit({"value": sim_arb_profit, "from": owner})
-    weth.transfer(example_action_a, sim_arb_profit).info()
+    weth.transfer(example_action_a, sim_arb_profit, {"from": owner}).info()
 
     # we don't want to test _mainnet_send here
     monkeypatch.setattr(
