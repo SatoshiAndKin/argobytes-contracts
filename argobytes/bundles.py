@@ -7,7 +7,7 @@ from brownie import accounts, chain, network, rpc, web3
 from eth_utils.address import is_address
 
 from argobytes.contracts import get_or_clone_flash_borrower, load_contract
-from argobytes.replay import get_forked_rpc
+from argobytes.replay import get_upstream_rpc
 from argobytes.cli_helpers_lite import prompt_loud_confirmation
 
 
@@ -57,15 +57,13 @@ class TransactionBundler:
         sender=None,
         setup_transactions=None,
     ):
-        forked_host = get_forked_rpc()
-
         if host_private is None:
             # default to eden. disable by setting to False
             host_private = "https://api.edennetwork.io/v1/rpc"
 
         self.owner = owner
         self.host_fork = web3.provider.endpoint_uri
-        self.host_main = forked_host
+        self.host_main = get_upstream_rpc()
         self.host_private = host_private
         self.borrowed_assets = borrowed_assets
         self.borrower_salt = borrower_salt
@@ -219,7 +217,8 @@ class TransactionBundler:
             return
 
         print("Setting network mode:", click.style("fork", fg="green"))
-        web3.provider.endpoint_uri = self.host_fork
+        web3.connect(self.host_fork)
+        web3.reset_middlewares()
 
         # TODO: i'm no sure about this clear
         network.history.clear()
@@ -232,7 +231,8 @@ class TransactionBundler:
             return
 
         print("Setting network mode:", click.style("main", fg="red"))
-        web3.provider.endpoint_uri = self.host_main
+        web3.connect(self.host_main)
+        web3.reset_middlewares()
 
         network.history.clear()
 
@@ -248,7 +248,8 @@ class TransactionBundler:
             return
 
         print("Setting network mode:", click.style("private", fg="yellow"))
-        web3.provider.endpoint_uri = self.host_private
+        web3.connect(self.host_private)
+        web3.reset_middlewares()
 
         network.history.clear()
 

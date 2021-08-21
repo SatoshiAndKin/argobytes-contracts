@@ -17,7 +17,7 @@ import os
 from brownie import network as brownie_network
 from brownie import project, web3
 from brownie.network import gas_price
-from brownie.network.gas.strategies import GasNowScalingStrategy
+from brownie.network.gas.strategies import LinearScalingStrategy
 
 from argobytes.cli_helpers import get_project_root
 from argobytes.cli_helpers_lite import logger
@@ -87,8 +87,13 @@ def cli(
                 gas_strategy = "5010000000"  # 5.01 gwei
                 gas_price(gas_strategy)
                 logger.info(f"Default gas price: {gas_strategy}")
-            elif network in ["polygon-main", "polygon-fork"]:
-                gas_strategy = "1010000000"  # "1.01 gwei"
+            elif network in ["polygon-main", "polygon-main-fork"]:
+                gas_strategy = LinearScalingStrategy(
+                    "5.01 gwei",
+                    "60.01 gwei",
+                    increment=1.125,
+                    time_duration=20,
+                )
                 gas_price(gas_strategy)
                 logger.info(f"Default gas price: {gas_strategy}")
             else:

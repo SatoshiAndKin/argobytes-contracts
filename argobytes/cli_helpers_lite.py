@@ -1,12 +1,13 @@
 """CLI Helpers that you can bring in it import time."""
-
 import logging
+import time
 
 import click
+from brownie import web3, network
 from brownie._config import CONFIG
 from decorator import decorator
 
-from argobytes.replay import get_forked_rpc
+from argobytes.replay import get_upstream_rpc
 
 
 logger = logging.getLogger("argobytes")
@@ -36,17 +37,16 @@ class BrownieAccount(click.ParamType):
 
             # TODO: read an environment var to allow customizing this?
             pass_dir = Path.home().joinpath(".argobytes/passwords")
+            account_pass = None
+            if pass_dir.exists():
+                # TODO: is this the mode that we want?
+                assert pass_dir.stat().st_mode == 0o40700, "password dir must be mode 0700"
 
-            # TODO: is this the mode that we want?
-            assert pass_dir.stat().st_mode == 0o40700, "password dir must be mode 0700"
+                possible_pass = pass_dir / f"{name}.pass"
 
-            possible_pass = pass_dir / f"{name}.pass"
-
-            if possible_pass.exists():
-                with possible_pass.open("r") as f:
-                    account_pass = f.read.strip()
-            else:
-                account_pass = None
+                if possible_pass.exists():
+                    with possible_pass.open("r") as f:
+                        account_pass = f.read.strip()
 
             try:
                 account = accounts.load(value, password=account_pass)
@@ -173,7 +173,7 @@ def brownie_connect(func, *args, default_network=None, **kwargs):
     return func(*args, **kwargs)
 
 
-def prompt_loud_confirmation(account):
+def prompt_loud_confirmation(account, confirm_delay_secs=6):
     """Wait for the user to press [enter] or abort."""
     print()
     print("*" * 80)
@@ -183,18 +183,30 @@ def prompt_loud_confirmation(account):
     # TODO: safety check on gas costs
     # TODO: different chains have different token names.
     if account is None:
-        logger.warning("\nWARNING! Continuing past this will spend ETH!\n")
+        logger.warning("Continuing past this will spend ETH!")
     else:
-        logger.warning("\nWARNING! Continuing past this will spend ETH from %s!\n", account)
+        # TODO: we might actually send from multiple accounts
+        logger.warning("Continuing past this will spend ETH from %s!", account)
 
-    click.confirm("\nDo you want to continue?\n", abort=True)
+    click.secho(f"\nTransactions will run against the network at {web3.provider.endpoint_uri}!", fg="yellow")
+
+    click.confirm("\nDo you want to continue?", abort=True)
+
+    # safety delay
+    if confirm_delay_secs:
+        click.secho(
+            f"\nWe are doing it for real in {confirm_delay_secs} seconds!\n",
+            fg="red", bold=True,
+        )
+        click.secho("[Ctrl C] to cancel\n", blink=True, bold=True, fg="red")
+
+        time.sleep(confirm_delay_secs)
 
 
 def with_dry_run(func, account, *args, tokens=None, confirm_delay_secs=6, replay_rpc=None, **kwargs):
     """Run a function against a fork network and then confirm before doing it for real.
     since we have an account, the @brownie_connect() decorator isn't needed
     """
-    import time
     from argobytes.tokens import print_start_and_end_balance
 
     assert account, "no account!"
@@ -205,39 +217,35 @@ def with_dry_run(func, account, *args, tokens=None, confirm_delay_secs=6, replay
             func(account, *args, **kwargs)
 
     # run the function connected to the forked network
+    click.secho("Running transactions against a forked network", fg="yellow")
     do_func()
 
-    # we got this far and it didn't revert. prompt to send it to mainnet
-    prompt_loud_confirmation(account)
+    # TODO: optionally open a console here
 
-    # safety delay
-    if confirm_delay_secs:
-        click.secho(
-            f"\nI hope it did what you wanted on our forked net, because we are doing it for real in {confirm_delay_secs} seconds.\n\n",
-            fg="red",
-        )
-        click.secho("[Ctrl C] to cancel", blink=True, bold=True, fg="red")
-        time.sleep(confirm_delay_secs)
+    if not network.history:
+        print("No transactions were sent in the dry run. Exiting now")
+        return
 
-    # switch to the network that we forked from
-    # orig_rpc = web3.provider.endpoint_uri
-
-    # replay_rpc migh be set to something like eden network
-    # otherwise, use rpc that the current connection forked
+    orig_rpc = web3.provider.endpoint_uri
+    # replay_rpc might be set to something like eden network
     if not replay_rpc:
-        replay_rpc = get_forked_rpc()
+        # switch to the network that we forked from
+        replay_rpc = get_upstream_rpc()
+    network.history.clear()
+    web3.connect(replay_rpc)
+    web3.reset_middlewares()
 
-    web3.provider.endpoint_uri = replay_rpc
+    # we got this far and it didn't revert. prompt to send it to mainnet
+    prompt_loud_confirmation(account, confirm_delay_secs)
 
     # send the transactions to the public
     do_func()
 
     print("transactions complete!")
 
-    # return to the original network?
-    # web3.provider.endpoint_uri = orig_rpc
-    print(f"Still connected to {replay_rpc}")
+    # TODO: optionally open a console here
 
-    # TODO: i'm not sure about this clear
-    # i think we want it if we reconnect to orig_rpc, but not if we stay connected to replay_rpc
-    # network.history.clear()
+    # return to the original network
+    network.history.clear()
+    web3.connect(orig_rpc)
+    web3.reset_middlewares()
