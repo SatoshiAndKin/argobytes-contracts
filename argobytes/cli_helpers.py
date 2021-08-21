@@ -57,17 +57,3 @@ def debug_shell(extra_locals, banner="Argobytes debug time.", exitmsg=""):
 def get_project_root() -> Path:
     """Root directory of the brownie project."""
     return Path(__file__).parent.joinpath("argobytes_brownie_project")
-
-
-def prompt_loud_confirmation(account):
-    """Wait for the user to press [enter] or abort."""
-    print()
-    print("*" * 80)
-
-    if account is None:
-        logger.warning("\nWARNING! Continuing past this will spend ETH!\n")
-    else:
-        logger.warning("\nWARNING! Continuing past this will spend ETH from %s!\n", account)
-
-    # TODO: print the active network/chain id
-    click.confirm("\nDo you want to continue?\n", abort=True)

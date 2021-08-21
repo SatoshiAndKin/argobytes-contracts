@@ -3,7 +3,11 @@
 import logging
 
 import click
+from brownie._config import CONFIG
 from decorator import decorator
+
+from argobytes.replay import get_forked_rpc
+
 
 logger = logging.getLogger("argobytes")
 
@@ -167,3 +171,73 @@ def brownie_connect(func, *args, default_network=None, **kwargs):
     connect_fn()
 
     return func(*args, **kwargs)
+
+
+def prompt_loud_confirmation(account):
+    """Wait for the user to press [enter] or abort."""
+    print()
+    print("*" * 80)
+
+    # TODO: print the active network/chain id
+    # TODO: print expected gas costs
+    # TODO: safety check on gas costs
+    # TODO: different chains have different token names.
+    if account is None:
+        logger.warning("\nWARNING! Continuing past this will spend ETH!\n")
+    else:
+        logger.warning("\nWARNING! Continuing past this will spend ETH from %s!\n", account)
+
+    click.confirm("\nDo you want to continue?\n", abort=True)
+
+
+def with_dry_run(func, account, *args, tokens=None, confirm_delay_secs=6, replay_rpc=None, **kwargs):
+    """Run a function against a fork network and then confirm before doing it for real.
+    since we have an account, the @brownie_connect() decorator isn't needed
+    """
+    import time
+    from argobytes.tokens import print_start_and_end_balance
+
+    assert account, "no account!"
+    assert CONFIG.active_network["id"].endswith("-fork"), "must be on a forked network"
+
+    def do_func():
+        with print_start_and_end_balance(account, tokens):
+            func(account, *args, **kwargs)
+
+    # run the function connected to the forked network
+    do_func()
+
+    # we got this far and it didn't revert. prompt to send it to mainnet
+    prompt_loud_confirmation(account)
+
+    # safety delay
+    if confirm_delay_secs:
+        click.secho(
+            f"\nI hope it did what you wanted on our forked net, because we are doing it for real in {confirm_delay_secs} seconds.\n\n",
+            fg="red",
+        )
+        click.secho("[Ctrl C] to cancel", blink=True, bold=True, fg="red")
+        time.sleep(confirm_delay_secs)
+
+    # switch to the network that we forked from
+    # orig_rpc = web3.provider.endpoint_uri
+
+    # replay_rpc migh be set to something like eden network
+    # otherwise, use rpc that the current connection forked
+    if not replay_rpc:
+        replay_rpc = get_forked_rpc()
+
+    web3.provider.endpoint_uri = replay_rpc
+
+    # send the transactions to the public
+    do_func()
+
+    print("transactions complete!")
+
+    # return to the original network?
+    # web3.provider.endpoint_uri = orig_rpc
+    print(f"Still connected to {replay_rpc}")
+
+    # TODO: i'm not sure about this clear
+    # i think we want it if we reconnect to orig_rpc, but not if we stay connected to replay_rpc
+    # network.history.clear()

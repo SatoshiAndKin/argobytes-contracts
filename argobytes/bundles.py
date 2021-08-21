@@ -4,31 +4,15 @@ from pprint import pformat
 
 import click
 from brownie import accounts, chain, network, rpc, web3
-from brownie._config import CONFIG
 from eth_utils.address import is_address
 
 from argobytes.contracts import get_or_clone_flash_borrower, load_contract
+from argobytes.replay import get_forked_rpc
+from argobytes.cli_helpers_lite import prompt_loud_confirmation
 
 
-def find_lenders(aave_provider_registry, borrowed_assets):
-    # TODO: check owner balances before loading anything about aave
-    aave_provider_registry = load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413")
-
-    aave_providers_list = aave_provider_registry.getAddressesProvidersList()
-
-    # TODO: check all the markets and pick the best one
-    # #0 is main Aave V2 market. #1 is Aave AMM market
-    aave_market_id = 0
-
-    print("aave_market_id:", aave_market_id)
-    print("aave_providers_list:", aave_providers_list)
-
-    aave_provider = aave_providers_list[aave_market_id]
-    print("aave_provider:", aave_provider)
-
-    aave_provider = load_contract(aave_provider)
-
-    aave_lender = load_contract(aave_provider.getLendingPool())
+def find_lenders(aave_lender, borrowed_assets):
+    # TODO: allow multiple aave_lenders
 
     borrowed_assets = borrowed_assets or {}
     lenders = {}
@@ -73,12 +57,7 @@ class TransactionBundler:
         sender=None,
         setup_transactions=None,
     ):
-        active_network = CONFIG.active_network
-
-        assert active_network["id"].endswith("-fork"), "must be on a forked network"
-
-        forked_host = active_network["cmd_settings"]["fork"]
-        assert forked_host.startswith("http"), "only http supported for now"
+        forked_host = get_forked_rpc()
 
         if host_private is None:
             # default to eden. disable by setting to False
@@ -88,6 +67,7 @@ class TransactionBundler:
         self.host_fork = web3.provider.endpoint_uri
         self.host_main = forked_host
         self.host_private = host_private
+        self.borrowed_assets = borrowed_assets
         self.borrower_salt = borrower_salt
         self.clone_salt = clone_salt
         self.factory_salt = factory_salt
@@ -105,10 +85,23 @@ class TransactionBundler:
 
         # TODO: if "eden" in host_private, make sure sender has at least 100 EDEN staked
 
+        # even if we aren't using Aave, we need the aave_provider_registry to build the ArgobytesFlashBorrower contract
         if aave_provider_registry is None:
             aave_provider_registry = "0x52D306e36E3B6B02c153d0266ff0f85d18BCD413"
+        self.aave_provider_registry = load_contract(aave_provider_registry)
 
-        self.lenders = find_lenders(aave_provider_registry)
+        # TODO: if all the assets can be covered by our own balances, skip aave
+        aave_providers_list = self.aave_provider_registry.getAddressesProvidersList()
+
+        # TODO: check all the markets and pick the best one
+        # #0 is main Aave V2 market. #1 is Aave AMM market
+        aave_market_id = 0
+
+        aave_provider = load_contract(aave_providers_list[aave_market_id])
+
+        self.aave_lender = load_contract(aave_provider.getLendingPool())
+
+        self.lenders = find_lenders(self.aave_lender, self.borrowed_assets)
 
     def __enter__(self):
         """Context manager that captures transactions for bundling."""
@@ -192,10 +185,7 @@ class TransactionBundler:
             self.the_transactions()
 
         if prompt_confirmation:
-            # TODO: print expected gas costs
-            # TODO: safety check on gas costs
-            # TODO: different chains have different token names.
-            click.confirm("Are you sure you want to spend ETH?", abort=True)
+            prompt_loud_confirmation(self.owner)
 
         return self._mainnet_send(setup_did_something)
 
