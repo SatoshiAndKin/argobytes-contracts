@@ -217,11 +217,9 @@ class TransactionBundler:
             return
 
         print("Setting network mode:", click.style("fork", fg="green"))
+        network.history.clear()
         web3.connect(self.host_fork)
         web3.reset_middlewares()
-
-        # TODO: i'm no sure about this clear
-        network.history.clear()
 
     def set_network_main(self):
         if self.pending:
@@ -231,10 +229,9 @@ class TransactionBundler:
             return
 
         print("Setting network mode:", click.style("main", fg="red"))
+        network.history.clear()
         web3.connect(self.host_main)
         web3.reset_middlewares()
-
-        network.history.clear()
 
     def set_network_private(self):
         if self.pending:
@@ -248,10 +245,9 @@ class TransactionBundler:
             return
 
         print("Setting network mode:", click.style("private", fg="yellow"))
+        network.history.clear()
         web3.connect(self.host_private)
         web3.reset_middlewares()
-
-        network.history.clear()
 
     def setup(self) -> int:
         start_history_len = len(network.history)
