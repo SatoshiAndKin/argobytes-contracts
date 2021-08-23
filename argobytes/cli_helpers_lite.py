@@ -1,5 +1,6 @@
 """CLI Helpers that you can bring in it import time."""
 import logging
+import sys
 import time
 from enum import Enum
 
@@ -167,10 +168,6 @@ def brownie_connect(func, *args, default_network=None, **kwargs):
 
 def prompt_loud_confirmation(account, confirm_delay_secs=6):
     """Wait for the user to press [enter] or abort."""
-    if not sys.flags.interactive:
-        print("non-interactive mode detected. continuing without confirmation")
-        return
-
     print()
     print("*" * 80)
 
@@ -201,7 +198,15 @@ def prompt_loud_confirmation(account, confirm_delay_secs=6):
 
 
 def with_dry_run(
-    func, account, *args, tokens=None, confirm_delay_secs=6, replay_rpc=None, with_mainnet_run=False, **kwargs
+    func,
+    account,
+    *args,
+    tokens=None,
+    confirm_delay_secs=6,
+    replay_rpc=None,
+    with_mainnet_run=False,
+    prompt_mainnet_run=True,
+    **kwargs,
 ):
     """Run a function against a fork network and then confirm before doing it for real.
     since we have an account, the @brownie_connect() decorator isn't needed
@@ -240,7 +245,8 @@ def with_dry_run(
     web3.reset_middlewares()
 
     # we got this far and it didn't revert. prompt to send it to mainnet
-    prompt_loud_confirmation(account, confirm_delay_secs)
+    if prompt_mainnet_run:
+        prompt_loud_confirmation(account, confirm_delay_secs)
 
     # send the transactions to the public
     do_func()
