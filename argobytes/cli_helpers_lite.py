@@ -167,6 +167,10 @@ def brownie_connect(func, *args, default_network=None, **kwargs):
 
 def prompt_loud_confirmation(account, confirm_delay_secs=6):
     """Wait for the user to press [enter] or abort."""
+    if not sys.flags.interactive:
+        print("non-interactive mode detected. continuing without confirmation")
+        return
+
     print()
     print("*" * 80)
 
