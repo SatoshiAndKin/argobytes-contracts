@@ -14,6 +14,7 @@ This entrypoint will handle setting these accounts up and then starting brownie.
 """
 import os
 
+from brownie import chain
 from brownie import network as brownie_network
 from brownie import project, web3
 from brownie.network import gas_price
@@ -45,7 +46,6 @@ def cli(
     # TODO: set brownie autofetch_sources
 
     project_root = get_project_root()
-    print("project_root:", project_root)
 
     _install_dependencies(project_root)
 
@@ -72,11 +72,14 @@ def cli(
 
             logger.info("%s is the active %s project.", brownie_project._name, network)
 
+            # make sure the network is synced
+            # TODO: how many seconds should we tolerate? different chains are different. maybe base on block time?
+            assert chain[-1].timestamp >= time.time() - 30, "block times behind by more than 30 seconds"
+
             if network in ["mainnet", "mainnet-fork", "bsc-main", "bsc-main-fork", "polygon-main", "polygon-main-fork"]:
-                # TODO: use EIP1559 for mainnet/mainnet-fork
+                # TODO: use EIP1559 for mainnet/mainnet-fork (or maybe automatically somehow?)
                 gas_strategy = GasStrategyV1(
                     speed=gas_speed,
-                    block_duration=gas_block_duration,
                     max_price=gas_max_price,
                 )
                 gas_price(gas_strategy)
