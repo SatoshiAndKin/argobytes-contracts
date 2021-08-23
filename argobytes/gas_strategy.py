@@ -71,6 +71,7 @@ class GasStrategyV1(TimeGasStrategy):
 
     def get_gas_price(self) -> Generator[Wei, None, None]:
         last_gas_price = 0
+        max_gas_price = self.max_gas_price
         while True:
             rpc_price = rpc_gas_price_strategy(web3)
 
@@ -78,9 +79,11 @@ class GasStrategyV1(TimeGasStrategy):
             next_price = Wei(last_gas_price * self.increment)
 
             if start_price > next_price:
-                # first run or gas price has risen on the network, reset our max price
-                max_gas_price = rpc_price * self.max_multiplier
-                print(f"max gas price: {max_gas_price/1e9} gwei")
+                # first run or gas price has risen on the network
+                # reset our max price
+                if not self.max_gas_price:
+                    max_gas_price = rpc_price * self.max_multiplier
+                print(f"current max gas price: {max_gas_price/1e9} gwei")
 
                 next_price = start_price
 
