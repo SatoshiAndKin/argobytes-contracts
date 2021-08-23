@@ -16,9 +16,8 @@ from .tx import tx
 @click.option("--etherscan-token", default="", envvar="ETHERSCAN_TOKEN")
 @click.option("--flashbot-account", default=None, type=BROWNIE_ACCOUNT)
 @click.option("--gas-speed", default="standard", type=gas_choices, show_default=True)
-@click.option("--gas-max-speed", default="rapid", type=gas_choices, show_default=True)
-@click.option("--gas-increment", default=1.125, show_default=True)
-@click.option("--gas-block-duration", default=2, show_default=True)
+@click.option("--gas-block-duration", default=3, show_default=True)
+@click.option("--gas-max-price", default="1000 gwei", show_default=True)
 @click.option("--network", default=None, type=str, show_default=True)
 @click.pass_context
 @click.version_option()
@@ -27,9 +26,8 @@ def cli(
     etherscan_token,
     flashbot_account,
     gas_speed,
-    gas_max_speed,
-    gas_increment,
     gas_block_duration,
+    gas_max_price,
     network,
 ):
     """Ethereum helpers."""
@@ -40,9 +38,8 @@ def cli(
         etherscan_token,
         flashbot_account,
         gas_speed,
-        gas_max_speed,
-        gas_increment,
         gas_block_duration,
+        gas_max_price,
         network,
     )
 

@@ -22,8 +22,8 @@ def replay_history(new_rpc, history_start_index=0):
     return replay_transactions(new_rpc, network.history[history_start_index:])
 
 
-# TODO: i'm not sure we want this. these txs will be stale by at least some time. better to rebuild them with "with_dry_run"
 def replay_transactions(new_rpc, txs):
+    # you probably want to use with_dry_run instead. this replays the exact same transactions which might be stale
     network.history.wait()
 
     old_rpc = web3.provider.endpoint_uri
@@ -52,8 +52,6 @@ def replay_transactions(new_rpc, txs):
     network.history.wait()
 
     # put the old rpc back
+    network.history.clear()
     web3.connect(old_rpc)
     web3.reset_middlewares()
-
-    # TODO: not sure we want this
-    network.history.clear()

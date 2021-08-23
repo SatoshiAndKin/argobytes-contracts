@@ -203,7 +203,7 @@ def prompt_loud_confirmation(account, confirm_delay_secs=6):
         time.sleep(confirm_delay_secs)
 
 
-def with_dry_run(func, account, *args, tokens=None, confirm_delay_secs=6, replay_rpc=None, **kwargs):
+def with_dry_run(func, account, *args, tokens=None, confirm_delay_secs=6, replay_rpc=None, with_mainnet_run=False, **kwargs):
     """Run a function against a fork network and then confirm before doing it for real.
     since we have an account, the @brownie_connect() decorator isn't needed
     """
@@ -226,12 +226,17 @@ def with_dry_run(func, account, *args, tokens=None, confirm_delay_secs=6, replay
         print("No transactions were sent in the dry run. Exiting now")
         return
 
-    orig_rpc = web3.provider.endpoint_uri
+    if not with_mainnet_run:
+        print("Dry run completed successfully! Add '--with-mainnet-run' to broadcast for real.")
+        return 
+
     # replay_rpc might be set to something like eden network
     if not replay_rpc:
         # switch to the network that we forked from
         replay_rpc = get_upstream_rpc()
+
     network.history.clear()
+    orig_rpc = web3.provider.endpoint_uri
     web3.connect(replay_rpc)
     web3.reset_middlewares()
 

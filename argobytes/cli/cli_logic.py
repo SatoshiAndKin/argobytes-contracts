@@ -17,10 +17,10 @@ import os
 from brownie import network as brownie_network
 from brownie import project, web3
 from brownie.network import gas_price
-from brownie.network.gas.strategies import LinearScalingStrategy
 
 from argobytes.cli_helpers import get_project_root
 from argobytes.cli_helpers_lite import logger
+from argobytes.gas_strategy import GasStrategyV1
 
 # from flashbots import flashbot
 
@@ -30,9 +30,8 @@ def cli(
     etherscan_token,
     flashbot_account,
     gas_speed,
-    gas_max_speed,
-    gas_increment,
     gas_block_duration,
+    gas_max_price,
     network,
 ):
     """Ethereum helpers."""
@@ -47,7 +46,7 @@ def cli(
         from brownie.project.main import _install_dependencies
 
         # this allows later click commands to set the default. there might be a better way
-        network = ctx.obj["brownie_network"] or ctx.obj.get("default_brownie_network")
+        network = ctx.obj.get("brownie_network", ctx.obj.get("default_brownie_network"))
 
         project_root = get_project_root()
 
@@ -60,42 +59,35 @@ def cli(
         ctx.obj["brownie_project"] = brownie_project
 
         if network == "none" or network is None:
-            logger.warning(f"{brownie_project._name} is the active project. Not connected to any networks")
+            logger.warning("%s is the active project. Not connected to any networks", brownie_project._name)
         else:
             brownie_network.connect(network)
 
-            logger.info(f"{brownie_project._name} is the active {network} project.")
+            logger.info("%s is the active %s project.", brownie_project._name, network)
 
             if flashbot_account:
                 print(f"Using {flashbot_account} for signing flashbot bundles.")
                 # flashbot(web3, flashbot_account)
                 raise NotImplementedError
 
-            if network in ["mainnet", "mainnet-fork"]:
-                # TODO: write my own strategy
-                # TODO: use EIP1559
-                # gas_strategy = GasNowScalingStrategy(
-                #     initial_speed=gas_speed,
-                #     max_speed=gas_max_speed,
-                #     increment=gas_increment,
-                #     block_duration=gas_block_duration,
-                # )
-                # gas_price(gas_strategy)
-                # logger.info(f"Default gas strategy: {gas_strategy}")
-                logger.info(f"Using default brownie gas calculations")
-            elif network in ["bsc-main", "bsc-main-fork"]:
-                gas_strategy = "5010000000"  # 5.01 gwei
-                gas_price(gas_strategy)
-                logger.info(f"Default gas price: {gas_strategy}")
-            elif network in ["polygon-main", "polygon-main-fork"]:
-                gas_strategy = LinearScalingStrategy(
-                    "5.01 gwei",
-                    "60.01 gwei",
-                    increment=1.125,
-                    time_duration=20,
+            # TODO: write my own gas strategy that uses the RPC's recommendation as a starting point
+            # TODO: have it refresh this automatically
+            recommended_gas = web3.eth.gasPrice
+            logger.info("recommended gas: %s", recommended_gas)
+
+            if network in [
+                "mainnet", "mainnet-fork",
+                "bsc-main", "bsc-main-fork",
+                "polygon-main", "polygon-main-fork"
+            ]:
+                # TODO: use EIP1559 for mainnet/mainnet-fork
+                gas_strategy = GasStrategyV1(
+                    speed=gas_speed,
+                    block_duration=gas_block_duration,
+                    max_price=gas_max_price,
                 )
                 gas_price(gas_strategy)
-                logger.info(f"Default gas price: {gas_strategy}")
+                logger.info("Default gas strategy: %s", gas_strategy)
             else:
                 logger.warning("No default gas price or gas strategy has been set!")
 
