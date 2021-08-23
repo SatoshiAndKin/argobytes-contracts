@@ -5,7 +5,7 @@ import click_log
 from click_plugins import with_plugins
 from importlib_metadata import entry_points
 
-from ..cli_helpers_lite import BROWNIE_ACCOUNT, brownie_connect, gas_choices, logger
+from ..cli_helpers_lite import brownie_connect, gas_choices, logger
 from .compilers import compilers
 from .tx import tx
 
@@ -14,7 +14,6 @@ from .tx import tx
 @click.group()
 @click_log.simple_verbosity_option(logger)
 @click.option("--etherscan-token", default="", envvar="ETHERSCAN_TOKEN")
-@click.option("--flashbot-account", default=None, type=BROWNIE_ACCOUNT)
 @click.option("--gas-speed", default="standard", type=gas_choices, show_default=True)
 @click.option("--gas-block-duration", default=3, show_default=True)
 @click.option("--gas-max-price", default="1000 gwei", show_default=True)
@@ -24,7 +23,6 @@ from .tx import tx
 def cli(
     ctx,
     etherscan_token,
-    flashbot_account,
     gas_speed,
     gas_block_duration,
     gas_max_price,
@@ -36,7 +34,6 @@ def cli(
     cli(
         ctx,
         etherscan_token,
-        flashbot_account,
         gas_speed,
         gas_block_duration,
         gas_max_price,

@@ -1,14 +1,14 @@
 """CLI Helpers that you can bring in it import time."""
 import logging
 import time
+from enum import Enum
 
 import click
-from brownie import web3, network
+from brownie import network, web3
 from brownie._config import CONFIG
 from decorator import decorator
 
 from argobytes.replay import get_upstream_rpc
-
 
 logger = logging.getLogger("argobytes")
 
@@ -22,13 +22,7 @@ class BrownieAccount(click.ParamType):
         from brownie import accounts
 
         # brownie needs an active network to setup the account
-        if ctx and ctx.obj:
-            connect_fn = ctx.obj["brownie_connect_fn"]
-
-            connect_fn()
-
-            # make a noop connect function in case this gets called again for some reason
-            ctx.obj["brownie_connect_fn"] = lambda: None
+        ctx.obj["brownie_connect_fn"]()
 
         if value.endswith(".json"):
             print(f"Loading account @ {value}...")
@@ -109,8 +103,7 @@ class CommandWithAccount(click.Command):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.params.insert(
-            0,
+        self.params.append(
             click.core.Option(
                 ("--account",),
                 type=BROWNIE_ACCOUNT,
@@ -163,11 +156,10 @@ class CommandWithProxySalts(CommandWithAccount):
 def brownie_connect(func, *args, default_network=None, **kwargs):
     ctx = click.get_current_context()
 
-    connect_fn = ctx.obj["brownie_connect_fn"]
-
     if default_network:
         ctx.obj["default_brownie_network"] = default_network
 
+    connect_fn = ctx.obj["brownie_connect_fn"]
     connect_fn()
 
     return func(*args, **kwargs)
@@ -196,14 +188,17 @@ def prompt_loud_confirmation(account, confirm_delay_secs=6):
     if confirm_delay_secs:
         click.secho(
             f"\nWe are doing it for real in {confirm_delay_secs} seconds!\n",
-            fg="red", bold=True,
+            fg="red",
+            bold=True,
         )
         click.secho("[Ctrl C] to cancel\n", blink=True, bold=True, fg="red")
 
         time.sleep(confirm_delay_secs)
 
 
-def with_dry_run(func, account, *args, tokens=None, confirm_delay_secs=6, replay_rpc=None, with_mainnet_run=False, **kwargs):
+def with_dry_run(
+    func, account, *args, tokens=None, confirm_delay_secs=6, replay_rpc=None, with_mainnet_run=False, **kwargs
+):
     """Run a function against a fork network and then confirm before doing it for real.
     since we have an account, the @brownie_connect() decorator isn't needed
     """
@@ -228,7 +223,7 @@ def with_dry_run(func, account, *args, tokens=None, confirm_delay_secs=6, replay
 
     if not with_mainnet_run:
         print("Dry run completed successfully! Add '--with-mainnet-run' to broadcast for real.")
-        return 
+        return
 
     # replay_rpc might be set to something like eden network
     if not replay_rpc:

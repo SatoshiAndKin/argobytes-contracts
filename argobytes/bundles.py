@@ -6,9 +6,9 @@ import click
 from brownie import accounts, chain, network, rpc, web3
 from eth_utils.address import is_address
 
+from argobytes.cli_helpers_lite import prompt_loud_confirmation
 from argobytes.contracts import get_or_clone_flash_borrower, load_contract
 from argobytes.replay import get_upstream_rpc
-from argobytes.cli_helpers_lite import prompt_loud_confirmation
 
 
 def find_lenders(aave_lender, borrowed_assets):
