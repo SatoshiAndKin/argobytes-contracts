@@ -31,7 +31,6 @@ def cli(
     ctx,
     etherscan_token,
     gas_speed,
-    gas_block_duration,
     gas_max_price,
     network,
 ):
@@ -75,7 +74,12 @@ def cli(
 
             # make sure the network is synced
             # TODO: how many seconds should we tolerate? different chains are different. maybe base on block time?
-            assert chain[-1].timestamp >= time.time() - 30, "block times behind by more than 30 seconds"
+            # TODO: maybe query some central service?
+            if web3.eth.syncing:
+                raise RuntimeError("Node is syncing!")
+
+            if chain[-1].timestamp < time.time() - 60:
+                raise RuntimeError("block timestamp behind by more than 60 seconds!")
 
             if network in ["mainnet", "mainnet-fork", "bsc-main", "bsc-main-fork", "polygon-main", "polygon-main-fork"]:
                 # TODO: use EIP1559 for mainnet/mainnet-fork (or maybe automatically somehow?)

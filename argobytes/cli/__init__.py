@@ -15,8 +15,7 @@ from .tx import tx
 @click_log.simple_verbosity_option(logger)
 @click.option("--etherscan-token", default="", envvar="ETHERSCAN_TOKEN")
 @click.option("--gas-speed", default="standard", type=gas_choices, show_default=True)
-@click.option("--gas-block-duration", default=3, show_default=True)
-@click.option("--gas-max-price", default="1000 gwei", show_default=True)
+@click.option("--gas-max-price", default=None, show_default=True)
 @click.option("--network", default=None, type=str, show_default=True)
 @click.pass_context
 @click.version_option()
@@ -24,7 +23,6 @@ def cli(
     ctx,
     etherscan_token,
     gas_speed,
-    gas_block_duration,
     gas_max_price,
     network,
 ):
@@ -35,7 +33,6 @@ def cli(
         ctx,
         etherscan_token,
         gas_speed,
-        gas_block_duration,
         gas_max_price,
         network,
     )

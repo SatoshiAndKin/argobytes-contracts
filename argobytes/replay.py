@@ -3,14 +3,16 @@ from brownie._config import CONFIG
 
 
 def get_upstream_rpc():
-    active_network = CONFIG.active_network
+    if is_forked_network():
+        forked_host = CONFIG.active_network["cmd_settings"]["fork"]
+        assert forked_host.startswith("http"), "only http supported for now"
+        return forked_host
 
-    assert active_network["id"].endswith("-fork"), "must be on a forked network"
+    return CONFIG.active_network["host"]
 
-    forked_host = active_network["cmd_settings"]["fork"]
-    assert forked_host.startswith("http"), "only http supported for now"
 
-    return forked_host
+def is_forked_network():
+    return CONFIG.active_network["id"].endswith("-fork")
 
 
 def replay_history_on_main(history_start_index=0):

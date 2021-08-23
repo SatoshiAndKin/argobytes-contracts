@@ -70,6 +70,8 @@ class BrownieAccount(click.ParamType):
             ctx.obj["lazy_contract_default_account"] = account
         else:
             ctx.obj = {"lazy_contract_default_account": account}
+        # TODO: i just found this. do we need lazy_contract_default_account?
+        CONFIG.active_network["settings"]["default_contract_owner"] = account
 
         return account
 
