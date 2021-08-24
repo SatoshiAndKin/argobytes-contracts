@@ -5,7 +5,7 @@ pragma abicoder v2;
 
 import {AddressLib, CallReverted, InvalidTarget} from "contracts/library/AddressLib.sol";
 import {IERC20, SafeERC20} from "contracts/external/erc20/SafeERC20.sol";
-import {IAaveLendingPoolAddressesProviderRegistry, IAaveLendingPoolAddressesProviderRegistry} from "contracts/external/aave/Aave.sol";
+import {IAaveLendingPoolAddressesProvider, IAaveLendingPoolAddressesProviderRegistry} from "contracts/external/aave/Aave.sol";
 
 import {ArgobytesProxy} from "./ArgobytesProxy.sol";
 

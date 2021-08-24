@@ -355,28 +355,6 @@ interface IAaveLendingPool {
   function setConfiguration(address reserve, uint256 configuration) external;
 
   /**
-   * @dev Returns the configuration of the reserve
-   * @param asset The address of the underlying asset of the reserve
-   * @return The configuration of the reserve
-   **/
-   /*
-   function getConfiguration(address asset)
-     external
-    view
-    returns (DataTypes.ReserveConfigurationMap memory);
-   */
-
-  /**
-   * @dev Returns the configuration of the user across all the reserves
-   * @param user The user address
-   * @return The configuration of the user
-   **/
-  function getUserConfiguration(address user)
-    external
-    view
-    returns (DataTypes.UserConfigurationMap memory);
-
-  /**
    * @dev Returns the normalized income normalized income of the reserve
    * @param asset The address of the underlying asset of the reserve
    * @return The reserve's normalized income
@@ -390,13 +368,6 @@ interface IAaveLendingPool {
    */
   function getReserveNormalizedVariableDebt(address asset) external view returns (uint256);
 
-  /**
-   * @dev Returns the state and configuration of the reserve
-   * @param asset The address of the underlying asset of the reserve
-   * @return The state of the reserve
-   **/
-  //function getReserveData(address asset) external view returns (DataTypes.ReserveData memory);
-
   function finalizeTransfer(
     address asset,
     address from,
@@ -408,7 +379,7 @@ interface IAaveLendingPool {
 
   function getReservesList() external view returns (address[] memory);
 
-  function getAddressesProvider() external view returns (ILendingPoolAddressesProvider);
+  function getAddressesProvider() external view returns (IAaveLendingPoolAddressesProvider);
 
   function setPause(bool val) external;
 
