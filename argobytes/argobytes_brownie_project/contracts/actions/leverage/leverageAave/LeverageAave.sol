@@ -19,7 +19,6 @@ contract LeverageAave is ArgobytesTips {
         IERC20 collateral;
         uint256 collateral_amount;
         uint256 collateral_flash_fee;
-        uint256 collateral_tip;
         IERC20 borrow;
         uint256 borrow_amount;
         address swap_contract;
@@ -31,8 +30,9 @@ contract LeverageAave is ArgobytesTips {
         IAaveLendingPool lending_pool;
         IERC20 borrow;
         IERC20 collateral;
-        IERC20 collateral_atoken;  // TODO: more  specific type?
+        IERC20 collateral_atoken;
         uint256 collateral_atoken_amount;
+        uint256 collateral_atoken_tip;
         uint256 collateral_withdraw_amount;
         uint256 borrow_flash_fee;
         uint256 collateral_swap_amount;
@@ -107,6 +107,9 @@ contract LeverageAave is ArgobytesTips {
         // Transfer aToken here
         // TODO: calculate collateral_atoken_amount based on what we repaid?
         data.collateral_atoken.transferFrom(data.on_behalf_of, address(this), data.collateral_atoken_amount);
+
+        // optionally tip atokens
+        tip_erc20(data.collateral_atoken, data.collateral_atoken_tip);
 
         // Burn aToken for the underlying
         data.collateral_atoken.approve(address(data.lending_pool), data.collateral_withdraw_amount);
