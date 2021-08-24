@@ -78,8 +78,10 @@ def cli(
             if web3.eth.syncing:
                 raise RuntimeError("Node is syncing!")
 
-            if chain[-1].timestamp < time.time() - 60:
-                raise RuntimeError("block timestamp behind by more than 60 seconds!")
+            block_timestamp = chain[-1].timestamp
+            now = time.time() - 60
+            if block_timestamp < now:
+                raise RuntimeError("block timestamp behind by more than 60 seconds!", block_timestamp, now)
 
             if network in ["mainnet", "mainnet-fork", "bsc-main", "bsc-main-fork", "polygon-main", "polygon-main-fork"]:
                 # TODO: use EIP1559 for mainnet/mainnet-fork (or maybe automatically somehow?)

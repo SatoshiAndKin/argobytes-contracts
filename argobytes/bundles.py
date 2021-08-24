@@ -61,10 +61,12 @@ class TransactionBundler:
             # default to eden. disable by setting to False
             host_private = "https://api.edennetwork.io/v1/rpc"
 
+        # TODO: if "eden" in host_private, make sure sender has at least 100 EDEN staked
+
         self.owner = owner
         self.host_fork = web3.provider.endpoint_uri
-        self.host_main = get_upstream_rpc()
         self.host_private = host_private
+        self.host_upstream = get_upstream_rpc()
         self.borrowed_assets = borrowed_assets
         self.borrower_salt = borrower_salt
         self.clone_salt = clone_salt
@@ -80,8 +82,6 @@ class TransactionBundler:
         else:
             self.sender = sender
             raise NotImplementedError("make sure auth is setup for this sender")
-
-        # TODO: if "eden" in host_private, make sure sender has at least 100 EDEN staked
 
         # even if we aren't using Aave, we need the aave_provider_registry to build the ArgobytesFlashBorrower contract
         if aave_provider_registry is None:
@@ -185,29 +185,34 @@ class TransactionBundler:
         if prompt_confirmation:
             prompt_loud_confirmation(self.owner)
 
-        return self._mainnet_send(setup_did_something)
+        return self._send_upstream(setup_did_something)
 
-    def _mainnet_send(self, setup_did_something):
-        self.set_network_main()
-
+    def _send_upstream(self, setup_did_something):
         if setup_did_something:
-            # deploy the setup transactions for real
+            # send the setup transactions to the upstream network
+            self.set_network_upstream()
             self.setup()
 
             # several blocks may have passed waiting for contract deployment confirmations
-            # reset the forked node and rebuild the transaction
+            # reset the forked node and rebuild the flash transaction
             self.reset_network_fork()
-
-            # rebuild the atomic transaction
             with self:
                 self.the_transactions()
 
             # self.safety_checks()  #TODO: figure out how to capture starting balances in a generic way
 
-            # prepare to send the transaction for real
-            self.set_network_main()
+        # send the flash transaction to the private network
+        self.set_network_private()
+        tx = self.sender.transfer(
+            to=self.flash_tx.receiver,
+            data=self.flash_tx.input,
+            gas_limit=self.flash_tx.gas_limit,
+            allow_revert=False,
+        )
+        tx.info()
 
-        return self._send_for_real()
+        # put the network back
+        self.reset_network_fork()
 
     def set_network_fork(self):
         if self.pending:
@@ -217,20 +222,22 @@ class TransactionBundler:
             return
 
         print("Setting network mode:", click.style("fork", fg="green"))
+        network.history.wait()
         network.history.clear()
         web3.connect(self.host_fork)
         web3.reset_middlewares()
 
-    def set_network_main(self):
+    def set_network_upstream(self):
         if self.pending:
             raise RuntimeError
 
-        if web3.provider.endpoint_uri == self.host_main:
+        if web3.provider.endpoint_uri == self.host_upstream:
             return
 
         print("Setting network mode:", click.style("main", fg="red"))
+        network.history.wait()
         network.history.clear()
-        web3.connect(self.host_main)
+        web3.connect(self.host_upstream)
         web3.reset_middlewares()
 
     def set_network_private(self):
@@ -239,12 +246,13 @@ class TransactionBundler:
 
         if not self.host_private:
             print("Network mode private is disabled!")
-            return self.set_network_main()
+            return self.set_network_upstream()
 
         if web3.provider.endpoint_uri == self.host_private:
             return
 
         print("Setting network mode:", click.style("private", fg="yellow"))
+        network.history.wait()
         network.history.clear()
         web3.connect(self.host_private)
         web3.reset_middlewares()
@@ -438,27 +446,6 @@ class TransactionBundler:
             flash_tx.call_trace()
 
         return flash_tx
-
-    def _send_for_real(self):
-        print("Sending the transaction for real!")
-        assert self.flash_tx, "no pending transaction"
-
-        self.set_network_private()
-
-        # send the transaction to be confirmed on the real chain
-        # TODO: use the same gas estimate?
-        tx = self.sender.transfer(
-            to=self.flash_tx.receiver,
-            data=self.flash_tx.input,
-            gas_limit=self.flash_tx.gas_limit,
-            allow_revert=False,
-        )
-        tx.info()
-
-        # set the provide back to the forked network
-        self.reset_network_fork()
-
-        return tx
 
     @classmethod
     def flashloan(

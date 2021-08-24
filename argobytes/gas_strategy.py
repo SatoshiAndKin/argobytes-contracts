@@ -68,7 +68,7 @@ class GasStrategyV1(BlockGasStrategy):
         else:
             block_time = (time.time() - chain[-1000].timestamp) / 1000
 
-        block_duration = round(time_duration / block_time, 0)
+        block_duration = int(round(time_duration / block_time, 0))
         if not block_duration:
             block_duration = 1
 
