@@ -15,11 +15,11 @@ contract LeverageAave is ArgobytesTips {
 
     struct EnterData {
         address on_behalf_of;
-        address sender;
         IAaveLendingPool lending_pool;
         IERC20 collateral;
         uint256 collateral_amount;
         uint256 collateral_flash_fee;
+        uint256 collateral_tip;
         IERC20 borrow;
         uint256 borrow_amount;
         address swap_contract;
@@ -29,6 +29,7 @@ contract LeverageAave is ArgobytesTips {
     struct ExitData {
         address on_behalf_of;
         uint256 usdt_flash_fee;
+        // TODO: fill this in
     }
 
     function enter(EnterData calldata data) external {
@@ -56,23 +57,26 @@ contract LeverageAave is ArgobytesTips {
         );
 
         // trade borrowed tokens to repay the flash loan
+        data.borrow.transfer(data.swap_contract, data.borrow_amount);
         (bool trade_success, ) = data.swap_contract.call(data.swap_data);
         require(trade_success, "!swap");
 
-        uint256 balance = data.collateral.balanceOf(address(this));
+        // we need to pay back the flash loan
         flash_collateral_amount += data.collateral_flash_fee;
 
+        // make sure we traded enough to pay back the flash loan
+        uint256 balance = data.collateral.balanceOf(address(this));
         require(
             balance >= flash_collateral_amount,
             "!swap balance"
         );
 
-        // check if we have some extra collateral tokens
+        // check if we have any extra collateral tokens
         if (balance > flash_collateral_amount) {
             data.collateral.safeTransfer(data.on_behalf_of, balance - flash_collateral_amount);
         }
         
-        // check if we have some extra borrow tokens
+        // check if we have any extra borrow tokens
         balance = data.borrow.balanceOf(address(this));
         if (balance > 0) {
             data.borrow.safeTransfer(data.on_behalf_of, balance);
@@ -82,6 +86,43 @@ contract LeverageAave is ArgobytesTips {
     }
 
     function exit(ExitData calldata data) external {
-        revert("wip");
+        // at this point, we have some tokens from the flash loan
+        uint256 flash_borrow_amount = data.borrow.balanceOf(address(this));
+
+        // repay the loan with the flash loaned tokens
+        data.lending_pool.repay(data.borrow, flash_borrow_amount, 2, data.on_behalf_of);
+
+        // Transfer aToken here
+        data.aave_token.transferFrom(data.on_behalf_of, address(this), data.aave_token_amount);
+
+        // Burn aToken for the underlying
+        data.lending_pool.withdraw(data.collateral, data.collateral_withdraw_amount, address(this));
+
+        // we need to pay back the flash loan
+        flash_borrow_amount += data.flash_borrow_fee;
+
+        // trade collateral tokens to repay the flash loan
+        data.collateral.transfer(data.swap_contract, data.collateral_swap_amount);
+        (bool trade_success, ) = data.swap_contract.call(data.swap_data);
+        require(trade_success, "!swap");
+
+        // make sure we traded enough to pay back the flash loan
+        uint256 balance = data.borrow.balanceOf(address(this));
+        require(
+            balance >= flash_borrow_amount,
+            "!swap balance"
+        );  // TODO: this isn't needed becaause the safeTransfer will
+        // check if we have any extra borrow tokens
+        if (balance > flash_borrow_amount) {
+            data.borrow.safeTransfer(data.on_behalf_of, balance - flash_borrow_amount);
+        }
+
+        // check if we have any extra collateral tokens
+        balance = data.collateral.balanceOf(address(this));
+        if (balance > 0) {
+            data.collateral.safeTransfer(data.on_behalf_of, balance);
+        }
+
+        // flash_borrow_amount will be pulled by the flash lender
     }
 }
