@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MPL-2.0
-// TODO: consistent revert strings
 pragma solidity 0.8.7;
 pragma abicoder v2;
 
@@ -9,7 +8,7 @@ import {IERC20, SafeERC20} from "contracts/external/erc20/SafeERC20.sol";
 
 // TODO: typed errors
 
-/// @title Leverage cyy3crv
+/// @title Leverage tokens on Aave V2
 contract LeverageAave is ArgobytesTips {
     using SafeERC20 for IERC20;
 
@@ -21,21 +20,6 @@ contract LeverageAave is ArgobytesTips {
         uint256 collateral_flash_fee;
         IERC20 borrow;
         uint256 borrow_amount;
-        address swap_contract;
-        bytes swap_data;
-    }
-
-    struct ExitData {
-        address on_behalf_of;
-        IAaveLendingPool lending_pool;
-        IERC20 borrow;
-        IERC20 collateral;
-        IERC20 collateral_atoken;
-        uint256 collateral_atoken_amount;
-        uint256 collateral_atoken_tip;
-        uint256 collateral_withdraw_amount;
-        uint256 borrow_flash_fee;
-        uint256 collateral_swap_amount;
         address swap_contract;
         bytes swap_data;
     }
@@ -94,6 +78,21 @@ contract LeverageAave is ArgobytesTips {
         }
 
         // flash_collateral_amount will be pulled by the flash lender
+    }
+
+    struct ExitData {
+        address on_behalf_of;
+        IAaveLendingPool lending_pool;
+        IERC20 borrow;
+        IERC20 collateral;
+        IERC20 collateral_atoken;
+        uint256 collateral_atoken_amount;
+        uint256 collateral_atoken_tip;
+        uint256 collateral_withdraw_amount;
+        uint256 borrow_flash_fee;
+        uint256 collateral_swap_amount;
+        address swap_contract;
+        bytes swap_data;
     }
 
     function exit(ExitData calldata data) external {
