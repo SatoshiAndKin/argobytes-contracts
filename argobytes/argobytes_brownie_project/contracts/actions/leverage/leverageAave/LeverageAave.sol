@@ -28,8 +28,16 @@ contract LeverageAave is ArgobytesTips {
 
     struct ExitData {
         address on_behalf_of;
-        uint256 usdt_flash_fee;
-        // TODO: fill this in
+        IAaveLendingPool lending_pool;
+        IERC20 borrow;
+        IERC20 collateral;
+        IERC20 collateral_atoken;  // TODO: more  specific type?
+        uint256 collateral_atoken_amount;
+        uint256 collateral_withdraw_amount;
+        uint256 borrow_flash_fee;
+        uint256 collateral_swap_amount;
+        address swap_contract;
+        bytes swap_data;
     }
 
     function enter(EnterData calldata data) external {
@@ -39,10 +47,13 @@ contract LeverageAave is ArgobytesTips {
         // transfer the user's initial collateral
         data.collateral.safeTransferFrom(data.on_behalf_of, address(this), data.collateral_amount);
 
+        uint256 additional_collateral = flash_collateral_amount + data.collateral_amount;
+
         // deposit collateral into Aave
+        data.collateral.approve(address(data.lending_pool), additional_collateral);
         data.lending_pool.deposit(
             address(data.collateral),
-            flash_collateral_amount + data.collateral_amount,
+            additional_collateral,
             data.on_behalf_of,
             0
         );
@@ -90,16 +101,19 @@ contract LeverageAave is ArgobytesTips {
         uint256 flash_borrow_amount = data.borrow.balanceOf(address(this));
 
         // repay the loan with the flash loaned tokens
-        data.lending_pool.repay(data.borrow, flash_borrow_amount, 2, data.on_behalf_of);
+        data.borrow.approve(address(data.lending_pool), flash_borrow_amount);
+        data.lending_pool.repay(address(data.borrow), flash_borrow_amount, 2, data.on_behalf_of);
 
         // Transfer aToken here
-        data.aave_token.transferFrom(data.on_behalf_of, address(this), data.aave_token_amount);
+        // TODO: calculate collateral_atoken_amount based on what we repaid?
+        data.collateral_atoken.transferFrom(data.on_behalf_of, address(this), data.collateral_atoken_amount);
 
         // Burn aToken for the underlying
-        data.lending_pool.withdraw(data.collateral, data.collateral_withdraw_amount, address(this));
+        data.collateral_atoken.approve(address(data.lending_pool), data.collateral_withdraw_amount);
+        data.lending_pool.withdraw(address(data.collateral), data.collateral_withdraw_amount, address(this));
 
         // we need to pay back the flash loan
-        flash_borrow_amount += data.flash_borrow_fee;
+        flash_borrow_amount += data.borrow_flash_fee;
 
         // trade collateral tokens to repay the flash loan
         data.collateral.transfer(data.swap_contract, data.collateral_swap_amount);
@@ -111,7 +125,7 @@ contract LeverageAave is ArgobytesTips {
         require(
             balance >= flash_borrow_amount,
             "!swap balance"
-        );  // TODO: this isn't needed becaause the safeTransfer will
+        );
         // check if we have any extra borrow tokens
         if (balance > flash_borrow_amount) {
             data.borrow.safeTransfer(data.on_behalf_of, balance - flash_borrow_amount);
@@ -121,6 +135,12 @@ contract LeverageAave is ArgobytesTips {
         balance = data.collateral.balanceOf(address(this));
         if (balance > 0) {
             data.collateral.safeTransfer(data.on_behalf_of, balance);
+        }
+
+        // check if we have any leftover a tokens
+        balance = data.collateral_atoken.balanceOf(address(this));
+        if (balance > 0) {
+            data.collateral_atoken.safeTransfer(data.on_behalf_of, balance);
         }
 
         // flash_borrow_amount will be pulled by the flash lender
