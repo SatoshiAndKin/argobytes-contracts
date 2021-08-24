@@ -5,18 +5,11 @@ pragma abicoder v2;
 
 import {AddressLib, CallReverted, InvalidTarget} from "contracts/library/AddressLib.sol";
 import {IERC20, SafeERC20} from "contracts/external/erc20/SafeERC20.sol";
+import {IAaveLendingPoolAddressesProviderRegistry, IAaveLendingPoolAddressesProviderRegistry} from "contracts/external/aave/Aave.sol";
 
 import {ArgobytesProxy} from "./ArgobytesProxy.sol";
 
 error BadLender(address);
-
-interface ILendingPoolAddressesProviderRegistry {
-    function getAddressesProvidersList() external view returns (IAaveLendingPoolAddressesProvider[] memory);
-}
-
-interface IAaveLendingPoolAddressesProvider {
-    function getLendingPool() external returns (address);
-}
 
 /// @title Flash borrow from approved tokes or from Aave V2's LendingPool.flashLoan
 contract ArogbytesFlashBorrower is ArgobytesProxy {
@@ -25,11 +18,11 @@ contract ArogbytesFlashBorrower is ArgobytesProxy {
     event AddLendingPool(address pool);
     event RemoveLendingPool(address pool);
 
-    ILendingPoolAddressesProviderRegistry immutable lender_provider_registry;
+    IAaveLendingPoolAddressesProviderRegistry immutable lender_provider_registry;
 
     mapping(address => bool) public lending_pools;
 
-    constructor(ILendingPoolAddressesProviderRegistry _lender_provider_registry) {
+    constructor(IAaveLendingPoolAddressesProviderRegistry _lender_provider_registry) {
         lender_provider_registry = _lender_provider_registry;
 
         // by default, you can flash loan from yourself. this can be removed
@@ -69,6 +62,7 @@ contract ArogbytesFlashBorrower is ArgobytesProxy {
     }
 
     /// @notice transfer tokens from lenders, do whatever with them, repay them, send profits to the owner
+    /// @dev If you don't have enough tokens have Aave's LendingPool executeOperation here instead
     /// @dev lenders must approve this contract to use their tokens!
     /// @dev "params" should be abi encoded ActionTypes.Actions
     // TODO: write a fork of this that works with fee on transfer tokens?

@@ -110,7 +110,7 @@ class GasStrategyV1(BlockGasStrategy):
             },
         )
         r = r.json()
-        return int(r['result'], 16)
+        return int(r["result"], 16)
 
     def get_gas_price(self) -> Generator[Wei, None, None]:
         # just in case we changed networks
