@@ -7,7 +7,7 @@ from warnings import warn
 
 import click
 import rlp
-from brownie import ETH_ADDRESS, ZERO_ADDRESS, Contract, project, web3
+from brownie import chain, ETH_ADDRESS, ZERO_ADDRESS, Contract, project, web3
 from eth_abi import decode_single
 from eth_utils import keccak, to_bytes, to_checksum_address
 from lazy_load import lazy
@@ -147,17 +147,20 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
 
 
 def get_or_clone_flash_borrower(
-    account, constructor_args=None, borrower_salt=None, clone_salt="", factory_salt="", leading_zeros=1
+    account, aave_provider_registry=None, borrower_salt=None, clone_salt="", factory_salt="", leading_zeros=1
 ):
     factory = get_or_create_factory(account, factory_salt)
 
     # we don't actually want the proxy. flash_borrower does more
     # proxy = get_or_create_proxy(account, salt)
     flash_borrower = get_or_create_flash_borrower(
-        account, constructor_args=constructor_args, salt=borrower_salt, leading_zeros=leading_zeros or 1
+        account, aave_provider_registry=aave_provider_registry, salt=borrower_salt, leading_zeros=leading_zeros or 1
     )
 
     clone = get_or_clone(account, factory, flash_borrower, salt=clone_salt)
+
+    # this is an immutable and so we don't have a getter for it
+    clone.aave_provider_registry = flash_borrower.aave_provider_registry
 
     print(f"clone owned by {account}:", clone)
 
@@ -215,16 +218,27 @@ def get_or_create_proxy(default_account, salt=None, leading_zeros=1):
     )
 
 
-def get_or_create_flash_borrower(default_account, constructor_args=None, salt=None, leading_zeros=1):
-    assert constructor_args, "need address of AaveProviderRegistry"
+def get_or_create_flash_borrower(default_account, aave_provider_registry=None, salt=None, leading_zeros=1):
     assert leading_zeros, "need >=1 leading zero"
-    return get_or_create(
+
+    if not aave_provider_registry:
+        if chain.id == 1:
+            aave_provider_registry = load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413")
+        else:
+            raise NotImplementedError
+
+    contract = get_or_create(
         default_account,
         ArgobytesBrownieProject.ArogbytesFlashBorrower,
-        constructor_args=constructor_args,
+        constructor_args=[aave_provider_registry],
         salt=salt,
         leading_zeros=leading_zeros,
     )
+
+    # this is an immutable and so it doesn't have a getter
+    contract.aave_provider_registry = aave_provider_registry
+
+    return contract
 
 
 def lazy_contract(address, owner=None, force=False):

@@ -98,7 +98,7 @@ def argobytes_proxy_clone(argobytes_factory, argobytes_proxy):
 def argobytes_flash_borrower(aave_provider_registry, argobytes_factory, argobytes_proxy, brownie_mainnet_fork):
     # on mainnet we use the (bytes32) salt to generate custom addresses with lots of zero bytes
     # for our tests, we just need an address with the first byte being a zero
-    return get_or_create_flash_borrower(accounts[0], constructor_args=[aave_provider_registry])
+    return get_or_create_flash_borrower(accounts[0], aave_provider_registry=aave_provider_registry)
 
 
 @pytest.fixture()

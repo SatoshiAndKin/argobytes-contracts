@@ -8,7 +8,7 @@ def test_get_or_clone(aave_provider_registry):
 
     argobytes_factory = get_or_create_factory(account)
 
-    argobytes_proxy = get_or_create_flash_borrower(account, [aave_provider_registry])
+    argobytes_proxy = get_or_create_flash_borrower(account, aave_provider_registry=aave_provider_registry)
 
     argobytes_clone = get_or_clone(account, argobytes_factory, argobytes_proxy)
 

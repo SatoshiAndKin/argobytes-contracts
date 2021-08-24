@@ -232,6 +232,8 @@ def with_dry_run(
         print("No transactions were sent in the dry run. Exiting now")
         return
 
+    # TODO: if account is not a LocalAccount, exit here since we can't sign with it
+
     if not with_mainnet_run:
         print("Dry run completed successfully! Add '--with-mainnet-run' to broadcast for real.")
         return

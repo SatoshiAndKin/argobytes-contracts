@@ -1,5 +1,6 @@
 """Bundle multiple transactions into as few as possible."""
 import contextlib
+from abc import ABC, abstractmethod
 from pprint import pformat
 
 import click
@@ -31,7 +32,7 @@ def find_lenders(aave_lender, borrowed_assets):
     return lenders
 
 
-class TransactionBundler:
+class TransactionBundler(ABC):
     """
     Safely send flash loans over the Eden network.
 
@@ -46,16 +47,15 @@ class TransactionBundler:
 
     def __init__(
         self,
-        owner,
+        aave_market_id=0,
         aave_provider_registry=None,
         borrowed_assets=None,
         borrower_salt=None,
         clone_salt=None,
-        delegate_callable=None,
         factory_salt=None,
         host_private=None,
+        owner=None,
         sender=None,
-        setup_transactions=None,
     ):
         if host_private is None:
             # default to eden. disable by setting to False
@@ -71,12 +71,11 @@ class TransactionBundler:
         self.borrower_salt = borrower_salt
         self.clone_salt = clone_salt
         self.factory_salt = factory_salt
-        self.setup_transactions = setup_transactions or []
         self.pending = False
         self.factory = self.flash_borrower = self.clone = self.flash_tx = None
-        self.delegate_callable = [getattr(dc, "address", dc) for dc in delegate_callable or []]
-        self.ignored = []
+        self.delegate_callable = []  # this is populated by the setup transaction
 
+        assert owner, "no owner!"
         if not sender:
             self.sender = owner
         else:
@@ -85,7 +84,11 @@ class TransactionBundler:
 
         # even if we aren't using Aave, we need the aave_provider_registry to build the ArgobytesFlashBorrower contract
         if aave_provider_registry is None:
-            aave_provider_registry = "0x52D306e36E3B6B02c153d0266ff0f85d18BCD413"
+            # TODO: DRY
+            if chain.id == 1:
+                aave_provider_registry = "0x52D306e36E3B6B02c153d0266ff0f85d18BCD413"
+            else:
+                raise NotImplementedError
         self.aave_provider_registry = load_contract(aave_provider_registry)
 
         # TODO: if all the assets can be covered by our own balances, skip aave
@@ -93,8 +96,6 @@ class TransactionBundler:
 
         # TODO: check all the markets and pick the best one
         # #0 is main Aave V2 market. #1 is Aave AMM market
-        aave_market_id = 0
-
         aave_provider = load_contract(aave_providers_list[aave_market_id])
 
         self.aave_lender = load_contract(aave_provider.getLendingPool())
@@ -108,10 +109,6 @@ class TransactionBundler:
         assert not self.pending, "cannot nest flash loans"
         self.pending = True
 
-        # ignore any transactions in the history before this
-        # this could be more efficient, but this works for now
-        self.ignored = list(range(0, len(network.history)))
-
         # snapshot here. so we can revert to before any non-atomic transactions are sent
         chain.snapshot()
 
@@ -121,7 +118,7 @@ class TransactionBundler:
         # every flash loan MUST include at least one transfer of each asset in self.borrowed_assets to the clone
         for asset, amount in self.borrowed_assets.items():
             assert amount, f"No amount set for {asset}"
-            print("Simulating flash loan of {amount:_} {asset}...")
+            print(f"Simulating flash loan of {amount:_} {asset}...")
             asset.transfer(self.clone, amount, {"from": self.lenders[asset]})
 
         return self
@@ -138,15 +135,18 @@ class TransactionBundler:
 
         self.pending = False
 
-    @contextlib.contextmanager
-    def ignore_transactions(self):
-        # TODO: do we still need this?
-        start_history_length = len(network.history)
+    @abstractmethod
+    def setup_bundle(self):
+        """Do any setup transactions needed by the bundle (such as approvals).
+        
+        Returns a list of delegate callable actions.
+        """
+        raise NotImplementedError
 
-        yield
-
-        for i in range(start_history_length, len(network.history)):
-            self.ignored.append(i)
+    @abstractmethod
+    def the_transactions(self):
+        """Send a bunch of transactions to be bundled into a flash loan."""
+        raise NotImplementedError
 
     def is_delegate_callable(self, contract):
         address = getattr(contract, "address", contract)
@@ -169,12 +169,12 @@ class TransactionBundler:
             print(f"Unlocking {lender}...")
             self.lenders[lender] = accounts.at(lender, force=True)
 
-    def careful_send(self, prompt_confirmation=True):
+    def careful_send(self, prompt_confirmation=True, broadcast=False):
         """Do a dry run, prompt, send the transaction for real."""
         assert web3.provider.endpoint_uri == self.host_fork  # just in case
 
         # deploy contracts and run any other setup transactions on the forked network
-        setup_did_something = self.setup() > 0
+        self.setup()
 
         # on a forked network, do the transcations that we want to be atomic.
         # the __exit__ funcion compiles everything and sets self.flash_tx
@@ -182,13 +182,19 @@ class TransactionBundler:
         with self:
             self.the_transactions()
 
+        # TODO: if not local account, we cannot proceed
+
+        if not broadcast:
+            print("Success! Add --broadcast to send for real.")
+            return
+
         if prompt_confirmation:
             prompt_loud_confirmation(self.owner)
 
-        return self._send_upstream(setup_did_something)
+        return self._send_upstream()
 
-    def _send_upstream(self, setup_did_something):
-        if setup_did_something:
+    def _send_upstream(self):
+        try:
             # send the setup transactions to the upstream network
             self.set_network_upstream()
             self.setup()
@@ -201,18 +207,18 @@ class TransactionBundler:
 
             # self.safety_checks()  #TODO: figure out how to capture starting balances in a generic way
 
-        # send the flash transaction to the private network
-        self.set_network_private()
-        tx = self.sender.transfer(
-            to=self.flash_tx.receiver,
-            data=self.flash_tx.input,
-            gas_limit=self.flash_tx.gas_limit,
-            allow_revert=False,
-        )
-        tx.info()
-
-        # put the network back
-        self.reset_network_fork()
+            # send the flash transaction to the private network
+            self.set_network_private()
+            tx = self.sender.transfer(
+                to=self.flash_tx.receiver,
+                data=self.flash_tx.input,
+                gas_limit=self.flash_tx.gas_limit,
+                allow_revert=False,
+            )
+            tx.info()
+        finally:
+            # put the network back
+            self.reset_network_fork()
 
     def set_network_fork(self):
         if self.pending:
@@ -257,29 +263,11 @@ class TransactionBundler:
         web3.connect(self.host_private)
         web3.reset_middlewares()
 
-    def setup(self) -> int:
-        start_history_len = len(network.history)
-
-        # run any extra setup transactions
-        for tx in self.setup_transactions:
-            if not tx:
-                continue
-
-            # TODO: get the actual Contract for this so brownie's info is better?
-            # TODO: if we set gas_limit and allow_revert=False, how does it check for revert?
-            # TODO: are we sure required_confs=0 is always going to be okay?
-            self.sender.transfer(
-                to=tx.receiver,
-                data=tx.input,
-                gas_limit=tx.gas_limit,
-                allow_revert=False,
-                required_confs=0,
-            )
-
+    def setup(self):
         # TODO: pass required_confs to these
         self.factory, self.flash_borrower, self.clone = get_or_clone_flash_borrower(
             self.owner,
-            constructor_args=[self.aave_provider_registry],
+            aave_provider_registry=self.aave_provider_registry,
             borrower_salt=self.borrower_salt,
             clone_salt=self.clone_salt,
             factory_salt=self.factory_salt,
@@ -299,13 +287,9 @@ class TransactionBundler:
                 self.clone.updateAaveLendingPools({"from": self.owner}).info()
                 # TODO: remove old pools?
 
+        self.delegate_callable = self.setup_bundle()
+
         network.history.wait()
-
-        return len(network.history) - start_history_len
-
-    def the_transactions(self):
-        """Send a bunch of transactions to be bundled into a flash loan."""
-        raise NotImplementedError("proper abstract base class")
 
     def _actions_from_history(self):
         assert web3.provider.endpoint_uri == self.host_fork, "oh no!"
@@ -314,12 +298,8 @@ class TransactionBundler:
         asset_amounts = {}
         actions = []
         for i, tx in enumerate(network.history):
-            if i in self.ignored:
-                print(f"skipped tx: {tx.txid}")
-                continue
-            else:
-                print(f"processing...")
-                tx.info()
+            print(f"processing...")
+            tx.info()
 
             contract = load_contract(tx.receiver)
 
@@ -446,45 +426,3 @@ class TransactionBundler:
             flash_tx.call_trace()
 
         return flash_tx
-
-    @classmethod
-    def flashloan(
-        cls,
-        owner,
-        transaction_bundle_fn,
-        history_start_index=0,
-        prompt_confirmation=True,
-        **kwargs,
-    ):
-        if "setup_transactions" not in kwargs:
-            kwargs["setup_transactions"] = network.history[history_start_index:]
-
-        class MyBundler(cls):
-            def __init__(self):
-                super().__init__(owner, **kwargs)
-
-            def the_transactions(self):
-                transaction_bundle_fn(self)
-
-        return MyBundler().careful_send(prompt_confirmation)
-
-    @classmethod
-    def bundle(
-        cls,
-        owner,
-        transaction_bundle_fn,
-        history_start_index=0,
-        prompt_confirmation=True,
-        **kwargs,
-    ):
-        if "setup_transactions" not in kwargs:
-            kwargs["setup_transactions"] = network.history[history_start_index:]
-
-        class MyBundler(cls):
-            def __init__(self):
-                super().__init__(owner, **kwargs)
-
-            def the_transactions(self):
-                transaction_bundle_fn(self)
-
-        return MyBundler().careful_send(prompt_confirmation)

@@ -83,8 +83,11 @@ def cli(
             if block_timestamp < now:
                 raise RuntimeError("block timestamp behind by more than 60 seconds!", block_timestamp, now)
 
-            if network in ["mainnet", "mainnet-fork", "bsc-main", "bsc-main-fork", "polygon-main", "polygon-main-fork"]:
+            if network in ["mainnet", "mainnet-fork"]:
+                logger.info("TODO: figure out gas for the ethereum network")
+            elif network in ["bsc-main", "bsc-main-fork", "polygon-main", "polygon-main-fork"]:
                 # TODO: use EIP1559 for mainnet/mainnet-fork (or maybe automatically somehow?)
+                # TODO: i think we have some bugs here still
                 gas_strategy = GasStrategyV1(
                     speed=gas_speed,
                     max_price=gas_max_price,

@@ -214,13 +214,11 @@ def print_token_balances(balances, label=None, as_usd=False):
 
 
 def safe_token_approve(
-    account, balances, spender, extra_balances=None, amount=2 ** 256 - 1, reset=False, required_confs=0
+    account, balances, spender, extra_balances=None, amount=2 ** 256 - 1, reset=False
 ):
     """For every token that we have a balance of, Approve unlimited (or a specified amount) for the spender."""
     if extra_balances is None:
         extra_balances = {}
-
-    pending_txs = []
 
     for token, balance in balances.items():
         token_symbol = get_token_symbol(token, weth_to_eth=False)
@@ -248,12 +246,10 @@ def safe_token_approve(
         elif reset:
             # TODO: we should have a list of tokens that need this behavior instead of taking a kwarg
             print(f"Clearing {token_symbol} ({token.address}) approval...")
-            # gas estimators get confused if you do 0 here
-            approve_tx = token.approve(
-                spender, 0, {"from": account, "required_confs": required_confs or 1, "gas_buffer": 1.3}
+            # gas estimators get confused if we don't wait for confirmation here
+            token.approve(
+                spender, 0, {"from": account, "required_confs": 1, "gas_buffer": 1.3}
             )
-
-            pending_txs.append(approve_tx)
 
         if amount == 2 ** 256 - 1:
             # the amount is the max
@@ -262,17 +258,15 @@ def safe_token_approve(
             # the amount was specified
             print(f"Approving {spender} for {amount} of {account}'s {token_symbol}...")
 
-        approve_tx = token.approve(
-            spender, amount, {"from": account, "required_confs": required_confs, "gas_buffer": 1.3}
+        token.approve(
+            spender, amount, {"from": account, "required_confs": 0, "gas_buffer": 1.3}
         )
-
-        pending_txs.append(approve_tx)
 
         # TODO: if debug, print this
         # approve_tx.info()
 
-    if required_confs == 0:
-        wait_for_confirmation(pending_txs, required_confs=1)
+    brownie.history.wait()
+    # TODO: what if one of them reverted?
 
 
 def transfer_token(from_address, to, token, decimal_amount):
@@ -295,7 +289,7 @@ def print_start_and_end_balance(account, tokens=None):
     print()
 
     if tokens:
-        raise NotImplementedError("TODO: print starting token balances")
+        print("TODO: print starting token balances")
 
     yield
 
@@ -311,7 +305,7 @@ def print_start_and_end_balance(account, tokens=None):
     )
 
     if tokens:
-        raise NotImplementedError("TODO: print ending token balances")
+        print("TODO: print ending token balances")
 
 
 def retry_fetch_token_list(url, tries=3):

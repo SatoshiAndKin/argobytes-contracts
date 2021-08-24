@@ -7,8 +7,6 @@ from argobytes.tokens import load_token
 
 
 def example_aave_flash_loan(owner):
-    history_start_index = len(network.history)
-
     # we are going to flash loan some WETH from Aave
     weth = load_token("weth", owner=owner)
 
@@ -44,7 +42,6 @@ def example_aave_flash_loan(owner):
         transaction_bundle,
         borrowed_assets={weth: trade_size},
         delegate_callable=delegate_callable,
-        history_start_index=history_start_index,
         # a real flash loan should probably prompt confirmation
         prompt_confirmation=False,
     )

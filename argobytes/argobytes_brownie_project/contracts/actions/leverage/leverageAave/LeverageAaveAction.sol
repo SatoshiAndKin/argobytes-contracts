@@ -9,7 +9,7 @@ import {IERC20, SafeERC20} from "contracts/external/erc20/SafeERC20.sol";
 // TODO: typed errors
 
 /// @title Leverage tokens on Aave V2
-contract LeverageAave is ArgobytesTips {
+contract LeverageAaveAction is ArgobytesTips {
     using SafeERC20 for IERC20;
 
     struct EnterData {
@@ -146,5 +146,6 @@ contract LeverageAave is ArgobytesTips {
         }
 
         // flash_borrow_amount will be pulled by the flash lender
+        // on_behalf_of will have a bunch of aToken
     }
 }
