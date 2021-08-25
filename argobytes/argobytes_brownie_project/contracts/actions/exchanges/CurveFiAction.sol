@@ -22,12 +22,12 @@ contract CurveFiAction is AbstractERC20Exchange {
 
     CurveSwaps immutable curve_swaps;
 
-    /// @dev get curve_swaps from https://curve.readthedocs.io/registry-exchanges.html
+    /// @notice get curve_swaps from https://curve.readthedocs.io/registry-exchanges.html
     constructor(CurveSwaps _curve_swaps) public {
         curve_swaps = _curve_swaps;
     }
 
-    // trade the full balance on curve
+    /// @notice trade the full balance on curve
     function trade(
         address pool,
         IERC20 src_token,
@@ -41,7 +41,8 @@ contract CurveFiAction is AbstractERC20Exchange {
 
         // TODO: efficient way to do infinite approvals? what is most gas efficient now?
         // TODO: approve pool or curve_swaps?
-        src_token.approve(address(curve_swaps), src_amount);
+        // we do safeApprove because this might be USDT or PAXG (or similarly broken ERC-20)
+        src_token.safeApprove(address(curve_swaps), src_amount);
 
         // do the trade
         curve_swaps.exchange(pool, src_token, dest_token, src_amount, dest_min_tokens, to);
