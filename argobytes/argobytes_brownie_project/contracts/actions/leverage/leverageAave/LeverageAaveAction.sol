@@ -105,7 +105,7 @@ contract LeverageAaveAction is ArgobytesTips {
         uint256 flash_borrow_amount = data.borrow.balanceOf(address(this));
 
         // repay the loan with the flash loaned tokens
-        data.borrow.safaApprove(address(data.lending_pool), flash_borrow_amount);
+        data.borrow.safeApprove(address(data.lending_pool), flash_borrow_amount);
         data.lending_pool.repay(address(data.borrow), flash_borrow_amount, 2, data.on_behalf_of);
 
         // Transfer aToken here
