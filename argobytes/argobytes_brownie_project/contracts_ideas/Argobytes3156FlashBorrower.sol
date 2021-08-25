@@ -3,10 +3,11 @@
 /**
  * ArgobytesFlashBorrower is an extension to ArgobytesProxy that is also an IERC3156 Flash Loan Borrower.
  */
-pragma solidity 0.8.7;
+pragma solidity 0.6.12;
 
 import {AddressLib, CallReverted, InvalidTarget} from "contracts/library/AddressLib.sol";
 import {IERC20} from "contracts/external/erc20/IERC20.sol";
+import {BytesLib} from "contrcts/library/BytesLib.sol";
 
 import {ActionTypes} from "contracts/abstract/ActionTypes.sol";
 import {IERC3156FlashBorrower} from "contracts/external/erc3156/IERC3156FlashBorrower.sol";
@@ -75,7 +76,7 @@ contract Argobytes3156FlashBorrower is ArgobytesProxy, IERC3156FlashBorrower {
         // check auth (owner is always allowed to use any lender and any action)
         if (msg.sender != owner()) {
             if (!s.allowed_lenders[lender]) revert UnexpectedLender();
-            requireAuth(msg.sender, action.target, action.call_type, bytes4(action.data));
+            requireAuth(msg.sender, action.target, action.call_type, BytesLib.toBytes4(action.data));
         }
 
         if (s.pending_flashloan_callback == true) {

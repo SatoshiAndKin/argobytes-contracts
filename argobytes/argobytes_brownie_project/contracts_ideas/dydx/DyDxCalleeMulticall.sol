@@ -1,7 +1,7 @@
 /* Like https://github.com/makerdao/multicall, but compatible with DyDx calls */
 // TODO: i think we can delete this
 
-pragma solidity 0.8.7;
+pragma solidity 0.6.12;
 
 import {DyDx_IDyDxCallee, DyDx_Account} from "./external/DyDx_IDyDxCallee.sol";
 

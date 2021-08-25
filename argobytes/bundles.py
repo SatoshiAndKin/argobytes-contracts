@@ -4,7 +4,7 @@ from pprint import pformat
 from typing import List
 
 import click
-from brownie import accounts, chain, network, rpc, web3, Contract
+from brownie import Contract, accounts, chain, network, rpc, web3
 from eth_utils.address import is_address
 
 from argobytes.cli_helpers_lite import prompt_loud_confirmation
@@ -130,7 +130,7 @@ class TransactionBundler(ABC):
     @abstractmethod
     def setup_bundle(self) -> List[Contract]:
         """Do any setup transactions needed by the bundle (such as approvals).
-        
+
         Returns a list of delegate callable actions.
         """
         # self.simulated_flash_loan(first_contract_target)
@@ -139,7 +139,7 @@ class TransactionBundler(ABC):
     @abstractmethod
     def the_transactions(self):
         """Send a bunch of transactions to be bundled into a flash loan.
-        
+
         This must call `transfer_from_flash_loan`.
         """
         raise NotImplementedError

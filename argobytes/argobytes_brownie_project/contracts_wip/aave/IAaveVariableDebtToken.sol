@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.7;
+pragma solidity 0.6.12;
 
 import {IAaveScaledBalanceToken} from './IAaveScaledBalanceToken.sol';
 // import {IAaveIncentivesController} from './IAaveIncentivesController.sol';

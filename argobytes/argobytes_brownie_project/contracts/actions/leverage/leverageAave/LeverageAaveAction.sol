@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.8.7;
-pragma abicoder v2;
+pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
 
 import {ArgobytesTips} from "contracts/ArgobytesTips.sol";
 import {IAaveLendingPool} from "contracts/external/aave/Aave.sol";
@@ -122,6 +122,8 @@ contract LeverageAaveAction is ArgobytesTips {
 
         // trade collateral tokens to repay the flash loan
         data.collateral.transfer(data.swap_contract, data.collateral_swap_amount);
+        // AddressLib.functionCall(data.swap_contract, data.swap_data);
+        // TODO: debugging this is a pain
         (bool trade_success, ) = data.swap_contract.call(data.swap_data);
         require(trade_success, "!swap");
 

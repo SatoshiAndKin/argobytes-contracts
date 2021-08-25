@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.8.7;
+pragma solidity 0.6.12;
 
 import {AbstractERC20Exchange} from "./AbstractERC20Exchange.sol";
 
@@ -7,8 +7,7 @@ import {IERC20} from "contracts/external/erc20/IERC20.sol";
 import {IKyberNetworkProxy} from "contracts/external/kyber/IKyberNetworkProxy.sol";
 import {IKyberRegisterWallet} from "contracts/external/kyber/IKyberRegisterWallet.sol";
 
-error AccessDenied();
-error FailedTrade();
+// error FailedTrade();
 
 contract KyberAction is AbstractERC20Exchange {
     // TODO: document MAX_QTY
@@ -24,7 +23,7 @@ contract KyberAction is AbstractERC20Exchange {
     // this function must be able to receive ether if it is expected to trade it
     receive() external payable {}
 
-    constructor(IKyberNetworkProxy _network_proxy, address payable _platform_wallet) {
+    constructor(IKyberNetworkProxy _network_proxy, address payable _platform_wallet) public {
         network_proxy = _network_proxy;
 
         KYBER_REGISTER_WALLET.registerWallet(_platform_wallet);
@@ -86,7 +85,8 @@ contract KyberAction is AbstractERC20Exchange {
 
         // TODO: set minConversionRate instead?
         if (received < dest_min_tokens) {
-            revert FailedTrade();
+            // revert FailedTrade();
+            revert("!dest_min_tokens");
         }
     }
 

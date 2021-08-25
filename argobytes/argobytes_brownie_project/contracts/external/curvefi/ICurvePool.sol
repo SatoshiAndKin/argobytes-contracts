@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.8.7;
+pragma solidity 0.6.12;
 
 // TODO: each pool is slightly different. this is built to work with 3crv, but also has "exchange_underlying"
 interface ICurvePool {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.8.7;
+pragma solidity 0.6.12;
 
-error AccessDenied();
+// error AccessDenied();
 
 /// @title A contract with the owner's address appended to the end
 /// @dev In order to set the owner, contracts using this abstract need to be deployed with something like ArgobytesFactory19
@@ -9,7 +9,8 @@ abstract contract ImmutablyOwned {
     /// @dev revert if sender is not the owner
     modifier onlyOwner() {
         if (owner() != msg.sender) {
-            revert AccessDenied();
+            // revert AccessDenied();
+            revert("!access");
         }
         _;
     }

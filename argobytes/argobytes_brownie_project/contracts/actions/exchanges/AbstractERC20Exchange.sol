@@ -6,7 +6,7 @@
  *
  * Rewrite this to use UniversalERC20? I'm not sure its worth it. this is pretty easy to follow.
  */
-pragma solidity 0.8.7;
+pragma solidity 0.6.12;
 
 import {IERC20} from "contracts/external/erc20/IERC20.sol";
 

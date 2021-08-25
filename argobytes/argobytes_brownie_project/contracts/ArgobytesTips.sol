@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.8.7;
-pragma abicoder v2;
+pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
 
 import {IENS, IResolver} from "contracts/external/ens/ENS.sol";
 import {IERC20} from "contracts/external/erc20/IERC20.sol";
@@ -14,7 +14,7 @@ abstract contract Tips {
     /// @dev we don't want to revert if tipping fails. instead we just emit an event
     event TipFailed(address indexed to, IERC20 token, uint256 amount, bytes errordata);
 
-    constructor(bytes32 _tip_namehash) {
+    constructor(bytes32 _tip_namehash) internal {
         tip_namehash = _tip_namehash;
     }
 
@@ -70,5 +70,5 @@ abstract contract Tips {
 /// @title Send tokens to tip.satoshiandkin.eth
 abstract contract ArgobytesTips is Tips {
     /// @dev `brownie.web3.ens.namehash("tip.satoshiandkin.eth")`
-    constructor() Tips(0x6797569217323c160453d50601152fd4a68e66c4c1fd0bfc8a3f902fa488d465) {}
+    constructor() Tips(0x6797569217323c160453d50601152fd4a68e66c4c1fd0bfc8a3f902fa488d465) internal {}
 }

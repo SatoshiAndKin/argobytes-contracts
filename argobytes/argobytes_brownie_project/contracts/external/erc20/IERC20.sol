@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: You can't license an interface
-pragma solidity 0.8.7;
+pragma solidity 0.6.12;
 
-import {SafeERC20} from "@OpenZeppelin/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20} from "@OpenZeppelin/token/ERC20/SafeERC20.sol";
 
 /// @title https://eips.ethereum.org/EIPS/eip-20
 interface IERC20 {
