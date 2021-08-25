@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.7;
+pragma abicoder v2;
 
 import {ArgobytesTips} from "contracts/ArgobytesTips.sol";
 import {IAaveLendingPool} from "contracts/external/aave/Aave.sol";
@@ -36,7 +36,7 @@ contract LeverageAaveAction is ArgobytesTips {
         uint256 additional_collateral = flash_collateral_amount + data.collateral_amount;
 
         // deposit collateral into Aave
-        data.collateral.approve(address(data.lending_pool), additional_collateral);
+        data.collateral.safeApprove(address(data.lending_pool), additional_collateral);
         data.lending_pool.deposit(
             address(data.collateral),
             additional_collateral,
@@ -105,7 +105,7 @@ contract LeverageAaveAction is ArgobytesTips {
         uint256 flash_borrow_amount = data.borrow.balanceOf(address(this));
 
         // repay the loan with the flash loaned tokens
-        data.borrow.approve(address(data.lending_pool), flash_borrow_amount);
+        data.borrow.safaApprove(address(data.lending_pool), flash_borrow_amount);
         data.lending_pool.repay(address(data.borrow), flash_borrow_amount, 2, data.on_behalf_of);
 
         // Transfer aToken here
@@ -116,7 +116,7 @@ contract LeverageAaveAction is ArgobytesTips {
         tip_erc20(data.collateral_atoken, data.collateral_atoken_tip);
 
         // Burn aToken for the underlying
-        data.collateral_atoken.approve(address(data.lending_pool), data.collateral_withdraw_amount);
+        data.collateral_atoken.safeApprove(address(data.lending_pool), data.collateral_withdraw_amount);
         data.lending_pool.withdraw(address(data.collateral), data.collateral_withdraw_amount, address(this));
 
         // we need to pay back the flash loan
@@ -126,7 +126,7 @@ contract LeverageAaveAction is ArgobytesTips {
         // data.collateral.safeTransfer(data.swap_contract, data.collateral_swap_amount);
         // AddressLib.functionCall(data.swap_contract, data.swap_data);
         // TODO: debugging this is a pain
-        data.collateral.approve(address(data.swap_contract), data.collateral_withdraw_amount);
+        data.collateral.safeApprove(data.swap_contract, data.collateral_withdraw_amount);
         (bool trade_success, ) = data.swap_contract.call(data.swap_data);
         require(trade_success, "!swap");
 

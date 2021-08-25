@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 // TODO: WETH10 is out. it is backwards compatible with 9, but has more features. do we care about any of them?
-pragma solidity 0.6.12;
+pragma solidity 0.8.7;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 
@@ -12,7 +12,7 @@ contract Weth9Action {
     // this function must be able to receive ether if it is expected to wrap it
     receive() external payable {}
 
-    constructor(IWETH9 _weth) public {
+    constructor(IWETH9 _weth) {
         weth = _weth;
     }
 

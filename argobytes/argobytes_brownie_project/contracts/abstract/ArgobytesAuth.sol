@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.6.12;
+pragma solidity 0.8.7;
 
 import {ArgobytesAuthority} from "contracts/ArgobytesAuthority.sol";
 
 import {ActionTypes} from "./ActionTypes.sol";
 import {ImmutablyOwned} from "./ImmutablyOwned.sol";
 
-// error AccessDenied();
+error AccessDenied();
 
 /// @title Access control with an immutable owner
 /// @dev clone targets for ArgobytesFactory19 need to use this (or something like it)
@@ -55,10 +55,7 @@ abstract contract ArgobytesAuth is ActionTypes, ImmutablyOwned {
         CallType call_type,
         bytes4 sig
     ) internal view {
-        if (!isAuthorized(sender, call_type, target, sig)) {
-            // revert AccessDenied();
-            revert("!access");
-        }
+        if (!isAuthorized(sender, call_type, target, sig)) revert AccessDenied();
     }
 
     /// @notice Set the contract used for checking authentication

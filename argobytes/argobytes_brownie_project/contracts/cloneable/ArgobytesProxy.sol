@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.7;
 
-import {AddressLib} from "contracts/library/AddressLib.sol";
-import {BytesLib} from "contracts/library/BytesLib.sol";
+import {AddressLib, CallReverted, InvalidTarget} from "contracts/library/AddressLib.sol";
 
 import {ArgobytesAuth} from "contracts/abstract/ArgobytesAuth.sol";
 
@@ -24,15 +22,14 @@ contract ArgobytesProxy is ArgobytesAuth {
     function execute(Action calldata action) public payable returns (bytes memory action_returned) {
         // check auth
         if (msg.sender != owner()) {
-            requireAuth(msg.sender, action.target, action.call_type, BytesLib.toBytes4(action.data));
+            requireAuth(msg.sender, action.target, action.call_type, bytes4(action.data));
         }
 
         // TODO: re-entrancy protection? i think our auth check is sufficient
 
         // TODO: do we really care about this check? calling a non-contract will give "success" even though thats probably not what people wanted to do
         if (!AddressLib.isContract(action.target)) {
-            // revert InvalidTarget(action.target);
-            revert("!target");
+            revert InvalidTarget(action.target);
         }
 
         bool success;
@@ -46,8 +43,7 @@ contract ArgobytesProxy is ArgobytesAuth {
         }
 
         if (!success) {
-            // revert CallReverted(action.target, action.data, action_returned);
-            revert(string(action_returned));
+            revert CallReverted(action.target, action.data, action_returned);
         }
     }
 

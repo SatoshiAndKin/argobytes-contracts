@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
 // TODO: rethink this
-pragma solidity 0.6.12;
+pragma solidity 0.8.7;
 
 import {ArgobytesAuth} from "contracts/abstract/ArgobytesAuth.sol";
 import {IERC20, SafeERC20} from "contracts/external/erc20/SafeERC20.sol";
 import {ArgobytesMulticall} from "contracts/ArgobytesMulticall.sol";
 
-// error BadArbitrage(IERC20 token, uint256 start_amount, uint256 end_amount);
+error BadArbitrage(IERC20 token, uint256 start_amount, uint256 end_amount);
 
 /// @title Trade ERC20 tokens
 contract ArgobytesTrader {
@@ -62,8 +62,7 @@ contract ArgobytesTrader {
             }
 
             if (end_balance < start_balances[i]) {
-                // revert BadArbitrage(borrows[i].token, start_balances[i], end_balance);
-                revert("!arbitrage");
+                revert BadArbitrage(borrows[i].token, start_balances[i], end_balance);
             }
         }
 

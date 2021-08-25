@@ -1,7 +1,7 @@
 // An action for ArgobytesFlashBorrower that borrows DAI and deposits into https://unit.xyz
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.7;
+pragma abicoder v2;
 
 import {ArgobytesTips} from "contracts/ArgobytesTips.sol";
 

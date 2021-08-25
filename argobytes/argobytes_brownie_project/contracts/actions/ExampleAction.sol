@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.6.12;
+pragma solidity 0.8.7;
 
 import {IERC20, UniversalERC20} from "contracts/library/UniversalERC20.sol";
 
-// error FancyError(bool is_true, uint256 amount, string message);
+error FancyError(bool is_true, uint256 amount, string message);
 
 contract ExampleAction {
     using UniversalERC20 for IERC20;
@@ -31,11 +31,9 @@ contract ExampleAction {
         revert("ExampleAction: fail function always reverts");
     }
 
-    /*
     function failFancy() public payable {
         revert FancyError(true, 1, "ExampleAction: fail function always reverts");
     }
-    */
 
     function noop() public payable returns (bool) {
         return true;

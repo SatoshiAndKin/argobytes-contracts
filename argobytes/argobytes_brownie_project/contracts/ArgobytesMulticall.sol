@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.7;
 
 import {AddressLib} from "contracts/library/AddressLib.sol";
 

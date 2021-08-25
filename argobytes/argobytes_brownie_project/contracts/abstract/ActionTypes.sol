@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.6.12;
+pragma solidity 0.8.7;
 
 /// @title Common types for contracts that use actions
 contract ActionTypes {

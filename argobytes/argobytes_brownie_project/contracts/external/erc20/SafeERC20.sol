@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Based on OpenZeppelin's SafeERC20
-// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/b0cf6fbb7a70f31527f36579ad644e1cf12fdf4e/contracts/token/ERC20/SafeERC20.sol
+// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/b0cf6fbb7a70f31527f36579ad644e1cf12fdf4e/contracts/token/ERC20/utils/SafeERC20.sol
 
-pragma solidity 0.6.12;
+pragma solidity 0.8.7;
 
 import {IERC20} from "./IERC20.sol";
 import {AddressLib} from "contracts/library/AddressLib.sol";
 
-// error TransferFailed(address token, bytes data);
+error TransferFailed(address token, bytes data);
 
 /**
  * @title SafeERC20
@@ -61,8 +61,7 @@ library SafeERC20 {
         if (returndata.length > 0) {
             // Return data is optional. if we got back "false", revert
             if (abi.decode(returndata, (bool)) == false) {
-                // revert TransferFailed(address(token), data);
-                revert("!transfer");
+                revert TransferFailed(address(token), data);
             }
         }
     }

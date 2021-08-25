@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 // Deploy contracts using CREATE2.
-pragma solidity 0.6.12;
+pragma solidity 0.8.7;
 
-import {AddressLib} from "contracts/library/AddressLib.sol";
+import {AddressLib, Create2Failed} from "contracts/library/AddressLib.sol";
 
 /// @title A factory for proxy contracts with immutable owners and targets with 19 bytes addresses.
 /// @author Satoshi & Kin, Inc.
@@ -90,8 +90,7 @@ contract ArgobytesFactory19 {
 
         if (clone == address(0)) {
             // the salt isn't so helpful in this function, but from createClone19s it is helpful.
-            // revert Create2Failed(salt);
-            revert("!create2");
+            revert Create2Failed(salt);
         }
 
         emit NewClone(target19, salt, immutable_owner, clone);

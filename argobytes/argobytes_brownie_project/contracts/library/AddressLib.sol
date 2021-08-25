@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
 
-pragma solidity 0.6.12;
+pragma solidity 0.8.7;
 
-// error CallReverted(address target, bytes data, bytes errordata);
-// error Create2Failed(bytes32 salt);
-// error InvalidTarget(address target);
-// error NoBytecode();
+error CallReverted(address target, bytes data, bytes errordata);
+error Create2Failed(bytes32 salt);
+error InvalidTarget(address target);
+error NoBytecode();
 
 /// @title Helper functions for addresses
 library AddressLib {
@@ -19,8 +19,7 @@ library AddressLib {
      */
     function deploy(bytes32 salt, bytes memory bytecode) internal returns (address addr) {
         if (bytecode.length == 0) {
-            // revert NoBytecode();
-            revert("!bytecode");
+            revert NoBytecode();
         }
 
         // TODO: document this
@@ -29,8 +28,7 @@ library AddressLib {
         }
 
         if (addr == address(0)) {
-            // revert Create2Failed(salt);
-            revert("!create2");
+            revert Create2Failed(salt);
         }
     }
 
@@ -75,33 +73,28 @@ library AddressLib {
     /// @dev call a function and discard the returndata
     function functionCall(address target, bytes memory data) internal returns (bytes memory returndata) {
         if (!isContract(target)) {
-            // revert InvalidTarget(target);
-            revert("!target");
+            revert InvalidTarget(target);
         }
 
         bool success;
         (success, returndata) = target.call(data);
 
         if (!success) {
-            // revert CallReverted(target, data, returndata);
-            // TODO: revert with the returndata
-            revert(string(returndata));
+            revert CallReverted(target, data, returndata);
         }
     }
 
     /// @dev call a function and discard the returndata
     function functionCallWithBalance(address target, bytes memory data) internal returns (bytes memory returndata) {
         if (!isContract(target)) {
-            // revert InvalidTarget(target);
-            revert("!target");
+            revert InvalidTarget(target);
         }
 
         bool success;
         (success, returndata) = target.call{value: address(this).balance}(data);
 
         if (!success) {
-            // revert CallReverted(target, data, returndata);
-            revert("!callWithBalance");
+            revert CallReverted(target, data, returndata);
         }
     }
 }

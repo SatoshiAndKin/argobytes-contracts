@@ -213,7 +213,9 @@ def print_token_balances(balances, label=None, as_usd=False):
     pprint(dict_for_printing)
 
 
-def safe_token_approve(account, balances, spender, extra_balances=None, amount=2 ** 256 - 1, reset=False):
+def safe_token_approve(
+    account, balances, spender, extra_balances=None, amount=2 ** 256 - 1, reset=False
+):
     """For every token that we have a balance of, Approve unlimited (or a specified amount) for the spender."""
     if extra_balances is None:
         extra_balances = {}
@@ -245,7 +247,9 @@ def safe_token_approve(account, balances, spender, extra_balances=None, amount=2
             # TODO: we should have a list of tokens that need this behavior instead of taking a kwarg
             print(f"Clearing {token_symbol} ({token.address}) approval...")
             # gas estimators get confused if we don't wait for confirmation here
-            token.approve(spender, 0, {"from": account, "required_confs": 1, "gas_buffer": 1.3})
+            token.approve(
+                spender, 0, {"from": account, "required_confs": 1, "gas_buffer": 1.3}
+            )
 
         if amount == 2 ** 256 - 1:
             # the amount is the max
@@ -254,7 +258,9 @@ def safe_token_approve(account, balances, spender, extra_balances=None, amount=2
             # the amount was specified
             print(f"Approving {spender} for {amount} of {account}'s {token_symbol}...")
 
-        token.approve(spender, amount, {"from": account, "required_confs": 0, "gas_buffer": 1.3})
+        token.approve(
+            spender, amount, {"from": account, "required_confs": 0, "gas_buffer": 1.3}
+        )
 
         # TODO: if debug, print this
         # approve_tx.info()

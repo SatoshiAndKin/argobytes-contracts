@@ -2,7 +2,7 @@
 // https://0x.org/docs/guides/v3-forwarder-specification#marketsellorderswitheth
 // https://0x.org/docs/guides/introduction-to-using-0x-liquidity-in-smart-contracts#introduction-to-using-0x-liquidity-in-smart-contracts
 // https://0x.org/docs/guides/use-0x-api-liquidity-in-your-smart-contracts
-pragma solidity 0.6.12;
+pragma solidity 0.8.7;
 
 import {Address} from "@OpenZeppelin/utils/Address.sol";
 

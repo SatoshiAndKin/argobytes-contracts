@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.6.12;
+pragma solidity 0.8.7;
 
 import {IERC20, SafeERC20} from "contracts/external/erc20/SafeERC20.sol";
 

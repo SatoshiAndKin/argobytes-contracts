@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 // TODO: rewrite this to be a target for ArgobytesFlashBorrower
 // TODO: consistent revert strings
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.7;
+pragma abicoder v2;
 
 import {ArgobytesTips} from "contracts/ArgobytesTips.sol";
 
@@ -87,9 +87,9 @@ contract ExitCYY3CRVAction is ArgobytesTips, LeverageCYY3CRVConstants {
 
         // add the fee
         // flash loaning max DAI is likely impossible, but even if this rolls over, things revert
-        // unchecked {
-        flash_dai_amount += dai_flash_fee;
-        // }
+        unchecked {
+            flash_dai_amount += dai_flash_fee;
+        }
 
         // burn enough 3crv to get back enough DAI to pay back the flash loan
         // we could allow exiting to DAI, USDC, or USDT here, but i think exiting with 3crv makes the most sense

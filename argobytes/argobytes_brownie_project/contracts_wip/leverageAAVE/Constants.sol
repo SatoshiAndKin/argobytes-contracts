@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.7;
+pragma abicoder v2;
 
 import {IERC20} from "contracts/external/erc20/IERC20.sol";
 

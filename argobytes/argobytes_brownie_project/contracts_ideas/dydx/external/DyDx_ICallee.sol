@@ -13,7 +13,7 @@
     https://github.com/dydxprotocol/solo/blob/2d8454e02702fe5bc455b848556660629c3cad36/contracts/protocol/external/IDyDxCallee.sol
 */
 
-pragma solidity 0.6.12;
+pragma solidity 0.8.7;
 
 import {DyDx_Account} from "./DyDx_Account.sol";
 

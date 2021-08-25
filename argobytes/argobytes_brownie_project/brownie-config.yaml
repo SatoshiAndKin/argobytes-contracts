@@ -7,7 +7,7 @@ compiler:
       enabled: false
       # runs: 1000000
     remappings:
-      - "@OpenZeppelin=OpenZeppelin/openzeppelin-contracts@3.4.0/contracts"
+      - "@OpenZeppelin=OpenZeppelin/openzeppelin-contracts@4.1.0/contracts"
 
 dependencies:
-  - OpenZeppelin/openzeppelin-contracts@3.4.0
+  - OpenZeppelin/openzeppelin-contracts@4.1.0

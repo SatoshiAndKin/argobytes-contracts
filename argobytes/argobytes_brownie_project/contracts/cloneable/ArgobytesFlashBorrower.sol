@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MPL-2.0
 // TODO: Make this Cloneable by using ArgobytesAuth?
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.7;
+pragma abicoder v2;
 
-import {AddressLib} from "contracts/library/AddressLib.sol";
-import {BytesLib} from "contracts/library/BytesLib.sol";
+import {AddressLib, CallReverted, InvalidTarget} from "contracts/library/AddressLib.sol";
 import {IERC20, SafeERC20} from "contracts/external/erc20/SafeERC20.sol";
 import {IAaveLendingPoolAddressesProvider, IAaveLendingPoolAddressesProviderRegistry} from "contracts/external/aave/Aave.sol";
 
 import {ArgobytesProxy} from "./ArgobytesProxy.sol";
 
-// error BadLender(address);
+error BadLender(address);
 
 /// @title Flash borrow from approved tokes or from Aave V2's LendingPool.flashLoan
 contract ArogbytesFlashBorrower is ArgobytesProxy {
@@ -23,7 +22,7 @@ contract ArogbytesFlashBorrower is ArgobytesProxy {
 
     mapping(address => bool) public lending_pools;
 
-    constructor(IAaveLendingPoolAddressesProviderRegistry _lender_provider_registry) public {
+    constructor(IAaveLendingPoolAddressesProviderRegistry _lender_provider_registry) {
         lender_provider_registry = _lender_provider_registry;
 
         // by default, you can flash loan from yourself. this can be removed
@@ -126,8 +125,7 @@ contract ArogbytesFlashBorrower is ArgobytesProxy {
     ) external returns (bool) {
         // make sure Aave is calling us
         if (!lending_pools[msg.sender]) {
-            // revert BadLender(msg.sender);
-            revert("!lender");
+            revert BadLender(msg.sender);
         }
 
         for (uint256 i = 0; i < assets.length; i++) {
@@ -154,7 +152,7 @@ contract ArogbytesFlashBorrower is ArgobytesProxy {
                 // a common pattern is delegate calling a known safe contract that doesn't call arbitrary actions
                 // do NOT do things like authorizing calls to token transfers!
                 if (initiator_not_owner) {
-                    requireAuth(initiator, action.target, action.call_type, BytesLib.toBytes4(action.data));
+                    requireAuth(initiator, action.target, action.call_type, bytes4(action.data));
                 }
 
                 bool success;
@@ -169,8 +167,7 @@ contract ArogbytesFlashBorrower is ArgobytesProxy {
                 }
 
                 if (!success) {
-                    // revert CallReverted(action.target, action.data, action_returned);
-                    revert("!call");
+                    revert CallReverted(action.target, action.data, action_returned);
                 }
             }
         }
