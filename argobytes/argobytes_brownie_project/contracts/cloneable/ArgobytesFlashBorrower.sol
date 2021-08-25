@@ -183,6 +183,7 @@ contract ArogbytesFlashBorrower is ArgobytesProxy {
             uint256 amount = amounts[i] + premiums[i];
 
             // TODO: delete this. aave will revert if the transfer fails. this message is useful in dev though
+            require(asset.balanceOf(address(this)) > 0, "no tokens");
             require(asset.balanceOf(address(this)) > amount, "not enough tokens");
 
             // Approve the LendingPool contract to *pull* the owed amount

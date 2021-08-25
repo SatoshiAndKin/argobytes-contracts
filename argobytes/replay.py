@@ -36,6 +36,9 @@ def replay_transactions(new_rpc, txs):
     old_snapshot = rpc_singleton.snapshot
     rpc_singleton.snapshot = lambda: 0
 
+    old_sleep = rpc_singleton.sleep
+    rpc_singleton.sleep = lambda _: None
+
     network.history.clear()
     chain._network_disconnected()
     web3.connect(new_rpc)
@@ -67,3 +70,4 @@ def replay_transactions(new_rpc, txs):
 
     # restore snapshotting
     rpc_singleton.snapshot = old_snapshot
+    rpc_singleton.sleep = old_sleep
