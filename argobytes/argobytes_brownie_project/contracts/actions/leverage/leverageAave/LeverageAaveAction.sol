@@ -65,24 +65,13 @@ contract LeverageAaveAction is ArgobytesTips {
         flash_collateral_amount += data.collateral_flash_fee;
 
         // make sure we traded enough to pay back the flash loan
+        // approvals for repaying the flash loan are setup by ArgobytesFlashBorrower
+        // any excess will be swept by the ArgobytesFlashBorrower
         uint256 balance = data.collateral.balanceOf(address(this));
         require(
             balance >= flash_collateral_amount,
             "!swap balance"
         );
-
-        // check if we have any extra collateral tokens
-        if (balance > flash_collateral_amount) {
-            data.collateral.safeTransfer(data.on_behalf_of, balance - flash_collateral_amount);
-        }
-        
-        // check if we have any extra borrow tokens
-        balance = data.borrow.balanceOf(address(this));
-        if (balance > 0) {
-            data.borrow.safeTransfer(data.on_behalf_of, balance);
-        }
-
-        // flash_collateral_amount will be pulled by the flash lender
     }
 
     struct ExitData {

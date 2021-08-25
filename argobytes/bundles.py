@@ -7,6 +7,7 @@ import click
 from brownie import accounts, chain, network, rpc, web3, Contract
 from eth_utils.address import is_address
 
+from argobytes.cli_helpers import debug_shell
 from argobytes.cli_helpers_lite import prompt_loud_confirmation
 from argobytes.contracts import get_or_clone_flash_borrower, load_contract
 from argobytes.replay import get_upstream_rpc
@@ -193,6 +194,9 @@ class TransactionBundler(ABC):
         with self:
             self.the_transactions()
 
+        # TODO: make this optional
+        debug_shell(locals())
+
         # TODO: if not local account, we cannot proceed
 
         if not broadcast:
@@ -226,7 +230,7 @@ class TransactionBundler(ABC):
                 gas_limit=self.flash_tx.gas_limit,
                 allow_revert=False,
             )
-            tx.info()
+            # tx.info()
         finally:
             # put the network back
             self.reset_network_fork()
@@ -313,7 +317,7 @@ class TransactionBundler(ABC):
         actions = []
         for i, tx in enumerate(network.history):
             print(f"processing...")
-            tx.info()
+            # tx.info()
 
             contract = load_contract(tx.receiver)
 
@@ -438,6 +442,7 @@ class TransactionBundler(ABC):
         # TODO: info for reverted trasactions was crashing ganachhe
         if flash_tx.status == 1:
             flash_tx.info()
-            flash_tx.call_trace()
+            # the call trace is very verbose!
+            # flash_tx.call_trace()
 
         return flash_tx
