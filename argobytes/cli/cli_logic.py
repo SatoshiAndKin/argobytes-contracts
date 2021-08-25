@@ -85,7 +85,11 @@ def cli(
             now = time.time() - 60
             if block_timestamp < now:
                 # TODO: raise
-                logger.warn("block timestamp (%s) behind by more than 60 seconds! (%s)", block_timestamp, now)
+                logger.warn(
+                    "block timestamp (%s) behind by more than 60 seconds! (%.1f)",
+                    block_timestamp,
+                    now - block_timestamp,
+                )
 
             if network in ["mainnet", "mainnet-fork"]:
                 # TODO: custom GasNowStrategy that takes an integer max

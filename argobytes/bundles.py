@@ -112,6 +112,9 @@ class TransactionBundler(ABC):
         # snapshot here. so we can revert to before any non-atomic transactions are sent
         chain.snapshot()
 
+        # TODO: do we want to clear it, or just save the start index?
+        network.history.clear()
+
         return self
 
     def __exit__(self, exc_type, value, traceback):
@@ -308,7 +311,7 @@ class TransactionBundler(ABC):
         # pull actions out of history
         asset_amounts = {}
         actions = []
-        for i, tx in enumerate(network.history.from_sender(self.sender)):
+        for i, tx in enumerate(network.history):
             print(f"processing...")
             tx.info()
 
@@ -327,9 +330,10 @@ class TransactionBundler(ABC):
 
             # TODO: do this in a more general way? hard coding special cases is really fragile
             # if we are going to transfer from ourselves TO ourselves, so we can just skip it
-            if signature == "transfer(address,uint256)" and new_input_args[0] == self.clone:
+            if tx.sender != self.sender and signature == "transfer(address,uint256)":
                 # on the forked network, this is transferred from an unlocked account
                 # on the live network, this is transferred from the flash lender and so we skip this action
+                # TODO: instead of checking self.sender, check something less fragile?
                 if contract in asset_amounts:
                     print(f"funding flash loan with {input_args[1]} more {contract}")
                     asset_amounts[contract] += input_args[1]
