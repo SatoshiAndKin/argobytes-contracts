@@ -27,8 +27,10 @@ contract LeverageAaveAction is ArgobytesTips {
     function enter(EnterData calldata data) external {
         // at this point, we have some tokens from the flash loan
         uint256 flash_collateral_amount = data.collateral.balanceOf(address(this));
+        require(flash_collateral_amount > 0, "no flash collateral");
 
         // transfer the user's initial collateral
+        // require(data.collateral.allowance(...))
         data.collateral.safeTransferFrom(data.on_behalf_of, address(this), data.collateral_amount);
 
         uint256 additional_collateral = flash_collateral_amount + data.collateral_amount;
@@ -46,13 +48,14 @@ contract LeverageAaveAction is ArgobytesTips {
         data.lending_pool.borrow(
             address(data.borrow),
             data.borrow_amount,
+            // TODO: allow stable or variable borrows?
             2,
             0,
             data.on_behalf_of
         );
 
         // trade borrowed tokens to repay the flash loan
-        data.borrow.transfer(data.swap_contract, data.borrow_amount);
+        data.borrow.safeTransfer(data.swap_contract, data.borrow_amount);
         (bool trade_success, ) = data.swap_contract.call(data.swap_data);
         require(trade_success, "!swap");
 

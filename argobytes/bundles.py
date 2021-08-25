@@ -1,10 +1,10 @@
 """Bundle multiple transactions into as few as possible."""
-import contextlib
 from abc import ABC, abstractmethod
 from pprint import pformat
+from typing import List
 
 import click
-from brownie import accounts, chain, network, rpc, web3
+from brownie import accounts, chain, network, rpc, web3, Contract
 from eth_utils.address import is_address
 
 from argobytes.cli_helpers_lite import prompt_loud_confirmation
@@ -112,40 +112,36 @@ class TransactionBundler(ABC):
         # snapshot here. so we can revert to before any non-atomic transactions are sent
         chain.snapshot()
 
-        # send each asset to the clone just like the flash loan would
-        # on a forked network, we transfer from the unlocked lender
-        # on mainnet, this transfer is handled by the flash loan function
-        # every flash loan MUST include at least one transfer of each asset in self.borrowed_assets to the clone
-        for asset, amount in self.borrowed_assets.items():
-            assert amount, f"No amount set for {asset}"
-            print(f"Simulating flash loan of {amount:_} {asset}...")
-            asset.transfer(self.clone, amount, {"from": self.lenders[asset]})
-
         return self
 
     def __exit__(self, exc_type, value, traceback):
         """Context manager that captures transactions for bundling."""
-        print("Multiple transaction dry run complete!")
 
         if exc_type is not None:
-            # we got an exception
+            print("Transaction dry run erred!")
             return False
+
+        print("Transaction dry run completed succesfully!")
 
         self.flash_tx = self._flashloan_from_history()
 
         self.pending = False
 
     @abstractmethod
-    def setup_bundle(self):
+    def setup_bundle(self) -> List[Contract]:
         """Do any setup transactions needed by the bundle (such as approvals).
         
         Returns a list of delegate callable actions.
         """
+        # self.simulated_flash_loan(first_contract_target)
         raise NotImplementedError
 
     @abstractmethod
     def the_transactions(self):
-        """Send a bunch of transactions to be bundled into a flash loan."""
+        """Send a bunch of transactions to be bundled into a flash loan.
+        
+        This must call `transfer_from_flash_loan`.
+        """
         raise NotImplementedError
 
     def is_delegate_callable(self, contract):
@@ -168,6 +164,18 @@ class TransactionBundler(ABC):
         for lender in self.lenders:
             print(f"Unlocking {lender}...")
             self.lenders[lender] = accounts.at(lender, force=True)
+
+    def transfer_from_flash_loan(self, receiver):
+        """
+        # send each asset to the clone just like the flash loan would
+        # on a forked network, we transfer from the unlocked lender
+        # on mainnet, this transfer is handled by the flash loan function
+        # you must call this at the start of `the_transactions`
+        """
+        for asset, amount in self.borrowed_assets.items():
+            assert amount, f"No amount set for {asset}"
+            print(f"Simulating flash loan of {amount:_} {asset} to {receiver}...")
+            asset.transfer(receiver, amount, {"from": self.lenders[asset]}).info()
 
     def careful_send(self, prompt_confirmation=True, broadcast=False):
         """Do a dry run, prompt, send the transaction for real."""
@@ -297,7 +305,7 @@ class TransactionBundler(ABC):
         # pull actions out of history
         asset_amounts = {}
         actions = []
-        for i, tx in enumerate(network.history):
+        for i, tx in enumerate(network.history.from_sender(self.sender)):
             print(f"processing...")
             tx.info()
 
@@ -314,7 +322,8 @@ class TransactionBundler(ABC):
                 else:
                     new_input_args.append(i)
 
-            # TODO: do this in a more general way. hard coding special cases is really fragile
+            """
+            # TODO: do this in a more general way? hard coding special cases is really fragile
             # if we are going to transfer from ourselves TO ourselves, so we can just skip it
             if signature == "transfer(address,uint256)" and new_input_args[0] == self.clone:
                 # on the forked network, this is transferred from an unlocked account
@@ -333,6 +342,7 @@ class TransactionBundler(ABC):
                 # TODO: i'm not actually sure we will ever do this
                 # an action like this is usually part of setup that is only needed on a forked network
                 continue
+            """
 
             method = contract.get_method_object(tx.input)
 

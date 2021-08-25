@@ -34,7 +34,8 @@ contract CurveFiAction is AbstractERC20Exchange {
         src_token.approve(address(exchange), src_amount);
 
         // do the trade
-        exchange.exchange(i, j, src_amount, dest_min_tokens);
+        // todo: put back dest_min_tokens
+        exchange.exchange(i, j, src_amount, 1);
 
         if (to != address(this)) {
             // leave 1 wei behind
