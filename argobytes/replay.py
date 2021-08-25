@@ -1,4 +1,4 @@
-from brownie import network, web3
+from brownie import network, web3, rpc, chain
 from brownie._config import CONFIG
 
 
@@ -30,11 +30,16 @@ def replay_transactions(new_rpc, txs):
 
     old_rpc = web3.provider.endpoint_uri
 
+    # disable snapshotting
+    rpc_singleton = rpc.Rpc()
+
+    old_snapshot = rpc_singleton.snapshot
+    rpc_singleton.snapshot = lambda: 0
+
+    network.history.clear()
+    chain._network_disconnected()
     web3.connect(new_rpc)
     web3.reset_middlewares()
-
-    # TODO: not sure we want this
-    network.history.clear()
 
     # TODO: only replay from a specific address
     for tx in txs:
@@ -52,8 +57,13 @@ def replay_transactions(new_rpc, txs):
         )
 
     network.history.wait()
+    chain._network_disconnected()
 
     # put the old rpc back
     network.history.clear()
+    chain._network_disconnected()
     web3.connect(old_rpc)
     web3.reset_middlewares()
+
+    # restore snapshotting
+    rpc_singleton.snapshot = old_snapshot

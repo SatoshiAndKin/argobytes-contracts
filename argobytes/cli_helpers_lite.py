@@ -5,7 +5,7 @@ import time
 from enum import Enum
 
 import click
-from brownie import network, web3
+from brownie import network, web3, chain
 from brownie._config import CONFIG
 from decorator import decorator
 
@@ -243,8 +243,10 @@ def with_dry_run(
         # switch to the network that we forked from
         replay_rpc = get_upstream_rpc()
 
-    network.history.clear()
     orig_rpc = web3.provider.endpoint_uri
+
+    network.history.clear()
+    chain._network_disconnected()
     web3.connect(replay_rpc)
     web3.reset_middlewares()
 
@@ -261,5 +263,6 @@ def with_dry_run(
 
     # return to the original network
     network.history.clear()
+    chain._network_disconnected()
     web3.connect(orig_rpc)
     web3.reset_middlewares()

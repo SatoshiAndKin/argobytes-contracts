@@ -238,6 +238,7 @@ class TransactionBundler(ABC):
         print("Setting network mode:", click.style("fork", fg="green"))
         network.history.wait()
         network.history.clear()
+        chain._network_disconnected()
         web3.connect(self.host_fork)
         web3.reset_middlewares()
 
@@ -251,6 +252,7 @@ class TransactionBundler(ABC):
         print("Setting network mode:", click.style("main", fg="red"))
         network.history.wait()
         network.history.clear()
+        chain._network_disconnected()
         web3.connect(self.host_upstream)
         web3.reset_middlewares()
 
@@ -268,6 +270,7 @@ class TransactionBundler(ABC):
         print("Setting network mode:", click.style("private", fg="yellow"))
         network.history.wait()
         network.history.clear()
+        chain._network_disconnected()
         web3.connect(self.host_private)
         web3.reset_middlewares()
 
