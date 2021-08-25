@@ -53,9 +53,11 @@ contract LeverageAaveAction is ArgobytesTips {
             0,
             data.on_behalf_of
         );
+        require(data.borrow_amount > 0, "!borrow_amount");
 
         // trade borrowed tokens to repay the flash loan
-        data.borrow.safeTransfer(data.swap_contract, data.borrow_amount);
+        // because the borrow_amount is fixed, we can use most exchanges direcly without helper actions
+        data.borrow.safeApprove(data.swap_contract, data.borrow_amount);
         (bool trade_success, ) = data.swap_contract.call(data.swap_data);
         require(trade_success, "!swap");
 
@@ -121,9 +123,10 @@ contract LeverageAaveAction is ArgobytesTips {
         flash_borrow_amount += data.borrow_flash_fee;
 
         // trade collateral tokens to repay the flash loan
-        data.collateral.transfer(data.swap_contract, data.collateral_swap_amount);
+        // data.collateral.safeTransfer(data.swap_contract, data.collateral_swap_amount);
         // AddressLib.functionCall(data.swap_contract, data.swap_data);
         // TODO: debugging this is a pain
+        data.collateral.approve(address(data.swap_contract), data.collateral_withdraw_amount);
         (bool trade_success, ) = data.swap_contract.call(data.swap_data);
         require(trade_success, "!swap");
 

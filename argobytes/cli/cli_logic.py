@@ -15,16 +15,15 @@ This entrypoint will handle setting these accounts up and then starting brownie.
 import os
 import time
 
-from brownie import chain
+from brownie import chain, project, web3
 from brownie import network as brownie_network
-from brownie import project, web3
+from brownie._config import CONFIG
 from brownie.network import gas_price
+from brownie.network.gas.strategies import GasNowStrategy
 
 from argobytes.cli_helpers import get_project_root
 from argobytes.cli_helpers_lite import logger
 from argobytes.gas_strategy import GasStrategyV1
-
-# from flashbots import flashbot
 
 
 def cli(
@@ -41,7 +40,9 @@ def cli(
 
     # put this into the environment so that brownie sees it
     # TODO: polygonscan and bscscan tokens?
-    os.environ["ETHERSCAN_TOKEN"] = etherscan_token
+    if etherscan_token:
+        # TODO: brownie isn't seeing this. i think the .env file needs to have the exports remove
+        os.environ["ETHERSCAN_TOKEN"] = etherscan_token
 
     # TODO: set brownie autofetch_sources
 
@@ -52,6 +53,8 @@ def cli(
     # setup the project and network the same way brownie's run helper does
     brownie_project = project.load(project_root, "ArgobytesBrownieProject")
     brownie_project.load_config()
+
+    CONFIG.argv["revert"] = True
 
     ctx.obj["brownie_project"] = brownie_project
 
@@ -81,10 +84,16 @@ def cli(
             block_timestamp = chain[-1].timestamp
             now = time.time() - 60
             if block_timestamp < now:
-                raise RuntimeError("block timestamp behind by more than 60 seconds!", block_timestamp, now)
+                # TODO: raise
+                logger.warn("block timestamp (%s) behind by more than 60 seconds! (%s)", block_timestamp, now)
 
             if network in ["mainnet", "mainnet-fork"]:
-                logger.info("TODO: figure out gas for the ethereum network")
+                # TODO: custom GasNowStrategy that takes an integer max
+                # gas_strategy = GasNowStrategy(gas_speed)
+                # logger.info(gas_strategy)
+                # TODO: this seems to be ignored. i'm seeing 20 gwei in the logs
+                gas_price("0 gwei")
+                logger.warning("Forced gas price to 0!")
             elif network in ["bsc-main", "bsc-main-fork", "polygon-main", "polygon-main-fork"]:
                 # TODO: use EIP1559 for mainnet/mainnet-fork (or maybe automatically somehow?)
                 # TODO: i think we have some bugs here still

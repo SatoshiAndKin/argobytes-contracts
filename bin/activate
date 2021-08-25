@@ -1,12 +1,11 @@
 # source me!
 # TODO: exit if this isn't being sourced
 
-export BROWNIE_LIB=1
+BROWNIE_LIB=1
+PATH="$PATH:$(pwd)/node_modules/.bin"
 
 source .env
+
+export BROWNIE_LIB ETHERSCAN_TOKEN NODE_OPTIONS WEB3_INFURA_PROJECT_ID PATH
+
 source venv/bin/activate
-
-PATH=$(pwd)/node_modules/.bin:$PATH
-
-export PATH
-

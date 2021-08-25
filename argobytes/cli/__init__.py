@@ -13,9 +13,9 @@ from .tx import tx
 @with_plugins(entry_points(group="argobytes.plugins"))
 @click.group()
 @click_log.simple_verbosity_option(logger)
-@click.option("--etherscan-token", default="", envvar="ETHERSCAN_TOKEN")
-@click.option("--gas-speed", default="standard", type=gas_choices, show_default=True)
-@click.option("--gas-max-price", default=None, show_default=True)
+@click.option("--etherscan-token", envvar="ETHERSCAN_TOKEN")
+@click.option("--gas-speed", default="slow", show_default=True, type=gas_choices)
+@click.option("--gas-max-price", default=None, show_default=True, type=int)
 @click.option("--network", default=None, type=str, show_default=True)
 @click.pass_context
 @click.version_option()

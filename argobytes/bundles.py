@@ -85,7 +85,7 @@ class TransactionBundler(ABC):
         # even if we aren't using Aave, we need the aave_provider_registry to build the ArgobytesFlashBorrower contract
         if aave_provider_registry is None:
             # TODO: DRY
-            if chain.id == 1:
+            if chain.id in [1, 31337]:
                 aave_provider_registry = "0x52D306e36E3B6B02c153d0266ff0f85d18BCD413"
             else:
                 raise NotImplementedError
@@ -175,7 +175,7 @@ class TransactionBundler(ABC):
         for asset, amount in self.borrowed_assets.items():
             assert amount, f"No amount set for {asset}"
             print(f"Simulating flash loan of {amount:_} {asset} to {receiver}...")
-            asset.transfer(receiver, amount, {"from": self.lenders[asset]}).info()
+            asset.transfer(receiver, amount, {"from": self.lenders[asset], "gas_price": 0}).info()
 
     def careful_send(self, prompt_confirmation=True, broadcast=False):
         """Do a dry run, prompt, send the transaction for real."""
@@ -322,7 +322,6 @@ class TransactionBundler(ABC):
                 else:
                     new_input_args.append(i)
 
-            """
             # TODO: do this in a more general way? hard coding special cases is really fragile
             # if we are going to transfer from ourselves TO ourselves, so we can just skip it
             if signature == "transfer(address,uint256)" and new_input_args[0] == self.clone:
@@ -342,7 +341,6 @@ class TransactionBundler(ABC):
                 # TODO: i'm not actually sure we will ever do this
                 # an action like this is usually part of setup that is only needed on a forked network
                 continue
-            """
 
             method = contract.get_method_object(tx.input)
 

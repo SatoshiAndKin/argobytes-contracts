@@ -2,6 +2,7 @@ import brownie
 import pytest
 from brownie import ZERO_ADDRESS, accounts, network, project, web3
 from brownie._config import CONFIG
+from brownie.project.main import _install_dependencies
 from brownie.test.fixtures import PytestBrownieFixtures
 from brownie.test.managers.runner import RevertContextManager
 from click.testing import CliRunner
@@ -25,12 +26,15 @@ from argobytes.web3_helpers import to_hex32
 def brownie_mainnet_fork(pytestconfig):
     project_root = get_project_root()
 
-    # override some config
-    CONFIG.argv["revert"] = True
-
     # setup the project and network the same way brownie's run helper does
     brownie_project = project.load(project_root)
     brownie_project.load_config()
+
+    _install_dependencies(project_root)
+
+    # override some config
+    # TODO: i don't think this is doing anything
+    CONFIG.argv["revert"] = True
 
     network.connect("mainnet-fork")
 
