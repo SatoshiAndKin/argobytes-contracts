@@ -8,6 +8,10 @@ import {IERC20, SafeERC20} from "contracts/external/erc20/SafeERC20.sol";
 
 // TODO: typed errors
 
+interface IPriceOracle {
+    function getAssetPrice(address asset) external view returns (uint256);
+}
+
 /// @title Leverage tokens on Aave V2
 contract LeverageAaveAction is ArgobytesTips {
     using SafeERC20 for IERC20;
@@ -19,7 +23,8 @@ contract LeverageAaveAction is ArgobytesTips {
         uint256 collateral_amount;
         uint256 collateral_flash_fee;
         IERC20 borrow;
-        uint256 borrow_amount;
+        uint16 borrow_bps;  // size is log base 2 of 10000 = 13.3
+        IPriceOracle aave_oracle;
         address swap_contract;
         bytes swap_data;
     }
@@ -44,20 +49,41 @@ contract LeverageAaveAction is ArgobytesTips {
             0
         );
 
+        uint256 borrow_amount;
+        { // scope to prevent stack too deep
+            (
+                uint256 totalCollateralETH,
+                uint256 totalDebtETH,
+                uint256 availableBorrowsETH,
+                uint256 currentLiquidationThreshold,
+                uint256 ltv,
+                uint256 healthFactor
+            ) = data.lending_pool.getUserAccountData(data.on_behalf_of);
+
+            uint256 newDebtEth = ((totalDebtETH + availableBorrowsETH) * data.borrow_bps / 10000) - totalDebtETH;
+
+            // 1 ETH = X token
+            uint256 price = data.aave_oracle.getAssetPrice(address(data.collateral));
+
+            // calculate borrow amount
+            // TODO: not sure about the math here. maybe need to divide by something
+            borrow_amount = newDebtEth * price;
+        }
+
         // borrow tokens from Aave
         data.lending_pool.borrow(
             address(data.borrow),
-            data.borrow_amount,
+            borrow_amount,
             // TODO: allow stable or variable borrows?
             2,
             0,
             data.on_behalf_of
         );
-        require(data.borrow_amount > 0, "!borrow_amount");
 
         // trade borrowed tokens to repay the flash loan
         // because the borrow_amount is fixed, we can use most exchanges direcly without helper actions
-        data.borrow.safeApprove(data.swap_contract, data.borrow_amount);
+        uint256 balance = data.borrow.balanceOf(address(this)) - 1;
+        data.borrow.transfer(data.swap_contract, balance);
         (bool trade_success, ) = data.swap_contract.call(data.swap_data);
         require(trade_success, "!swap");
 
@@ -67,7 +93,7 @@ contract LeverageAaveAction is ArgobytesTips {
         // make sure we traded enough to pay back the flash loan
         // approvals for repaying the flash loan are setup by ArgobytesFlashBorrower
         // any excess will be swept by the ArgobytesFlashBorrower
-        uint256 balance = data.collateral.balanceOf(address(this));
+        balance = data.collateral.balanceOf(address(this));
         require(
             balance >= flash_collateral_amount,
             "!swap balance"
