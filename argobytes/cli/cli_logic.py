@@ -88,7 +88,7 @@ def cli(
                 logger.warn(
                     "block timestamp (%s) behind by more than 60 seconds! (%.1f)",
                     block_timestamp,
-                    now - block_timestamp,
+                    now - block_timestamp + 60,
                 )
 
             if network in ["mainnet", "mainnet-fork"]:

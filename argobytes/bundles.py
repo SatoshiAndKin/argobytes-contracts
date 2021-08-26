@@ -13,14 +13,14 @@ from argobytes.contracts import get_or_clone_flash_borrower, load_contract
 from argobytes.replay import get_upstream_rpc
 
 
-def find_lenders(aave_lender, borrowed_assets):
-    # TODO: allow multiple aave_lenders
+def find_lenders(aave_lending_pool, borrowed_assets):
+    # TODO: allow multiple aave_lending_pools
 
     borrowed_assets = borrowed_assets or {}
     lenders = {}
     for asset, amount in borrowed_assets.items():
         # TODO: if this reverts, try another aave_market_id?
-        reserve_data = aave_lender.getReserveData(asset)
+        reserve_data = aave_lending_pool.getReserveData(asset)
 
         lender = reserve_data[7]
 
@@ -99,9 +99,9 @@ class TransactionBundler(ABC):
         # #0 is main Aave V2 market. #1 is Aave AMM market
         aave_provider = load_contract(aave_providers_list[aave_market_id])
 
-        self.aave_lender = load_contract(aave_provider.getLendingPool())
+        self.aave_lending_pool = load_contract(aave_provider.getLendingPool())
 
-        self.lenders = find_lenders(self.aave_lender, self.borrowed_assets)
+        self.lenders = find_lenders(self.aave_lending_pool, self.borrowed_assets)
 
     def __enter__(self):
         """Context manager that captures transactions for bundling."""
@@ -179,9 +179,10 @@ class TransactionBundler(ABC):
         for asset, amount in self.borrowed_assets.items():
             assert amount, f"No amount set for {asset}"
             print(f"Simulating flash loan of {amount:_} {asset} to {receiver}...")
+            assert amount > 0, f"invalid flash loan amount! {amount:_}"
             asset.transfer(receiver, amount, {"from": self.lenders[asset], "gas_price": 0}).info()
 
-    def careful_send(self, prompt_confirmation=True, broadcast=False):
+    def careful_send(self, prompt_confirmation=True, broadcast=False, with_shell=False):
         """Do a dry run, prompt, send the transaction for real."""
         assert web3.provider.endpoint_uri == self.host_fork  # just in case
 
@@ -194,8 +195,10 @@ class TransactionBundler(ABC):
         with self:
             self.the_transactions()
 
-        # TODO: make this optional
-        debug_shell(locals())
+        if with_shell:
+            debug_shell(locals())
+
+        self.check_aave_status(self.owner)
 
         # TODO: if not local account, we cannot proceed
 
@@ -206,7 +209,27 @@ class TransactionBundler(ABC):
         if prompt_confirmation:
             prompt_loud_confirmation(self.owner)
 
-        return self._send_upstream()
+        tx = self._send_upstream()
+
+        if with_shell:
+            debug_shell(locals())
+
+        self.check_aave_status(self.owner)
+
+        return tx
+
+    def check_aave_status(self, user):
+        totalCollateralETH, totalDebtETH, availableBorrowsETH, currentLiquidationThreshold, ltv, healthFactor = self.aave_lending_pool.getUserAccountData(user)
+
+        print(f"totalCollateralETH: {totalCollateralETH/1e18:_}")
+        print(f"totalDebtETH: {totalDebtETH/1e18:_}")
+        print(f"availableBorrowsETH: {availableBorrowsETH/1e18:_}")
+        # TODO: what units is this?
+        print(f"currentLiquidationThreshold: {currentLiquidationThreshold:_}")
+        print(f"ltv: {ltv/100}%")
+        print(f"healthFactor: {healthFactor/1e18:_}")
+
+        # raise an error if healthFactor too low
 
     def _send_upstream(self):
         try:
@@ -299,7 +322,7 @@ class TransactionBundler(ABC):
         else:
             try:
                 # TODO: does this raise or return false?
-                if not self.clone.lending_pools(self.aave_lender):
+                if not self.clone.lending_pools(self.aave_lending_pool):
                     raise ValueError
             except ValueError:
                 self.clone.updateAaveLendingPools({"from": self.owner}).info()
@@ -435,7 +458,7 @@ class TransactionBundler(ABC):
 
         print("Sending dry run of Aave flash loan transaction...")
         # TODO: if any of the lenders are aave, use an aave flash loan. otherwise call self.clone.flashloanForOwner(...)
-        flash_tx = self.aave_lender.flashLoan(
+        flash_tx = self.aave_lending_pool.flashLoan(
             self.clone, assets, amounts, modes, self.clone, flash_params, 0, {"from": self.sender}
         )
 
