@@ -1,4 +1,4 @@
-from brownie import network, web3, rpc, chain
+from brownie import chain, network, rpc, web3
 from brownie._config import CONFIG
 
 

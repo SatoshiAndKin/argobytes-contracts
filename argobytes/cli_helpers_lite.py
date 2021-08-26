@@ -5,7 +5,7 @@ import time
 from enum import Enum
 
 import click
-from brownie import network, web3, chain
+from brownie import chain, network, web3
 from brownie._config import CONFIG
 from decorator import decorator
 

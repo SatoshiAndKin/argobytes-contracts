@@ -15,8 +15,9 @@ This entrypoint will handle setting these accounts up and then starting brownie.
 import os
 import time
 
-from brownie import chain, project, web3
+from brownie import chain
 from brownie import network as brownie_network
+from brownie import project, web3
 from brownie._config import CONFIG
 from brownie.network import gas_price
 from brownie.network.gas.strategies import GasNowStrategy

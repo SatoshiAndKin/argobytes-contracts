@@ -7,7 +7,7 @@ from warnings import warn
 
 import click
 import rlp
-from brownie import chain, ETH_ADDRESS, ZERO_ADDRESS, Contract, project, web3
+from brownie import ETH_ADDRESS, ZERO_ADDRESS, Contract, chain, project, web3
 from eth_abi import decode_single
 from eth_utils import keccak, to_bytes, to_checksum_address
 from lazy_load import lazy
