@@ -231,8 +231,7 @@ class TransactionBundler(ABC):
         print(f"totalCollateralETH: {totalCollateralETH/1e18:_}")
         print(f"totalDebtETH: {totalDebtETH/1e18:_}")
         print(f"availableBorrowsETH: {availableBorrowsETH/1e18:_}")
-        # TODO: what units is this?
-        print(f"currentLiquidationThreshold: {currentLiquidationThreshold/10_000}")
+        print(f"currentLiquidationThreshold: {currentLiquidationThreshold/100}%")
         print(f"ltv: {ltv/100}%")
         print(f"healthFactor: {healthFactor/1e18:_}")
 
