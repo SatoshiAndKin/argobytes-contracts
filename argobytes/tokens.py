@@ -39,6 +39,7 @@ def load_token(token_symbol: str, owner=None):
 
         return _cache_token[token_symbol]
 
+    # TODO: allow specifying a token list
     known_lists = tokenlists.available_token_lists()
 
     if not known_lists:

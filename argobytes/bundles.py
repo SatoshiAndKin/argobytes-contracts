@@ -178,7 +178,7 @@ class TransactionBundler(ABC):
         """
         for asset, amount in self.borrowed_assets.items():
             assert amount, f"No amount set for {asset}"
-            print(f"Simulating flash loan of {amount:_} {asset} to {receiver}...")
+            print(f"Simulating flash loan of {amount} {asset} to {receiver}...")
             assert amount > 0, f"invalid flash loan amount! {amount:_}"
             asset.transfer(receiver, amount, {"from": self.lenders[asset], "gas_price": 0}).info()
 
@@ -232,7 +232,7 @@ class TransactionBundler(ABC):
         print(f"totalDebtETH: {totalDebtETH/1e18:_}")
         print(f"availableBorrowsETH: {availableBorrowsETH/1e18:_}")
         # TODO: what units is this?
-        print(f"currentLiquidationThreshold: {currentLiquidationThreshold:_}")
+        print(f"currentLiquidationThreshold: {currentLiquidationThreshold/10_000}")
         print(f"ltv: {ltv/100}%")
         print(f"healthFactor: {healthFactor/1e18:_}")
 
