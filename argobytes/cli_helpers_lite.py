@@ -5,13 +5,38 @@ import time
 from enum import Enum
 
 import click
-from brownie import chain, network, web3
+from brownie import accounts, chain, network, web3
 from brownie._config import CONFIG
 from decorator import decorator
 
-from argobytes.replay import get_upstream_rpc
+from argobytes.replay import get_upstream_rpc, is_forked_network
 
 logger = logging.getLogger("argobytes")
+
+
+class LockedBrownieAccount(click.ParamType):
+    name = "account"
+
+    def convert(self, value, param, ctx):
+        # brownie needs an active network to setup the account
+        # TODO: should this be on the --network flag? i think that would work well
+        # TODO: is there some way to make sure --network is parsed first?
+        ctx.obj["brownie_connect_fn"]()
+
+        force = is_forked_network()
+
+        try:
+            return accounts.at(value, force=force)
+        except Exception as e:
+            # TODO: catch a specific exception type
+            self.fail(
+                f"Brownie could not get account {value!r}: {e}",
+                param,
+                ctx,
+            )
+
+
+LOCKED_BROWNIE_ACCOUNT = LockedBrownieAccount()
 
 
 class BrownieAccount(click.ParamType):

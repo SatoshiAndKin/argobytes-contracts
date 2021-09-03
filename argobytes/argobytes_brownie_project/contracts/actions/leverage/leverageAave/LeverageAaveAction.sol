@@ -82,7 +82,7 @@ contract LeverageAaveAction is ArgobytesTips {
         IERC20 collateral_atoken;
         uint256 collateral_atoken_amount;
         uint256 collateral_atoken_tip;
-        uint256 collateral_withdraw_amount;
+        uint256 collateral_trade_amount;
         uint256 borrow_flash_fee;
         address swap_contract;  // a standard exchange. tokens are approved for here
         bytes swap_data;
@@ -115,7 +115,7 @@ contract LeverageAaveAction is ArgobytesTips {
         // burning aToken for the underlying
         // this does not have to be all the atoken!
         // TODO: option to withdraw all of the atokens? 
-        data.lending_pool.withdraw(address(data.collateral), data.collateral_withdraw_amount, address(this));
+        data.lending_pool.withdraw(address(data.collateral), data.collateral_trade_amount, address(this));
 
         // we need to pay back the flash loan
         flash_borrow_amount += data.borrow_flash_fee;
@@ -124,7 +124,7 @@ contract LeverageAaveAction is ArgobytesTips {
         // data.collateral.safeTransfer(data.swap_contract, data.collateral_swap_amount);
         // AddressLib.functionCall(data.swap_contract, data.swap_data);
         // TODO: debugging this is a pain
-        data.collateral.safeApprove(data.swap_contract, data.collateral_withdraw_amount);
+        data.collateral.safeApprove(data.swap_contract, data.collateral_trade_amount);
         (bool trade_success, ) = data.swap_contract.call(data.swap_data);
         require(trade_success, "!swap");
 
@@ -142,7 +142,7 @@ contract LeverageAaveAction is ArgobytesTips {
             data.collateral_atoken.safeTransfer(data.on_behalf_of, balance - 1);
         }
 
-        // flash_borrow_amount will be pulled by the flash lender
+        // flash_borrow_amount will be pulled by the flash lender. any excess will be sent to the owner
         // on_behalf_of will have a bunch of aToken
     }
 }

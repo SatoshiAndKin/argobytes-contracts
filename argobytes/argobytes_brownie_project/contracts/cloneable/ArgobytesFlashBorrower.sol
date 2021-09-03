@@ -34,7 +34,7 @@ contract ArogbytesFlashBorrower is ArgobytesProxy {
     /// @dev youu can do this off chain and call addLendingPool yourself, but this is easier to delegate
     function updateAaveLendingPools() external auth(CallType.ADMIN) {
         IAaveLendingPoolAddressesProvider[] memory lending_pool_providers = lender_provider_registry
-        .getAddressesProvidersList();
+            .getAddressesProvidersList();
         uint256 num_lending_pools = lending_pool_providers.length;
         for (uint256 i = 0; i < num_lending_pools; i++) {
             address lending_pool = lending_pool_providers[i].getLendingPool();
