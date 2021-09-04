@@ -2,7 +2,7 @@ from brownie import chain, network, rpc, web3
 from brownie._config import CONFIG
 
 
-def get_upstream_rpc():
+def get_upstream_rpc() -> str:
     if is_forked_network():
         forked_host = CONFIG.active_network["cmd_settings"]["fork"]
         assert forked_host.startswith("http"), "only http supported for now"
@@ -11,7 +11,7 @@ def get_upstream_rpc():
     return CONFIG.active_network["host"]
 
 
-def is_forked_network():
+def is_forked_network() -> bool:
     return CONFIG.active_network["id"].endswith("-fork")
 
 
@@ -24,7 +24,7 @@ def replay_history(new_rpc, history_start_index=0):
     return replay_transactions(new_rpc, network.history[history_start_index:])
 
 
-def replay_transactions(new_rpc, txs):
+def replay_transactions(new_rpc, txs) -> None:
     # you probably want to use with_dry_run instead. this replays the exact same transactions which might be stale
     network.history.wait()
 

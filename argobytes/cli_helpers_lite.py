@@ -8,6 +8,7 @@ import click
 from brownie import accounts, chain, network, web3
 from brownie._config import CONFIG
 from decorator import decorator
+from eth_utils.address import to_checksum_address
 
 from argobytes.replay import get_upstream_rpc, is_forked_network
 
@@ -23,17 +24,22 @@ class LockedBrownieAccount(click.ParamType):
         # TODO: is there some way to make sure --network is parsed first?
         ctx.obj["brownie_connect_fn"]()
 
-        force = is_forked_network()
+        if is_forked_network():
+            try:
+                return accounts.at(value, force=True)
+            except Exception as e:
+                # TODO: catch a specific exception type
+                self.fail(
+                    f"Brownie could not get account {value!r}: {e}",
+                    param,
+                    ctx,
+                )
 
-        try:
-            return accounts.at(value, force=force)
-        except Exception as e:
-            # TODO: catch a specific exception type
-            self.fail(
-                f"Brownie could not get account {value!r}: {e}",
-                param,
-                ctx,
-            )
+        # TODO: resolve ENS
+        if "." in value:
+            return web3.ens.resolve(value)
+        else:
+            return to_checksum_address(value)
 
 
 LOCKED_BROWNIE_ACCOUNT = LockedBrownieAccount()

@@ -260,7 +260,9 @@ _contract_cache = {}
 
 
 def load_contract(token_name_or_address: str, owner=None, block=None, force=False):
-    if block == "latest":
+    if block is None:
+        pass
+    elif block == "latest":
         block = None
     elif isinstance(token_name_or_address, str) and "." in token_name_or_address:
         # TODO: PR against web3 to take a block argument

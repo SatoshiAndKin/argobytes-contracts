@@ -40,7 +40,6 @@ contract CurveFiAction is AbstractERC20Exchange {
         uint256 src_amount = src_token.balanceOf(address(this)) - 1;
 
         // TODO: efficient way to do infinite approvals? what is most gas efficient now?
-        // TODO: approve pool or curve_swaps?
         // we do safeApprove because this might be USDT or PAXG (or similarly broken ERC-20)
         src_token.safeApprove(address(curve_swaps), src_amount);
 

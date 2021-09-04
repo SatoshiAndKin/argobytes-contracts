@@ -185,7 +185,7 @@ contract ArogbytesFlashBorrower is ArgobytesProxy {
 
             // Approve the LendingPool contract to *pull* the owed amount
             if (msg.sender != address(this)) {
-                asset.approve(msg.sender, amount);
+                asset.safeApprove(msg.sender, amount);
             }
 
             // send on the rest as profit

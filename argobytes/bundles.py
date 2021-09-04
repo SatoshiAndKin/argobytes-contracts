@@ -220,20 +220,21 @@ class TransactionBundler(ABC):
 
     def check_aave_status(self, user):
         (
-            totalCollateralETH,
-            totalDebtETH,
-            availableBorrowsETH,
-            currentLiquidationThreshold,
-            ltv,
-            healthFactor,
+            total_collateral_eth,
+            total_debt_eth,
+            available_borrows_eth,
+            current_liquidation_threshold,
+            max_ltv,
+            health_factor,
         ) = self.aave_lending_pool.getUserAccountData(user)
 
-        print(f"totalCollateralETH: {totalCollateralETH/1e18:_}")
-        print(f"totalDebtETH: {totalDebtETH/1e18:_}")
-        print(f"availableBorrowsETH: {availableBorrowsETH/1e18:_}")
-        print(f"currentLiquidationThreshold: {currentLiquidationThreshold/100}%")
-        print(f"ltv: {ltv/100}%")
-        print(f"healthFactor: {healthFactor/1e18:_}")
+        print("AAVE status for", user)
+        print(f"total_collateral_eth: {total_collateral_eth/1e18:_}")
+        print(f"total_debt_eth: {total_debt_eth/1e18:_}")
+        print(f"available_borrows_eth: {available_borrows_eth/1e18:_}")
+        print(f"current_liquidation_threshold: {current_liquidation_threshold/100}%")
+        print(f"max_ltv: {max_ltv/100}%")
+        print(f"health_factor: {health_factor/1e18:_}")
 
         # raise an error if healthFactor too low
 
