@@ -65,9 +65,9 @@ contract LeverageAaveAction is ArgobytesTips {
         IERC20 borrow;
         uint256 borrow_transfer_amt;
         IERC20 collateral;
-        uint256 collateral_trade; // the amount of collateral exchanged to pay back the flash loan
-        uint256 collateral_tip;
         IERC20 collateral_atoken;
+        uint256 collateral_tip_amount;
+        uint256 collateral_trade_amount; // the amount of collateral exchanged to pay back the flash loan
         IAaveLendingPool lending_pool;
         address on_behalf_of;
         address swap_contract;  // a standard exchange. tokens are approved for here
@@ -76,7 +76,7 @@ contract LeverageAaveAction is ArgobytesTips {
 
     function exit(ExitData calldata data) external {
         if (data.borrow_transfer_amt > 0) {
-            data.borrow.safeTransferFrom(data.on_behalf_of, data.borrow_transfer_amt);
+            data.borrow.safeTransferFrom(data.on_behalf_of, address(this), data.borrow_transfer_amt);
         }
 
         // at this point, we have some borrow tokens from the flash loan and maybe some extra from borrow_transfer_amt
@@ -92,20 +92,20 @@ contract LeverageAaveAction is ArgobytesTips {
         // Transfer some aToken here to exchange to borrow_token
         data.collateral_atoken.transferFrom(
             data.on_behalf_of, address(this),
-            data.collateral_trade + data.collateral_tip
+            data.collateral_trade_amount + data.collateral_tip_amount
         );
 
         // optionally tip aToken
-        tip_erc20(data.collateral_atoken, data.collateral_tip);
+        tip_erc20(data.collateral_atoken, data.collateral_tip_amount);
 
         // burn aToken for the underlying. aTokens are 1:1 with their underlying
-        data.collateral_atoken.safeApprove(address(data.lending_pool), data.collateral_trade);
-        data.lending_pool.withdraw(address(data.collateral), data.collateral_trade, address(this));
+        data.collateral_atoken.safeApprove(address(data.lending_pool), data.collateral_trade_amount);
+        data.lending_pool.withdraw(address(data.collateral), data.collateral_trade_amount, address(this));
 
         // trade a known amount of collateral tokens into borrow tokens to repay the flash loan
         // because we know our amount, we call DEXs directly **instead of** an Argobytes Action
-        // be sure to have the minimum exhanged to be >= flash loan + flash loan fee
-        data.collateral.safeApprove(data.swap_contract, data.collateral_trade);
+        // be sure the minimum exchanged is >= flasah borrowed amount + flashloan fee
+        data.collateral.safeApprove(data.swap_contract, data.collateral_trade_amount);
         (bool trade_success, ) = data.swap_contract.call(data.swap_data);
         require(trade_success, "!swap");
 
