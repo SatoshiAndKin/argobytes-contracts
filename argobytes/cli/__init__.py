@@ -95,7 +95,7 @@ def main():
     standalone_mode = os.environ.get("ARGOBYTES_CLICK_STANDALONE", "1") == "1"
 
     # TODO: default this to 0
-    exception_console = os.environ.get("ARGOBYTES_EXCEPTION_CONSOLE", "1") == "1"
+    exception_console = os.environ.get("ARGOBYTES_EXCEPTION_CONSOLE", "0") == "1"
 
     try:
         cli(
@@ -107,9 +107,7 @@ def main():
     except Exception as exc:
         if exception_console:
             import inspect
-            import traceback
 
-            from argobytes.cli_helpers import debug_shell
             from argobytes.transactions import get_transaction
 
             trace = inspect.trace()
@@ -120,8 +118,12 @@ def main():
             l = locals()
             l.update(trace[-1][0].f_locals)
 
+            import traceback
             traceback.print_tb(exc.__traceback__)
 
-            debug_shell(l, banner=click.style("Caught exception!", fg="red"))
+            exc_repr = repr(exc)
+
+            from argobytes.cli_helpers import debug_shell
+            debug_shell(l, banner=click.style(f"Caught exception! {exc_repr}", fg="red"))
 
         raise

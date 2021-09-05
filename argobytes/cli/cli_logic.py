@@ -91,7 +91,7 @@ def cli(
                     now - block_timestamp + 60,
                 )
 
-            if network in ["mainnet", "mainnet-fork"]:
+            if network in ["mainnet", "mainnet-fork", "hardhat-fork"]:
                 # TODO: custom GasNowStrategy that takes an integer max
                 # gas_strategy = GasNowStrategy(gas_speed)
                 # logger.info(gas_strategy)
