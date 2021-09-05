@@ -52,7 +52,7 @@ def print_tx_info(tx, call_trace=False):
     print()
     print("Sometimes useful, but often slow: tx.trace")
     print()
-    print("[ctrl+d] to check another transaction")
+    print("Press [ctrl+d] to check another transaction")
     print()
 
     extra_locals = COMMON_HELPERS

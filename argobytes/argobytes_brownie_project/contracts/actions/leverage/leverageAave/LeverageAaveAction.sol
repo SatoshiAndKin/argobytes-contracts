@@ -19,7 +19,7 @@ contract LeverageAaveAction is ArgobytesTips {
         uint256 collateral_transfer_amount;
         IAaveLendingPool lending_pool;
         address on_behalf_of;
-        address swap_contract;  // a standard exchange. tokens are approved for here
+        address swap_contract;  // a standard exchange that trades 100% of a set input amount
         bytes swap_data;
     }
 
@@ -63,14 +63,15 @@ contract LeverageAaveAction is ArgobytesTips {
 
     struct ExitData {
         IERC20 borrow;
+        IERC20 borrow_debt_token;
         uint256 borrow_transfer_amt;
         IERC20 collateral;
         IERC20 collateral_atoken;
-        uint256 collateral_tip_amount;
+        uint256 collateral_tip_amount; // tip for the developers in aToken
         uint256 collateral_trade_amount; // the amount of collateral exchanged to pay back the flash loan
         IAaveLendingPool lending_pool;
         address on_behalf_of;
-        address swap_contract;  // a standard exchange. tokens are approved for here
+        address swap_contract;  // a standard exchange that trades 100% of a set input amount
         bytes swap_data;
     }
 
@@ -81,6 +82,12 @@ contract LeverageAaveAction is ArgobytesTips {
 
         // at this point, we have some borrow tokens from the flash loan and maybe some extra from borrow_transfer_amt
         uint256 repay_amount = data.borrow.balanceOf(address(this));
+
+        // TODO: this shouldn't be needed, overpayment should be fine. But i'm seeing confusing reverts
+        uint256 debt_amount = data.borrow_debt_token.balanceOf(data.on_behalf_of);
+        if (debt_amount < repay_amount) {
+            repay_amount = debt_amount;
+        }
 
         // repay the loan
         // overpayment is returned (and normal because we want to be sure not to leave any dust behind)

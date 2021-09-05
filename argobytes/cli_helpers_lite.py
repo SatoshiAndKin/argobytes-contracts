@@ -15,7 +15,7 @@ from argobytes.replay import get_upstream_rpc, is_forked_network
 logger = logging.getLogger("argobytes")
 
 
-class LockedBrownieAccount(click.ParamType):
+class ReadOnlyAccount(click.ParamType):
     name = "account"
 
     def convert(self, value, param, ctx):
@@ -42,7 +42,7 @@ class LockedBrownieAccount(click.ParamType):
             return to_checksum_address(value)
 
 
-LOCKED_BROWNIE_ACCOUNT = LockedBrownieAccount()
+READ_ONLY_ACCOUNT = ReadOnlyAccount()
 
 
 class BrownieAccount(click.ParamType):

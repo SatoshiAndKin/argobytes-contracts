@@ -77,7 +77,7 @@ class TransactionBundler(ABC):
         self.delegate_callable = []  # this is populated by the setup transaction
 
         assert owner, "no owner!"
-        if not sender:
+        if not sender or sender == owner:
             self.sender = owner
         else:
             self.sender = sender
@@ -195,10 +195,10 @@ class TransactionBundler(ABC):
         with self:
             self.the_transactions()
 
-        if with_shell:
-            debug_shell(locals())
-
         self.check_aave_status(self.owner)
+
+        if with_shell:
+            debug_shell(locals(), banner="Press [ctrl+d] once done inspecting")
 
         # TODO: if not local account, we cannot proceed
 
@@ -450,6 +450,9 @@ class TransactionBundler(ABC):
         amounts = []
         modes = []
         for asset, amount in asset_amounts.items():
+            if not amount:
+                continue
+
             lenders.append(self.lenders[asset])
             assets.append(asset)
             amounts.append(amount)
@@ -465,14 +468,9 @@ class TransactionBundler(ABC):
 
         print("Sending dry run of Aave flash loan transaction...")
         # TODO: if any of the lenders are aave, use an aave flash loan. otherwise call self.clone.flashloanForOwner(...)
-        flash_tx = self.aave_lending_pool.flashLoan(
+        # TODO: if not borrows, call flashloanForOwner or execute
+        tx = self.aave_lending_pool.flashLoan(
             self.clone, assets, amounts, modes, self.clone, flash_params, 0, {"from": self.sender}
         )
 
-        # TODO: info for reverted trasactions was crashing ganachhe
-        if flash_tx.status == 1:
-            flash_tx.info()
-            # the call trace is very verbose!
-            # flash_tx.call_trace()
-
-        return flash_tx
+        return tx

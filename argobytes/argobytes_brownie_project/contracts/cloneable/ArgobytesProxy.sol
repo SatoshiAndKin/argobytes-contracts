@@ -55,6 +55,7 @@ contract ArgobytesProxy is ArgobytesAuth {
         responses = new bytes[](num_actions);
 
         for (uint256 i = 0; i < num_actions; i++) {
+            // TODO: double check auth on this
             responses[i] = execute(actions[i]);
         }
 

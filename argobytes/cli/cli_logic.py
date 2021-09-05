@@ -20,7 +20,6 @@ from brownie import network as brownie_network
 from brownie import project, web3
 from brownie._config import CONFIG
 from brownie.network import gas_price
-from brownie.network.gas.strategies import GasNowStrategy
 
 from argobytes.cli_helpers import get_project_root
 from argobytes.cli_helpers_lite import logger

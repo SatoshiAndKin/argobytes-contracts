@@ -86,7 +86,7 @@ contract ArogbytesFlashBorrower is ArgobytesProxy {
                 address lender;
                 for (uint i = 0; i < assetsLength; i++) {
                     lender = lenders[i] == address(0) ? owner() : lenders[i];
-                    IERC20(assets[i]).transferFrom(lender, address(this), amounts[i]);
+                    IERC20(assets[i]).safeTransferFrom(lender, address(this), amounts[i]);
                 }
             }
 
@@ -103,14 +103,10 @@ contract ArogbytesFlashBorrower is ArgobytesProxy {
         }
 
         // return tokens to the lenders
-        // profits were alredy traansfered to the owner by executeOperation
-        IERC20 token;
-        uint256 balance;
+        // profits were alredy transfered to the owner by executeOperation
         for (uint i = 0; i < assetsLength; i++) {
-            token = IERC20(assets[i]);
-
             // return borrowed tokens
-            token.transfer(lenders[i], amounts[i]);
+            IERC20(assets[i]).safeTransfer(lenders[i], amounts[i]);
         }
     }
 
@@ -179,14 +175,8 @@ contract ArogbytesFlashBorrower is ArgobytesProxy {
             // we need this much to pay back the flash loan
             uint256 amount = amounts[i] + premiums[i];
 
-            // TODO: delete this. aave will revert if the transfer fails. this message is useful in dev though
-            require(asset.balanceOf(address(this)) > 0, "no tokens");
-            require(asset.balanceOf(address(this)) > amount, "not enough tokens");
-
             // Approve the LendingPool contract to *pull* the owed amount
-            if (msg.sender != address(this)) {
-                asset.safeApprove(msg.sender, amount);
-            }
+            asset.safeApprove(msg.sender, amount);
 
             // send on the rest as profit
             amount = asset.balanceOf(address(this)) - amount;

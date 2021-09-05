@@ -94,9 +94,34 @@ def main():
     # TODO: do we need this for easier testing? or is invoke catch_exceptions=False enough?
     standalone_mode = os.environ.get("ARGOBYTES_CLICK_STANDALONE", "1") == "1"
 
-    cli(
-        obj={},
-        auto_envvar_prefix="ARGOBYTES",
-        prog_name="argobytes",
-        standalone_mode=standalone_mode,
-    )
+    # TODO: default this to 0
+    exception_console = os.environ.get("ARGOBYTES_EXCEPTION_CONSOLE", "1") == "1"
+
+    try:
+        cli(
+            obj={},
+            auto_envvar_prefix="ARGOBYTES",
+            prog_name="argobytes",
+            standalone_mode=standalone_mode,
+        )
+    except Exception as exc:
+        if exception_console:
+            import inspect
+            import traceback
+
+            from argobytes.cli_helpers import debug_shell
+            from argobytes.transactions import get_transaction
+
+            trace = inspect.trace()
+
+            if hasattr(exc, "txid"):
+                tx = get_transaction(exc.txid)
+
+            l = locals()
+            l.update(trace[-1][0].f_locals)
+
+            traceback.print_tb(exc.__traceback__)
+
+            debug_shell(l, banner=click.style("Caught exception!", fg="red"))
+
+        raise

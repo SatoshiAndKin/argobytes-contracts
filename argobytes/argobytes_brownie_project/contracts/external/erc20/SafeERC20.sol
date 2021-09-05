@@ -32,6 +32,10 @@ library SafeERC20 {
         address spender,
         uint256 value
     ) internal {
+        // if (value > 0 && token.allowance(msg.sender, spender) > 0) {
+        //     // some tokens are really annoying and made a bad design desision in the name of "security"
+        //     _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, 0));
+        // }
         _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));
     }
 
