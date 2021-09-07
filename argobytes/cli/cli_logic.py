@@ -98,7 +98,14 @@ def cli(
                 # TODO: this seems to be ignored. i'm seeing 20 gwei in the logs
                 gas_price("0 gwei")
                 logger.warning("Forced gas price to 0!")
-            elif network in ["bsc-main", "bsc-main-fork", "polygon-main", "polygon-main-fork"]:
+            elif network in [
+                "bsc-main",
+                "bsc-main-fork",
+                "ftm-main",
+                "ftm-main-fork",
+                "polygon-main",
+                "polygon-main-fork",
+            ]:
                 # TODO: use EIP1559 for mainnet/mainnet-fork (or maybe automatically somehow?)
                 # TODO: i think we have some bugs here still
                 gas_strategy = GasStrategyV1(

@@ -36,29 +36,31 @@ class GasStrategyV1(BlockGasStrategy):
     ):
         # TODO: tune these. need to think about max_multipliers and incrementss and how long these take to hit their maxes
         # TODO: enum
+        # TODO: this is not a good strategy. the recommendations from the node are not good
         if speed == "slow":
-            initial_increment = 0.5
-            time_duration = 120
-            max_multiplier = 1
+            initial_increment = 0.75
+            time_duration = 60
+            max_multiplier = 1.1
         elif speed == "standard":
-            initial_increment = 0.8
-            time_duration = 50
+            initial_increment = 1.0
+            time_duration = 30
             max_multiplier = 2
         elif speed == "fast":
             initial_increment = 1.2
-            time_duration = 30
+            time_duration = 20
             max_multiplier = 3
         elif speed == "rapid":
+            # have rapid increment faster, too? add a random jitter?
             initial_increment = 1.5
-            time_duration = 15
-            max_multiplier = 10
+            time_duration = 10
+            max_multiplier = 4
         else:
             raise RuntimeError
 
         # TODO: different inccrements for different speeds?
         increment = 1.125
         if increment < 1.1:
-            raise RuntimeError("increment too small")
+            raise RuntimeError("increment too small. nodes will reject this increase")
 
         if chain.id == 137 and is_forked_network():
             # TODO: something is broken with ganache+polygon+parsing blocks

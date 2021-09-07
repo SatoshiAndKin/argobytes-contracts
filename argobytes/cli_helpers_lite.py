@@ -10,8 +10,6 @@ from brownie._config import CONFIG
 from decorator import decorator
 from eth_utils.address import to_checksum_address
 
-from argobytes.replay import get_upstream_rpc, is_forked_network
-
 logger = logging.getLogger("argobytes")
 
 
@@ -297,3 +295,7 @@ def with_dry_run(
     chain._network_disconnected()
     web3.connect(orig_rpc)
     web3.reset_middlewares()
+
+
+# damn circular immports
+from argobytes.replay import get_upstream_rpc, is_forked_network

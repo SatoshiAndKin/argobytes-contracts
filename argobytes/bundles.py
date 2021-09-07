@@ -153,7 +153,10 @@ class TransactionBundler(ABC):
         return address in self.delegate_callable
 
     def reset_network_fork(self):
-        """Kill ganache and start a new one."""
+        """Kill ganache and start a new one.
+
+        TODO: move this to a function outside this class
+        """
         # TODO: is there some way to list all the unlocked accounts?
 
         self.set_network_fork()
@@ -211,10 +214,10 @@ class TransactionBundler(ABC):
 
         tx = self._send_upstream()
 
+        self.check_aave_status(self.owner)
+
         if with_shell:
             debug_shell(locals())
-
-        self.check_aave_status(self.owner)
 
         return tx
 

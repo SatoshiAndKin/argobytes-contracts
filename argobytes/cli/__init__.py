@@ -14,7 +14,7 @@ from .tx import tx
 @click.group()
 @click_log.simple_verbosity_option(logger)
 @click.option("--etherscan-token", envvar="ETHERSCAN_TOKEN")
-@click.option("--gas-speed", default="slow", show_default=True, type=gas_choices)
+@click.option("--gas-speed", default="standard", show_default=True, type=gas_choices)
 @click.option("--gas-max-price", default=None, show_default=True, type=int)
 @click.option("--network", default=None, type=str, show_default=True)
 @click.pass_context
@@ -119,11 +119,13 @@ def main():
             l.update(trace[-1][0].f_locals)
 
             import traceback
+
             traceback.print_tb(exc.__traceback__)
 
             exc_repr = repr(exc)
 
             from argobytes.cli_helpers import debug_shell
+
             debug_shell(l, banner=click.style(f"Caught exception! {exc_repr}", fg="red"))
 
         raise
