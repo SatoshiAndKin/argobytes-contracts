@@ -8,37 +8,44 @@ contract RarityActionV1 {
     IRarity public constant RARITY = IRarity(0xce761D788DF608BD21bdd59d6f4B54b2e27F25Bb);
     IRarityGold public constant RARITY_GOLD = IRarityGold(0x2069B76Afe6b734Fb65D1d099E7ec64ee9CC76B2);
 
-    function summonAndAdventure(uint[11] calldata summonedPerClass, address owner) external {
+    function summonFor(uint class, uint amount, bool adventure, address owner) external {
         uint summoner;
-        for (uint class_id = 0; class_id < 11; class_id++) {
-            for (uint i = 0; i < summonedPerClass[class_id]; i++) {
-                summoner = RARITY.next_summoner();
-                RARITY.summon(class_id + 1);
+        for (uint i = 0; i < amount; i++) {
+            summoner = RARITY.next_summoner();
+            RARITY.summon(class);
+            if (adventure) {
                 RARITY.adventure(summoner);
-                RARITY.safeTransferFrom(address(this), owner, summoner);
             }
+            RARITY.safeTransferFrom(address(this), owner, summoner);
         }
     }
 
-    function adventure(uint[] calldata adventurers) external {
-        uint length = adventurers.length;
+    function adventure(uint[] calldata summoners) external {
+        uint length = summoners.length;
         for (uint i = 0; i < length; i++) {
-            RARITY.adventure(adventurers[i]);
+            RARITY.adventure(summoners[i]);
         }
     }
 
-    function levelUp(uint[] calldata adventurers) external {
-        uint length = adventurers.length;
+    function levelUp(uint[] calldata summoners) external {
+        uint length = summoners.length;
         for (uint i = 0; i < length; i++) {
-            RARITY.level_up(adventurers[i]);
+            RARITY.level_up(summoners[i]);
         }
     }
 
-    function levelUpAndClaim(uint[] calldata adventurers) external {
-        uint length = adventurers.length;
+    function claimGold(uint[] calldata summoners) external {
+        uint length = summoners.length;
         for (uint i = 0; i < length; i++) {
-            RARITY.level_up(adventurers[i]);
-            RARITY_GOLD.claim(adventurers[i]);
+            RARITY_GOLD.claim(summoners[i]);
+        }
+    }
+
+    function levelUpAndClaimGold(uint[] calldata summoners) external {
+        uint length = summoners.length;
+        for (uint i = 0; i < length; i++) {
+            RARITY.level_up(summoners[i]);
+            RARITY_GOLD.claim(summoners[i]);
         }
     }
 
