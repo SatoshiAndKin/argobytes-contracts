@@ -274,10 +274,16 @@ def with_dry_run(
 
     orig_rpc = web3.provider.endpoint_uri
 
+    # TODO: move this to a helper function. too many things need to be called in the right order
     network.history.clear()
     chain._network_disconnected()
     web3.connect(replay_rpc)
     web3.reset_middlewares()
+    # disable snapshotting
+    old_snapshot = rpc.snapshot
+    old_sleep = rpc.sleep
+    rpc.snapshot = lambda: 0
+    rpc.sleep = lambda _: None
 
     # we got this far and it didn't revert. prompt to send it to mainnet
     if prompt_mainnet_run:
@@ -291,10 +297,14 @@ def with_dry_run(
     # TODO: optionally open a console here
 
     # return to the original network
+    # TODO: move this to a helper function. too many things need to be called in the right order
     network.history.clear()
     chain._network_disconnected()
     web3.connect(orig_rpc)
     web3.reset_middlewares()
+    # restore snapshotting
+    rpc.snapshot = old_snapshot
+    rpc.sleep = old_sleep
 
 
 # damn circular immports

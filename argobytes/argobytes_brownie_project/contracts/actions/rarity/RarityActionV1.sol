@@ -8,6 +8,17 @@ contract RarityActionV1 {
     IRarity public constant RARITY = IRarity(0xce761D788DF608BD21bdd59d6f4B54b2e27F25Bb);
     IRarityGold public constant RARITY_GOLD = IRarityGold(0x2069B76Afe6b734Fb65D1d099E7ec64ee9CC76B2);
 
+    function summonAndAdventure(uint[11] calldata summonedPerClass) external {
+        uint summoner;
+        for (uint class_id = 0; class_id < 11; class_id++) {
+            for (uint i = 0; i < summonedPerClass[class_id]; i++) {
+                summoner = RARITY.next_summoner();
+                RARITY.summon(class_id + 1);
+                RARITY.adventure(summoner);
+            }
+        }
+    }
+
     function adventure(uint[] calldata adventurers) external {
         uint length = adventurers.length;
         for (uint i = 0; i < length; i++) {
