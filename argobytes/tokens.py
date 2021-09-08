@@ -11,7 +11,6 @@ import tokenlists
 from eth_utils import to_checksum_address
 
 from .contracts import EthContract, load_contract
-from .transactions import wait_for_confirmation
 
 _cache_symbols = {}
 _cache_decimals = {}

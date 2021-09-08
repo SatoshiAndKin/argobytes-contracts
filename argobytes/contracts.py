@@ -87,7 +87,7 @@ def get_or_clone(owner, argobytes_factory, target_contract, salt=None):
     (clone_address, clone_exists) = argobytes_factory.checkClone19.call(target_contract, salt, owner)
 
     if not clone_exists:
-        # send the transaction to craete the contract
+        # send the transaction to create the contract
         deploy_tx = argobytes_factory.createClone19(target_contract.address, salt, owner, {"from": owner})
 
         deploy_tx.info()
@@ -557,6 +557,7 @@ def poke_contracts(contracts):
 
 
 # eip-2470
+# TODO: this does not work on Fantom. Use https://ftmscan.com/address/0x54f5a04417e29ff5d7141a6d33cb286f50d5d50e#code
 SingletonFactory = lazy_contract("0xce0042B868300000d44A59004Da54A005ffdcf9f")
 
 # dydx wrapper https://github.com/albertocuestacanada/ERC3156-Wrappers

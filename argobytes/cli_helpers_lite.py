@@ -5,7 +5,7 @@ import time
 from enum import Enum
 
 import click
-from brownie import accounts, chain, network, web3
+from brownie import accounts, chain, network, rpc, web3
 from brownie._config import CONFIG
 from decorator import decorator
 from eth_utils.address import to_checksum_address

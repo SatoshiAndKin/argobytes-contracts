@@ -131,7 +131,7 @@ def sync_tx_cache():
 
 
 # TODO: context manager to do this automatically?
-# TODO: where should this be?
+# TODO: where should this be? should we just use history.wait()?
 def wait_for_confirmation(pending_txs, required_confs=1):
     if pending_txs:
         # wait for the last transaction to confirm (if it confirms, then all the previous ones have confirmed)
