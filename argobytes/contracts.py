@@ -171,6 +171,9 @@ def get_or_create(
     default_account, contract, no_create=False, salt=None, constructor_args=None, leading_zeros=0
 ) -> Contract:
     """Use eip-2470 to create a contract with deterministic addresses."""
+    if chain.id == 250:
+        raise RuntimeError("The singleton deployer does not work on FTM")
+
     if constructor_args is None:
         constructor_args = []
 
@@ -186,6 +189,7 @@ def get_or_create(
 
         deploy_tx = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account})
 
+        # TODO: sometimes our RPC doesn't support this :( its also not necessary. remove it?
         deployed_contract_address = deploy_tx.return_value
 
         assert (
