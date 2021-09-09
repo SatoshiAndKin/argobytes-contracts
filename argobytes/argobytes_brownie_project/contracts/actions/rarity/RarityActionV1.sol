@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 pragma solidity 0.8.7;
 
-import {IRarity, IRarityGold} from "contracts/external/rarity/IRarity.sol";
+import {IRarity} from "contracts/external/rarity/IRarity.sol";
+import {IRarityGold} from "contracts/external/rarity/IRarityGold.sol";
 
 contract RarityActionV1 {
 

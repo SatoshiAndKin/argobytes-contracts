@@ -1,0 +1,1 @@
+// this was my original idea, but now i think a bunch of buildings dedicated for each class makes more sense
