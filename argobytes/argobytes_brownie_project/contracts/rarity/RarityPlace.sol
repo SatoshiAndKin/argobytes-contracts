@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 pragma solidity 0.8.7;
 
-import "@OpenZeppelin/utils/structs/EnumerableMap.sol";
 import "@OpenZeppelin/utils/structs/EnumerableSet.sol";
 
 import {RarityOwnable} from "./RarityOwnable.sol";
@@ -11,7 +10,6 @@ import {IRarityGold} from "contracts/external/rarity/IRarityGold.sol";
  */
 abstract contract RarityPlace is RarityOwnable {
     using EnumerableSet for EnumerableSet.UintSet;
-    using EnumerableMap for EnumerableSet.AddressToUintMap;
 
     IRarityGold public constant RARITY_GOLD = IRarityGold(0x2069B76Afe6b734Fb65D1d099E7ec64ee9CC76B2);
     // TODO: need ability scores so that we will be strong enough to adventure
@@ -45,7 +43,8 @@ abstract contract RarityPlace is RarityOwnable {
     // TODO: owner-only setter
     address levelCapDestination;
 
-    event ReputationEarned(uint indexed player, uint amount);
+    event RenownUp(uint indexed player, uint amount);
+    event RenownDown(uint indexed player, uint amount);
 
     // TODO: change this to be a cloneable contract with an initializer
     constructor(
@@ -53,9 +52,9 @@ abstract contract RarityPlace is RarityOwnable {
         uint _levelCap,
         address _surroundingPlace,
         address _levelCapDestination,
-        address _capacity
-    ) external RarityOwnable(msg.sender) {
-        require(_maxSummoners > 0);
+        uint _capacity
+    ) RarityOwnable(msg.sender) {
+        require(_capacity > 0);
 
         // create a summoner that represents the place
         // as occupants level up and work, they send their gold and such here
@@ -74,13 +73,13 @@ abstract contract RarityPlace is RarityOwnable {
 
     function onERC721Received(address operator, address, uint256 tokenId, bytes calldata) external returns(bytes4) {
         require(operator == address(RARITY), "!operator");
-        require(summoners.length < maxSummoners, "full");
+        require(summoners.length() < capacity, "full");
         summoners.add(tokenId);
         return this.onERC721Received.selector;
     }
 
-    // TODO: instead of taking ids. cycle? have a "startIndex"?
-    function checkSummoners(uint[] memory ids) external {
+    // TODO: instead of taking ids, cycle using `nextCheck`? have a "startIndex"?
+    function checkSummoners(uint player, uint[] memory ids) external {
         uint reward = 0;
         uint length = ids.length;
         for (uint i = 0; i < length; i++) {
@@ -88,7 +87,7 @@ abstract contract RarityPlace is RarityOwnable {
 
             // if we aren't the owner, we can't manage this
             if (RARITY.ownerOf(summoner) != address(this)) {
-                adventurers.remove(summoner);
+                summoners.remove(summoner);
                 reward += 1;
                 continue;
             }
@@ -96,7 +95,7 @@ abstract contract RarityPlace is RarityOwnable {
             // if level above level cap, transfer out
             if (levelCap > 0 && RARITY.level(summoner) > levelCap) {
                 RARITY.safeTransferFrom(address(this), levelCapDestination, summoner);
-                adventurers.remove(summoner);
+                summoners.remove(summoner);
                 reward += 1;
                 continue;
             }
@@ -105,8 +104,7 @@ abstract contract RarityPlace is RarityOwnable {
         _mintRenown(player, reward);
     }
 
-    function exchangeRenown(uint player, address srcPlace, uint srcAmount) {
-        // TODO: ACCESS CONTROL!
+    function exchangeRenown(uint player, address srcPlace, uint srcAmount) external {
         require(_isApprovedOrOwner(msg.sender, player), "!approve");
 
         // TODO: variable exchange rates?
@@ -117,39 +115,38 @@ abstract contract RarityPlace is RarityOwnable {
         uint destAmount = srcAmount * exchangeRate / 1e9;
         uint roundedSrcAmount = destAmount * 1e9 / exchangeRate;
 
-        RarityPlace(srcPlace).spendRenown(roundedSrcAmount);
-
-        renown[_summoner] += destAmount;
-        totalRenown += destAmount;
+        RarityPlace(srcPlace).spendRenown(player, roundedSrcAmount);
+        _mintRenown(player, destAmount);
     }
 
-    function spendRenown(uint player, uint amount) {
+    function spendRenown(uint player, uint amount) external {
         require(msg.sender == surroundingPlace);
-        renown[_summoner] -= amount;
+        renown[player] -= amount;
         totalRenown -= amount;
         emit RenownDown(player, amount);
     }
 
-    function _mintRenown(player, amount) internal {
-        if (amount) {
+    function _mintRenown(uint player, uint amount) internal {
+        if (amount > 0) {
             renown[player] += amount;
             totalRenown += amount;
             emit RenownUp(player, amount);
         }
     }
 
-    function levelUp(uint player, uint[] memory ids) external returns(reward) {
+    function levelUp(uint player, uint[] memory ids) external returns(uint) {
         uint length = ids.length;
         uint reward = 0;
         for (uint i = 0; i < length; i++) {
-            summoner = ids[i];
+            uint summoner = ids[i];
 
-            try rarity.level_up(summoner) {
-                rarityGold.claim(summoner);
+            try RARITY.level_up(summoner) {
+                RARITY_GOLD.claim(summoner);
 
-                uint gold = rarityGold.balanceOf(summoner);
+                uint gold = RARITY_GOLD.balanceOf(summoner);
 
-                rarityGold.transfer(summoner, place, gold);
+                // todo: the place has gold, but there is no way to get it out. write that!
+                RARITY_GOLD.transfer(summoner, place, gold);
 
                 // TODO: how much reward? scale based on gold?
                 // TODO: reward the summoner with renown too?
@@ -170,7 +167,7 @@ abstract contract RarityPlace is RarityOwnable {
 
     /// @dev override this to call more during "_summon"
     function _summon_more()
-        internal virtual override
+        internal virtual
         returns (uint bonusReward)
     {
         // TODO: set skills, attributes, anything else?
@@ -185,28 +182,28 @@ abstract contract RarityPlace is RarityOwnable {
 
         if (block.timestamp > firstAdventureLog) {
             // the first summoner is able to adventure again
-            nextSummoner = 0;
+            nextAdventurer = 0;
         }
 
         uint currentSummoners = summoners.length();
 
-        if (nextSummoner + workNumSummoners > currentSummoners) {
+        if (nextAdventurer + workNumSummoners > currentSummoners) {
             // summon more workers
-            uint summonersNeeded = nextSummoner + workNumSummoners - currentSummoners;
+            uint summonersNeeded = nextAdventurer + workNumSummoners - currentSummoners;
             for (uint i = 0; i < summonersNeeded; i++) {
                 // this will revert if the place is full
                 _summon();
             }
         }
 
-        if (nextSummoner == 0) {
+        if (nextAdventurer == 0) {
             firstAdventureLog = block.timestamp;
         }
 
         // do some sort of adventuring
-        moreReward = 0;
+        uint moreReward = 0;
         for (uint i = 0; i < workNumSummoners; i++) {
-            uint summoner = summoners.at(nextSummoner + i);
+            uint summoner = summoners.at(nextAdventurer + i);
             RARITY.adventure(summoner);
             moreReward += _work_more(player, summoner);
         }
@@ -217,7 +214,7 @@ abstract contract RarityPlace is RarityOwnable {
 
     /// @dev override this to call any other adventure contracts during "work"
     function _work_more(uint player, uint summoner)
-        internal virtual override
+        internal virtual
         returns (uint bonusReward)
     {}
 

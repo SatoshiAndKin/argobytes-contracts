@@ -6,24 +6,24 @@ import {IRarity} from "contracts/external/rarity/IRarity.sol";
 // TODO: typed errors
 
 abstract contract RarityOwnable {
-    address private _owner;
+    address private __owner;
 
     IRarity public constant RARITY = IRarity(0xce761D788DF608BD21bdd59d6f4B54b2e27F25Bb);
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     /**
-     * @dev Initializes the contract setting the deployer as the initial owner.
+     * @dev Initializes the contract setting the passed address as the initial owner.
      */
-    constructor(owner) {
-        _setOwner(owner);
+    constructor(address _owner) {
+        _setOwner(_owner);
     }
 
     /**
      * @dev Returns the address of the current owner.
      */
     function owner() public view virtual returns (address) {
-        return _owner;
+        return __owner;
     }
 
     /**
@@ -56,13 +56,13 @@ abstract contract RarityOwnable {
     }
 
     function _setOwner(address newOwner) private {
-        address oldOwner = _owner;
+        address oldOwner = __owner;
 
         // TODO: do we want this? it's a bit of a backdoor
         RARITY.setApprovalForAll(oldOwner, false);
         RARITY.setApprovalForAll(newOwner, true);
 
-        _owner = newOwner;
+        __owner = newOwner;
 
         emit OwnershipTransferred(oldOwner, newOwner);
     }
@@ -70,7 +70,7 @@ abstract contract RarityOwnable {
     // TODO: this probably belongs somewhere else
     function _isApprovedOrOwner(address spender, uint256 summoner) internal view returns (bool) {
         // require(_exists(tokenId), "ERC721: operator query for nonexistent token");
-        address owner = RARITY.ownerOf(summoner);
-        return (spender == owner || RARITY.getApproved(summoner) == spender || RARITY.isApprovedForAll(owner, spender));
+        address summoner_owner = RARITY.ownerOf(summoner);
+        return (spender == summoner_owner || RARITY.getApproved(summoner) == spender || RARITY.isApprovedForAll(summoner_owner, spender));
     }
 }
