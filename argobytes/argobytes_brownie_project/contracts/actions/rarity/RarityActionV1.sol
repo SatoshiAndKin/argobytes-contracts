@@ -9,12 +9,12 @@ contract RarityActionV1 {
     IRarity public constant RARITY = IRarity(0xce761D788DF608BD21bdd59d6f4B54b2e27F25Bb);
     IRarityGold public constant RARITY_GOLD = IRarityGold(0x2069B76Afe6b734Fb65D1d099E7ec64ee9CC76B2);
 
-    function summonFor(uint class, uint amount, bool adventure, address owner) external {
+    function summonFor(uint class, uint amount, bool with_adventure, address owner) external {
         uint summoner;
         for (uint i = 0; i < amount; i++) {
             summoner = RARITY.next_summoner();
             RARITY.summon(class);
-            if (adventure) {
+            if (with_adventure) {
                 RARITY.adventure(summoner);
             }
             RARITY.safeTransferFrom(address(this), owner, summoner);
