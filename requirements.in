@@ -5,6 +5,7 @@ click-plugins
 click-spinner
 decorator
 eth-abi
+gql
 importlib_metadata
 ipython
 lazy_load

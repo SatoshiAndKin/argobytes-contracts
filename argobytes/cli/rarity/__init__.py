@@ -1,4 +1,5 @@
 import click
+
 from argobytes.cli_helpers_lite import CommandWithAccount
 
 
@@ -22,6 +23,7 @@ def adventure(account):
 
     from .rarity_logic import adventure
 
+    # TODO: this while loop might be somewhat common. move it to a helper?
     while True:
         # try:
         next_run = adventure(account)
@@ -73,3 +75,11 @@ def summon(account, class_id, amount, adventure):
     from .rarity_logic import summon
 
     summon(account, class_id, amount, adventure)
+
+
+@rarity.command(cls=CommandWithAccount)
+@click.argument("name", type=str)
+def build_town(account, name):
+    from .rarity_logic import build_town
+
+    build_town(account, name)

@@ -114,6 +114,10 @@ eth-utils==1.10.0
     #   web3
 execnet==1.9.0
     # via pytest-xdist
+gql==2.0.0
+    # via -r requirements.in
+graphql-core==2.3.2
+    # via gql
 hexbytes==0.2.1
     # via
     #   eip712
@@ -184,6 +188,10 @@ pickleshare==0.7.5
     # via ipython
 pluggy==0.13.1
     # via pytest
+promise==2.3
+    # via
+    #   gql
+    #   graphql-core
 prompt-toolkit==3.0.19
     # via
     #   eth-brownie
@@ -247,6 +255,7 @@ regex==2021.8.3
 requests==2.26.0
     # via
     #   eth-brownie
+    #   gql
     #   ipfshttpclient
     #   py-solc-x
     #   pythx
@@ -257,6 +266,8 @@ rlp==1.2.0
     #   eth-account
     #   eth-brownie
     #   eth-rlp
+rx==1.6.1
+    # via graphql-core
 semantic-version==2.8.5
     # via
     #   eth-brownie
@@ -267,9 +278,12 @@ semantic-version==2.8.5
 six==1.16.0
     # via
     #   asttokens
+    #   gql
+    #   graphql-core
     #   jsonschema
     #   multiaddr
     #   parsimonious
+    #   promise
     #   protobuf
     #   pytest-xdist
     #   python-dateutil

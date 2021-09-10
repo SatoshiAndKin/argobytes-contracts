@@ -171,9 +171,6 @@ def get_or_create(
     default_account, contract, no_create=False, salt=None, constructor_args=None, leading_zeros=0
 ) -> Contract:
     """Use eip-2470 to create a contract with deterministic addresses."""
-    if chain.id == 250:
-        raise RuntimeError("The singleton deployer does not work on FTM")
-
     if constructor_args is None:
         constructor_args = []
 
@@ -189,14 +186,20 @@ def get_or_create(
 
         deploy_tx = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account})
 
-        # TODO: sometimes our RPC doesn't support this :( its also not necessary. remove it?
-        deployed_contract_address = deploy_tx.return_value
+        """
+        if chain.id == 250:
+            # this special case makes me sad
+            deployed_contract_address = deploy_tx.events["Deployed"]
+        else:
+            # TODO: sometimes our RPC doesn't support this :( its also not necessary. remove it?
+            deployed_contract_address = deploy_tx.return_value
 
         assert (
             contract_address == deployed_contract_address
         ), f"create2 error: {contract_address} != {deployed_contract_address}"
 
         contract_address = deployed_contract_address
+        """
 
         print(f"Created {contract._name} at {contract_address}\n")
     else:
@@ -556,9 +559,17 @@ def poke_contracts(contracts):
             pass
 
 
+def get_singleton_factory_address():
+    if chain.id == 250:
+        # SingletonFactory doesn't work here
+        # Use Andre's factory instead
+        return "0x54f5a04417e29ff5d7141a6d33cb286f50d5d50e"
+    else:
+        return "0xce0042B868300000d44A59004Da54A005ffdcf9f"
+
+
 # eip-2470
-# TODO: this does not work on Fantom. Use https://ftmscan.com/address/0x54f5a04417e29ff5d7141a6d33cb286f50d5d50e#code
-SingletonFactory = lazy_contract("0xce0042B868300000d44A59004Da54A005ffdcf9f")
+SingletonFactory = lazy_contract(get_singleton_factory_address)
 
 # dydx wrapper https://github.com/albertocuestacanada/ERC3156-Wrappers
 DyDxFlashLender = lazy_contract("0x6bdC1FCB2F13d1bA9D26ccEc3983d5D4bf318693")

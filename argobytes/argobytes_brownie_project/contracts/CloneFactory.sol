@@ -10,18 +10,8 @@ contract CloneFactory {
 
     event NewClone(address indexed clone, address indexed target, bytes32 salt);
 
-    function cloneAndInit(address target, bytes32 salt, bytes calldata initData) external payable returns (address clone) {
-        if (initData.length > 0) {
-            salt = keccak256(abi.encodePacked(salt, initData));
-        }
-
+    function cloneTarget(address target, bytes32 salt) external payable returns (address clone) {
         clone = target.cloneDeterministic(salt);
-
-        if (initData.length > 0) {
-            (bool success, ) = clone.call(initData);
-            require(success, "!init");
-        }
-
         emit NewClone(clone, target, salt);
     }
 }

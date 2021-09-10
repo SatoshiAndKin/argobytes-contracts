@@ -13,7 +13,7 @@ import {IRarityGold} from "contracts/external/rarity/IRarityGold.sol";
 /** @title A place is full of summoners
     // TODO: have some sort of map so places can have coordinates
  */
-abstract contract RarityPlace is Multicall, RarityCommon {
+contract RarityPlace is Multicall, RarityCommon {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 
@@ -88,6 +88,8 @@ abstract contract RarityPlace is Multicall, RarityCommon {
     address private immutable original;
     /// @dev A contract used to clone this contract
     CloneFactory private immutable cloneFactory;
+    /// @dev This contract has been initialized
+    bool private initialized;
 
     ///
     /// Contract setup functions
@@ -114,12 +116,12 @@ abstract contract RarityPlace is Multicall, RarityCommon {
     }
 
     /// @notice setup state on a clone. call via newPlace
-    function initialize(bytes calldata encodedInitData) external {
+    function initialize(InitData calldata initData) external {
         // security checks
         require(address(this) != original, "!delegatecall");
-        require(msg.sender == address(cloneFactory), "!cloneFactory");
+        require(!initialized, "!initialize");
 
-        InitData memory initData = abi.decode(encodedInitData, (InitData));
+        initialized = true;
 
         uint adventuresLength = initData.adventures.length;
         for (uint i = 0; i < adventuresLength; i++) {
@@ -136,8 +138,7 @@ abstract contract RarityPlace is Multicall, RarityCommon {
 
         // create a summoner that represents the place
         // as occupants level up and work, they send their gold and such here
-        placeSummoner = RARITY.next_summoner();
-        // this does **not** trigger onERC721Received because we are in a constructor
+        // the onReceive hook sets placeSummoner to the tokenId
         RARITY.summon(initData.placeClass);
         // TODO: should the summoner that represents the place "adventure"? have stats?
         // TODO: how should we get the gold out and into an AMM?
@@ -177,9 +178,12 @@ abstract contract RarityPlace is Multicall, RarityCommon {
             initData.surroundingPlace = address(this);
         }
 
-        bytes memory encodedInitData = abi.encode(initData);
+        // ensure different initializers get different addresses
+        _salt = keccak256(abi.encode(_salt, initData));
 
-        address place = cloneFactory.cloneAndInit(address(this), _salt, encodedInitData);
+        address place = cloneFactory.cloneTarget(address(this), _salt);
+
+        RarityPlace(place).initialize(initData);
 
         if (initData.surroundingPlace == address(this)) {
             places.add(place);
@@ -228,8 +232,7 @@ abstract contract RarityPlace is Multicall, RarityCommon {
 
     // TODO: make sure this stays under 30k gas!
     function onERC721Received(address operator, address, uint256 tokenId, bytes calldata) external returns(bytes4) {
-        require(operator == address(RARITY), "!operator");
-        require(summoners.length() < capacity, "full");
+        require(RARITY.ownerOf(tokenId) == address(this), "wtf");
 
         uint class = RARITY.class(tokenId);
         uint classesLength = classes.length;
@@ -242,7 +245,12 @@ abstract contract RarityPlace is Multicall, RarityCommon {
             }
         }
 
-        summoners.add(tokenId);
+        if (placeSummoner == 0) {
+            placeSummoner = tokenId;
+        } else {
+            require(summoners.length() < capacity, "full");
+            summoners.add(tokenId);
+        }
         return this.onERC721Received.selector;
     }
 
