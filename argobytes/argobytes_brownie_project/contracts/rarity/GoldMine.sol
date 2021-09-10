@@ -2,7 +2,7 @@
 // this was my original idea, but now i think a bunch of buildings dedicated for each class makes more sense
 pragma solidity 0.8.7;
 
-import {RarityPlace} from "./abstract/RarityPlace.sol";
+import {RarityPlace} from "./RarityPlace.sol";
 
 contract GoldMine is RarityPlace {
 

@@ -5,9 +5,10 @@ import "@OpenZeppelin/utils/structs/EnumerableSet.sol";
 import "@OpenZeppelin/utils/Multicall.sol";
 
 import {CloneFactory} from "contracts/CloneFactory.sol";
-import {RarityCommon} from "./RarityCommon.sol";
 import {IRarityAdventure} from "contracts/external/rarity/IRarityAdventure.sol";
 import {IRarityGold} from "contracts/external/rarity/IRarityGold.sol";
+
+import {RarityCommon} from "./abstract/RarityCommon.sol";
 
 
 /** @title A place is full of summoners

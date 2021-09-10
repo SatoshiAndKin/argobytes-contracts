@@ -2,7 +2,7 @@
 // a place to trade gold and renown for leveled adventurers with slightly randomized attributes
 pragma solidity 0.8.7;
 
-import {RarityPlace} from "./abstract/RarityPlace.sol";
+import {RarityPlace} from "./RarityPlace.sol";
 
 contract MercenaryCamp is RarityPlace {
 
