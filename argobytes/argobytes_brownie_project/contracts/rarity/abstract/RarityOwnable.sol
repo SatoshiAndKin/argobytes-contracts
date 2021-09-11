@@ -2,13 +2,12 @@
 pragma solidity 0.8.7;
 
 import {IRarity} from "contracts/external/rarity/IRarity.sol";
-import {RarityCommon} from "./RarityCommon.sol";
+import {RarityBase} from "./RarityBase.sol";
 
 // TODO: typed errors
-// TODO: 
 
 /// @title a contract that is owned by its 
-abstract contract RarityOwnable is RarityCommon {
+abstract contract RarityOwnable is RarityBase {
     uint private __owner;
 
     event OwnershipTransferred(uint indexed previousOwner, uint indexed newOwner);

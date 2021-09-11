@@ -8,168 +8,246 @@ import {CloneFactory} from "contracts/CloneFactory.sol";
 import {IRarityAdventure} from "contracts/external/rarity/IRarityAdventure.sol";
 import {IRarityGold} from "contracts/external/rarity/IRarityGold.sol";
 
-import {RarityCommon} from "./abstract/RarityCommon.sol";
+import {RarityBase} from "./abstract/RarityBase.sol";
+import {RarityDice} from "./RarityDice.sol";
+import {RarityRenown} from "./RarityRenown.sol";
 
+// TODO: write IRarityPlace.sol
 
 /** @title A place is full of summoners
     // TODO: have some sort of map so places can have coordinates
  */
-contract RarityPlace is Multicall, RarityCommon {
+contract RarityPlace is Multicall, RarityBase {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    IRarityGold public constant RARITY_GOLD = IRarityGold(0x2069B76Afe6b734Fb65D1d099E7ec64ee9CC76B2);
+    /// @dev a struct full of initial data to avoid "stack too deep" errors
+    struct AdventureData {
+        address adventure;
+        uint reward;
+    }
+
+    struct AttributeData {
+        uint32 strength;
+        uint32 dexterity;
+        uint32 constitution;
+        uint32 intelligence;
+        uint32 wisdom;
+        uint32 charisma;
+    }
+
+    struct ClassData {
+        uint class;
+        uint eliteLevel;
+        address eliteDestination;
+        AttributeData attributes;
+        // TODO: skills
+    }
+
+    struct InitData {
+        AdventureData[] adventures;
+        uint baseAdventureReward;
+        uint capacity;
+        ClassData[] classes;
+        uint goldRewardScale; // probably should be 1e18 to match gold
+        uint hireCostScale;
+        string name;
+        address owner;
+        uint placeClass;
+        uint renownExchangeRate;
+        address surroundingPlace;
+        uint workBaseReward; // probably should be 250e18 to match xp
+        uint16 workTaxBps; // max of 10,000
+    }
+
+    struct PlaceClassData {
+        AttributeData attributes;
+        // TODO: randomized skills
+    }
+
+    struct NewPlaceData {
+        // by default, we clone the parent. but any contract can be cloned (so long as is IRarityPlace)
+        RarityPlace implContract;
+        // TODO: rename "salt" to "location" and use it as coordinates somehow?
+        bytes32 salt;
+        AdventureData[] adventures;
+        uint baseAdventureReward;
+        uint capacity;
+        ClassData[] classes;
+        uint eliteLevel;
+        uint goldRewardScale;
+        string name;
+        uint placeClass;
+        PlaceClassData placeClassData;
+        uint ourRenownExchangeRate;
+        uint theirRenownExchangeRate;
+        uint16 workTaxBps;
+    }
+
 
     /// @dev a place is full of adventures
     // TODO: owner-only setter
     EnumerableSet.AddressSet internal adventures;
+    /// @dev each adventure gives renown. 1e18 == 1.0
+    mapping(address => uint) public adventureRewardScale;
+
+    /// @dev the base renown given for calling `work`
+    uint baseAdventureReward;
 
     /// @dev a place has limited capacity
-    // TODO: owner-only setter
     uint capacity;
-    /// @dev a place can limit its classses
-    // TODO: owner-only setter
-    uint[] classes;
-    // TODO: need ability scores/class so that we will be strong enough to adventure
+    /// @dev a place can limit its classes. it can do ratios too by doing `[barb, barb, fighter]`
+    ClassData[] classes;
 
-    /// @dev a place has a primary summoner for holding pooled funds
-    uint placeSummoner;
+    /// @dev roll some dice
+    RarityDice immutable dice;
 
     /// @dev track the timestamp that the first npc in summoners last adventured
     uint firstSummonerAdventureLog;
+
+    // 1e18 == 1.0
+    uint goldRewardScale;
+
+    // 1e18 == 1.0
+    uint hireCostScale;
+
+    // TODO: owner-only setter for eliteLevel and eliteLevelDestinations that makes sure all classes get set
+    /// @dev once a summmoner levels up past the eliteLevel, they can move to eliteLevelDestination
+    uint eliteLevel;
+    /// @dev an address for the summoners to move to. Probably a Mercenary Camp
+    address[11] eliteLevelDestinations;
 
     /// @dev a place must have a name
     string name;
 
     /// @dev the next summoner that is ready for adventure. if > summoners.lenght, summon more
+    /// TODO: helper function to reset this in case of some bug? worst case its stuck for a day
     uint nextSummoner;
-    /// @dev the next summoner that is ready to be checked for level or loot
-    uint nextSummonerToCheck;
+
+    /// @dev The owner of this contract. VERY POWERFUL!
+    // TODO: owner ownly setter
+    address public owner;
 
     /** @dev
         a place can contain other place
         renown can be exchanged between them
         only the owner can add new places
         key is the contract address. value is the exchange rate for renown
-        // TODO: what units for exchange rate? 1e9 == 1.0
+        // TODO: what units for exchange rate? 1e18 == 1.0
         // TODO: owner-only setter
     */
     EnumerableSet.AddressSet internal places;
 
-    /// @dev mapping to get information about the places inside this place
-    mapping(address => uint) internal renownExchangeRate;
+    /// @dev a place has a primary summoner for holding pooled funds
+    uint placeSummoner;
+
+    /// @dev contract for managing renown
+    RarityRenown public immutable renown;
 
     /// @dev a place is full of NPC summoners
     EnumerableSet.UintSet internal summoners;
+
+    /// @dev summoners that have done their work and hit the level cap
+    EnumerableSet.UintSet[11] internal eliteSummoners;
+
+    // 1e18 == 1.0
+    uint public summonerReward;
 
     /// @dev the place that this place is inside. this place can spend our renown
     // TODO: owner-only setter
     RarityPlace public surroundingPlace;
 
-    /// @dev tracking how often an outsider has led an adventure at this place
-    mapping(uint => uint) public renownOf;
-    /// @dev the total unspent renown
-    uint public totalRenown;
+    /// @dev tax taken out of work
+    uint16 public workTaxBps;
 
-    event RenownUp(uint indexed player, uint amount);
-    event RenownDown(uint indexed player, uint amount);
-
-    // TODO: owner-only setter for levelCap and levelCapDestinations that makes sure all classes get set
-    /// @dev once a summmoner levels up past the levelCap, they can move to levelCapDestination
-    uint levelCap;
-    /// @dev an address for the summoners to move to. Probably a Mercenary Camp
-    address[11] levelCapDestinations;
-
-    /// @dev The owner of this contract. VERY POWERFUL!
-    // TODO: owner ownly setter
-    address private owner;
-
-    // non-game state
-    /// @dev The original address of this contract
-    address private immutable original;
+    // non-game data
     /// @dev A contract used to clone this contract
     CloneFactory private immutable cloneFactory;
     /// @dev This contract has been initialized
     bool private initialized;
+    /// @dev The original address of this contract
+    address private immutable original;
 
     ///
     /// Contract setup functions
     ///
 
     /// @notice a mostly empty constructor. use createNewPlace to actually make a place.
-    constructor(address _cloneFactory) {
+    constructor(CloneFactory _cloneFactory, RarityDice _dice, RarityRenown _renown) {
+        // game immutables
+        dice = _dice;
+        renown = _renown;
+
+        // non-game immutables
+        cloneFactory = _cloneFactory;
         // save this address in the bytecode so that we can check for delegatecalls
         original = address(this);
-        cloneFactory = CloneFactory(_cloneFactory);
-    }
-
-    /// @dev a struct full of initial data to avoid "stack too deep" errors
-    struct InitData {
-        address[] adventures;
-        uint256 capacity;
-        uint256[] classes;
-        uint256 levelCap;
-        address[11] levelCapDestinations;
-        string name;
-        address owner;
-        uint256 placeClass;
-        address surroundingPlace;
     }
 
     /// @notice setup state on a clone. call via newPlace
     function initialize(InitData calldata initData) external {
         // security checks
         require(address(this) != original, "!delegatecall");
-        require(!initialized, "!initialize");
+
+        if (initialized) {
+            // we allow calling init again, but only by the owner
+            require(!initialized, "!initialize");
+        }
 
         initialized = true;
 
-        uint adventuresLength = initData.adventures.length;
-        for (uint i = 0; i < adventuresLength; i++) {
-            adventures.add(initData.adventures[i]);
+        uint l = initData.adventures.length;
+        for (uint i = 0; i < l; i++) {
+            address adventure = initData.adventures[i].adventure;
+            adventures.add(adventure);
+            adventureRewardScale[adventure] = initData.adventures[i].reward;
         }
 
+        baseAdventureReward = initData.baseAdventureReward;
         capacity = initData.capacity;
-        classes = initData.classes;
-        levelCap = initData.levelCap;
-        levelCapDestinations = initData.levelCapDestinations;
+
+        l = initData.classes.length;
+        for (uint i = 0; i < l; i++) {
+            classes[i] = initData.classes[i];
+        }
+
+        goldRewardScale = initData.goldRewardScale;
         name = initData.name;
         owner = initData.owner;
+
+        renown.setExchangeRate(initData.surroundingPlace, initData.renownExchangeRate);
+
         surroundingPlace = RarityPlace(initData.surroundingPlace);
+        workTaxBps = initData.workTaxBps;
 
         // create a summoner that represents the place
         // as occupants level up and work, they send their gold and such here
         // the onReceive hook sets placeSummoner to the tokenId
-        RARITY.summon(initData.placeClass);
+        if (placeSummoner == 0) {
+            RARITY.summon(initData.placeClass);
+        }
         // TODO: should the summoner that represents the place "adventure"? have stats?
         // TODO: how should we get the gold out and into an AMM?
+        // TODO: how should we get materials out of the extra adventures?
     }
 
     /// @notice create a clone of this contract
-    function newPlace(
-        address[] calldata _adventures,
-        uint _capacity,
-        uint[] calldata _classes,
-        uint _levelCap,
-        address[11] calldata _levelCapDestinations,
-        string calldata _name,
-        uint _placeClass,
-        uint _renownExchangeRate,
-        bytes32 _salt
-    ) external returns(address) {
+    function newPlace(NewPlaceData calldata newPlaceData) external returns(RarityPlace) {
         InitData memory initData;
 
-        initData.adventures = _adventures;
-        initData.capacity = _capacity;
-        initData.classes = _classes;
-        initData.levelCap = _levelCap;
-        initData.levelCapDestinations = _levelCapDestinations;
-        initData.name = _name;
-        initData.placeClass = _placeClass;
+        initData.adventures = newPlaceData.adventures;
+        initData.baseAdventureReward = newPlaceData.baseAdventureReward;
+        initData.capacity = newPlaceData.capacity;
+        initData.classes = newPlaceData.classes;
+        initData.name = newPlaceData.name;
+        initData.placeClass = newPlaceData.placeClass;
+        initData.renownExchangeRate = newPlaceData.theirRenownExchangeRate;
+        initData.workTaxBps = newPlaceData.workTaxBps;
 
         if (address(this) == original) {
             // if called on the original contract, create a new place not inside any other
-            require(_renownExchangeRate == 0, "!_renownExchangeRate");
+            require(newPlaceData.ourRenownExchangeRate == 0, "!_ourRenownExchangeRate");
+            require(newPlaceData.theirRenownExchangeRate == 0, "!_theirRenownExchangeRate");
             initData.owner = msg.sender;
             // initData.surroundingPlace = address(0);
         } else {
@@ -180,49 +258,67 @@ contract RarityPlace is Multicall, RarityCommon {
         }
 
         // ensure different initializers get different addresses
-        _salt = keccak256(abi.encode(_salt, initData));
+        bytes32 salt = keccak256(abi.encode(newPlaceData.salt, initData));
 
-        address place = cloneFactory.cloneTarget(address(this), _salt);
+        // allow cloning any contract, not just this one
+        address place;
+        if (address(newPlaceData.implContract) == address(0)) {
+            place = cloneFactory.cloneTarget(address(this), salt);
+        } else {
+            place = cloneFactory.cloneTarget(address(newPlaceData.implContract), salt);
+        }
+
+        if (initData.surroundingPlace == address(this)) {
+            _surroundPlace(place, newPlaceData.ourRenownExchangeRate);
+        } else {
+            // if surrounding place isn't this place, we can't use ourRenownExchangeRate
+            require(newPlaceData.ourRenownExchangeRate == 0, "!ourRenownExchangeRate");
+        }
 
         RarityPlace(place).initialize(initData);
 
-        if (initData.surroundingPlace == address(this)) {
-            places.add(place);
-            renownExchangeRate[place] = _renownExchangeRate;
-        }
-
-        return place;
+        return RarityPlace(place);
     }
     
     ///
     /// Place management functions
     ///
 
-    /// @dev join this place to a different surroundingPlace
-    function joinPlace(address place, address _newSurroundingPlace) external {
+    /// @dev join this place to a different surroundingPlace. call this before surroundPlace
+    function joinPlace(address _newSurroundingPlace, uint _renownExchangeRate) external {
         require(owner == msg.sender, "!owner");
         surroundingPlace = RarityPlace(_newSurroundingPlace);
+
+        renown.setExchangeRate(_newSurroundingPlace, _renownExchangeRate);
+
         // TODO: event?
     }
 
-    /// @notice Add a place to this place (owner-only)
-    function surroundPlace(address place, uint _renownExchangeRate) external {
+    /// @notice Add a place to this place (owner-only). call this after joinPlace
+    function surroundPlace(address _place, uint _renownExchangeRate) external {
         require(owner == msg.sender, "!owner");
-        require(RarityPlace(place).surroundingPlace() == this, "!surrounding");
+        _surroundPlace(_place, _renownExchangeRate);
+    }
 
-        places.add(place);
-        renownExchangeRate[place] = _renownExchangeRate;
+    function _surroundPlace(address _place, uint _renownExchangeRate) internal {
+        require(RarityPlace(_place).surroundingPlace() == this, "!surrounding");
+
+        places.add(_place);
+
+        renown.setExchangeRate(_place, _renownExchangeRate);
 
         // TODO: event?
     }
 
     /// @notice Remove a place from this place (owner-only)
-    function removePlace(address place) external {
+    function removePlace(address _place) external {
         require(owner == msg.sender, "!owner");
-        require(RarityPlace(place).surroundingPlace() != this, "!surrounding");
+        require(RarityPlace(_place).surroundingPlace() != this, "!surrounding");
 
-        places.remove(place);
-        delete renownExchangeRate[place];
+        places.remove(_place);
+
+        // TODO: always clear exchange rate?
+        renown.setExchangeRate(_place, 0);
 
         // TODO: event?
     }
@@ -240,7 +336,7 @@ contract RarityPlace is Multicall, RarityCommon {
 
         bool classValid = false;
         for (uint i = 0; i < classesLength; i++) {
-            if (classes[i] == class) {
+            if (classes[i].class == class) {
                 classValid = true;
                 break;
             }
@@ -255,72 +351,45 @@ contract RarityPlace is Multicall, RarityCommon {
         return this.onERC721Received.selector;
     }
 
-    // TODO: instead of taking ids, cycle using `nextSummonerToCheck`? have a "startIndex"?
-    function checkSummoners(uint player, uint[] memory ids) external {
+    function _levelUp(uint summoner) internal returns(uint) {
         uint reward = 0;
-        uint length = ids.length;
-        for (uint i = 0; i < length; i++) {
-            uint summoner = ids[i];
 
-            // if we aren't the owner, we can't manage this
-            if (RARITY.ownerOf(summoner) != address(this)) {
-                summoners.remove(summoner);
-                reward += 1;
-                continue;
-            }
+        try RARITY.level_up(summoner) {
+            uint gold_claimed = RARITY_GOLD.claimable(summoner);
 
-            // if level above level cap, transfer out
-            if (levelCap > 0 && RARITY.level(summoner) > levelCap) {
-                // TODO: get level and class in one call
-                uint levelCapDestinationIndex = RARITY.class(summoner) - 1;
-
-                RARITY.safeTransferFrom(address(this), levelCapDestinations[levelCapDestinationIndex], summoner);
-                summoners.remove(summoner);
-                reward += 1;
-                continue;
-            }
-        }
-
-        _mintRenown(player, reward);
-    }
-
-    function levelUp(uint player, uint[] memory ids) external returns(uint) {
-        uint length = ids.length;
-        uint reward = 0;
-        for (uint i = 0; i < length; i++) {
-            uint summoner = ids[i];
-
-            try RARITY.level_up(summoner) {
+            if (gold_claimed > 0) {
                 RARITY_GOLD.claim(summoner);
 
-                uint gold = RARITY_GOLD.balanceOf(summoner);
-
                 // todo: the place has gold, but there is no way to get it out. write that!
-                RARITY_GOLD.transfer(summoner, placeSummoner, gold);
+                RARITY_GOLD.transfer(summoner, placeSummoner, gold_claimed * workTaxBps / 10000);
 
-                // TODO: how much reward? scale based on gold?
-                // TODO: reward the summoner with renown too?
-                reward += 1;
-            } catch (bytes memory /*lowLevelData*/) {
-                // someone must have already leveled this summoner
+                // RARITY_GOLD.decimals() == 18
+                reward += gold_claimed * goldRewardScale / 1e18;
             }
+        } catch (bytes memory /*lowLevelData*/) {
+            // the summoner is not ready to lvle up
         }
 
-        _mintRenown(player, reward);
+        return reward;
     }
 
     /// @dev summon a summoner for this placae
     function _summon(uint player) internal {
-        uint class = classes[summoners.length() % classes.length];
+        uint class = classes[summoners.length() % classes.length].class;
         uint summoner = RARITY.next_summoner();
 
         RARITY.summon(class);
 
-        _summon_more(player, summoner, class);
+        uint reward = 1e18 * summonerReward / 1e18;
+
+        renown.mint(summoner, summonerReward);
+        renown.mint(player, summonerReward);
+
+        _summon_more(player, summoner);
     }
 
     /// @dev override this to call more during "_summon"
-    function _summon_more(uint player, uint summoner, uint class)
+    function _summon_more(uint player, uint summoner)
         internal virtual
         returns (uint bonusReward)
     {
@@ -340,6 +409,9 @@ contract RarityPlace is Multicall, RarityCommon {
             // the first summoner is able to adventure again
             nextSummoner = 0;
         }
+        if (nextSummoner == 0) {
+            firstSummonerAdventureLog = block.timestamp;
+        }
 
         uint currentSummoners = summoners.length();
 
@@ -352,122 +424,96 @@ contract RarityPlace is Multicall, RarityCommon {
             }
         }
 
-        if (nextSummoner == 0) {
-            firstSummonerAdventureLog = block.timestamp;
-        }
-
-        // do some sort of adventuring
-        uint moreReward = 0;
+        // do some adventuring (and maybe more)
+        uint reward = 0;
         uint moreAdventures = adventures.length();
         for (uint i = 0; i < workNumSummoners; i++) {
             uint summoner = summoners.at(nextSummoner + i);
+
+            // base adventure
+            uint thisReward = baseAdventureReward;
             RARITY.adventure(summoner);
 
-            uint class = RARITY.class(summoner);
+            // try to level up
+            thisReward += _levelUp(summoner);
 
+            // more adventures
             for (uint j = 0; j < moreAdventures; j++) {
-                // TODO: is scouting on chain too gas expensive? put this in a try block instead?
-                // TODO: will everything have a scout method?
                 IRarityAdventure adventure = IRarityAdventure(adventures.at(j));
                 if (adventure.scout(summoner) > 0) {
-                    moreReward += adventure.adventure(summoner);
+                    uint rewardScale = adventureRewardScale[address(adventure)];
+
+                    uint claimed = adventure.adventure(summoner);
+
+                    // we could take a percentage of claimed, but they are small ints so rounding means we usually get 0
+                    // so instead, the placeSummoner has a chance to take all of what is claimed
+                    // this should add some randomness to the NPCs
+                    if (dice.random(summoner) % 10000 <= workTaxBps) {
+                        adventure.transfer(summoner, placeSummoner, claimed);
+                    }
+
+                    // unlike gold and xp, claimed items have 0 decimals
+                    // multiply by 1e18 to fractionalize the claimed items
+                    thisReward += claimed * 1e18 * rewardScale / 1e18;
                 }
             }
 
-            moreReward += _work_more(player, summoner, class);
+            thisReward += _work_more(player, summoner);
+
+            // give renown to the summoner. we will use this to calculate their cost to hire
+            renown.mint(summoner, thisReward);
+
+            // keep counting for the reward for the player
+            reward += thisReward;
         }
 
         // pay for the work in renown
-        _mintRenown(player, workNumSummoners + moreReward);
+        renown.mint(player, reward);
     }
 
     /// @dev override this to call any other adventure contracts during "work"
-    function _work_more(uint player, uint summoner, uint class)
+    function _work_more(uint player, uint summoner)
         internal virtual
         returns (uint bonusReward)
     {
         // do something cool
     }
 
-    ///
-    /// Renown functions
-    ///
+    function setCapacity(uint _capacity)
+        external
+    {
+        capacity = _capacity;
 
-    function exchangeRenown(uint player, address srcPlace, uint srcAmount, address dstPlace) internal returns (uint) {
-        require(_isApprovedOrOwner(msg.sender, player), "!approve");
-        return _exchangeRenown(player, srcPlace, srcAmount, dstPlace);
-    }
-
-    function _exchangeRenown(uint player, address srcPlace, uint srcAmount, address dstPlace) internal returns (uint) {
-        if (srcPlace == address(this)) {
-            require(places.contains(dstPlace), "!dstPlace");
-
-            // TODO: variable exchange rates?
-            uint exchangeRate = renownExchangeRate[srcPlace];
-
-            require(exchangeRate > 0, "!exchangeRate");
-
-            // TODO: double check and document this math
-            uint destAmount = srcAmount / exchangeRate * 1e9;
-            uint roundedSrcAmount = destAmount / 1e9 * exchangeRate;
-
-            _spendRenown(player, roundedSrcAmount);
-            RarityPlace(dstPlace).mintRenown(player, destAmount);
-
-            return destAmount;
-        }
-        
-        if (dstPlace == address(this)) {
-            require(places.contains(srcPlace), "!srcPlace");
-
-            // TODO: variable exchange rates?
-            uint exchangeRate = renownExchangeRate[srcPlace];
-
-            require(exchangeRate > 0, "!exchangeRate");
-
-            // TODO: double check and document this math
-            uint destAmount = srcAmount * exchangeRate / 1e9;
-            uint roundedSrcAmount = destAmount * 1e9 / exchangeRate;
-
-            RarityPlace(srcPlace).spendRenown(player, roundedSrcAmount);
-            _mintRenown(player, destAmount);
-
-            return destAmount;
+        if (summoners.length() < _capacity) {
+            return;
         }
 
-        // place to place trade
-        require(places.contains(srcPlace), "!srcPlace");
-        require(places.contains(dstPlace), "!dstPlace");
-
-        uint received = _exchangeRenown(player, srcPlace, srcAmount, address(this));
-        return _exchangeRenown(player, address(this), received, dstPlace);
+        revert("todo: move extra summoners out. reset nextSummoner");
     }
 
-    // TODO: helper for calculation renown trades for destAmounts?
-
-
-    function mintRenown(uint player, uint amount) external {
-        require(msg.sender == address(surroundingPlace));
-        _mintRenown(player, amount);
+    function hireSummoner(uint _summoner, uint _renownIn, uint class, address newOwner) external {
+        _hireSummoner(_summoner, _renownIn, class, newOwner, summoners);
     }
 
-    function _mintRenown(uint player, uint amount) internal {
-        if (amount > 0) {
-            renownOf[player] += amount;
-            totalRenown += amount;
-            emit RenownUp(player, amount);
-        }
+    function hireEliteSummoner(uint _summoner, uint _renownIn, uint class, address newOwner) external {
+        _hireSummoner(_summoner, _renownIn, class, newOwner, eliteSummoners[class]);
     }
 
-    function spendRenown(uint player, uint amount) external {
-        require(msg.sender == address(surroundingPlace));
-        _spendRenown(player, amount);
-    }
+    function _hireSummoner(uint _summoner, uint _renownIn, uint class, address newOwner, EnumerableSet.UintSet storage _summoners) internal {
+        // TODO: don't just hire the first summoner. find one that can be purchased for this much renownIn
+        uint hired = _summoners.at(0);
 
-    function _spendRenown(uint player, uint amount) internal {
-        renownOf[player] -= amount;
-        totalRenown -= amount;
-        emit RenownDown(player, amount);
+        uint hiredRenownBalance = renown.balanceOf(address(this), hired);
+
+        // TODO: better price depending on _summoner's skills/level?
+        uint cost = hiredRenownBalance * hireCostScale / 1e18;
+
+        renown.burn(_summoner, cost);
+        renown.burn(hired, hiredRenownBalance);
+
+        _summoners.remove(hired);
+
+        RARITY.safeTransferFrom(address(this), newOwner, hired);
     }
 
     ///
@@ -478,7 +524,7 @@ contract RarityPlace is Multicall, RarityCommon {
     
         setOwner
         setCapacity
-        setClasses (and levelCap and Destinations)
+        setClasses (and eliteLevel and Destinations)
         setName
         transferOwnership    
         takeOwnership

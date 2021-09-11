@@ -19,10 +19,15 @@ def get_event_address(tx, event):
     return event.address or tx.logs[event.pos[0]].address
 
 
-def get_event_contract(tx, event):
+def get_event_contract(tx, event, fallback_interface=None):
     address = get_event_address(tx, event)
+    try:
+        return load_contract(address)
+    except ValueError:
+        if not fallback_interface:
+            raise
 
-    return load_contract(address)
+    return fallback_interface(address)
 
 
 def fetch_transaction(txid, force=False):
