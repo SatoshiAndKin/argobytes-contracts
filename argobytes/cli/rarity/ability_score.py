@@ -344,7 +344,7 @@ def rank_attribute_permutations(dump_stats=0):
 #     : []
 # }
 
-class Attributes(IntEnum):
+class Ability(IntEnum):
     STR = 1
     DEX = 2
     CON = 3
@@ -355,12 +355,188 @@ class Attributes(IntEnum):
 MIN_MIN_DUMP_STATS = 0
 MAX_MAX_DUMP_STATS = 4
 
-AttributeBounds = namedtuple("AttributeBounds", ["min_dump_stats", "max_dump_stats", "attribute_rankings"])
+AttributeBounds = namedtuple("AbilityBounds", ["min_dump_stats", "max_dump_stats", "ability_rankings"])
 
 
-possibilities = [
+possibilities = {
+    RarityBaseClass.BARBARIAN: [[
+        # tier 1
+        (Ability.STR, Ability.DEX, Ability.CON),
+        # tier 2
+        (Ability.CHA, Ability.WIS),
+        # tier 3
+        (Ability.INT),
+    ]],
+    RarityBaseClass.BARD: [[
+        # tier 1
+        (Ability.CHA),
+        # tier 2
+        (Ability.DEX),
+        # tier 3
+        (Ability.CON),
+        # tier 4
+        (Ability.INT, Ability.WIS, Ability.STR),
+    ]],
+    RarityBaseClass.CLERIC: [
+        [
+            # tier 1
+            (Ability.WIS),
+            # tier 2
+            (Ability.STR),
+            # tier 3
+            (Ability.CON),
+            # tier 4
+            (Ability.CHA),
+            # tier 5
+            (Ability.DEX),
+            # tier 6
+            (Ability.INT),
+        ],
+        [
+            # tier 1
+            (Ability.WIS),
+            # tier 2
+            (Ability.DEX),
+            # tier 3
+            (Ability.CON),
+            # tier 4
+            (Ability.CHA),
+            # tier 5
+            (Ability.STR),
+            # tier 6
+            (Ability.INT),
+        ],
+    ],
+    RarityBaseClass.DRUID: [[
+        # tier 1
+        (Ability.WIS, Ability.DEX, Ability.CON),
+        # tier 2
+        (Ability.CHA),
+        # tier 3
+        (Ability.INT),
+        # tier 4
+        (Ability.STR),
+    ]],
+    RarityBaseClass.FIGHTER: [
+        [
+            # tier 1
+            (Ability.STR),
+            # tier 2
+            (Ability.CON),
+            # tier 3
+            (Ability.DEX),
+            # tier 4
+            (Ability.INT, Ability.WIS, Ability.CHA),
+        ],
+        [
+            # tier 1
+            (Ability.DEX),
+            # tier 2
+            (Ability.CON),
+            # tier 3
+            (Ability.STR),
+            # tier 4
+            (Ability.INT, Ability.WIS, Ability.CHA),
+        ],
+    ],
+    RarityBaseClass.MONK: [
+        [
+            # tier 1
+            (Ability.DEX),
+            # tier 2
+            (Ability.WIS),
+            # tier 3
+            (Ability.CON, Ability.CHA),
+            # tier 4
+            (Ability.INT, Ability.STR),
+        ],
+        [
+            # tier 1
+            (Ability.DEX),
+            # tier 2
+            (Ability.WIS),
+            # tier 3
+            (Ability.CON, Ability.STR),
+            # tier 4
+            (Ability.INT, Ability.CHA),
+        ]
+    ],
+    RarityBaseClass.PALADIN: [[
+        # tier 1
+        (Ability.STR, Ability.CON),
+        # tier 2
+        (Ability.CHA),
+        # tier 3
+        (Ability.DEX),
+        # tier 4
+        (Ability.WIS, Ability.INT),
+    ]],
+    RarityBaseClass.RANGER: [[
+        # tier 1
+        (Ability.DEX),
+        # tier 2
+        (Ability.WIS),
+        # tier 3
+        (Ability.CON),
+        # tier 4
+        (Ability.CHA),
+        # tier 5
+        (Ability.INT),
+        # tier 6
+        (Ability.STR),
+    ]],
+    RarityBaseClass.ROGUE: [
+        [
+            # tier 1
+            (Ability.INT, Ability.DEX),
+            # tier 2
+            (Ability.CON, Ability.WIS, Ability.CHA, Ability.STR),
+        ],
+        [
+            # tier 1
+            (Ability.DEX),
+            # tier 2
+            (Ability.STR),
+            # tier 3
+            (Ability.CON, Ability.CHA),
+            # tier 5
+            (Ability.WIS, Ability.INT),
+        ],
+        [
+            # tier 1
+            (Ability.DEX),
+            # tier 2
+            (Ability.INT),
+            # tier 3
+            (Ability.CON),
+            # tier 4
+            (Ability.CHA),
+            # tier 5
+            (Ability.WIS, Ability.STR),
+        ],
+    ],
+    RarityBaseClass.SORCERER: [[
+        # tier 1
+        (Ability.CHA),
+        # tier 2
+        (Ability.DEX, Ability.CON, Ability.WIS, Ability.INT),
+        # tier 3
+        (Ability.STR),
+    ]],
+    RarityBaseClass.WIZARD: [[
+        # tier 1
+        (Ability.INT),
+        # tier 2
+        (Ability.DEX, Ability.CON, Ability.WIS, Ability.CHA),
+        # tier 3
+        (Ability.STR),
+    ]],
+}
 
-]
+specialized = {
+    "Market LP": NotImplemented,
+    "Craft I": NotImplemented,
+}
 
 
 def random_attributes(classId: RarityBaseClass):
