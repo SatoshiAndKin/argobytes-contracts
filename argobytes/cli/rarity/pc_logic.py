@@ -15,7 +15,7 @@ def adventure(account):
 
         try:
             if RARITY_CRAFT_1.scout(summoner) > 0:
-                # we could check adventure_log here, but just catching the exception is easier. we won't broadcast 
+                # we could check adventure_log here, but just catching the exception is easier. we won't broadcast
                 RARITY_CRAFT_1.adventure(summoner).info()
         except Exception:
             pass

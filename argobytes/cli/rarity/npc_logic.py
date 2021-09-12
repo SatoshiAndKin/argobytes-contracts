@@ -8,8 +8,7 @@ from gql.transport.requests import RequestsHTTPTransport
 
 from argobytes.contracts import ArgobytesBrownieProject, get_or_create, lazy_contract
 
-from .rarity_logic import get_summoners, RARITY, RARITY_ACTION_V2, grouper
-
+from .rarity_logic import RARITY, RARITY_ACTION_V2, get_summoners, grouper
 
 # TODO: set attributes, name, title. what else?
 # TODO: farm rarity gems

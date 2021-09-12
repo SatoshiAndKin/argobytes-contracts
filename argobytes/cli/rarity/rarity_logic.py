@@ -9,8 +9,8 @@ from brownie import multicall
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 
-from argobytes.contracts import ArgobytesBrownieProject, get_or_create, lazy_contract
 from argobytes.cli_helpers import debug_shell
+from argobytes.contracts import ArgobytesBrownieProject, get_or_create, lazy_contract
 
 RARITY = lazy_contract("0xce761d788df608bd21bdd59d6f4b54b2e27f25bb")
 RARITY_ATTRIBUTES = lazy_contract("0xB5F5AF1087A8DA62A23b08C00C6ec9af21F397a1")
@@ -30,7 +30,8 @@ RARITY_CODEX_ITEMS_WEAPONS = lazy_contract("0xeE1a2EA55945223404d73C0BbE57f540BB
 # TODO: prefix this so we can tell it is our code and not official code
 RARITY_ACTION_V2 = lazy_contract(lambda: get_or_create(None, ArgobytesBrownieProject.RarityActionV2))
 
-Summoner = namedtuple('Summoner', ['summoner', 'xp', 'log', 'classId', 'level'])
+Summoner = namedtuple("Summoner", ["summoner", "xp", "log", "classId", "level"])
+
 
 class RarityBaseClass(IntEnum):
     # NONE = 0
@@ -46,6 +47,7 @@ class RarityBaseClass(IntEnum):
     SORCERER = 10
     WIZARD = 11
 
+
 # TODO: enum for prestige classes
 
 
@@ -59,7 +61,7 @@ def grouper(iterable, n, fillvalue=None):
     return itertools.zip_longest(*args, fillvalue=fillvalue)
 
 
-def get_summoners(account, limit = 1000):
+def get_summoners(account, limit=1000):
     # Select your transport with a defined url endpoint
     transport = RequestsHTTPTransport(url="https://api.thegraph.com/subgraphs/name/eabz/rarity")
 
