@@ -112,10 +112,9 @@ contract RarityPlace is Multicall, RarityBase {
     uint hireCostScale;
 
     // TODO: owner-only setter for eliteLevel and eliteLevelDestinations that makes sure all classes get set
-    /// @dev once a summmoner levels up past the eliteLevel, they can move to eliteLevelDestination
-    uint eliteLevel;
-    /// @dev an address for the summoners to move to. Probably a Mercenary Camp
-    address[11] eliteLevelDestinations;
+    /// @dev once a summmoner levels up past the eliteLevel (defined in classes ClassData), they can move to eliteLevelDestination. if no destination, they move here
+    /// @dev summoners that have done their work and hit the level cap
+    EnumerableSet.UintSet[11] internal eliteSummoners;
 
     /// @dev a place must have a name
     string name;
@@ -146,9 +145,6 @@ contract RarityPlace is Multicall, RarityBase {
 
     /// @dev a place is full of NPC summoners
     EnumerableSet.UintSet internal summoners;
-
-    /// @dev summoners that have done their work and hit the level cap
-    EnumerableSet.UintSet[11] internal eliteSummoners;
 
     // 1e18 == 1.0
     uint public summonerReward;

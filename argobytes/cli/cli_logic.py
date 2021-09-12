@@ -105,7 +105,7 @@ def cli(
                 # TODO: custom GasNowStrategy that takes an integer max
                 # TODO: 50 is the network-wide minimum
                 gas_price("51 gwei")
-                logger.warning("Forced gas price to 51 gwei!")
+                logger.info("Fixed gas price to 51 gwei")
             elif network in [
                 "bsc-main",
                 "bsc-main-fork",

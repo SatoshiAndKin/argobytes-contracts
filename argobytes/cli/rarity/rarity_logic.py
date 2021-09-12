@@ -1,17 +1,52 @@
+"""
+Common logic for interacting with <https://github.com/andrecronje/rarity>.
+"""
 import itertools
+from collections import namedtuple
+from enum import IntEnum
 
-import click
-from brownie import ZERO_ADDRESS, chain, history, multicall
-from click_spinner import spinner
+from brownie import multicall
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 
 from argobytes.contracts import ArgobytesBrownieProject, get_or_create, lazy_contract
+from argobytes.cli_helpers import debug_shell
 
 RARITY = lazy_contract("0xce761d788df608bd21bdd59d6f4b54b2e27f25bb")
+RARITY_ATTRIBUTES = lazy_contract("0xB5F5AF1087A8DA62A23b08C00C6ec9af21F397a1")
+RARITY_CRAFT_1 = lazy_contract("0x2A0F1cB17680161cF255348dDFDeE94ea8Ca196A")
+RARITY_CRAFTING_1 = lazy_contract("0x3FC0539D1a0737FCA3e4556A990AAE1C38425F14")
+RARITY_GOLD = lazy_contract("0x2069B76Afe6b734Fb65D1d099E7ec64ee9CC76B2")
+RARITY_SKILLS = lazy_contract("0x51C0B29A1d84611373BA301706c6B4b72283C80F")
 
-# i'd like to use the singleton deployer, but it doesn't appear to work on ftm
-RARITY_ACTION_V1 = lazy_contract("0x0fD89B2430Bec282962bb1D012b22b7fD3d0db58")
+RARITY_CODEX_RANDOM = lazy_contract("0x7426dBE5207C2b5DaC57d8e55F0959fcD99661D4")
+RARITY_CODEX_SKILLS = lazy_contract("0x67ae39a2Ee91D7258a86CD901B17527e19E493B3")
+RARITY_CODEX_CLASS_SKILLS = lazy_contract("0xf677eD67B7717f3a743BE8D9b6662B11b095DB43")
+RARITY_CODEX_FEATS_1 = lazy_contract("0x822F888f5DB8e1316717Eb904E550ebB1196EdbE")
+RARITY_CODEX_ITEMS_GOODS = lazy_contract("0x0C5C1CC0A7AE65FE372fbb08FF16578De4b980f3")
+RARITY_CODEX_ITEMS_ARMOR = lazy_contract("0xf5114A952Aca3e9055a52a87938efefc8BB7878C")
+RARITY_CODEX_ITEMS_WEAPONS = lazy_contract("0xeE1a2EA55945223404d73C0BbE57f540BBAAD0D8")
+
+# TODO: prefix this so we can tell it is our code and not official code
+RARITY_ACTION_V2 = lazy_contract(lambda: get_or_create(None, ArgobytesBrownieProject.RarityActionV2))
+
+Summoner = namedtuple('Summoner', ['summoner', 'xp', 'log', 'classId', 'level'])
+
+class RarityBaseClass(IntEnum):
+    # NONE = 0
+    BARBARIAN = 1
+    BARD = 2
+    CLERIC = 3
+    DRUID = 4
+    FIGHTER = 5
+    MONK = 6
+    PALADIN = 7
+    RANGER = 8
+    ROGUE = 9
+    SORCERER = 10
+    WIZARD = 11
+
+# TODO: enum for prestige classes
 
 
 def grouper(iterable, n, fillvalue=None):
@@ -24,7 +59,7 @@ def grouper(iterable, n, fillvalue=None):
     return itertools.zip_longest(*args, fillvalue=fillvalue)
 
 
-def get_summoners(account):
+def get_summoners(account, limit = 1000):
     # Select your transport with a defined url endpoint
     transport = RequestsHTTPTransport(url="https://api.thegraph.com/subgraphs/name/eabz/rarity")
 
@@ -37,411 +72,52 @@ def get_summoners(account):
     query = gql(
         """
     {{
-        summoners(where: {{owner: "{account}"}}, first: 1000) {{
+        summoners(where: {{owner: "{account}"}}, first: {limit}) {{
             id
-        }}
+            }}
     }}
     """.format(
-            account=account.address.lower()
+            account=account.address.lower(),
+            limit=limit,
         )
     )
 
     result = client.execute(query)
 
+    # TODO: scan transactions for new summoners if the balance doesn't match
+
     summoners = [x["id"] for x in result["summoners"]]
 
-    # TODO: scan transactions for new summoners if the balance doesn't match
+    # the graph might be behind, so get the data out of the chain
+    with multicall:
+        summoners = [(s, RARITY.summoner(s)) for s in summoners]
+
+    # (uint _xp, uint _log, uint _class, uint _level)
+    summoners = [Summoner(s, *x) for (s, x) in summoners]
 
     return summoners
 
 
-# TODO: set attributes, name, title. what else?
-# TODO: farm rarity gems
-
-
-def adventure(account):
-    summoners = get_summoners(account)
-
-    print(f"{account} has {len(summoners)} known summoners")
-
-    rarity_balance = RARITY.balanceOf(account)
-    if rarity_balance != len(summoners):
-        print(f"WARNING! Only {len(summoners)}/{rarity_balance} summoner ids are known!")
-
-    if not RARITY.isApprovedForAll(account, RARITY_ACTION_V1):
-        RARITY.setApprovalForAll(RARITY_ACTION_V1, True, {"from": account}).info()
-
-    # Version numbering is going to be tedious. so is approving every time a new contract comes out
-    # get our clone proxies deployed on FTM and then approve that instead?
-
-    print("Querying adventure logs...")
-    with spinner():
-        with multicall:
-            adventurers_logs = [(RARITY.adventurers_log(s), s) for s in summoners]
-            # TODO: check adventure logs and scouting for RARITY_CELLAR
-
-    now = chain[-1].timestamp
-
-    adventurers_logs.sort()
-
-    next_run = now + 86400
-
-    for (l, s) in adventurers_logs:
-        if now < l:
-            next_run = l + 1
-            break
-
-    print("next run needed in", next_run - now, "seconds")
-
-    # filter out adventurers that have adventured too recently
-    adventurers = [s for (l, s) in adventurers_logs if now > l]
-
-    if not adventurers:
-        print("No adventurers ready")
-        # TODO: return next time we should run? schedule it?
-        return next_run
-
-    print(f"{account} has {len(adventurers)} summoners ready for adventure")
-
-    # TODO: how many fit in one transaction? 15 failed in my quick testing, but do some more checking
-    # TODO: ganache block limit is way less than actual mainnet. figure out a practical limit
-    group_size = len(adventurers)
-    for a in grouper(adventurers, group_size, None):
-        RARITY_ACTION_V1.adventure(list(filter(None, a)), {"required_confs": 0})
-
-    print("waiting for confirmations...")
-    with spinner():
-        history.wait()
-
-    print("adventuring complete!")
-
-    return next_run
-
-
-def summon(account, class_id: int = 11, amount: int = 1, adventure: bool = False):
-    if not RARITY.isApprovedForAll(account, RARITY_ACTION_V1):
-        RARITY.setApprovalForAll(RARITY_ACTION_V1, True, {"from": account}).info()
-
-    RARITY_ACTION_V1.summonFor(class_id, amount, adventure, account).info()
-
-    with spinner():
-        summoners = []
-        for tx in history.from_sender(account):
-            if "summoned" not in tx.events:
-                continue
-
-            for event in tx.events["summoned"]:
-                summoners.append(event["summoner"])
-
-    print("new summoners:", summoners)
-
-
-def build_town(account, name):
-    clone_factory = get_or_create(account, ArgobytesBrownieProject.CloneFactory)
-    rarity_place = get_or_create(account, ArgobytesBrownieProject.RarityPlace, constructor_args=[clone_factory])
-
-    placeClass = 1
-    empty_salt = b"\x00" * 32
-
-    my_town_tx = rarity_place.newPlace(
-        # address[] calldata _adventures,
-        [],
-        # uint _capacity,
-        0,
-        # uint[] calldata _classes,
-        [],
-        # uint _levelCap,
-        0,
-        # address[11] calldata _levelCapDestinations,
-        [ZERO_ADDRESS] * 11,
-        # string calldata _name,
-        name,
-        # uint _placeClass,
-        placeClass,
-        # uint _renownExchangeRate,
-        0,
-        # bytes32 _salt
-        empty_salt,
+def rarity_console(account):
+    # TODO: load all the account's current summons
+    debug_shell(
+        {
+            "account": account,
+            "rarity_contracts": {
+                "RARITY": RARITY,
+                "RARITY_ATTRIBUTES": RARITY_ATTRIBUTES,
+                "RARITY_CRAFT_1": RARITY_CRAFT_1,
+                "RARITY_CRAFTING_1": RARITY_CRAFTING_1,
+                "RARITY_GOLD": RARITY_GOLD,
+                "RARITY_SKILLS": RARITY_SKILLS,
+                "RARITY_CODEX_RANDOM": RARITY_CODEX_RANDOM,
+                "RARITY_CODEX_SKILLS": RARITY_CODEX_SKILLS,
+                "RARITY_CODEX_CLASS_SKILLS": RARITY_CODEX_CLASS_SKILLS,
+                "RARITY_CODEX_FEATS_1": RARITY_CODEX_FEATS_1,
+                "RARITY_CODEX_ITEMS_GOODS": RARITY_CODEX_ITEMS_GOODS,
+                "RARITY_CODEX_ITEMS_ARMOR": RARITY_CODEX_ITEMS_ARMOR,
+                "RARITY_CODEX_ITEMS_WEAPONS": RARITY_CODEX_ITEMS_WEAPONS,
+            },
+            "summoners": get_summoners(account),
+        }
     )
-    my_town = ArgobytesBrownieProject.RarityPlace.at(my_town_tx.return_value, owner=account)
-    print(f"town {name}:", click.style(my_town, fg="green"))
-
-    # TODO: mercenary_camp (sells all the summoners that leveled out of the other buildings)
-    mercenary_camp = ZERO_ADDRESS
-
-    # place (w/ barbs)
-    deploy_tx = my_town.newPlace(
-        # address[] calldata _adventures,
-        [
-            # The Cellar - https://andrecronje.medium.com/rarity-the-cellar-83a1606a0be3
-            "0x2A0F1cB17680161cF255348dDFDeE94ea8Ca196A",
-        ],
-        # uint _capacity,
-        2 ** 256 - 1,
-        # uint[] calldata _classes,
-        [1],
-        # uint _levelCap,
-        0,
-        # address[11] calldata _levelCapDestinations,
-        [mercenary_camp] * 11,
-        # string calldata _name,
-        "Wildlands",
-        # uint _placeClass,
-        1,
-        # uint _renownExchangeRate,
-        1e9,
-        # bytes32 _salt
-        empty_salt,
-    )
-    place = ArgobytesBrownieProject.RarityPlace.at(deploy_tx.return_value, owner=account)
-    print(f"Wildlands:", click.style(place, fg="green"))
-
-    # tavern (w/ bards)
-    deploy_tx = my_town.newPlace(
-        # address[] calldata _adventures,
-        [],
-        # uint _capacity,
-        2 ** 256 - 1,
-        # uint[] calldata _classes,
-        [2],
-        # uint _levelCap,
-        0,
-        # address[11] calldata _levelCapDestinations,
-        [mercenary_camp] * 11,
-        # string calldata _name,
-        "The Greasy Spoon",
-        # uint _placeClass,
-        2,
-        # uint _renownExchangeRate,
-        1e9,
-        # bytes32 _salt
-        empty_salt,
-    )
-    place = ArgobytesBrownieProject.RarityPlace.at(deploy_tx.return_value, owner=account)
-    print(f"The Greasy Spoon:", click.style(place, fg="green"))
-
-    # temple (w/ clerics)
-    deploy_tx = my_town.newPlace(
-        # address[] calldata _adventures,
-        [],
-        # uint _capacity,
-        2 ** 256 - 1,
-        # uint[] calldata _classes,
-        [3],
-        # uint _levelCap,
-        0,
-        # address[11] calldata _levelCapDestinations,
-        [mercenary_camp] * 11,
-        # string calldata _name,
-        "Temple",
-        # uint _placeClass,
-        3,
-        # uint _renownExchangeRate,
-        1e9,
-        # bytes32 _salt
-        empty_salt,
-    )
-    place = ArgobytesBrownieProject.RarityPlace.at(deploy_tx.return_value, owner=account)
-    print(f"Temple:", click.style(place, fg="green"))
-
-    # standing_stones (w/ druids)
-    deploy_tx = my_town.newPlace(
-        # address[] calldata _adventures,
-        [],
-        # uint _capacity,
-        2 ** 256 - 1,
-        # uint[] calldata _classes,
-        [4],
-        # uint _levelCap,
-        0,
-        # address[11] calldata _levelCapDestinations,
-        [mercenary_camp] * 11,
-        # string calldata _name,
-        "Standing Stones",
-        # uint _placeClass,
-        4,
-        # uint _renownExchangeRate,
-        1e9,
-        # bytes32 _salt
-        empty_salt,
-    )
-    place = ArgobytesBrownieProject.RarityPlace.at(deploy_tx.return_value, owner=account)
-    print(f"Standing Stones:", click.style(place, fg="green"))
-
-    # barracks (w/ fighters)
-    deploy_tx = my_town.newPlace(
-        # address[] calldata _adventures,
-        [
-            # The Cellar - https://andrecronje.medium.com/rarity-the-cellar-83a1606a0be3
-            "0x2A0F1cB17680161cF255348dDFDeE94ea8Ca196A",
-        ],
-        # uint _capacity,
-        2 ** 256 - 1,
-        # uint[] calldata _classes,
-        [5],
-        # uint _levelCap,
-        0,
-        # address[11] calldata _levelCapDestinations,
-        [mercenary_camp] * 11,
-        # string calldata _name,
-        "Barracks",
-        # uint _placeClass,
-        5,
-        # uint _renownExchangeRate,
-        1e9,
-        # bytes32 _salt
-        empty_salt,
-    )
-    place = ArgobytesBrownieProject.RarityPlace.at(deploy_tx.return_value, owner=account)
-    print(f"Barracks:", click.style(place, fg="green"))
-
-    # marketplace (w/ rogues training to be LPs on https://rarity.game's market)
-    deploy_tx = my_town.newPlace(
-        # address[] calldata _adventures,
-        [],
-        # uint _capacity,
-        2 ** 256 - 1,
-        # uint[] calldata _classes,
-        [6],
-        # uint _levelCap,
-        0,
-        # address[11] calldata _levelCapDestinations,
-        [mercenary_camp] * 11,
-        # string calldata _name,
-        "Market District",
-        # uint _placeClass,
-        6,
-        # uint _renownExchangeRate,
-        1e9,
-        # bytes32 _salt
-        empty_salt,
-    )
-    place = ArgobytesBrownieProject.RarityPlace.at(deploy_tx.return_value, owner=account)
-    print(f"Market District:", click.style(place, fg="green"))
-
-    # monastary (w/ monks)
-    deploy_tx = my_town.newPlace(
-        # address[] calldata _adventures,
-        [],
-        # uint _capacity,
-        2 ** 256 - 1,
-        # uint[] calldata _classes,
-        [7],
-        # uint _levelCap,
-        0,
-        # address[11] calldata _levelCapDestinations,
-        [mercenary_camp] * 11,
-        # string calldata _name,
-        "Monastary",
-        # uint _placeClass,
-        7,
-        # uint _renownExchangeRate,
-        1e9,
-        # bytes32 _salt
-        empty_salt,
-    )
-    place = ArgobytesBrownieProject.RarityPlace.at(deploy_tx.return_value, owner=account)
-    print(f"Monastary:", click.style(place, fg="green"))
-
-    # temple barracks (w/ paladins)
-    deploy_tx = my_town.newPlace(
-        # address[] calldata _adventures,
-        [
-            # The Cellar - https://andrecronje.medium.com/rarity-the-cellar-83a1606a0be3
-            "0x2A0F1cB17680161cF255348dDFDeE94ea8Ca196A",
-        ],
-        # uint _capacity,
-        2 ** 256 - 1,
-        # uint[] calldata _classes,
-        [8],
-        # uint _levelCap,
-        0,
-        # address[11] calldata _levelCapDestinations,
-        [mercenary_camp] * 11,
-        # string calldata _name,
-        "Temple Barracks",
-        # uint _placeClass,
-        8,
-        # uint _renownExchangeRate,
-        1e9,
-        # bytes32 _salt
-        empty_salt,
-    )
-    place = ArgobytesBrownieProject.RarityPlace.at(deploy_tx.return_value, owner=account)
-    print(f"Temple Barracks:", click.style(place, fg="green"))
-
-    # forest (w/ ranger. needs better name)
-    deploy_tx = my_town.newPlace(
-        # address[] calldata _adventures,
-        [],
-        # uint _capacity,
-        2 ** 256 - 1,
-        # uint[] calldata _classes,
-        [9],
-        # uint _levelCap,
-        0,
-        # address[11] calldata _levelCapDestinations,
-        [mercenary_camp] * 11,
-        # string calldata _name,
-        "Forest",
-        # uint _placeClass,
-        9,
-        # uint _renownExchangeRate,
-        1e9,
-        # bytes32 _salt
-        empty_salt,
-    )
-    place = ArgobytesBrownieProject.RarityPlace.at(deploy_tx.return_value, owner=account)
-    print(f"Forest:", click.style(place, fg="green"))
-
-    # sorcerers_guild (needs better name)
-    deploy_tx = my_town.newPlace(
-        # address[] calldata _adventures,
-        [],
-        # uint _capacity,
-        2 ** 256 - 1,
-        # uint[] calldata _classes,
-        [10],
-        # uint _levelCap,
-        0,
-        # address[11] calldata _levelCapDestinations,
-        [mercenary_camp] * 11,
-        # string calldata _name,
-        "Sorcerer's Guild",
-        # uint _placeClass,
-        10,
-        # uint _renownExchangeRate,
-        1e9,
-        # bytes32 _salt
-        empty_salt,
-    )
-    place = ArgobytesBrownieProject.RarityPlace.at(deploy_tx.return_value, owner=account)
-    print(f"Sorcerer's Guild:", click.style(place, fg="green"))
-
-    # arcane tower (w/ wizards)
-    deploy_tx = my_town.newPlace(
-        # address[] calldata _adventures,
-        [],
-        # uint _capacity,
-        2 ** 256 - 1,
-        # uint[] calldata _classes,
-        [11],
-        # uint _levelCap,
-        0,
-        # address[11] calldata _levelCapDestinations,
-        [mercenary_camp] * 11,
-        # string calldata _name,
-        "Arcane Tower",
-        # uint _placeClass,
-        11,
-        # uint _renownExchangeRate,
-        1e9,
-        # bytes32 _salt
-        empty_salt,
-    )
-    place = ArgobytesBrownieProject.RarityPlace.at(deploy_tx.return_value, owner=account)
-    print(f"Arcane Tower:", click.style(place, fg="green"))
-
-    # allow people to create a house. houses can have their size increased by spending renown. working will rotate through the houses
-
-    print("Town complete")

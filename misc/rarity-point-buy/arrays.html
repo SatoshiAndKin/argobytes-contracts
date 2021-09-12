@@ -1,0 +1,212 @@
+
+<html>
+<head>
+<title>Dungeons &amp; Dragons, 4th Edition:  All Ability Score Arrays</title>
+<style type="text/css">
+  .main  { font: 10pt Georgia, "Times New Roman", serif }
+  .about, .arrays, .title  { margin: 10pt; }
+  .arrays  { padding: 1em; border: 2px solid gray }
+  .array, .title  { font-weight: bold; }
+  .title  { font-size: 14pt; }
+</style>
+<script type="text/javascript">
+
+/** Simple profiling -- number of subarray steps performed. */
+calculations = 0;
+
+/**
+ * Prices of the ability scores.
+ * Map of int (ability score) to int (point cost).
+
+
+Each summoner starts with 32 points
+Each attribute starts with a base of 8
+Increasing from 9–14 costs 1 point each
+Increasing from 15–16 costs 2 points each
+Increasing from 17-18 costs 3 points each
+Increasing to 19-20 costs 4 points each
+
+A summoner receives 1 additional point every 4 levels, at 4, 8, 12, 16, and 20.
+Example 32 point buy scores; 8, 12, 8, 18, 14, 14
+
+
+((score - 8)**2)/6;
+ */
+prices =
+{
+   8:  0,
+   9:  1,
+  10:  2,
+  11:  3,
+  12:  4,
+  13:  5,
+  14:  6,
+  15:  8,
+  16: 10,
+  17: 13,
+  18: 16,
+  19: 20,
+  20: 24,
+}
+
+/**
+ * As a purely unnecessary optimization, instead of repeating a sub-array
+ * calculation, store the results of each recursive call in a cache.
+ * Map of String (composite parameter key) to array of ability score sub-arrays.
+ */
+arrayCache = { };
+
+/**
+ * Recursively calculate an array of ability scores, or a sub-array.
+ * @param points (int) Number of points (remaining) with which to buy scores.
+ * @param numScores (int) Number of scores left to buy.
+ * @param maxScore (int) Highest value score to consider buying.  We track this so
+ *   that we don't bother buying a score we've already bought during the previous step
+ *   (because we count downward when considering scores).
+ * @param canHas8 (boolean) Whether or not we can get points back by going down to 9 or 8.
+ *   Since you can only do this once, we must track whether or not it has happened yet.
+ * @return An array of ability score arrays, each of which will have length equal to numScores.
+ *   May be an empty list if no score subarrays meet the criteria (usually due to too few or
+ *   too many points to spend).
+ */
+arrays = function(points, numScores, maxScore)
+{
+  var key = points + ":" + numScores + ":" + maxScore;
+
+  // Check the cache -- don't repeat a subarray calculation we've already done.
+  var results = arrayCache[key];
+  if(results)
+  {
+    return results;
+  }
+  else
+  {
+    results = new Array();
+
+    // We put the results in the cache now.  Since the local variable
+    // is by reference, when we later add to the results it will be
+    // reflected in the cache copy as well.
+    arrayCache[key] = results;
+
+    calculations++;
+  }
+
+  // First, we consider the maximum possible score we could buy, and work
+  // down from there.  This results in the arrays always being sorted from
+  // highest to lowest, both within themselves and between themselves.
+  for(var score = maxScore; score >= 8; score--)
+  {
+    var cost = prices[score];
+    if (cost <= points)
+    {
+      var scoreArray = [score];
+      var remainingPoints = points - cost;
+
+      if(numScores == 1)
+      {
+        // When we are down to the last score slot, there's
+        // really only one option:  The most expensive score
+        // that we can afford.  But if that would leave any
+        // points remaining, disqualify it; it means that we
+        // didn't spend enough points in a previous step.
+        if(remainingPoints == 0)
+        {
+          results.push(scoreArray);
+          return results;
+        }
+      }
+      else
+      {
+        // Recurse to fill in the rest of the array using the remaining points.
+        // The new maxScore is our current score; no sense buying a score higher
+        // than the ones we already have.  This way we are always spending
+        // points up front, keeping the arrays sorted.  We canHas8 only if we haven't already.
+        var remainderArrays = arrays(remainingPoints, numScores - 1, score);
+
+        for(var i = 0; i < remainderArrays.length; i++)
+        {
+          var remainderArray = remainderArrays[i];
+
+          // Concatenate the selected score onto the front to complete
+          // the sub-array.
+          var resultArray = scoreArray.concat(remainderArray);
+          results.push(resultArray);
+        }        
+      }
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Calculate all ability score arrays using default values.
+ * @param points Number of points to use during the point-buy.
+ * @return An array of ability-score arrays.
+ */
+allArrays = function(points)
+{
+  if(!points)
+  {
+    points = 32;
+  }
+  return arrays(points, 6, 20);
+}
+
+/**
+ * Prints a single array with simple formatting.
+ * @param abilityArray A single ability score array.
+ */
+printArray = function(abilityArray)
+{
+  document.write('<li><span class="array">(' + abilityArray + '),</span></li>');
+}
+
+/**
+ * Prints multiple arrays with simple formatting.
+ * @param multipleArrays An array of ability score arrays.
+ */
+printArrays = function(multipleArrays)
+{
+  document.write('<div class="arrays">');
+  document.write('<ol>');
+  for(var i = 0; i < multipleArrays.length; i++)
+  {
+    printArray(multipleArrays[i]);
+  }
+  document.write('</ol>');
+  document.write('</div>');
+}
+
+</script>
+</head>
+<body>
+<div class="main">
+<div class="title">
+  Dungeons &amp; Dragons, 4th Edition:  All Ability Score Arrays
+</div>
+<div class="about">
+  This page executes JavaScript to calculate 
+  all possible unique ability score combinations allowed
+  using the point-buy rules in Dungeons &amp; Dragons, 4th Edition.
+</div>
+<div class="about">
+  <a href="https://www.enworld.org/threads/all-ability-score-arrays.259634/">ENWorld Discussion Thread</a>
+  <a href="http://www.wjs3.com/rpg/arrays.html">Original Site</a>
+</div>
+<script type="text/javascript">
+  printArrays(allArrays());
+</script>
+<div class="about">
+  Sub-array calculations:
+  <script type="text/javascript">
+    document.write(calculations);
+  </script>
+</div>
+<div class="about">
+  &copy; 2009 wjs3.com
+  &copy; 2021 Satoshi &amp; Kin, Inc.
+</div>
+</div>
+</body>
+</html>
