@@ -27,6 +27,7 @@ COMMON_HELPERS = {
     "HexBytes": HexBytes,
     "eth_abi": eth_abi,
     "eth_utils": eth_utils,
+    "gas_price": brownie.network.gas_price,
     "get_event_address": get_event_address,
     "get_event_contract": get_event_contract,
     "get_transaction": get_transaction,

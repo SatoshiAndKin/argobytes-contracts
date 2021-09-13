@@ -104,22 +104,21 @@ def rarity_console(account):
     # TODO: load all the account's current summons
     debug_shell(
         {
-            "account": account,
-            "rarity_contracts": {
-                "RARITY": RARITY,
-                "RARITY_ATTRIBUTES": RARITY_ATTRIBUTES,
-                "RARITY_CRAFT_1": RARITY_CRAFT_1,
-                "RARITY_CRAFTING_1": RARITY_CRAFTING_1,
-                "RARITY_GOLD": RARITY_GOLD,
-                "RARITY_SKILLS": RARITY_SKILLS,
-                "RARITY_CODEX_RANDOM": RARITY_CODEX_RANDOM,
-                "RARITY_CODEX_SKILLS": RARITY_CODEX_SKILLS,
-                "RARITY_CODEX_CLASS_SKILLS": RARITY_CODEX_CLASS_SKILLS,
-                "RARITY_CODEX_FEATS_1": RARITY_CODEX_FEATS_1,
-                "RARITY_CODEX_ITEMS_GOODS": RARITY_CODEX_ITEMS_GOODS,
-                "RARITY_CODEX_ITEMS_ARMOR": RARITY_CODEX_ITEMS_ARMOR,
-                "RARITY_CODEX_ITEMS_WEAPONS": RARITY_CODEX_ITEMS_WEAPONS,
-            },
-            "summoners": get_summoners(account),
+            "a": account,
+            "RARITY": RARITY,
+            "RARITY_ATTRIBUTES": RARITY_ATTRIBUTES,
+            "RARITY_CRAFT_1": RARITY_CRAFT_1,
+            "RARITY_CRAFTING_1": RARITY_CRAFTING_1,
+            "RARITY_GOLD": RARITY_GOLD,
+            "RARITY_SKILLS": RARITY_SKILLS,
+            "RARITY_CODEX_RANDOM": RARITY_CODEX_RANDOM,
+            "RARITY_CODEX_SKILLS": RARITY_CODEX_SKILLS,
+            "RARITY_CODEX_CLASS_SKILLS": RARITY_CODEX_CLASS_SKILLS,
+            "RARITY_CODEX_FEATS_1": RARITY_CODEX_FEATS_1,
+            "RARITY_CODEX_ITEMS_GOODS": RARITY_CODEX_ITEMS_GOODS,
+            "RARITY_CODEX_ITEMS_ARMOR": RARITY_CODEX_ITEMS_ARMOR,
+            "RARITY_CODEX_ITEMS_WEAPONS": RARITY_CODEX_ITEMS_WEAPONS,
+            "RARITY_ACTION_V2": RARITY_ACTION_V2,
+            "s": get_summoners(account),
         }
     )

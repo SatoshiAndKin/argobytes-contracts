@@ -26,10 +26,11 @@ Increasing from 15–16 costs 2 points each
 Increasing from 17-18 costs 3 points each
 Increasing to 19-20 costs 4 points each
 
+
 A summoner receives 1 additional point every 4 levels, at 4, 8, 12, 16, and 20.
 Example 32 point buy scores; 8, 12, 8, 18, 14, 14
 
-cost = ((score - 8) ** 2) / 6;
+cost = ((score - 8) ** 2) // 6;
  */
 prices =
 {
@@ -46,6 +47,8 @@ prices =
   18: 16,
   19: 20,
   20: 24,
+  21: 28,
+  22: 32,
 }
 
 /**
@@ -119,7 +122,7 @@ arrays = function(points, numScores, maxScore)
         // Recurse to fill in the rest of the array using the remaining points.
         // The new maxScore is our current score; no sense buying a score higher
         // than the ones we already have.  This way we are always spending
-        // points up front, keeping the arrays sorted.  We canHas8 only if we haven't already.
+        // points up front, keeping the arrays sorted.
         var remainderArrays = arrays(remainingPoints, numScores - 1, score);
 
         for(var i = 0; i < remainderArrays.length; i++)
@@ -149,7 +152,7 @@ allArrays = function(points)
   {
     points = 32;
   }
-  return arrays(points, 6, 20);
+  return arrays(points, 6, 22);
 }
 
 /**

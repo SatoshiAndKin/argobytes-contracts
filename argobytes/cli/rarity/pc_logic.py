@@ -8,10 +8,15 @@ def summon(account, classId):
 
     print("new summoner:", summoner)
 
+    # TODO: setup 
+
 
 def adventure(account):
     for summoner in get_summoners(account):
-        RARITY.adventure(summoner).info()
+        try:
+            RARITY.adventure(summoner).info()
+        except Exception:
+                pass
 
         try:
             if RARITY_CRAFT_1.scout(summoner) > 0:

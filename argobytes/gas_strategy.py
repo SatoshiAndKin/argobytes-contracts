@@ -5,6 +5,7 @@ import requests
 from brownie import chain
 from brownie.convert import Wei
 from brownie.network.gas.bases import BlockGasStrategy
+from toolz.itertoolz import last
 
 from argobytes.replay import get_upstream_rpc, is_forked_network
 
@@ -138,4 +139,56 @@ class GasStrategyV1(BlockGasStrategy):
             # don't go higher than the max
             last_gas_price = min(next_price, max_gas_price)
 
+            yield last_gas_price
+
+
+class GasStrategyMinimum(BlockGasStrategy):
+    """
+    Gas strategy for paying minimum possible gas. This will be very slow on congested chains.
+
+    TODO: i'd prefer to use a gas-now style strategy, but these chains don't have the graphql rpc necessary to do that
+    """
+
+    def __init__(
+        self,
+        time_duration = 60,
+        extra = "1 gwei"
+    ):
+        if chain.id == 137 and is_forked_network():
+            # TODO: something is broken with ganache+polygon+parsing blocks
+            # their error message sends us here:
+            # http://web3py.readthedocs.io/en/stable/middleware.html#geth-style-proof-of-authority
+            block_time = 2.4
+        else:
+            block_time = (time.time() - chain[-1000].timestamp) / 1000
+
+        block_duration = int(round(time_duration / block_time, 0))
+        if not block_duration:
+            block_duration = 1
+
+        super().__init__(block_duration)
+
+        self.extra = extra
+
+    def __str__(self) -> str:
+        gas_price = next(self.get_gas_price())
+        return f"GasStrategyMinimum recommends {gas_price/1e9:_} gwei (checking after {self.duration} blocks)"
+
+    def get_minimum_gas_price(self):
+        if "minimumGasPrice" in chain[-1]:
+            return 
+
+    def get_gas_price(self) -> Generator[Wei, None, None]:
+        last_gas_price = self.get_minimum_gas_price()
+
+        yield last_gas_price
+
+        while True:
+            min_price = self.get_minimum_gas_price()
+
+            last_gas_price = last_gas_price * 1.101
+
+            last_gas_price = min(min_price, last_gas_price)
+
+            # this might not broadcast if too close to the previous price
             yield last_gas_price

@@ -23,7 +23,7 @@ from brownie.network import gas_price
 
 from argobytes.cli_helpers import get_project_root
 from argobytes.cli_helpers_lite import logger
-from argobytes.gas_strategy import GasStrategyV1
+from argobytes.gas_strategy import GasStrategyV1, GasStrategyMinimum
 
 
 def cli(
@@ -104,8 +104,12 @@ def cli(
             ]:
                 # TODO: custom GasNowStrategy that takes an integer max
                 # TODO: 50 is the network-wide minimum
-                gas_price("51 gwei")
-                logger.info("Fixed gas price to 51 gwei")
+                gas_strategy = GasStrategyMinimum(
+                    time_duration=60,
+                    extra="1 gwei",
+                )
+                gas_price(gas_strategy)
+                logger.info(gas_strategy)
             elif network in [
                 "bsc-main",
                 "bsc-main-fork",

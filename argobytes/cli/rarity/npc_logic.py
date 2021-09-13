@@ -85,10 +85,10 @@ def adventure(account):
 
 
 def summon(account, class_id: int = 11, amount: int = 1, adventure: bool = False):
-    if not RARITY.isApprovedForAll(account, RARITY_ACTION_V1):
-        RARITY.setApprovalForAll(RARITY_ACTION_V1, True, {"from": account}).info()
+    if not RARITY.isApprovedForAll(account, RARITY_ACTION_V2):
+        RARITY.setApprovalForAll(RARITY_ACTION_V2, True, {"from": account}).info()
 
-    RARITY_ACTION_V1.summonFor(class_id, amount, adventure, account).info()
+    RARITY_ACTION_V2.summonFor(class_id, amount, adventure, account).info()
 
     with spinner():
         summoners = []
