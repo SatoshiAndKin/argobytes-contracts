@@ -1,5 +1,7 @@
 """Handle Ethereum smart Contracts."""
 import multiprocessing
+from brownie import accounts
+from brownie.network.contract import ProjectContract
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import IntFlag
@@ -174,6 +176,9 @@ def get_or_create(
     if constructor_args is None:
         constructor_args = []
 
+    if not default_account:
+        default_account = accounts[0]
+
     contract_initcode = contract.deploy.encode_input(*constructor_args)
 
     contract_address, salt = mk_contract_address2(
@@ -266,6 +271,7 @@ def lazy_contract(address, owner=None, force=False):
 _contract_cache = {}
 
 
+# TODO: rename "block" to "block_identifier" since it might be "latest" or an int
 def load_contract(token_name_or_address: str, owner=None, block=None, force=False):
     if block is None:
         pass
@@ -280,7 +286,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
 
     cache_key = (token_name_or_address, block)
 
-    if cache_key in _contract_cache:
+    if cache_key in _contract_cache and not force:
         contract = _contract_cache[cache_key]
         contract._owner = owner
 
@@ -294,7 +300,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
             # this is odd. i've seen `TypeError: 'Contract' object is not callable`
             pass
 
-    if isinstance(token_name_or_address, Contract) or isinstance(token_name_or_address, EthContract):
+    if isinstance(token_name_or_address, ProjectContract) or isinstance(token_name_or_address, Contract) or isinstance(token_name_or_address, EthContract):
         # we were given a contract rather than an address or token name. return early
         token_name_or_address._owner = owner
 
@@ -316,7 +322,9 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
         _contract_cache[cache_key] = contract
 
         return contract
-    elif token_name_or_address.lower() == "ankreth":
+
+    # TODO: this should be in load_token, not here!
+    if token_name_or_address.lower() == "ankreth":
         # TODO: find a tokenlist with this on it
         token_name_or_address = to_checksum_address("0xe95a203b1a91a908f9b9ce46459d101078c2c3cb")
     elif token_name_or_address.lower() == "obtc":  # boring DAO BTC
@@ -336,6 +344,7 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
         contract = Contract(address, owner=owner)
 
     # check if this is a proxy contract
+    # TODO: if we are not an upgradable proxy, then we can widen the cache!
     contract = check_for_proxy(contract, block, force=force)
 
     contract._owner = owner

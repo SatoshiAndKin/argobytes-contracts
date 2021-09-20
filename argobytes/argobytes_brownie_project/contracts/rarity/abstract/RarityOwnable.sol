@@ -31,8 +31,7 @@ abstract contract RarityOwnable is RarityBase {
      */
     modifier onlyOwner() {
         require(owner() == msg.sender, "!owner");
-        _;
-    }
+        _;    }
 
     /**
      * @dev Leaves the contract without owner. It will not be possible to call

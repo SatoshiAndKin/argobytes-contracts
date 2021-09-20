@@ -99,11 +99,10 @@ def cli(
                 gas_price("0 gwei")
                 logger.warning("Forced gas price to 0!")
             elif network in [
-                "ftm-main",
-                "ftm-main-fork",
+                "ftm-main-offffff",
+                "ftm-main-fork-offffff",
             ]:
-                # TODO: custom GasNowStrategy that takes an integer max
-                # TODO: 50 is the network-wide minimum
+                # TODO: custom Gas strategy
                 gas_price("51 gwei")
                 logger.info("Fixed gas price to 51 gwei")
             elif network in [

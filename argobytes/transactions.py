@@ -39,7 +39,6 @@ def fetch_transaction(txid, force=False):
 
     assert tx.txid == txid, "bad transaction id!"
 
-    # TODO: brownie should probably have an option to do this for us. make a github issue
     # get the contract for parsing events from logs
     try:
         load_contract(tx.receiver, force=force, block=tx.block_number)
@@ -48,6 +47,9 @@ def fetch_transaction(txid, force=False):
         pass
 
     if tx.logs:
+        # brownie tries to parse all the logs, but sometimes it fails. and sometimes it thinks it got it right but is wrong.
+        # for example: synthetix changed event argument order without changing types
+        # we try harder by specifying the block number
         for l in tx.logs:
             # get more contracts for parsing events from logs
             try:
