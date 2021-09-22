@@ -14,7 +14,7 @@ def get_upstream_rpc() -> str:
 
 
 def is_forked_network() -> bool:
-    return CONFIG.active_network["id"].endswith("-fork")
+    return network.show_active().endswith("-fork")
 
 
 def replay_history_on_main(automatic=False, history_start_index=0):
@@ -40,7 +40,7 @@ def replay_transactions(new_rpc, txs, automatic=False) -> None:
     rpc.snapshot = lambda: 0
 
     old_sleep = rpc.sleep
-    rpc.sleep = lambda _: None
+    rpc.sleep = lambda _: 0
 
     network.history.clear()
     chain._network_disconnected()
