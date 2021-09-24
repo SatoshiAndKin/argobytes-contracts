@@ -184,6 +184,12 @@ def get_token_symbol(token_contract, weth_to_eth=True):
 
         # TODO: do this for UNI-V1, BPT, etc.
         symbol = f"Cake-LP-{symbol0}-{symbol1}"
+    elif symbol == "bUNI-V2":
+        uni_lp = load_contract(token_contract.token())
+
+        uni_lp_symbol = get_token_symbol(uni_lp)
+
+        symbol = f"b{uni_lp_symbol}"
 
     _cache_symbols[token_contract.address] = symbol
 
