@@ -174,9 +174,11 @@ class GasStrategyMinimum(BlockGasStrategy):
         gas_price = next(self.get_gas_price())
         return f"GasStrategyMinimum recommends {gas_price/1e9:_} gwei (checking after {self.duration} blocks)"
 
-    def get_minimum_gas_price(self):
+    def get_minimum_gas_price(self) -> int:
         if "minimumGasPrice" in chain[-1]:
-            return 
+            return chain[-1]["minimumGasPrice"]
+
+        raise NotImplementedError
 
     def get_gas_price(self) -> Generator[Wei, None, None]:
         last_gas_price = self.get_minimum_gas_price()

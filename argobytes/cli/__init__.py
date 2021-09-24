@@ -7,7 +7,6 @@ from importlib_metadata import entry_points
 
 from ..cli_helpers_lite import brownie_connect, gas_choices, logger
 from .compilers import compilers
-from .rarity import rarity
 from .tx import tx
 
 
@@ -84,7 +83,6 @@ def donate():
 
 
 cli.add_command(compilers)
-cli.add_command(rarity)
 cli.add_command(tx)
 
 

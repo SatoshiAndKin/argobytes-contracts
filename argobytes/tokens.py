@@ -158,7 +158,7 @@ def get_token_symbol(token_contract, weth_to_eth=True):
         symbol1 = get_token_symbol(token1, weth_to_eth=True)
 
         # TODO: do this for UNI-V1, BPT, etc.
-        symbol = f"UNI-V2-{symbol0}/{symbol1}"
+        symbol = f"UNI-V2-{symbol0}-{symbol1}"
     elif symbol == "BPT":
         underlying_tokens = token_contract.getCurrentTokens()
 
@@ -166,9 +166,9 @@ def get_token_symbol(token_contract, weth_to_eth=True):
             get_token_symbol(load_contract(underlying), weth_to_eth=True) for underlying in underlying_tokens
         ]
 
-        underlying_symbols = "/".join(underlying_symbols)
+        underlying_symbols = "-".join(underlying_symbols)
 
-        symbol = f"BPT {underlying_symbols}"
+        symbol = f"BPT-{underlying_symbols}"
     elif symbol.upper() == "UNI-V1":
         underlying_token = load_contract(token_contract.tokenAddress())
 
@@ -183,7 +183,13 @@ def get_token_symbol(token_contract, weth_to_eth=True):
         symbol1 = get_token_symbol(token1, weth_to_eth=True)
 
         # TODO: do this for UNI-V1, BPT, etc.
-        symbol = f"Cake-LP-{symbol0}/{symbol1}"
+        symbol = f"Cake-LP-{symbol0}-{symbol1}"
+    elif symbol == "bUNI-V2":
+        uni_lp = load_contract(token_contract.token())
+
+        uni_lp_symbol = get_token_symbol(uni_lp)
+
+        symbol = f"b{uni_lp_symbol}"
 
     _cache_symbols[token_contract.address] = symbol
 

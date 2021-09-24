@@ -245,7 +245,7 @@ def with_dry_run(
     from argobytes.tokens import print_start_and_end_balance
 
     assert account, "no account!"
-    assert CONFIG.active_network["id"].endswith("-fork"), "must be on a forked network"
+    assert network.show_active().endswith("-fork"), "must be on a forked network"
 
     def do_func():
         with print_start_and_end_balance(account, tokens):
@@ -275,6 +275,7 @@ def with_dry_run(
     orig_rpc = web3.provider.endpoint_uri
 
     # TODO: move this to a helper function. too many things need to be called in the right order
+    # TODO: should we just web3.disconnect instead?
     network.history.clear()
     chain._network_disconnected()
     web3.connect(replay_rpc)
@@ -283,7 +284,7 @@ def with_dry_run(
     old_snapshot = rpc.snapshot
     old_sleep = rpc.sleep
     rpc.snapshot = lambda: 0
-    rpc.sleep = lambda _: None
+    rpc.sleep = lambda _: 0
 
     # we got this far and it didn't revert. prompt to send it to mainnet
     if prompt_mainnet_run:
