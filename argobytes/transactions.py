@@ -23,7 +23,7 @@ def get_event_contract(tx, event, fallback_interface=None):
     address = get_event_address(tx, event)
     try:
         return load_contract(address)
-    except ValueError:
+    except Exception:
         if not fallback_interface:
             raise
 
