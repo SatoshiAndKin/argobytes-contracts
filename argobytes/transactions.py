@@ -19,10 +19,10 @@ def get_event_address(tx, event):
     return event.address or tx.logs[event.pos[0]].address
 
 
-def get_event_contract(tx, event, fallback_interface=None):
+def get_event_contract(tx, event, block=None, fallback_interface=None):
     address = get_event_address(tx, event)
     try:
-        return load_contract(address)
+        return load_contract(address, block=block)
     except Exception:
         if not fallback_interface:
             raise

@@ -253,7 +253,7 @@ def get_or_create_flash_borrower(default_account, aave_provider_registry=None, s
     return contract
 
 
-def lazy_contract(address, owner=None, force=False):
+def lazy_contract(address, owner=None, force=False, block=None):
     def _owner(owner):
         if owner:
             return owner
@@ -265,7 +265,7 @@ def lazy_contract(address, owner=None, force=False):
 
         return click_ctx.obj.get("lazy_contract_default_account", None)
 
-    return lazy(lambda: load_contract(address, _owner(owner), force=force))
+    return lazy(lambda: load_contract(address, _owner(owner), block=block, force=force))
 
 
 _contract_cache = {}
@@ -291,6 +291,8 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
         contract._owner = owner
 
         return contract
+
+    # TODO: i think we need to check if this token_name_or_address is in the cache already. if it is (and if not immutable), then we MUST force load the contract. otherwise we get brownie's possibly stale cache
 
     if callable(token_name_or_address):
         # sometimes it is useful to get the address from a function

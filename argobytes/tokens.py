@@ -26,13 +26,15 @@ def get_claimable_3crv(account, fee_distribution, min_crv=50):
     return claimable
 
 
-def load_token(token_symbol: str, owner=None):
+def load_token(token_symbol: str, block=None, owner=None):
+    assert token_symbol, "No token symbol give to look up"
+
     if token_symbol in _cache_token:
         token = _cache_token[token_symbol]
         token._owner = owner
         return token
 
-    if token_symbol == "eth":
+    if token_symbol.lower() == "eth":
         # TODO: think about this more. this isn't a contract
         _cache_token[token_symbol] = EthContract()
 
@@ -61,16 +63,25 @@ def load_token(token_symbol: str, owner=None):
     _cache_decimals[token_address] = token_info.decimals
     _cache_symbols[token_address] = token_info.symbol
 
-    contract = load_contract(token_address, owner=owner)
+    contract = load_contract(token_address, block=block, owner=owner)
 
     _cache_token[token_symbol] = contract
 
     return contract
 
 
-def load_token_or_contract(token_symbol_or_address: str):
+def load_token_or_contract(token_symbol_or_address: str, block=None):
+    if token_symbol_or_address == "ETH":
+        # TODO: go back to treating this as WETH (except that broke balance checks)
+        return EthContract()
+
+    # treat BTC as WBTC
+    # doing this for ETH caused some problems, but i think this will be fine
+    if token_symbol_or_address == "BTC":
+        token_symbol_or_address == "WBTC"
+
     try:
-        return load_contract(token_symbol_or_address)
+        return load_contract(token_symbol_or_address, block=block)
     except ValueError:
         return load_token(token_symbol_or_address)
 
