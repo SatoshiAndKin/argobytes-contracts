@@ -1,0 +1,647 @@
+[
+{
+    "inputs": [
+    {
+        "internalType": "contract CloneFactory",
+        "name": "_cloneFactory",
+        "type": "address"
+    }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+},
+{
+    "inputs": [],
+    "name": "Blocked",
+    "type": "error"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "target",
+        "type": "address"
+    },
+    {
+        "internalType": "bytes",
+        "name": "targetData",
+        "type": "bytes"
+    },
+    {
+        "internalType": "bytes",
+        "name": "error",
+        "type": "bytes"
+    }
+    ],
+    "name": "CallFailed",
+    "type": "error"
+},
+{
+    "inputs": [],
+    "name": "NotOwner",
+    "type": "error"
+},
+{
+    "inputs": [],
+    "name": "NotOwner",
+    "type": "error"
+},
+{
+    "anonymous": false,
+    "inputs": [
+    {
+        "indexed": false,
+        "internalType": "address",
+        "name": "oldOwner",
+        "type": "address"
+    },
+    {
+        "indexed": false,
+        "internalType": "address",
+        "name": "NextOwner",
+        "type": "address"
+    }
+    ],
+    "name": "NextOwner",
+    "type": "event"
+},
+{
+    "anonymous": false,
+    "inputs": [
+    {
+        "indexed": false,
+        "internalType": "address",
+        "name": "oldOwner",
+        "type": "address"
+    },
+    {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+    }
+    ],
+    "name": "SetOwner",
+    "type": "event"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "target",
+        "type": "address"
+    },
+    {
+        "internalType": "bytes",
+        "name": "targetData",
+        "type": "bytes"
+    },
+    {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+    }
+    ],
+    "name": "callTarget",
+    "outputs": [
+    {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+    }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+    },
+    {
+        "internalType": "bytes32",
+        "name": "_salt",
+        "type": "bytes32"
+    }
+    ],
+    "name": "createClone",
+    "outputs": [
+    {
+        "internalType": "contract FlashBorrower",
+        "name": "clone",
+        "type": "address"
+    }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "target",
+        "type": "address"
+    },
+    {
+        "internalType": "bytes",
+        "name": "targetData",
+        "type": "bytes"
+    }
+    ],
+    "name": "delegateTarget",
+    "outputs": [
+    {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+    }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "components": [
+        {
+            "internalType": "address",
+            "name": "target",
+            "type": "address"
+        },
+        {
+            "internalType": "enum TargetCaller.CallType",
+            "name": "callType",
+            "type": "uint8"
+        },
+        {
+            "internalType": "bytes",
+            "name": "targetData",
+            "type": "bytes"
+        }
+        ],
+        "internalType": "struct TargetCaller.Target[]",
+        "name": "targets",
+        "type": "tuple[]"
+    }
+    ],
+    "name": "execute",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+    },
+    {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+    },
+    {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+    },
+    {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+    },
+    {
+        "internalType": "bytes",
+        "name": "encodedTargets",
+        "type": "bytes"
+    }
+    ],
+    "name": "executeOperation",
+    "outputs": [
+    {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+    }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "contract IAaveV2LendingPool",
+        "name": "lendingPool",
+        "type": "address"
+    },
+    {
+        "internalType": "address[]",
+        "name": "assets",
+        "type": "address[]"
+    },
+    {
+        "internalType": "uint256[]",
+        "name": "amounts",
+        "type": "uint256[]"
+    },
+    {
+        "internalType": "uint256[]",
+        "name": "modes",
+        "type": "uint256[]"
+    },
+    {
+        "components": [
+        {
+            "internalType": "address",
+            "name": "target",
+            "type": "address"
+        },
+        {
+            "internalType": "enum TargetCaller.CallType",
+            "name": "callType",
+            "type": "uint8"
+        },
+        {
+            "internalType": "bytes",
+            "name": "targetData",
+            "type": "bytes"
+        }
+        ],
+        "internalType": "struct TargetCaller.Target[]",
+        "name": "targets",
+        "type": "tuple[]"
+    }
+    ],
+    "name": "flashLoanAaveV2",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "contract IERC3156FlashLender",
+        "name": "lender",
+        "type": "address"
+    },
+    {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+    },
+    {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+    },
+    {
+        "components": [
+        {
+            "internalType": "address",
+            "name": "target",
+            "type": "address"
+        },
+        {
+            "internalType": "enum TargetCaller.CallType",
+            "name": "callType",
+            "type": "uint8"
+        },
+        {
+            "internalType": "bytes",
+            "name": "targetData",
+            "type": "bytes"
+        }
+        ],
+        "internalType": "struct TargetCaller.Target[]",
+        "name": "targets",
+        "type": "tuple[]"
+    },
+    {
+        "internalType": "bool",
+        "name": "repayLender",
+        "type": "bool"
+    }
+    ],
+    "name": "flashLoanERC3156",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "contract IUniswapV2Pair",
+        "name": "uniswapPool",
+        "type": "address"
+    },
+    {
+        "internalType": "uint256",
+        "name": "amount0Out",
+        "type": "uint256"
+    },
+    {
+        "internalType": "uint256",
+        "name": "amount1Out",
+        "type": "uint256"
+    },
+    {
+        "components": [
+        {
+            "components": [
+            {
+                "internalType": "address",
+                "name": "target",
+                "type": "address"
+            },
+            {
+                "internalType": "enum TargetCaller.CallType",
+                "name": "callType",
+                "type": "uint8"
+            },
+            {
+                "internalType": "bytes",
+                "name": "targetData",
+                "type": "bytes"
+            }
+            ],
+            "internalType": "struct TargetCaller.Target[]",
+            "name": "targets",
+            "type": "tuple[]"
+        },
+        {
+            "internalType": "contract IERC20",
+            "name": "repayToken",
+            "type": "address"
+        }
+        ],
+        "internalType": "struct UniswapV2FlashBorrower.UniswapV2FlashData",
+        "name": "flashData",
+        "type": "tuple"
+    }
+    ],
+    "name": "flashLoanUniswapV2",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+    },
+    {
+        "internalType": "bytes32",
+        "name": "_salt",
+        "type": "bytes32"
+    }
+    ],
+    "name": "getClone",
+    "outputs": [
+    {
+        "internalType": "address",
+        "name": "clone",
+        "type": "address"
+    },
+    {
+        "internalType": "bool",
+        "name": "exists",
+        "type": "bool"
+    }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+    }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+    },
+    {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+    },
+    {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+    },
+    {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+    },
+    {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+    }
+    ],
+    "name": "onERC1155BatchReceived",
+    "outputs": [
+    {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+    }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+    },
+    {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+    },
+    {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+    },
+    {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+    },
+    {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+    }
+    ],
+    "name": "onERC1155Received",
+    "outputs": [
+    {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+    }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+    },
+    {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+    },
+    {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+    },
+    {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+    }
+    ],
+    "name": "onERC721Received",
+    "outputs": [
+    {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+    }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+    },
+    {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+    },
+    {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+    },
+    {
+        "internalType": "uint256",
+        "name": "fee",
+        "type": "uint256"
+    },
+    {
+        "internalType": "bytes",
+        "name": "encodedTargets",
+        "type": "bytes"
+    }
+    ],
+    "name": "onFlashLoan",
+    "outputs": [
+    {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+    }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+},
+{
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+    {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+    }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "bytes4",
+        "name": "interfaceID",
+        "type": "bytes4"
+    }
+    ],
+    "name": "supportsInterface",
+    "outputs": [
+    {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+    }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+    },
+    {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+    },
+    {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+    },
+    {
+        "internalType": "bytes",
+        "name": "encodedFlashData",
+        "type": "bytes"
+    }
+    ],
+    "name": "uniswapV2Call",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+},
+{
+    "stateMutability": "payable",
+    "type": "receive"
+}
+]

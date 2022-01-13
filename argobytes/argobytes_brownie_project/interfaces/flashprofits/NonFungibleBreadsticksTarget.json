@@ -1,0 +1,58 @@
+[
+{
+    "inputs": [
+    {
+        "internalType": "contract INonFungibleBreadsticks",
+        "name": "nfb",
+        "type": "address"
+    }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+},
+{
+    "inputs": [
+    {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+    }
+    ],
+    "name": "PassedTargetIndex",
+    "type": "error"
+},
+{
+    "inputs": [],
+    "name": "Paused",
+    "type": "error"
+},
+{
+    "inputs": [
+    {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+    }
+    ],
+    "name": "TooEarly",
+    "type": "error"
+},
+{
+    "inputs": [
+    {
+        "internalType": "uint256",
+        "name": "max_order_size",
+        "type": "uint256"
+    },
+    {
+        "internalType": "uint256",
+        "name": "target_index",
+        "type": "uint256"
+    }
+    ],
+    "name": "gorge",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+}
+]

@@ -1,0 +1,98 @@
+[
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+    },
+    {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+    },
+    {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+    }
+    ],
+    "name": "TransferFailed",
+    "type": "error"
+},
+{
+    "inputs": [
+    {
+        "components": [
+        {
+            "internalType": "uint256",
+            "name": "min_reth_traded",
+            "type": "uint256"
+        },
+        {
+            "internalType": "uint256",
+            "name": "reth_transfered",
+            "type": "uint256"
+        },
+        {
+            "internalType": "uint256",
+            "name": "flash_repay_amount",
+            "type": "uint256"
+        },
+        {
+            "internalType": "address payable",
+            "name": "on_behalf_of",
+            "type": "address"
+        }
+        ],
+        "internalType": "struct LiqeeRethTarget.EnterData",
+        "name": "data",
+        "type": "tuple"
+    }
+    ],
+    "name": "enter",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "components": [
+        {
+            "internalType": "uint256",
+            "name": "qreth_redeem_amount",
+            "type": "uint256"
+        },
+        {
+            "internalType": "uint256",
+            "name": "reth_trade_amount",
+            "type": "uint256"
+        },
+        {
+            "internalType": "uint256",
+            "name": "min_eth_received",
+            "type": "uint256"
+        },
+        {
+            "internalType": "uint256",
+            "name": "flash_repay_amount",
+            "type": "uint256"
+        },
+        {
+            "internalType": "address payable",
+            "name": "on_behalf_of",
+            "type": "address"
+        }
+        ],
+        "internalType": "struct LiqeeRethTarget.ExitData",
+        "name": "data",
+        "type": "tuple"
+    }
+    ],
+    "name": "exit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+}
+]

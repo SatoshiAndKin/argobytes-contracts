@@ -1,0 +1,160 @@
+[
+{
+    "inputs": [],
+    "name": "Blocked",
+    "type": "error"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "target",
+        "type": "address"
+    },
+    {
+        "internalType": "bytes",
+        "name": "targetData",
+        "type": "bytes"
+    },
+    {
+        "internalType": "bytes",
+        "name": "error",
+        "type": "bytes"
+    }
+    ],
+    "name": "CallFailed",
+    "type": "error"
+},
+{
+    "inputs": [],
+    "name": "NotOwner",
+    "type": "error"
+},
+{
+    "anonymous": false,
+    "inputs": [
+    {
+        "indexed": false,
+        "internalType": "address",
+        "name": "oldOwner",
+        "type": "address"
+    },
+    {
+        "indexed": false,
+        "internalType": "address",
+        "name": "NextOwner",
+        "type": "address"
+    }
+    ],
+    "name": "NextOwner",
+    "type": "event"
+},
+{
+    "anonymous": false,
+    "inputs": [
+    {
+        "indexed": false,
+        "internalType": "address",
+        "name": "oldOwner",
+        "type": "address"
+    },
+    {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+    }
+    ],
+    "name": "SetOwner",
+    "type": "event"
+},
+{
+    "inputs": [
+    {
+        "internalType": "contract IERC3156FlashLender",
+        "name": "lender",
+        "type": "address"
+    },
+    {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+    },
+    {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+    },
+    {
+        "components": [
+        {
+            "internalType": "address",
+            "name": "target",
+            "type": "address"
+        },
+        {
+            "internalType": "enum TargetCaller.CallType",
+            "name": "callType",
+            "type": "uint8"
+        },
+        {
+            "internalType": "bytes",
+            "name": "targetData",
+            "type": "bytes"
+        }
+        ],
+        "internalType": "struct TargetCaller.Target[]",
+        "name": "targets",
+        "type": "tuple[]"
+    },
+    {
+        "internalType": "bool",
+        "name": "repayLender",
+        "type": "bool"
+    }
+    ],
+    "name": "flashLoanERC3156",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+},
+{
+    "inputs": [
+    {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+    },
+    {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+    },
+    {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+    },
+    {
+        "internalType": "uint256",
+        "name": "fee",
+        "type": "uint256"
+    },
+    {
+        "internalType": "bytes",
+        "name": "encodedTargets",
+        "type": "bytes"
+    }
+    ],
+    "name": "onFlashLoan",
+    "outputs": [
+    {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+    }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+}
+]
