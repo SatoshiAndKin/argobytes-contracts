@@ -8,7 +8,7 @@ from pprint import pprint
 
 import brownie
 import tokenlists
-from eth_utils import to_checksum_address
+from eth_utils import to_checksum_address, is_address
 
 from .contracts import EthContract, load_contract
 
@@ -56,7 +56,9 @@ def load_token(token_symbol: str, block=None, owner=None):
             pass
 
     if token_info is None:
-        raise ValueError(f"Symbol '{token_symbol}' is not in any of our tokenlists: {known_lists}")
+        raise ValueError(
+            f"Symbol '{token_symbol}' is not in any of our tokenlists: {known_lists}"
+        )
 
     token_address = to_checksum_address(token_info.address)
 
@@ -70,7 +72,13 @@ def load_token(token_symbol: str, block=None, owner=None):
     return contract
 
 
-def load_token_or_contract(token_symbol_or_address: str, block=None):
+def load_token_or_contract(
+    token_symbol_or_address: str, block=None, fallback_interface=None
+):
+    if hasattr(token_symbol_or_address, "address"):
+        # this is already a contract
+        return token_symbol_or_address
+
     if token_symbol_or_address == "ETH":
         # TODO: go back to treating this as WETH (except that broke balance checks)
         return EthContract()
@@ -80,10 +88,16 @@ def load_token_or_contract(token_symbol_or_address: str, block=None):
     if token_symbol_or_address == "BTC":
         token_symbol_or_address == "WBTC"
 
-    try:
-        return load_contract(token_symbol_or_address, block=block)
-    except ValueError:
-        return load_token(token_symbol_or_address)
+    if is_address(token_symbol_or_address):
+        try:
+            return load_contract(token_symbol_or_address, block=block)
+        except Exception:
+            if not fallback_interface:
+                raise
+
+        return fallback_interface(token_symbol_or_address)
+
+    return load_token(token_symbol_or_address, block=block)
 
 
 def get_balances(account, tokens):
@@ -102,7 +116,7 @@ def get_decimal_shift(token):
 
 
 def get_token_decimals(token_contract):
-    if token_contract.address in _cache_decimals:
+    if hasattr(token_contract, "address") and token_contract.address in _cache_decimals:
         return _cache_decimals[token_contract.address]
 
     if token_contract in [brownie.ETH_ADDRESS, brownie.ZERO_ADDRESS]:
@@ -116,6 +130,8 @@ def get_token_decimals(token_contract):
         decimals = 18
     elif token_contract.address == "0xE215e8160a5e0A03f2D6c7900b050F2f04eA5Cbb":
         # RAY is weird
+        decimals = 0
+    elif token_contract.address == "0x000000000000C1CB11D5c062901F32D06248CE48":
         decimals = 0
     else:
         if hasattr(token_contract, "decimals"):
@@ -139,18 +155,35 @@ def get_token_decimals(token_contract):
 
 
 def get_token_symbol(token_contract, weth_to_eth=True):
+    if isinstance(token_contract, str):
+        # TODO: load at a specific block?
+        token_contract = load_contract(token_contract)
+
     if token_contract.address in _cache_symbols:
         return _cache_symbols[token_contract.address]
 
     if token_contract in [brownie.ETH_ADDRESS, brownie.ZERO_ADDRESS]:
         symbol = "ETH"
+    elif token_contract.address == "0x57Ab1E02fEE23774580C119740129eAC7081e9D3":
+        # old sUSD contract
+        symbol = "sUSD"
+    elif token_contract.address == "0xC011A72400E58ecD99Ee497CF89E3775d4bd732F":
+        # this is a proxy to a proxy to a gnosis safe
+        symbol = "SNX"
+    elif token_contract.address == "0x88ACDd2a6425c3FaAE4Bc9650Fd7E27e0Bebb7aB":
+        # they use unicode for their symbol. i'd rather not deal with that
+        symbol = "MIST"
+    elif token_contract.address == "0x000000000000C1CB11D5c062901F32D06248CE48":
+        symbol = "LGT"
+    elif token_contract.address == "0xeb8928eE92EFb06C44d072a24C2BCB993B61e543":
+        symbol = "PTUNI-V2-POOL-ETH"
     else:
         if hasattr(token_contract, "symbol"):
             symbol_fn = token_contract.symbol
         elif hasattr(token_contract, "SYMBOL"):
             symbol_fn = token_contract.SYMBOL
         else:
-            raise ValueError
+            raise ValueError(token_contract)
 
         if hasattr(symbol_fn, "call"):
             # some contracts forgot to add "view" to their functions and so we need to call
@@ -158,6 +191,16 @@ def get_token_symbol(token_contract, weth_to_eth=True):
             symbol = symbol_fn.call()
         else:
             symbol = symbol_fn()
+
+        if not isinstance(symbol, str):
+            # Maker (and probably others) return a bytes32 instead of a string!
+            # SAI returns b'DAI\x00\x00...'! we are fine with that though since the rename just causes confusion
+            # TODO: do we want to make sure SAI is named SAI?
+            symbol = symbol.capitalize().rstrip(b"\x00").decode("utf-8")
+
+            if symbol in ["Mkr", "Dai"]:
+                # Really? Why don't they capitalize the whole thing?
+                symbol = symbol.upper()
 
     if symbol == "WETH":
         if weth_to_eth:
@@ -178,7 +221,8 @@ def get_token_symbol(token_contract, weth_to_eth=True):
         underlying_tokens = token_contract.getCurrentTokens()
 
         underlying_symbols = [
-            get_token_symbol(load_contract(underlying), weth_to_eth=True) for underlying in underlying_tokens
+            get_token_symbol(load_contract(underlying), weth_to_eth=True)
+            for underlying in underlying_tokens
         ]
 
         underlying_symbols = "-".join(underlying_symbols)
@@ -205,6 +249,58 @@ def get_token_symbol(token_contract, weth_to_eth=True):
         uni_lp_symbol = get_token_symbol(uni_lp)
 
         symbol = f"b{uni_lp_symbol}"
+    elif symbol == "pUNI-V2":
+        uni_lp = load_contract(token_contract.token())
+
+        uni_lp_symbol = get_token_symbol(uni_lp)
+
+        symbol = f"p{uni_lp_symbol}"
+    elif symbol == "SLP":
+        token0 = load_contract(token_contract.token0())
+        token1 = load_contract(token_contract.token1())
+
+        symbol0 = get_token_symbol(token0, weth_to_eth=weth_to_eth)
+        symbol1 = get_token_symbol(token1, weth_to_eth=weth_to_eth)
+
+        symbol = f"SLP-{symbol0}-{symbol1}"
+    elif symbol == "pSLP":
+        # pickling SLP
+        underlying = load_contract(token_contract.token())
+
+        underlying_symbol = get_token_symbol(underlying, weth_to_eth=weth_to_eth)
+
+        symbol = f"p{underlying_symbol}"
+    elif symbol == "BPT":
+        underlying_tokens = token_contract.getCurrentTokens()
+
+        underlying_symbols = [
+            get_token_symbol(load_contract(underlying), weth_to_eth=weth_to_eth)
+            for underlying in underlying_tokens
+        ]
+
+        underlying_symbols = " ".join(underlying_symbols)
+
+        symbol = f"BPT {underlying_symbols}"
+    elif symbol == "Cake-LP":
+        token0 = load_contract(token_contract.token0())
+        token1 = load_contract(token_contract.token1())
+
+        symbol0 = get_token_symbol(token0, weth_to_eth=weth_to_eth)
+        symbol1 = get_token_symbol(token1, weth_to_eth=weth_to_eth)
+
+        symbol = f"Cake-LP-{symbol0}-{symbol1}"
+    elif symbol == "bUNI-V2":
+        underlying = load_contract(token_contract.token())
+
+        symbol = get_token_symbol(underlying, weth_to_eth=weth_to_eth)
+
+        symbol = f"b{symbol}"
+    elif symbol == "pUNI-V2":
+        underlying = load_contract(token_contract.token())
+
+        symbol = get_token_symbol(underlying, weth_to_eth=weth_to_eth)
+
+        symbol = f"p{symbol}"
 
     _cache_symbols[token_contract.address] = symbol
 
@@ -234,7 +330,9 @@ def print_token_balances(balances, label=None, as_usd=False):
     pprint(dict_for_printing)
 
 
-def safe_token_approve(account, balances, spender, extra_balances=None, amount=2 ** 256 - 1, reset=False):
+def safe_token_approve(
+    account, balances, spender, extra_balances=None, amount=2 ** 256 - 1, reset=False
+):
     """For every token that we have a balance of, Approve unlimited (or a specified amount) for the spender."""
     if extra_balances is None:
         extra_balances = {}
@@ -266,7 +364,9 @@ def safe_token_approve(account, balances, spender, extra_balances=None, amount=2
             # TODO: we should have a list of tokens that need this behavior instead of taking a kwarg
             print(f"Clearing {token_symbol} ({token.address}) approval...")
             # gas estimators get confused if we don't wait for confirmation here
-            token.approve(spender, 0, {"from": account, "required_confs": 1, "gas_buffer": 1.3})
+            token.approve(
+                spender, 0, {"from": account, "required_confs": 1, "gas_buffer": 1.3}
+            )
 
         if amount == 2 ** 256 - 1:
             # the amount is the max
@@ -275,7 +375,9 @@ def safe_token_approve(account, balances, spender, extra_balances=None, amount=2
             # the amount was specified
             print(f"Approving {spender} for {amount} of {account}'s {token_symbol}...")
 
-        token.approve(spender, amount, {"from": account, "required_confs": 0, "gas_buffer": 1.3})
+        token.approve(
+            spender, amount, {"from": account, "required_confs": 0, "gas_buffer": 1.3}
+        )
 
         # TODO: if debug, print this
         # approve_tx.info()

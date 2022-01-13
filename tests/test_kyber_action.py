@@ -3,7 +3,9 @@ from eth_utils import to_bytes
 
 
 # TODO: this test crashes ganache when we try to collect coverage
-def test_action(kyber_action, kyber_network_proxy, dai_erc20, skip_coverage, usdc_erc20):
+def test_action(
+    kyber_action, kyber_network_proxy, dai_erc20, skip_coverage, usdc_erc20
+):
     value = 1e17
 
     # TODO: build proper hints for the different trades

@@ -2,8 +2,12 @@ import pytest
 from brownie import accounts
 
 
-@pytest.mark.skip(reason="these contracts are being refactored to use ArgobytesFlashBorrower")
-def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action, weth9_erc20):
+@pytest.mark.skip(
+    reason="these contracts are being refactored to use ArgobytesFlashBorrower"
+)
+def test_simple_arbitrage(
+    argobytes_multicall, argobytes_trader, example_action, weth9_erc20
+):
     value = 1e18
 
     # get some WETH for accounts[1]
@@ -50,7 +54,9 @@ def test_simple_arbitrage(argobytes_multicall, argobytes_trader, example_action,
         ),
     ]
 
-    arbitrage_tx = argobytes_trader.atomicArbitrage(accounts[0], borrows, argobytes_multicall, actions)
+    arbitrage_tx = argobytes_trader.atomicArbitrage(
+        accounts[0], borrows, argobytes_multicall, actions
+    )
 
     assert weth9_erc20.balanceOf(example_action) == 1
     assert weth9_erc20.balanceOf(argobytes_trader) == 0

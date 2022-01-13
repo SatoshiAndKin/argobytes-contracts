@@ -16,11 +16,15 @@ def test_3pool_trade(curve_fi_action, curve_fi_3pool, unlocked_uniswap_v2):
     # send some DAI to the curve_fi_action
     unlocked_uniswap_v2(token_a, 100, curve_fi_action)
 
-    curve_fi_action.trade(curve_fi_3pool, a_id, b_id, curve_fi_action, token_a, token_b, 1)
+    curve_fi_action.trade(
+        curve_fi_3pool, a_id, b_id, curve_fi_action, token_a, token_b, 1
+    )
 
     # TODO: check balances
 
-    curve_fi_action.trade(curve_fi_3pool, b_id, a_id, curve_fi_action, token_b, token_a, 1)
+    curve_fi_action.trade(
+        curve_fi_3pool, b_id, a_id, curve_fi_action, token_b, token_a, 1
+    )
 
     # TODO: check balances
     # TODO: actually assert things
@@ -47,13 +51,17 @@ def test_compound_trade(curve_fi_action, curve_fi_compound, unlocked_uniswap_v2)
     # cdai_erc20.mint(0, {"from": accounts[0]})
     # cusdc_erc20.mint(0, {"from": accounts[0]})
 
-    curve_fi_action.trade(curve_fi_compound, a_id, b_id, curve_fi_action, token_a, token_b, 1)
+    curve_fi_action.trade(
+        curve_fi_compound, a_id, b_id, curve_fi_action, token_a, token_b, 1
+    )
 
     # TODO: check balances more specifically
     assert token_a.balanceOf(curve_fi_action) == 1
     assert token_b.balanceOf(curve_fi_action) > 0
 
-    curve_fi_action.trade(curve_fi_compound, b_id, a_id, curve_fi_action, token_b, token_a, 1)
+    curve_fi_action.trade(
+        curve_fi_compound, b_id, a_id, curve_fi_action, token_b, token_a, 1
+    )
 
     # TODO: check balances more specifically
     assert token_a.balanceOf(curve_fi_action) > 0
@@ -62,7 +70,9 @@ def test_compound_trade(curve_fi_action, curve_fi_compound, unlocked_uniswap_v2)
     # TODO: actually assert things
 
 
-def test_compound_trade_underlying(curve_fi_action, curve_fi_compound, unlocked_uniswap_v2):
+def test_compound_trade_underlying(
+    curve_fi_action, curve_fi_compound, unlocked_uniswap_v2
+):
     a_id = 0
     b_id = 1
 
@@ -77,11 +87,15 @@ def test_compound_trade_underlying(curve_fi_action, curve_fi_compound, unlocked_
 
     assert token_a.balanceOf(curve_fi_action) == 100 * 1e18
 
-    curve_fi_action.tradeUnderlying(curve_fi_compound, a_id, b_id, curve_fi_action, token_a, token_b, 1)
+    curve_fi_action.tradeUnderlying(
+        curve_fi_compound, a_id, b_id, curve_fi_action, token_a, token_b, 1
+    )
 
     # TODO: check balances
 
-    curve_fi_action.tradeUnderlying(curve_fi_compound, b_id, a_id, curve_fi_action, token_b, token_a, 1)
+    curve_fi_action.tradeUnderlying(
+        curve_fi_compound, b_id, a_id, curve_fi_action, token_b, token_a, 1
+    )
 
     # TODO: check balances
     # TODO: actually assert things

@@ -60,7 +60,9 @@ from argobytes.contracts import SingletonFactory, get_or_create, mk_contract_add
     ],
 )
 def test_mk_contract_address2(address, salt, initcode, result):
-    (calculated_addr, calculated_salt_bytes) = mk_contract_address2(address, initcode, salt=salt)
+    (calculated_addr, calculated_salt_bytes) = mk_contract_address2(
+        address, initcode, salt=salt
+    )
 
     assert "0x" + calculated_salt_bytes.hex() == salt
     assert calculated_addr == result
@@ -72,7 +74,9 @@ def test_singleton_factory():
     salt = "0x5374616b696e6752657761726473416461707465725265676973747279000000"
     expected_addr = "0xCa591346A311A372a20ed69e08bBE5107979e243"
 
-    calculated_addr, calculated_salt = mk_contract_address2(SingletonFactory.address, initcode, salt=salt)
+    calculated_addr, calculated_salt = mk_contract_address2(
+        SingletonFactory.address, initcode, salt=salt
+    )
 
     assert "0x" + calculated_salt.hex() == salt
     assert calculated_addr == expected_addr

@@ -39,7 +39,9 @@ def test_uniswap_arbitrage(
             uniswap_v1_action,
             True,
             # uniswap_v1_action.tradeEtherToToken(address to, address exchange, address dest_token, uint dest_min_tokens)
-            uniswap_v1_action.tradeEtherToToken.encode_input(uniswap_v1_action, usdc_exchange, usdc_erc20, 1),
+            uniswap_v1_action.tradeEtherToToken.encode_input(
+                uniswap_v1_action, usdc_exchange, usdc_erc20, 1
+            ),
         ),
         # trade USDC to DAI
         (
@@ -55,7 +57,9 @@ def test_uniswap_arbitrage(
             uniswap_v1_action,
             False,
             # uniswap_v1_action.tradeTokenToEther(address to, address exchange, address src_token, uint dest_min_tokens)
-            uniswap_v1_action.tradeTokenToEther.encode_input(argobytes_proxy_clone, dai_exchange, dai_erc20, 1),
+            uniswap_v1_action.tradeTokenToEther.encode_input(
+                argobytes_proxy_clone, dai_exchange, dai_erc20, 1
+            ),
         ),
     ]
 

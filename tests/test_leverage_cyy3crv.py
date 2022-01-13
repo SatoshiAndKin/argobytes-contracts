@@ -62,7 +62,11 @@ def test_atomic_scripts(
 
     threecrv_balance = threecrv.balanceOf(account)
 
-    threecrv_balance_as_dai = Decimal(threecrv_balance) * Decimal(threecrv_pool.get_virtual_price()) / Decimal("1e18")
+    threecrv_balance_as_dai = (
+        Decimal(threecrv_balance)
+        * Decimal(threecrv_pool.get_virtual_price())
+        / Decimal("1e18")
+    )
 
     # make sure balances are what we expect
     assert dai.balanceOf(argobytes_flash_clone) == 0

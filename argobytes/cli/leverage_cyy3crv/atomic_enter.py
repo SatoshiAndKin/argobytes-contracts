@@ -13,7 +13,12 @@ from argobytes.contracts import (
     lazy_contract,
     poke_contracts,
 )
-from argobytes.tokens import get_balances, get_claimable_3crv, print_token_balances, safe_token_approve
+from argobytes.tokens import (
+    get_balances,
+    get_claimable_3crv,
+    print_token_balances,
+    safe_token_approve,
+)
 
 EnterData = namedtuple(
     "EnterData",
@@ -38,8 +43,14 @@ def atomic_enter(account, min_3crv_to_claim):
     logger.info(f"Hello, {account}")
 
     # deploy our contracts if necessary
-    enter_cyy3crv_action = get_or_create(account, ArgobytesBrownieProject.EnterCYY3CRVAction)
-    (argobytes_factory, argobytes_flash_borrower, argobytes_clone) = get_or_clone_flash_borrower(account)
+    enter_cyy3crv_action = get_or_create(
+        account, ArgobytesBrownieProject.EnterCYY3CRVAction
+    )
+    (
+        argobytes_factory,
+        argobytes_flash_borrower,
+        argobytes_clone,
+    ) = get_or_clone_flash_borrower(account)
 
     logger.info("clone: %s", argobytes_clone)
 
@@ -98,7 +109,12 @@ def atomic_enter(account, min_3crv_to_claim):
     # TODO: do this properly. use virtualprice and yearn's price calculation
     print("warning! summed_balances is not actually priced in USD")
     summed_balances = Decimal(
-        enter_data.dai + enter_data.usdc + enter_data.usdt + enter_data.threecrv + enter_data.y3crv + claimable_3crv
+        enter_data.dai
+        + enter_data.usdc
+        + enter_data.usdt
+        + enter_data.threecrv
+        + enter_data.y3crv
+        + claimable_3crv
     )
 
     print(f"summed_balances:   {summed_balances}")
@@ -113,7 +129,9 @@ def atomic_enter(account, min_3crv_to_claim):
 
     assert flash_loan_amount > 0, "no flash loan calculated"
 
-    enter_data = enter_data._replace(dai_flash_fee=lender.flashFee(dai, flash_loan_amount))
+    enter_data = enter_data._replace(
+        dai_flash_fee=lender.flashFee(dai, flash_loan_amount)
+    )
 
     extra_balances = {}
 

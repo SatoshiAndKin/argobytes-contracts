@@ -41,7 +41,9 @@ def atomic_exit(account, tip_eth, tip_3crv):
     # deploy our contracts if necessary
     argobytes_factory = get_or_create_factory(account)
     argobytes_flash_borrower = get_or_create_flash_borrower(account)
-    exit_cyy3crv_action = get_or_create(account, ArgobytesBrownieProject.ExitCYY3CRVAction)
+    exit_cyy3crv_action = get_or_create(
+        account, ArgobytesBrownieProject.ExitCYY3CRVAction
+    )
 
     # get the clone for the account
     argobytes_clone = get_or_clone(account, argobytes_factory, argobytes_flash_borrower)
@@ -55,7 +57,9 @@ def atomic_exit(account, tip_eth, tip_3crv):
     usdc = lazy_contract(exit_cyy3crv_action.USDC(), account)
     usdt = lazy_contract(exit_cyy3crv_action.USDT(), account)
     threecrv = lazy_contract(exit_cyy3crv_action.THREE_CRV(), account)
-    threecrv_pool = lazy_contract(exit_cyy3crv_action.THREE_CRV_POOL(), account, force=True)
+    threecrv_pool = lazy_contract(
+        exit_cyy3crv_action.THREE_CRV_POOL(), account, force=True
+    )
     y3crv = lazy_contract(exit_cyy3crv_action.Y_THREE_CRV(), account)
     cyy3crv = lazy_contract(exit_cyy3crv_action.CY_Y_THREE_CRV(), account)
     cydai = lazy_contract(exit_cyy3crv_action.CY_DAI(), account)
@@ -84,7 +88,10 @@ def atomic_exit(account, tip_eth, tip_3crv):
     # TODO: is this right? i think it might be overshooting. i don't think it matters that much though
     interest_slippage_blocks = int((5 * 60) / get_average_block_time())
     # https://www.geeksforgeeks.org/python-program-for-compound-interest/
-    flash_loan_amount = int(dai_borrowed * (pow((1 + borrow_rate_per_block / 1e18), interest_slippage_blocks)))
+    flash_loan_amount = int(
+        dai_borrowed
+        * (pow((1 + borrow_rate_per_block / 1e18), interest_slippage_blocks))
+    )
 
     print(f"flash_loan_amount: {flash_loan_amount}")
 

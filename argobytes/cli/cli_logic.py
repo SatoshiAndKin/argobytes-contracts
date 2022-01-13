@@ -66,10 +66,15 @@ def cli(
 
         # this allows later click commands to set the default. there might be a better way
         # we do "or" because "brownie_network" might be set to None
-        network = ctx.obj.get("brownie_network") or ctx.obj.get("default_brownie_network")
+        network = ctx.obj.get("brownie_network") or ctx.obj.get(
+            "default_brownie_network"
+        )
 
         if network == "none" or not network:
-            logger.warning("%s is the active project. Not connected to any networks", brownie_project._name)
+            logger.warning(
+                "%s is the active project. Not connected to any networks",
+                brownie_project._name,
+            )
         else:
             brownie_network.connect(network)
 

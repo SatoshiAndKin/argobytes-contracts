@@ -64,7 +64,9 @@ class BrownieAccount(click.ParamType):
             account_pass = None
             if pass_dir.exists():
                 # TODO: is this the mode that we want?
-                assert pass_dir.stat().st_mode == 0o40700, "password dir must be mode 0700"
+                assert (
+                    pass_dir.stat().st_mode == 0o40700
+                ), "password dir must be mode 0700"
 
                 possible_pass = pass_dir / f"{name}.pass"
 
@@ -212,7 +214,10 @@ def prompt_loud_confirmation(account, confirm_delay_secs=6):
         # TODO: we might actually send from multiple accounts
         logger.warning("Continuing past this will spend ETH from %s!", account)
 
-    click.secho(f"\nTransactions will run against the network at {web3.provider.endpoint_uri}!", fg="yellow")
+    click.secho(
+        f"\nTransactions will run against the network at {web3.provider.endpoint_uri}!",
+        fg="yellow",
+    )
 
     click.confirm("\nDo you want to continue?", abort=True)
 
@@ -264,7 +269,9 @@ def with_dry_run(
     # TODO: if account is not a LocalAccount, exit here since we can't sign with it
 
     if not with_mainnet_run:
-        print("Dry run completed successfully! Add '--with-mainnet-run' to broadcast for real.")
+        print(
+            "Dry run completed successfully! Add '--with-mainnet-run' to broadcast for real."
+        )
         return
 
     # replay_rpc might be set to something like eden network

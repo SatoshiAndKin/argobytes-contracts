@@ -6,7 +6,12 @@ from brownie import *
 from brownie.network import gas_price
 
 from argobytes.addresses import *
-from argobytes.contracts import ArgobytesBrownieProject, ArgobytesInterfaces, get_or_clone_flash_borrower, get_or_create
+from argobytes.contracts import (
+    ArgobytesBrownieProject,
+    ArgobytesInterfaces,
+    get_or_clone_flash_borrower,
+    get_or_create,
+)
 
 # TODO: set these inside main instead of using globals
 # EXPORT_ARTIFACTS = os.environ.get("EXPORT_ARTIFACTS", "0") == "1"
@@ -63,18 +68,26 @@ def main():
 
     # deploy a dsproxy just to compare gas costs
     # TODO: whats the deploy cost of DSProxyFactory?
-    ds_proxy_factory = ArgobytesInterfaces.DSProxyFactory(DSProxyFactoryAddress, accounts[5])
+    ds_proxy_factory = ArgobytesInterfaces.DSProxyFactory(
+        DSProxyFactoryAddress, accounts[5]
+    )
     ds_proxy_factory.build()
 
     # deploy ArgobytesFactory
     # deploy ArgobytesFlashBorrower
     # clone ArgobytesFlashBorrower for accounts[0]
-    (argobytes_factory, argobytes_flash_borrower, argobytes_clone) = get_or_clone_flash_borrower(
+    (
+        argobytes_factory,
+        argobytes_flash_borrower,
+        argobytes_clone,
+    ) = get_or_clone_flash_borrower(
         accounts[0],
     )
 
     # deploy ArgobytesAuthority
-    argobytes_authority = get_or_create(accounts[0], ArgobytesBrownieProject.ArgobytesAuthority, salt=salt)
+    argobytes_authority = get_or_create(
+        accounts[0], ArgobytesBrownieProject.ArgobytesAuthority, salt=salt
+    )
 
     # quick_save_contract(argobytes_authority)
 
@@ -85,13 +98,17 @@ def main():
     get_or_create(accounts[0], ArgobytesBrownieProject.ArgobytesMulticall)
 
     # deploy base actions
-    argobytes_trader = get_or_create(accounts[0], ArgobytesBrownieProject.ArgobytesTrader)
+    argobytes_trader = get_or_create(
+        accounts[0], ArgobytesBrownieProject.ArgobytesTrader
+    )
 
     # deploy all the exchange actions
     get_or_create(accounts[0], ArgobytesBrownieProject.ExampleAction)
     # get_or_create(accounts[0], ArgobytesBrownieProject.OneSplitOffchainAction)
     kyber_action = get_or_create(
-        accounts[0], ArgobytesBrownieProject.KyberAction, constructor_args=[argobytes_tip_address]
+        accounts[0],
+        ArgobytesBrownieProject.KyberAction,
+        constructor_args=[argobytes_tip_address],
     )
     get_or_create(accounts[0], ArgobytesBrownieProject.UniswapV1Action)
     get_or_create(accounts[0], ArgobytesBrownieProject.UniswapV2Action)
@@ -184,8 +201,10 @@ def main():
         {"from": accounts[5]},
     )
 
-    argobytes_flash_borrower_clone_5 = ArgobytesBrownieProject.ArgobytesFlashBorrower.at(
-        deploy_tx.return_value, accounts[5]
+    argobytes_flash_borrower_clone_5 = (
+        ArgobytesBrownieProject.ArgobytesFlashBorrower.at(
+            deploy_tx.return_value, accounts[5]
+        )
     )
 
     bulk_actions = [
@@ -224,8 +243,10 @@ def main():
         {"from": accounts[6]},
     )
 
-    argobytes_flash_borrower_clone_6 = ArgobytesBrownieProject.ArgobytesFlashBorrower.at(
-        deploy_tx.return_value, accounts[6]
+    argobytes_flash_borrower_clone_6 = (
+        ArgobytesBrownieProject.ArgobytesFlashBorrower.at(
+            deploy_tx.return_value, accounts[6]
+        )
     )
 
     ending_balance = accounts[6].balance()
@@ -245,8 +266,10 @@ def main():
         {"from": accounts[7]},
     )
 
-    argobytes_flash_borrower_clone_7 = ArgobytesBrownieProject.ArgobytesFlashBorrower.at(
-        deploy_tx.return_value, accounts[7]
+    argobytes_flash_borrower_clone_7 = (
+        ArgobytesBrownieProject.ArgobytesFlashBorrower.at(
+            deploy_tx.return_value, accounts[7]
+        )
     )
 
     ending_balance = accounts[7].balance()

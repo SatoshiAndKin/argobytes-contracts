@@ -99,10 +99,14 @@ def argobytes_proxy_clone(argobytes_factory, argobytes_proxy):
 
 
 @pytest.fixture()
-def argobytes_flash_borrower(aave_provider_registry, argobytes_factory, argobytes_proxy, brownie_mainnet_fork):
+def argobytes_flash_borrower(
+    aave_provider_registry, argobytes_factory, argobytes_proxy, brownie_mainnet_fork
+):
     # on mainnet we use the (bytes32) salt to generate custom addresses with lots of zero bytes
     # for our tests, we just need an address with the first byte being a zero
-    return get_or_create_flash_borrower(accounts[0], aave_provider_registry=aave_provider_registry)
+    return get_or_create_flash_borrower(
+        accounts[0], aave_provider_registry=aave_provider_registry
+    )
 
 
 @pytest.fixture()
@@ -187,7 +191,9 @@ def exit_cyy3crv_action(ExitCYY3CRVAction):
 
 @pytest.fixture()
 def kyber_action(KyberAction, kyber_network_proxy):
-    return get_or_create(accounts[0], KyberAction, constructor_args=[kyber_network_proxy, accounts[0]])
+    return get_or_create(
+        accounts[0], KyberAction, constructor_args=[kyber_network_proxy, accounts[0]]
+    )
 
 
 @pytest.fixture(scope="session")

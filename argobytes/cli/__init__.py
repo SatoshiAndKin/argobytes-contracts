@@ -126,6 +126,8 @@ def main():
 
             from argobytes.cli_helpers import debug_shell
 
-            debug_shell(l, banner=click.style(f"Caught exception! {exc_repr}", fg="red"))
+            debug_shell(
+                l, banner=click.style(f"Caught exception! {exc_repr}", fg="red")
+            )
 
         raise

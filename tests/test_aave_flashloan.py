@@ -13,8 +13,12 @@ def example_aave_flash_loan(owner):
     # deploy action contracts
     # (don't specify salt unless you know what you are doing)
     # a real flash loan would probably want CurveFiAction or UniswapV2Action
-    example_action_a = get_or_create(owner, ArgobytesBrownieProject.ExampleAction, salt="a")
-    example_action_b = get_or_create(owner, ArgobytesBrownieProject.ExampleAction, salt="b")
+    example_action_a = get_or_create(
+        owner, ArgobytesBrownieProject.ExampleAction, salt="a"
+    )
+    example_action_b = get_or_create(
+        owner, ArgobytesBrownieProject.ExampleAction, salt="b"
+    )
 
     # When possible, to save gas on transfers, contracts should be designed to be delegte called.
     # You must be certain the action contract does not use any state!
@@ -59,7 +63,9 @@ def test_aave_flash_loan(monkeypatch):
     sim_arb_profit = int(100e18 * 0.0009) + 3
 
     # TODO: we don't actually need to deploy the action now. we could just get the address
-    example_action_a = get_or_create(owner, ArgobytesBrownieProject.ExampleAction, salt="a")
+    example_action_a = get_or_create(
+        owner, ArgobytesBrownieProject.ExampleAction, salt="a"
+    )
 
     print("preparing simulated arbitrage profit...")
     # because this arb is on the exmaple action, we MUST NOT delegate call this action

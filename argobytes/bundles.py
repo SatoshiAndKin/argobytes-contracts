@@ -183,7 +183,9 @@ class TransactionBundler(ABC):
             assert amount, f"No amount set for {asset}"
             print(f"Simulating flash loan of {amount} {asset} to {receiver}...")
             assert amount > 0, f"invalid flash loan amount! {amount:_}"
-            asset.transfer(receiver, amount, {"from": self.lenders[asset], "gas_price": 0}).info()
+            asset.transfer(
+                receiver, amount, {"from": self.lenders[asset], "gas_price": 0}
+            ).info()
 
     def careful_send(self, prompt_confirmation=True, broadcast=False, with_shell=False):
         """Do a dry run, prompt, send the transaction for real."""
@@ -381,7 +383,10 @@ class TransactionBundler(ABC):
                 continue
 
             # TODO: is this the right way to cover transferFrom? need tests!
-            if signature == "transferFrom(address,address,uint256)" and new_input_args[0] == new_input_args[1]:
+            if (
+                signature == "transferFrom(address,address,uint256)"
+                and new_input_args[0] == new_input_args[1]
+            ):
                 # TODO: i'm not actually sure we will ever do this
                 # an action like this is usually part of setup that is only needed on a forked network
                 continue
@@ -390,7 +395,10 @@ class TransactionBundler(ABC):
 
             # sometimes instead of skipping, we want to modify the functions
             # TODO: is this the right way to cover transferFrom? need tests!
-            if signature == "transferFrom(address,address,uint256)" and new_input_args[0] == self.clone:
+            if (
+                signature == "transferFrom(address,address,uint256)"
+                and new_input_args[0] == self.clone
+            ):
                 # TODO: i'm not actually sure we will ever do this
                 signature = "transfer(address,uint256)"
                 new_input_args = (new_input_args[1], new_input_args[2])
@@ -473,7 +481,14 @@ class TransactionBundler(ABC):
         # TODO: if any of the lenders are aave, use an aave flash loan. otherwise call self.clone.flashloanForOwner(...)
         # TODO: if not borrows, call flashloanForOwner or execute
         tx = self.aave_lending_pool.flashLoan(
-            self.clone, assets, amounts, modes, self.clone, flash_params, 0, {"from": self.sender}
+            self.clone,
+            assets,
+            amounts,
+            modes,
+            self.clone,
+            flash_params,
+            0,
+            {"from": self.sender},
         )
 
         return tx

@@ -14,7 +14,9 @@ def download_all(max_workers):
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [executor.submit(install_solc, version) for version in solc_versions]
 
-        futures.extend([executor.submit(install_vyper, version) for version in vyper_versions])
+        futures.extend(
+            [executor.submit(install_vyper, version) for version in vyper_versions]
+        )
 
         for _f in as_completed(futures):
             # TODO: check for errors

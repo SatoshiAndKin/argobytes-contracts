@@ -40,7 +40,9 @@ def test_action(uniswap_v1_factory, uniswap_v1_action, dai_erc20, usdc_erc20):
 
     # trade USDC to DAI
     # tradeTokenToToken(address to, address exchange, address src_token, address dest_token, uint256 dest_min_tokens)
-    uniswap_v1_action.tradeTokenToToken(uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1)
+    uniswap_v1_action.tradeTokenToToken(
+        uniswap_v1_action, usdc_exchange, usdc_erc20, dai_erc20, 1
+    )
 
     # make sure USDC balance on the action is one
     assert usdc_erc20.balanceOf(uniswap_v1_action) == 1

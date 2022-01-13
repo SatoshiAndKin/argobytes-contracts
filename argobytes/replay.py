@@ -19,11 +19,15 @@ def is_forked_network() -> bool:
 
 def replay_history_on_main(automatic=False, history_start_index=0):
     main_rpc = get_upstream_rpc()
-    return replay_history(main_rpc, automatic=automatic, history_start_index=history_start_index)
+    return replay_history(
+        main_rpc, automatic=automatic, history_start_index=history_start_index
+    )
 
 
 def replay_history(new_rpc, automatic=False, history_start_index=0):
-    return replay_transactions(new_rpc, network.history[history_start_index:], automatic=automatic)
+    return replay_transactions(
+        new_rpc, network.history[history_start_index:], automatic=automatic
+    )
 
 
 def replay_transactions(new_rpc, txs, automatic=False) -> None:

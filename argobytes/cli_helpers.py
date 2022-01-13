@@ -13,9 +13,18 @@ from brownie import network as brownie_network
 from hexbytes import HexBytes
 
 from argobytes.cli_helpers_lite import logger
-from argobytes.contracts import ArgobytesBrownieProject, ArgobytesInterfaces, load_contract
+from argobytes.contracts import (
+    ArgobytesBrownieProject,
+    ArgobytesInterfaces,
+    load_contract,
+)
 from argobytes.tokens import load_token, load_token_or_contract
-from argobytes.transactions import get_event_address, get_event_contract, get_transaction, sync_tx_cache
+from argobytes.transactions import (
+    get_event_address,
+    get_event_contract,
+    get_transaction,
+    sync_tx_cache,
+)
 
 COMMON_HELPERS = {
     "ArgobytesBrownieProject": ArgobytesBrownieProject,

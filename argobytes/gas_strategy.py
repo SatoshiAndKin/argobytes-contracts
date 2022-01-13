@@ -149,11 +149,7 @@ class GasStrategyMinimum(BlockGasStrategy):
     TODO: i'd prefer to use a gas-now style strategy, but these chains don't have the graphql rpc necessary to do that
     """
 
-    def __init__(
-        self,
-        time_duration = 60,
-        extra = "1 gwei"
-    ):
+    def __init__(self, time_duration=60, extra="1 gwei"):
         if chain.id == 137 and is_forked_network():
             # TODO: something is broken with ganache+polygon+parsing blocks
             # their error message sends us here:

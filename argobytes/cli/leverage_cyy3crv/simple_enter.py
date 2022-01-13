@@ -1,8 +1,18 @@
 import os
 from decimal import Decimal
 
-from argobytes.contracts import ArgobytesBrownieProject, get_or_create, load_contract, poke_contracts
-from argobytes.tokens import get_balances, get_claimable_3crv, print_token_balances, safe_token_approve
+from argobytes.contracts import (
+    ArgobytesBrownieProject,
+    get_or_create,
+    load_contract,
+    poke_contracts,
+)
+from argobytes.tokens import (
+    get_balances,
+    get_claimable_3crv,
+    print_token_balances,
+    safe_token_approve,
+)
 
 
 def simple_enter(account):
@@ -13,7 +23,9 @@ def simple_enter(account):
     min_3crv_to_claim = os.environ.get("MIN_3CRV_TO_CLAIM", 50)
 
     # deploy our contracts if necessary
-    enter_cyy3crv_action = get_or_create(account, ArgobytesBrownieProject.EnterCYY3CRVAction)
+    enter_cyy3crv_action = get_or_create(
+        account, ArgobytesBrownieProject.EnterCYY3CRVAction
+    )
 
     print("Preparing contracts...")
     # TODO: use multicall to get all the addresses?
@@ -21,11 +33,15 @@ def simple_enter(account):
     usdc = load_contract(enter_cyy3crv_action.USDC(), account)
     usdt = load_contract(enter_cyy3crv_action.USDT(), account)
     threecrv = load_contract(enter_cyy3crv_action.THREE_CRV(), account)
-    threecrv_pool = load_contract(enter_cyy3crv_action.THREE_CRV_POOL(), account, force=True)
+    threecrv_pool = load_contract(
+        enter_cyy3crv_action.THREE_CRV_POOL(), account, force=True
+    )
     y3crv = load_contract(enter_cyy3crv_action.Y_THREE_CRV(), account)
     cyy3crv = load_contract(enter_cyy3crv_action.CY_Y_THREE_CRV(), account)
     cydai = load_contract(enter_cyy3crv_action.CY_DAI(), account)
-    fee_distribution = load_contract(enter_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION(), account)
+    fee_distribution = load_contract(
+        enter_cyy3crv_action.THREE_CRV_FEE_DISTRIBUTION(), account
+    )
     cream = load_contract(enter_cyy3crv_action.CREAM(), account)
 
     tokens = [dai, usdc, usdt, threecrv, y3crv, cyy3crv, cydai]
@@ -105,7 +121,10 @@ def simple_enter(account):
     # mint_tx.info()
 
     # TODO: need to use actual prices of 3crv and dai
-    borrow_amount = int(balances_for_y3crv[threecrv] * Decimal(threecrv_pool.get_virtual_price() / 1e18 * 0.9 * 0.9))
+    borrow_amount = int(
+        balances_for_y3crv[threecrv]
+        * Decimal(threecrv_pool.get_virtual_price() / 1e18 * 0.9 * 0.9)
+    )
     print(f"borrow_amount: {borrow_amount}")
 
     assert borrow_amount > 0

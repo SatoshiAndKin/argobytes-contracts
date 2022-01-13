@@ -6,6 +6,7 @@ from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import IntFlag
 from warnings import warn
+from functools import total_ordering
 
 import click
 import rlp
@@ -46,10 +47,24 @@ class ArgobytesAction:
         self.tuple = ActionTuple(contract.address, call_type, send_balance, data)
 
 
+@total_ordering
 class EthContract:
-    def __init__(self):
-        """Handle ETH like an ERC20."""
-        self.address = ETH_ADDRESS
+    def __lt__(self, other):
+        return self.address < other.address
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.address == other
+        if hasattr(other, "address"):
+            return self.address == other.address
+        raise NotImplementedError
+
+    def __hash__(self):
+        return self.address.__hash__()
+
+    @property
+    def address(self):
+        return ETH_ADDRESS
 
     def decimals(self):
         return 18
@@ -58,17 +73,22 @@ class EthContract:
         return "ETH"
 
     def balanceOf(self, account):
+        # TODO: get balance at a specific block
         return web3.eth.getBalance(str(account))
 
 
-def get_deterministic_contract(default_account, contract, salt="", constructor_args=None):
+def get_deterministic_contract(
+    default_account, contract, salt="", constructor_args=None
+):
     """Use eip-2470 to load a contract with a deterministic address."""
     if constructor_args is None:
         constructor_args = []
 
     contract_initcode = contract.deploy.encode_input(*constructor_args)
 
-    contract_address, salt = mk_contract_address2(SingletonFactory.address, contract_initcode, salt=salt)
+    contract_address, salt = mk_contract_address2(
+        SingletonFactory.address, contract_initcode, salt=salt
+    )
 
     if web3.eth.get_code(contract_address).hex() == "0x":
         raise ValueError(f"Contract {contract.name} not deployed!")
@@ -86,15 +106,21 @@ def get_or_clone(owner, argobytes_factory, target_contract, salt=None):
     if not salt:
         salt = ""
 
-    (clone_address, clone_exists) = argobytes_factory.checkClone19.call(target_contract, salt, owner)
+    (clone_address, clone_exists) = argobytes_factory.checkClone19.call(
+        target_contract, salt, owner
+    )
 
     if not clone_exists:
         # send the transaction to create the contract
-        deploy_tx = argobytes_factory.createClone19(target_contract.address, salt, owner, {"from": owner})
+        deploy_tx = argobytes_factory.createClone19(
+            target_contract.address, salt, owner, {"from": owner}
+        )
 
         deploy_tx.info()
 
-    c = Contract.from_abi(target_contract._name, clone_address, target_contract.abi, owner)
+    c = Contract.from_abi(
+        target_contract._name, clone_address, target_contract.abi, owner
+    )
 
     # cache the contracts
     _contract_cache[(clone_address, None)] = c
@@ -109,7 +135,9 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
     for salt in salts:
         salt = salt or ""
 
-        (proxy_exists, proxy_address) = argobytes_factory.clone19Exists(deployed_contract, salt, owner)
+        (proxy_exists, proxy_address) = argobytes_factory.clone19Exists(
+            deployed_contract, salt, owner
+        )
 
         my_proxys_proxies.append(proxy_address)
 
@@ -138,7 +166,9 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
         # my_proxys_proxies.extend([event['clone'] for event in sybil_tx.events["NewClone"]])
 
     def _contract(address):
-        c = Contract.from_abi(deployed_contract._name, address, deployed_contract.abi, owner)
+        c = Contract.from_abi(
+            deployed_contract._name, address, deployed_contract.abi, owner
+        )
 
         # cache the contracts
         _contract_cache[(address, None)] = c
@@ -149,14 +179,22 @@ def get_or_clones(owner, argobytes_factory, deployed_contract, salts):
 
 
 def get_or_clone_flash_borrower(
-    account, aave_provider_registry=None, borrower_salt=None, clone_salt="", factory_salt="", leading_zeros=1
+    account,
+    aave_provider_registry=None,
+    borrower_salt=None,
+    clone_salt="",
+    factory_salt="",
+    leading_zeros=1,
 ):
     factory = get_or_create_factory(account, factory_salt)
 
     # we don't actually want the proxy. flash_borrower does more
     # proxy = get_or_create_proxy(account, salt)
     flash_borrower = get_or_create_flash_borrower(
-        account, aave_provider_registry=aave_provider_registry, salt=borrower_salt, leading_zeros=leading_zeros or 1
+        account,
+        aave_provider_registry=aave_provider_registry,
+        salt=borrower_salt,
+        leading_zeros=leading_zeros or 1,
     )
 
     clone = get_or_clone(account, factory, flash_borrower, salt=clone_salt)
@@ -170,7 +208,12 @@ def get_or_clone_flash_borrower(
 
 
 def get_or_create(
-    default_account, contract, no_create=False, salt=None, constructor_args=None, leading_zeros=0
+    default_account,
+    contract,
+    no_create=False,
+    salt=None,
+    constructor_args=None,
+    leading_zeros=0,
 ) -> Contract:
     """Use eip-2470 to create a contract with deterministic addresses."""
     if constructor_args is None:
@@ -182,14 +225,21 @@ def get_or_create(
     contract_initcode = contract.deploy.encode_input(*constructor_args)
 
     contract_address, salt = mk_contract_address2(
-        str(SingletonFactory.address), contract_initcode, leading_zeros=leading_zeros, salt=salt
+        str(SingletonFactory.address),
+        contract_initcode,
+        leading_zeros=leading_zeros,
+        salt=salt,
     )
 
     if web3.eth.get_code(contract_address).hex() == "0x":
         if no_create:
-            raise Exception(f"{contract} is not yet deployed. This is likely an issue with configuration.")
+            raise Exception(
+                f"{contract} is not yet deployed. This is likely an issue with configuration."
+            )
 
-        deploy_tx = SingletonFactory.deploy(contract_initcode, salt, {"from": default_account})
+        deploy_tx = SingletonFactory.deploy(
+            contract_initcode, salt, {"from": default_account}
+        )
 
         """
         if chain.id == 250:
@@ -220,22 +270,32 @@ def get_or_create(
 
 def get_or_create_factory(default_account, salt=None, leading_zeros=0):
     return get_or_create(
-        default_account, ArgobytesBrownieProject.ArgobytesFactory19, salt=salt, leading_zeros=leading_zeros
+        default_account,
+        ArgobytesBrownieProject.ArgobytesFactory19,
+        salt=salt,
+        leading_zeros=leading_zeros,
     )
 
 
 def get_or_create_proxy(default_account, salt=None, leading_zeros=1):
     return get_or_create(
-        default_account, ArgobytesBrownieProject.ArgobytesProxy, salt=salt, leading_zeros=leading_zeros
+        default_account,
+        ArgobytesBrownieProject.ArgobytesProxy,
+        salt=salt,
+        leading_zeros=leading_zeros,
     )
 
 
-def get_or_create_flash_borrower(default_account, aave_provider_registry=None, salt=None, leading_zeros=1):
+def get_or_create_flash_borrower(
+    default_account, aave_provider_registry=None, salt=None, leading_zeros=1
+):
     assert leading_zeros, "need >=1 leading zero"
 
     if not aave_provider_registry:
         if chain.id == 1:
-            aave_provider_registry = load_contract("0x52D306e36E3B6B02c153d0266ff0f85d18BCD413")
+            aave_provider_registry = load_contract(
+                "0x52D306e36E3B6B02c153d0266ff0f85d18BCD413"
+            )
         else:
             raise NotImplementedError
 
@@ -280,8 +340,10 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
     elif isinstance(token_name_or_address, str) and "." in token_name_or_address:
         # TODO: PR against web3 to take a block argument
         # https://github.com/ethereum/web3.py/issues/1984
-        warn(f"Looking up {token_name_or_address} against the latest block, not {block}")
-
+        warn(
+            f"Looking up {token_name_or_address} against the latest block, not {block}"
+        )
+        # TODO: i don't think forcing block to None here is correct but we don't use ens much
         block = None
 
     cache_key = (token_name_or_address, block)
@@ -302,7 +364,11 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
             # this is odd. i've seen `TypeError: 'Contract' object is not callable`
             pass
 
-    if isinstance(token_name_or_address, ProjectContract) or isinstance(token_name_or_address, Contract) or isinstance(token_name_or_address, EthContract):
+    if (
+        isinstance(token_name_or_address, ProjectContract)
+        or isinstance(token_name_or_address, Contract)
+        or isinstance(token_name_or_address, EthContract)
+    ):
         # we were given a contract rather than an address or token name. return early
         token_name_or_address._owner = owner
 
@@ -328,7 +394,9 @@ def load_contract(token_name_or_address: str, owner=None, block=None, force=Fals
     # TODO: this should be in load_token, not here!
     if token_name_or_address.lower() == "ankreth":
         # TODO: find a tokenlist with this on it
-        token_name_or_address = to_checksum_address("0xe95a203b1a91a908f9b9ce46459d101078c2c3cb")
+        token_name_or_address = to_checksum_address(
+            "0xe95a203b1a91a908f9b9ce46459d101078c2c3cb"
+        )
     elif token_name_or_address.lower() == "obtc":  # boring DAO BTC
         # TODO: find a tokenlist with this on it
         token_name_or_address = "0x8064d9Ae6cDf087b1bcd5BDf3531bD5d8C537a68"
@@ -364,7 +432,11 @@ def check_for_proxy(contract, block, force=False):
     if contract._name == "DSProxy":
         return contract
 
-    if not ("Proxy" in contract._name or hasattr(contract, "implementation") or hasattr(contract, "target")):
+    if not (
+        "Proxy" in contract._name
+        or hasattr(contract, "implementation")
+        or hasattr(contract, "target")
+    ):
         return contract
 
     impl_addr = ZERO_ADDRESS
@@ -462,7 +534,9 @@ def check_for_proxy(contract, block, force=False):
     return contract
 
 
-def find_create2_salt(sender: bytes, initcode_hash: bytes, leading_zeros: int = 1) -> bytes:
+def find_create2_salt(
+    sender: bytes, initcode_hash: bytes, leading_zeros: int = 1
+) -> bytes:
     """Find a salt that creates an address with leading zero bytes.
 
     :param salt: the first salt to try
@@ -486,7 +560,9 @@ def find_create2_salt(sender: bytes, initcode_hash: bytes, leading_zeros: int = 
     while True:
         salt_bytes = to_bytes32(salt)
 
-        found_address_bytes = mk_contract_address2_bytes(sender, salt_bytes, initcode_hash)
+        found_address_bytes = mk_contract_address2_bytes(
+            sender, salt_bytes, initcode_hash
+        )
 
         # TODO: check found_address_bytes and return if theres a match
         if found_address_bytes.startswith(prefix):
@@ -507,7 +583,9 @@ def mk_contract_address(sender: str, nonce: int) -> str:
     return to_checksum_address(address_bytes)
 
 
-def mk_contract_address2_bytes(sender: bytes, salt: bytes, initcode_hash: bytes) -> bytes:
+def mk_contract_address2_bytes(
+    sender: bytes, salt: bytes, initcode_hash: bytes
+) -> bytes:
     """Create2 a contract address.
 
     keccak256 (0xff ++ sender ++ salt ++ keccak256 (init_code)) [-20:]
@@ -525,7 +603,9 @@ def hash_initcode(initcode: str) -> bytes:
     return keccak(to_bytes(hexstr=initcode))
 
 
-def mk_contract_address2(sender: str, initcode: str, leading_zeros: int = 0, salt: str = None):
+def mk_contract_address2(
+    sender: str, initcode: str, leading_zeros: int = 0, salt: str = None
+):
     sender_bytes = to_bytes(hexstr=sender)
 
     initcode_hash = hash_initcode(initcode)
@@ -534,7 +614,9 @@ def mk_contract_address2(sender: str, initcode: str, leading_zeros: int = 0, sal
         if not leading_zeros:
             salt = to_bytes32(text="")
         else:
-            salt = find_create2_salt(sender_bytes, initcode_hash, leading_zeros=leading_zeros)
+            salt = find_create2_salt(
+                sender_bytes, initcode_hash, leading_zeros=leading_zeros
+            )
     elif isinstance(salt, bytes):
         pass
     elif salt.startswith("0x"):

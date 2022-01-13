@@ -1,7 +1,17 @@
 from decimal import Decimal
 
-from argobytes.contracts import ArgobytesBrownieProject, get_or_create, load_contract, poke_contracts
-from argobytes.tokens import get_balances, get_token_decimals, print_token_balances, safe_token_approve
+from argobytes.contracts import (
+    ArgobytesBrownieProject,
+    get_or_create,
+    load_contract,
+    poke_contracts,
+)
+from argobytes.tokens import (
+    get_balances,
+    get_token_decimals,
+    print_token_balances,
+    safe_token_approve,
+)
 
 
 def simple_exit(account):
@@ -13,7 +23,9 @@ def simple_exit(account):
     # TODO: use salts for the contracts once we figure out a way to store them. maybe 3box?
 
     # TODO: we only use this for the constants. don't waste gas deploying this on mainnet if it isn't needed
-    exit_cyy3crv_action = get_or_create(account, ArgobytesBrownieProject.ExitCYY3CRVAction)
+    exit_cyy3crv_action = get_or_create(
+        account, ArgobytesBrownieProject.ExitCYY3CRVAction
+    )
 
     print("Preparing contracts...")
     # TODO: use multicall to get all the addresses?
@@ -22,9 +34,13 @@ def simple_exit(account):
     usdc = load_contract(exit_cyy3crv_action.USDC(), owner=account)
     usdt = load_contract(exit_cyy3crv_action.USDT(), owner=account)
     threecrv = load_contract(exit_cyy3crv_action.THREE_CRV(), owner=account)
-    threecrv_pool = load_contract(exit_cyy3crv_action.THREE_CRV_POOL(), owner=account, force=True)
+    threecrv_pool = load_contract(
+        exit_cyy3crv_action.THREE_CRV_POOL(), owner=account, force=True
+    )
     y3crv = load_contract(exit_cyy3crv_action.Y_THREE_CRV(), owner=account, force=True)
-    cyy3crv = load_contract(exit_cyy3crv_action.CY_Y_THREE_CRV(), owner=account, force=True)
+    cyy3crv = load_contract(
+        exit_cyy3crv_action.CY_Y_THREE_CRV(), owner=account, force=True
+    )
     cydai = load_contract(exit_cyy3crv_action.CY_DAI(), owner=account, force=True)
     cream = load_contract(exit_cyy3crv_action.CREAM(), owner=account, force=True)
 
@@ -68,7 +84,9 @@ def simple_exit(account):
 
     # we need more DAI!
     # calculate how much cyy3crv we can safely withdraw
-    (error, liquidity, shortfall) = cream.getHypotheticalAccountLiquidity(account, cydai, 0, borrow_balance)
+    (error, liquidity, shortfall) = cream.getHypotheticalAccountLiquidity(
+        account, cydai, 0, borrow_balance
+    )
     assert error == 0
     assert shortfall == 0
 
