@@ -3361,7 +3361,7 @@ resolve@1.17.0:
     hardhat: ^2.6.0
     prettier: ^2.3.0
     prettier-plugin-solidity: ^1.0.0-beta.11
-    solc: 0.8.5
+    solc: 0.8.7
   languageName: unknown
   linkType: soft
 
@@ -3420,11 +3420,11 @@ resolve@1.17.0:
   linkType: hard
 
 "semver@npm:^5.5.0, semver@npm:^5.7.0":
-  version: 5.7.1
-  resolution: "semver@npm:5.7.1"
+  version: 5.7.2
+  resolution: "semver@npm:5.7.2"
   bin:
-    semver: ./bin/semver
-  checksum: 57fd0acfd0bac382ee87cd52cd0aaa5af086a7dc8d60379dfe65fea491fb2489b6016400813930ecd61fd0952dae75c115287a1b16c234b1550887117744dfaf
+    semver: bin/semver
+  checksum: fb4ab5e0dd1c22ce0c937ea390b4a822147a9c53dbd2a9a0132f12fe382902beef4fbf12cf51bb955248d8d15874ce8cd89532569756384f994309825f10b686
   languageName: node
   linkType: hard
 
@@ -3569,9 +3569,9 @@ resolve@1.17.0:
   languageName: node
   linkType: hard
 
-"solc@npm:0.8.5":
-  version: 0.8.5
-  resolution: "solc@npm:0.8.5"
+"solc@npm:0.8.7":
+  version: 0.8.7
+  resolution: "solc@npm:0.8.7"
   dependencies:
     command-exists: ^1.2.8
     commander: 3.0.2
@@ -3584,7 +3584,7 @@ resolve@1.17.0:
     tmp: 0.0.33
   bin:
     solcjs: solcjs
-  checksum: 2d02f1ce4e246ca646a8f23ecb88a4d8a4606a3ad5563d5b45829e0817a685a410e53e1f00840026edc01dba3f9f2a2144c2fbd8116e2e771eeda4aa73302b72
+  checksum: 3efde9e07d92be5850e19e3a660b6c05cf403263438d02b1cbcd2428c66bed9bfb3e42e58f8232e6deee8ef557c3f53e45182f5a04d13b72b47607a89686f614
   languageName: node
   linkType: hard
 
